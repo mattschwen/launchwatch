@@ -221,14 +221,15 @@ export async function getNASAAPOD(): Promise<APOD | null> {
 // Combined Data Functions
 export async function getAllUpcomingLaunches(): Promise<Launch[]> {
   try {
+    // Request more launches to cover 3 months
     const [spacexLaunches, ll2Launches] = await Promise.all([
       getSpaceXUpcomingLaunches(),
-      getLL2UpcomingLaunches(20)
+      getLL2UpcomingLaunches(50) // Increased from 20 to 50 for 3-month coverage
     ]);
 
     // Convert to unified format
     const launches: Launch[] = [
-      ...spacexLaunches.slice(0, 10).map(launch => ({
+      ...spacexLaunches.map(launch => ({
         id: `spacex-${launch.id}`,
         name: launch.name,
         date: launch.date_utc,
@@ -240,7 +241,7 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
         description: launch.details,
         isLive: false
       })),
-      ...ll2Launches.slice(0, 10).map(launch => ({
+      ...ll2Launches.map(launch => ({
         id: `ll2-${launch.id}`,
         name: launch.name,
         date: launch.net,
@@ -254,13 +255,21 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
       }))
     ];
 
-    // Filter out past launches - only show from today onwards
+    // Calculate date ranges
     const now = Date.now() / 1000;
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayUnix = startOfToday.getTime() / 1000;
 
-    const futureLaunches = launches.filter(launch => launch.dateUnix >= todayUnix);
+    // 3 months from now
+    const threeMonthsFromNow = new Date();
+    threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+    const threeMonthsUnix = threeMonthsFromNow.getTime() / 1000;
+
+    // Filter: from today to 3 months out
+    const futureLaunches = launches.filter(launch =>
+      launch.dateUnix >= todayUnix && launch.dateUnix <= threeMonthsUnix
+    );
 
     // Sort by date
     futureLaunches.sort((a, b) => a.dateUnix - b.dateUnix);
