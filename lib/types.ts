@@ -4,7 +4,7 @@ export interface SpaceXLaunch {
   name: string;
   date_utc: string;
   date_unix: number;
-  rocket: string;
+  rocket: string | { id: string; name: string };
   success: boolean | null;
   details: string | null;
   links: {
@@ -13,7 +13,7 @@ export interface SpaceXLaunch {
     article: string | null;
     wikipedia: string | null;
   };
-  launchpad: string;
+  launchpad: string | { id: string; name: string; full_name?: string };
   upcoming: boolean;
 }
 

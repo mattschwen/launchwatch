@@ -29,11 +29,26 @@ export async function getSpaceXUpcomingLaunches(): Promise<SpaceXLaunch[]> {
   if (cached) return cached;
 
   try {
-    const response = await fetch(`${SPACEX_API}/launches/upcoming`, {
+    // Use query endpoint with populate to get full rocket and launchpad data
+    const response = await fetch(`${SPACEX_API}/launches/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: {
+          upcoming: true
+        },
+        options: {
+          populate: ['rocket', 'launchpad'],
+          sort: { date_unix: 'asc' }
+        }
+      }),
       next: { revalidate: 300 } // Revalidate every 5 minutes
     });
     if (!response.ok) throw new Error('Failed to fetch SpaceX launches');
-    const data = await response.json();
+    const result = await response.json();
+    const data = result.docs || [];
     setCachedData(cacheKey, data);
     return data;
   } catch (error) {
@@ -48,11 +63,27 @@ export async function getSpaceXPastLaunches(limit: number = 10): Promise<SpaceXL
   if (cached) return cached;
 
   try {
-    const response = await fetch(`${SPACEX_API}/launches/past?limit=${limit}`, {
+    // Use query endpoint with populate to get full rocket and launchpad data
+    const response = await fetch(`${SPACEX_API}/launches/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: {
+          upcoming: false
+        },
+        options: {
+          populate: ['rocket', 'launchpad'],
+          sort: { date_unix: 'desc' },
+          limit: limit
+        }
+      }),
       next: { revalidate: 3600 } // Past launches don't change often
     });
     if (!response.ok) throw new Error('Failed to fetch SpaceX past launches');
-    const data = await response.json();
+    const result = await response.json();
+    const data = result.docs || [];
     setCachedData(cacheKey, data);
     return data;
   } catch (error) {
@@ -135,8 +166,8 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
         name: launch.name,
         date: launch.date_utc,
         dateUnix: launch.date_unix,
-        rocket: launch.rocket,
-        launchSite: launch.launchpad,
+        rocket: typeof launch.rocket === 'object' ? launch.rocket.name : launch.rocket,
+        launchSite: typeof launch.launchpad === 'object' ? launch.launchpad.name : launch.launchpad,
         status: launch.upcoming ? 'upcoming' as const : (launch.success ? 'success' as const : 'failure' as const),
         livestream: launch.links.webcast,
         description: launch.details,
