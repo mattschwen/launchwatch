@@ -155,4 +155,4 @@ No test framework configured yet. To add tests:
 Primary target: Vercel (optimized for Next.js)
 - Set environment variables in Vercel dashboard
 - Auto-deploys from main branch
-- See `DEPLOYMENT.md` for detailed deployment guide
+- See `docs/DEPLOYMENT.md` for detailed deployment guide

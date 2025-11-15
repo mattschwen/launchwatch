@@ -5,6 +5,8 @@ A modern, minimal web app that tracks upcoming NASA and SpaceX rocket launches, 
 ![LaunchWatch](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square&logo=next.js)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?style=flat-square&logo=tailwind-css)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)
+![CI Status](https://img.shields.io/github/actions/workflow/status/matthewschwen/launchwatch/ci-web.yml?branch=main&label=CI&style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 ## ✨ Features
 
@@ -131,20 +133,29 @@ Rotating banner displaying:
 3. (Optional) Add `NEXT_PUBLIC_NASA_API_KEY` environment variable
 4. Deploy!
 
-### Deploy to Netlify
+**See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for comprehensive deployment guides including:**
+- Vercel (recommended)
+- Netlify
+- Railway
+- Docker
+- Custom domain setup
+- Performance optimization
+- Monitoring and analytics
 
-1. Build the project:
-```bash
-npm run build
-```
-
-2. Deploy the `.next` directory
-
-### Deploy to any Node.js host
+### Quick Deploy
 
 ```bash
 npm run build
 npm start
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env.local` and configure:
+
+```bash
+cp .env.example .env.local
+# Edit .env.local with your API keys
 ```
 
 ## ⚙️ Configuration
@@ -187,10 +198,52 @@ npm run lint         # Run ESLint
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
+Contributions are welcome! Please follow our development workflow:
+
+### Development Workflow
+
+1. **Fork and clone** the repository
+2. **Create a branch** following our naming convention:
+   - `feat/*` - New features
+   - `fix/*` - Bug fixes
+   - `docs/*` - Documentation updates
+   - `chore/*` - Build/tooling changes
+   - `refactor/*` - Code refactoring
+3. **Make your changes** following our code standards:
+   - Write semantic TypeScript with proper types (avoid `any`)
+   - Follow ESLint rules
+   - Maintain mobile-first responsive design
+   - Test locally with `npm run dev`
+   - Build successfully with `npm run build`
+4. **Commit with Conventional Commits** format:
+   - `feat(scope): add new feature`
+   - `fix(scope): fix bug description`
+   - Include body with context and rationale
+5. **Open a Pull Request**:
+   - Fill out the PR template completely
+   - Link related issues
+   - Ensure CI passes (lint, typecheck, build)
+   - Request review from code owners
+6. **Address review feedback**
+7. **Squash merge** to main after approval
+
+### Code Standards
+
+- **TypeScript**: Strict mode, no implicit `any`
+- **Style**: Enforced by ESLint and Prettier
+- **Components**: Mobile-first, responsive design
+- **API**: Client-side caching, error handling
+- **Documentation**: Update docs for behavior changes
+
+### Branch Protection
+
+The `main` branch is protected with:
+- Required status checks: lint, typecheck, build
+- Required reviews from code owners
+- No force pushes
+- No deletion
+
+See [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md) for setup instructions.
 
 ## 📄 License
 
