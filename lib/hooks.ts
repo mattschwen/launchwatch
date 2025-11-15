@@ -14,7 +14,12 @@ export function useLaunches() {
     async function fetchLaunches() {
       try {
         setLoading(true);
-        const data = await getAllUpcomingLaunches();
+
+        // Use server-side API route (shared cache across all users!)
+        const response = await fetch('/api/launches?type=all');
+        const result = await response.json();
+        const data = result.launches || [];
+
         setLaunches(data);
         setError(null);
 
@@ -36,8 +41,8 @@ export function useLaunches() {
     }
 
     fetchLaunches();
-    // Refresh every 2 minutes
-    const interval = setInterval(fetchLaunches, 2 * 60 * 1000);
+    // Refresh every 10 minutes (server has 30 min cache)
+    const interval = setInterval(fetchLaunches, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -54,7 +59,12 @@ export function useLiveLaunches() {
     async function fetchLiveLaunches() {
       try {
         setLoading(true);
-        const data = await getLiveLaunches();
+
+        // Use server-side API route
+        const response = await fetch('/api/launches?type=live');
+        const result = await response.json();
+        const data = result.launches || [];
+
         setLiveLaunches(data);
         setError(null);
       } catch (err) {
@@ -66,8 +76,8 @@ export function useLiveLaunches() {
     }
 
     fetchLiveLaunches();
-    // Refresh every 30 seconds for live launches
-    const interval = setInterval(fetchLiveLaunches, 30 * 1000);
+    // Refresh every 2 minutes for live launches (server cache helps)
+    const interval = setInterval(fetchLiveLaunches, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -84,7 +94,12 @@ export function useNextLaunch() {
     async function fetchNextLaunch() {
       try {
         setLoading(true);
-        const data = await getNextLaunch();
+
+        // Use server-side API route
+        const response = await fetch('/api/launches?type=next');
+        const result = await response.json();
+        const data = result.launch || null;
+
         setNextLaunch(data);
         setError(null);
       } catch (err) {
@@ -96,8 +111,8 @@ export function useNextLaunch() {
     }
 
     fetchNextLaunch();
-    // Refresh every minute
-    const interval = setInterval(fetchNextLaunch, 60 * 1000);
+    // Refresh every 5 minutes (server cache helps)
+    const interval = setInterval(fetchNextLaunch, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);

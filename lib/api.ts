@@ -2,13 +2,17 @@ import { SpaceXLaunch, SpaceXRocket, LL2Launch, APOD, Launch, RocketFact } from 
 
 // API Configuration
 const SPACEX_API = 'https://api.spacexdata.com/v4';
-const LL2_API = 'https://ll.thespacedevs.com/2.2.0';
+const LL2_API_KEY = process.env.NEXT_PUBLIC_LL2_API_KEY || '';
+const LL2_API = LL2_API_KEY
+  ? 'https://lldev.thespacedevs.com/2.2.0' // Premium endpoint (higher limits)
+  : 'https://ll.thespacedevs.com/2.2.0';   // Free endpoint (15 req/hour)
+const ROCKETLAUNCH_API = 'https://fdo.rocketlaunch.live/json/launches/next/5'; // Fallback API
 const NASA_API = 'https://api.nasa.gov';
 const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY || 'DEMO_KEY';
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
-const LL2_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for LL2 (rate limited)
+const LL2_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for LL2 (rate limited - 15 req/hour)
 let cache: { [key: string]: { data: any; timestamp: number } } = {};
 
 function getCachedData<T>(key: string, customDuration?: number): T | null {
@@ -127,8 +131,14 @@ export async function getLL2UpcomingLaunches(limit: number = 20): Promise<LL2Lau
   if (cached) return cached;
 
   try {
+    const headers: HeadersInit = {};
+    if (LL2_API_KEY) {
+      headers['Authorization'] = `Token ${LL2_API_KEY}`;
+    }
+
     const response = await fetch(`${LL2_API}/launch/upcoming/?limit=${limit}`, {
-      next: { revalidate: 600 } // 10 minutes
+      headers,
+      next: { revalidate: 1800 } // 30 minutes
     });
 
     // Handle rate limiting (429)
@@ -153,6 +163,37 @@ export async function getLL2UpcomingLaunches(limit: number = 20): Promise<LL2Lau
       return staleCache;
     }
 
+    return [];
+  }
+}
+
+// RocketLaunch.Live API (Fallback when LL2 is rate limited)
+export async function getRocketLaunchLiveData(limit: number = 5): Promise<LL2Launch[]> {
+  const cacheKey = `rll_upcoming_${limit}`;
+  const cached = getCachedData<LL2Launch[]>(cacheKey, LL2_CACHE_DURATION);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(ROCKETLAUNCH_API, {
+      next: { revalidate: 1800 } // 30 minutes
+    });
+
+    if (!response.ok) {
+      console.warn('RocketLaunch.Live API failed');
+      return [];
+    }
+
+    const data = await response.json();
+    // RocketLaunch.Live has different structure, so we'll use LL2 as it's also available there
+    // For now, return empty and rely on stale cache
+    console.log('RocketLaunch.Live response:', data);
+
+    // Note: RocketLaunch.Live structure may differ, needs mapping
+    // This is a placeholder - would need proper mapping if using this API
+    setCachedData(cacheKey, []);
+    return [];
+  } catch (error) {
+    console.error('Error fetching RocketLaunch.Live:', error);
     return [];
   }
 }
@@ -213,14 +254,21 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
       }))
     ];
 
+    // Filter out past launches - only show from today onwards
+    const now = Date.now() / 1000;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const todayUnix = startOfToday.getTime() / 1000;
+
+    const futureLaunches = launches.filter(launch => launch.dateUnix >= todayUnix);
+
     // Sort by date
-    launches.sort((a, b) => a.dateUnix - b.dateUnix);
+    futureLaunches.sort((a, b) => a.dateUnix - b.dateUnix);
 
     // Check if any launch is happening within ±2 hours
-    const now = Date.now() / 1000;
     const twoHours = 2 * 60 * 60;
 
-    launches.forEach(launch => {
+    futureLaunches.forEach(launch => {
       const timeDiff = Math.abs(launch.dateUnix - now);
       if (timeDiff <= twoHours) {
         launch.isLive = true;
@@ -228,7 +276,7 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
       }
     });
 
-    return launches;
+    return futureLaunches;
   } catch (error) {
     console.error('Error getting all launches:', error);
     return [];
