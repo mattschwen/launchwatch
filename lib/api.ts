@@ -7,15 +7,22 @@ const NASA_API = 'https://api.nasa.gov';
 const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY || 'DEMO_KEY';
 
 // Cache configuration
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
+const LL2_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for LL2 (rate limited)
 let cache: { [key: string]: { data: any; timestamp: number } } = {};
 
-function getCachedData<T>(key: string): T | null {
+function getCachedData<T>(key: string, customDuration?: number): T | null {
   const cached = cache[key];
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  const duration = customDuration || CACHE_DURATION;
+  if (cached && Date.now() - cached.timestamp < duration) {
     return cached.data as T;
   }
   return null;
+}
+
+function getStaleCachedData<T>(key: string): T | null {
+  const cached = cache[key];
+  return cached ? (cached.data as T) : null;
 }
 
 function setCachedData(key: string, data: any) {
@@ -114,19 +121,38 @@ export async function getSpaceXRockets(): Promise<SpaceXRocket[]> {
 // Launch Library 2 API Functions
 export async function getLL2UpcomingLaunches(limit: number = 20): Promise<LL2Launch[]> {
   const cacheKey = `ll2_upcoming_${limit}`;
-  const cached = getCachedData<LL2Launch[]>(cacheKey);
+
+  // Check cache with extended duration (10 minutes)
+  const cached = getCachedData<LL2Launch[]>(cacheKey, LL2_CACHE_DURATION);
   if (cached) return cached;
 
   try {
     const response = await fetch(`${LL2_API}/launch/upcoming/?limit=${limit}`, {
-      next: { revalidate: 300 }
+      next: { revalidate: 600 } // 10 minutes
     });
+
+    // Handle rate limiting (429)
+    if (response.status === 429) {
+      console.warn('LL2 rate limit hit, returning stale cache if available');
+      const staleCache = getStaleCachedData<LL2Launch[]>(cacheKey);
+      if (staleCache) return staleCache;
+      return []; // No cache available
+    }
+
     if (!response.ok) throw new Error('Failed to fetch LL2 launches');
     const data = await response.json();
     setCachedData(cacheKey, data.results);
     return data.results;
   } catch (error) {
     console.error('Error fetching LL2 launches:', error);
+
+    // Return stale cache if available on error
+    const staleCache = getStaleCachedData<LL2Launch[]>(cacheKey);
+    if (staleCache) {
+      console.warn('Returning stale LL2 cache due to error');
+      return staleCache;
+    }
+
     return [];
   }
 }
