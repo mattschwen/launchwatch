@@ -23,14 +23,24 @@ export default function PastLaunches() {
         setLoading(true);
         const pastLaunches = await getSpaceXPastLaunches(50);
 
+        // Debug: Check first launch structure
+        if (pastLaunches.length > 0) {
+          console.log('First past launch:', {
+            rocket: pastLaunches[0].rocket,
+            rocketType: typeof pastLaunches[0].rocket,
+            launchpad: pastLaunches[0].launchpad,
+            launchpadType: typeof pastLaunches[0].launchpad
+          });
+        }
+
         // Convert to our Launch type
         const converted: Launch[] = pastLaunches.map((launch) => ({
           id: `past-${launch.id}`,
           name: launch.name,
           date: launch.date_utc,
           dateUnix: launch.date_unix,
-          rocket: typeof launch.rocket === 'object' ? launch.rocket.name : launch.rocket,
-          launchSite: typeof launch.launchpad === 'object' ? launch.launchpad.name : launch.launchpad,
+          rocket: typeof launch.rocket === 'object' && launch.rocket !== null ? (launch.rocket.name || 'Unknown Rocket') : (launch.rocket || 'Unknown Rocket'),
+          launchSite: typeof launch.launchpad === 'object' && launch.launchpad !== null ? (launch.launchpad.name || launch.launchpad.full_name || 'Unknown Site') : (launch.launchpad || 'Unknown Site'),
           status: launch.success ? 'success' as const : 'failure' as const,
           livestream: launch.links.webcast,
           description: launch.details,
