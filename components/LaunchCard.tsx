@@ -1,6 +1,7 @@
 'use client';
 
 import { Launch } from '@/lib/types';
+import AddToCalendar from './AddToCalendar';
 
 interface LaunchCardProps {
   launch: Launch;
@@ -78,17 +79,20 @@ export default function LaunchCard({ launch }: LaunchCardProps) {
         </p>
       )}
 
-      {launch.livestream && (
-        <a
-          href={launch.livestream}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
-        >
-          <span>Watch Stream</span>
-          <span>→</span>
-        </a>
-      )}
+      <div className="flex flex-wrap gap-3">
+        {launch.livestream && (
+          <a
+            href={launch.livestream}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            <span>Watch Stream</span>
+            <span>→</span>
+          </a>
+        )}
+        <AddToCalendar launch={launch} variant="button" />
+      </div>
     </div>
   );
 }

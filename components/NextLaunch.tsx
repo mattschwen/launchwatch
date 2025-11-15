@@ -2,6 +2,7 @@
 
 import { useNextLaunch } from '@/lib/hooks';
 import Countdown from './Countdown';
+import AddToCalendar from './AddToCalendar';
 
 export default function NextLaunch() {
   const { nextLaunch, loading } = useNextLaunch();
@@ -55,17 +56,20 @@ export default function NextLaunch() {
           <Countdown targetDate={nextLaunch.date} />
         </div>
 
-        {nextLaunch.livestream && (
-          <a
-            href={nextLaunch.livestream}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-          >
-            <span>Watch Stream</span>
-            <span>→</span>
-          </a>
-        )}
+        <div className="flex flex-wrap gap-3">
+          {nextLaunch.livestream && (
+            <a
+              href={nextLaunch.livestream}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              <span>Watch Stream</span>
+              <span>→</span>
+            </a>
+          )}
+          <AddToCalendar launch={nextLaunch} variant="button" />
+        </div>
       </div>
     </div>
   );

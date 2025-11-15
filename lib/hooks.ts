@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Launch, RocketFact } from './types';
 import { getAllUpcomingLaunches, getLiveLaunches, getNextLaunch, getRocketFacts } from './api';
+import { checkAndNotify, clearOldNotificationFlags } from './notifications';
 
 export function useLaunches() {
   const [launches, setLaunches] = useState<Launch[]>([]);
@@ -16,12 +17,22 @@ export function useLaunches() {
         const data = await getAllUpcomingLaunches();
         setLaunches(data);
         setError(null);
+
+        // Check for notifications
+        if (typeof window !== 'undefined') {
+          checkAndNotify(data);
+        }
       } catch (err) {
         setError('Failed to load launches');
         console.error(err);
       } finally {
         setLoading(false);
       }
+    }
+
+    // Clear old notification flags on mount
+    if (typeof window !== 'undefined') {
+      clearOldNotificationFlags();
     }
 
     fetchLaunches();
