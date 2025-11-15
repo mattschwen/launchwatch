@@ -57,39 +57,50 @@ export default function Home() {
       <footer className="mt-auto">
         <RocketFacts />
         <div className="bg-black border-t border-gray-800 py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-gray-400 text-sm">
-              Data from{' '}
-              <a
-                href="https://api.spacexdata.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
-              >
-                SpaceX API
-              </a>
-              ,{' '}
-              <a
-                href="https://ll.thespacedevs.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
-              >
-                The Space Devs
-              </a>
-              , and{' '}
-              <a
-                href="https://api.nasa.gov"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300"
-              >
-                NASA
-              </a>
-            </p>
-            <p className="text-gray-500 text-xs mt-2">
-              Built with Next.js • Updates every 2 minutes
-            </p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-center md:text-left">
+                <p className="text-gray-400 text-sm">
+                  Data from{' '}
+                  <a
+                    href="https://api.spacexdata.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
+                    SpaceX API
+                  </a>
+                  ,{' '}
+                  <a
+                    href="https://ll.thespacedevs.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
+                    The Space Devs
+                  </a>
+                  , and{' '}
+                  <a
+                    href="https://api.nasa.gov"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
+                    NASA
+                  </a>
+                </p>
+                <p className="text-gray-500 text-xs mt-2">
+                  Built with Next.js • Updates every 10 minutes
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <span className="text-xl">🚀</span>
+                <span>LaunchWatch</span>
+                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono border border-blue-500/30">
+                  v1.0.0
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
