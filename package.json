@@ -1,16 +1,16 @@
 {
   "name": "launchwatch",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": false,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/matthewschwen/launchwatch.git"
+    "url": "https://github.com/mattschwen/launchwatch.git"
   },
   "bugs": {
-    "url": "https://github.com/matthewschwen/launchwatch/issues"
+    "url": "https://github.com/mattschwen/launchwatch/issues"
   },
-  "homepage": "https://github.com/matthewschwen/launchwatch#readme",
+  "homepage": "https://github.com/mattschwen/launchwatch#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
