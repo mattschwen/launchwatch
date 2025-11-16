@@ -30,124 +30,84 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
   };
 
   return (
-    <div className="mb-6 space-y-4">
-      {/* Search and Toggle */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="🔍 Search launches..."
-            value={filters.search}
-            onChange={(e) => updateFilter('search', e.target.value)}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
-          />
-        </div>
+    <div className="mb-4 space-y-3">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="🔍 Search..."
+          value={filters.search}
+          onChange={(e) => updateFilter('search', e.target.value)}
+          className="flex-1 px-3 py-2 glass rounded-lg text-[var(--text-primary)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)]"
+        />
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="px-4 py-2 bg-gray-800 border border-gray-700 hover:border-gray-600 rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2"
+          className="px-3 py-2 glass glass-hover rounded-lg text-[var(--text-primary)] text-sm"
         >
-          <span>⚙️</span>
-          <span>Filters</span>
-          <span className="text-xs">{showFilters ? '▲' : '▼'}</span>
+          ⚙️ {showFilters ? '▲' : '▼'}
         </button>
       </div>
 
-      {/* Filter Options */}
       {showFilters && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gray-800/50 border border-gray-700 rounded-lg animate-fade-in">
-          {/* Provider Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Provider
-            </label>
-            <select
-              value={filters.provider}
-              onChange={(e) => updateFilter('provider', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-            >
-              <option value="all">All Providers</option>
-              <option value="spacex">SpaceX</option>
-              <option value="nasa">NASA</option>
-              <option value="ula">ULA</option>
-              <option value="rocket-lab">Rocket Lab</option>
-              <option value="blue-origin">Blue Origin</option>
-              <option value="arianespace">Arianespace</option>
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => updateFilter('status', e.target.value)}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-            >
-              <option value="all">All Status</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="live">Live Now</option>
-              <option value="success">Success</option>
-              <option value="failure">Failure</option>
-              <option value="tbd">TBD</option>
-            </select>
-          </div>
-
-          {/* Sort By */}
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Sort By
-            </label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => updateFilter('sortBy', e.target.value as FilterOptions['sortBy'])}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-            >
-              <option value="date-asc">Date (Soonest First)</option>
-              <option value="date-desc">Date (Latest First)</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-3 gap-2 p-3 glass rounded-lg animate-fade-in text-xs">
+          <select
+            value={filters.provider}
+            onChange={(e) => updateFilter('provider', e.target.value)}
+            className="px-2 py-1.5 glass rounded text-[var(--text-primary)] bg-white/50"
+          >
+            <option value="all">All</option>
+            <option value="spacex">SpaceX</option>
+            <option value="nasa">NASA</option>
+            <option value="ula">ULA</option>
+            <option value="rocket-lab">Rocket Lab</option>
+            <option value="blue-origin">Blue Origin</option>
+          </select>
+          <select
+            value={filters.status}
+            onChange={(e) => updateFilter('status', e.target.value)}
+            className="px-2 py-1.5 glass rounded text-[var(--text-primary)] bg-white/50"
+          >
+            <option value="all">All Status</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="live">Live</option>
+            <option value="success">Success</option>
+          </select>
+          <select
+            value={filters.sortBy}
+            onChange={(e) => updateFilter('sortBy', e.target.value as FilterOptions['sortBy'])}
+            className="px-2 py-1.5 glass rounded text-[var(--text-primary)] bg-white/50"
+          >
+            <option value="date-asc">Soonest</option>
+            <option value="date-desc">Latest</option>
+            <option value="name-asc">A-Z</option>
+          </select>
         </div>
       )}
 
-      {/* Active Filters Display */}
       {(filters.search || filters.provider !== 'all' || filters.status !== 'all') && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 text-xs">
           {filters.search && (
-            <span className="px-3 py-1 bg-blue-600/20 border border-blue-500/50 text-blue-400 text-sm rounded-full flex items-center gap-2">
-              Search: "{filters.search}"
-              <button
-                onClick={() => updateFilter('search', '')}
-                className="hover:text-blue-300"
-              >
-                ✕
-              </button>
-            </span>
+            <button
+              onClick={() => updateFilter('search', '')}
+              className="px-2 py-1 bg-[var(--primary)]/20 border border-[var(--primary)]/50 text-[var(--primary-hover)] rounded flex items-center gap-1"
+            >
+              &quot;{filters.search}&quot; ✕
+            </button>
           )}
           {filters.provider !== 'all' && (
-            <span className="px-3 py-1 bg-purple-600/20 border border-purple-500/50 text-purple-400 text-sm rounded-full flex items-center gap-2">
-              {filters.provider}
-              <button
-                onClick={() => updateFilter('provider', 'all')}
-                className="hover:text-purple-300"
-              >
-                ✕
-              </button>
-            </span>
+            <button
+              onClick={() => updateFilter('provider', 'all')}
+              className="px-2 py-1 bg-[var(--secondary)]/20 border border-[var(--secondary)]/50 text-[var(--secondary)] rounded"
+            >
+              {filters.provider} ✕
+            </button>
           )}
           {filters.status !== 'all' && (
-            <span className="px-3 py-1 bg-green-600/20 border border-green-500/50 text-green-400 text-sm rounded-full flex items-center gap-2">
-              {filters.status}
-              <button
-                onClick={() => updateFilter('status', 'all')}
-                className="hover:text-green-300"
-              >
-                ✕
-              </button>
-            </span>
+            <button
+              onClick={() => updateFilter('status', 'all')}
+              className="px-2 py-1 bg-[var(--accent)]/20 border border-[var(--accent)]/50 text-[var(--accent)] rounded"
+            >
+              {filters.status} ✕
+            </button>
           )}
         </div>
       )}

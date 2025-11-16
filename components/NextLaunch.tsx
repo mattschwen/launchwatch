@@ -25,47 +25,38 @@ export default function NextLaunch() {
   };
 
   return (
-    <div className="w-full bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg p-6 mb-8">
-      <h2 className="text-2xl font-bold text-blue-400 mb-4">⏰ Next Launch</h2>
+    <div className="glass border border-[var(--primary)]/30 rounded-xl p-4 sm:p-5">
+      <h2 className="text-lg sm:text-xl font-bold gradient-text mb-3">⏰ Next Launch</h2>
 
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-3xl font-bold text-white mb-2">{nextLaunch.name}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-300">
-            <div>
-              <span className="text-gray-400">Rocket:</span>{' '}
-              <span className="font-semibold">{nextLaunch.rocket}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Launch Site:</span>{' '}
-              <span className="font-semibold">{nextLaunch.launchSite}</span>
-            </div>
+      <div className="space-y-3">
+        <h3 className="text-xl font-bold text-[var(--text-primary)]">{nextLaunch.name}</h3>
+        
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="glass rounded-lg p-2">
+            <p className="text-[var(--text-muted)] text-xs">Rocket</p>
+            <p className="font-medium text-[var(--text-primary)]">{nextLaunch.rocket}</p>
           </div>
-          <div className="mt-2 text-gray-300">
-            <span className="text-gray-400">Scheduled:</span>{' '}
-            <span className="font-semibold">{formatDate(nextLaunch.date)}</span>
+          <div className="glass rounded-lg p-2">
+            <p className="text-[var(--text-muted)] text-xs">Site</p>
+            <p className="font-medium text-[var(--text-primary)] truncate">{nextLaunch.launchSite}</p>
           </div>
         </div>
 
         {nextLaunch.description && (
-          <p className="text-gray-300 text-sm">{nextLaunch.description}</p>
+          <p className="text-[var(--text-secondary)] text-sm line-clamp-2">{nextLaunch.description}</p>
         )}
 
-        <div className="pt-4 border-t border-gray-700">
-          <p className="text-gray-400 text-sm mb-3">Countdown:</p>
-          <Countdown targetDate={nextLaunch.date} />
-        </div>
+        <Countdown targetDate={nextLaunch.date} />
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex gap-2">
           {nextLaunch.livestream && (
             <a
               href={nextLaunch.livestream}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="flex-1 text-center px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-semibold rounded-lg transition-all"
             >
-              <span>Watch Stream</span>
-              <span>→</span>
+              Watch Stream →
             </a>
           )}
           <AddToCalendar launch={nextLaunch} variant="button" />

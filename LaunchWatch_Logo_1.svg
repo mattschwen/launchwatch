@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>LaunchWatch – App Icon v4 (High Contrast): Rocket + Ticked Ring</title>
+  <defs>
+    <linearGradient id="accentHC" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="50%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+    <filter id="softGlowHC" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="dropShadowHC" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="shadow"/>
+      <feOffset in="shadow" dx="0" dy="10" result="offsetshadow"/>
+      <feComponentTransfer in="offsetshadow" result="shadow2">
+        <feFuncA type="linear" slope="0.35"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode in="shadow2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Ticks -->
+    <g id="tickMajorHC">
+      <line x1="0" y1="-210" x2="0" y2="-186" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="14" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <!-- Clean ring -->
+  <g opacity="1.0" filter="url(#softGlowHC)">
+    <circle cx="512" cy="512" r="210" fill="none" stroke="url(#accentHC)" stroke-width="36" stroke-linecap="round"/>
+  </g>
+
+  <!-- Ticks (12 major) -->
+  <g transform="translate(512,512)">
+    <use href="#tickMajorHC" transform="rotate(0)"/>
+    <use href="#tickMajorHC" transform="rotate(30)"/>
+    <use href="#tickMajorHC" transform="rotate(60)"/>
+    <use href="#tickMajorHC" transform="rotate(90)"/>
+    <use href="#tickMajorHC" transform="rotate(120)"/>
+    <use href="#tickMajorHC" transform="rotate(150)"/>
+    <use href="#tickMajorHC" transform="rotate(180)"/>
+    <use href="#tickMajorHC" transform="rotate(210)"/>
+    <use href="#tickMajorHC" transform="rotate(240)"/>
+    <use href="#tickMajorHC" transform="rotate(270)"/>
+    <use href="#tickMajorHC" transform="rotate(300)"/>
+    <use href="#tickMajorHC" transform="rotate(330)"/>
+  </g>
+
+  <!-- Rocket outline (NO window circle) -->
+  <g transform="translate(512,512) rotate(-45)" filter="url(#dropShadowHC)">
+    <!-- Halo -->
+    <path d="M 190 0 L 154 -24 L 98 -32 L 14 -26 L -12 -44 L -74 -12 L -74 12 L -12 44 L 14 26 L 98 32 L 154 24 Z"
+          fill="none" stroke="#FFFFFF" stroke-opacity="0.70" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Accent outline -->
+    <path d="M 190 0 L 154 -24 L 98 -32 L 14 -26 L -12 -44 L -74 -12 L -74 12 L -12 44 L 14 26 L 98 32 L 154 24 Z"
+          fill="none" stroke="url(#accentHC)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

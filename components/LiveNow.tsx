@@ -10,35 +10,29 @@ interface LiveNowProps {
 }
 
 export default function LiveNow({ launch }: LiveNowProps) {
-  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
-  const [showSearchHelper, setShowSearchHelper] = useState(false);
+  const embedUrl = getYouTubeEmbedUrl(launch.livestream);
+  const [showSearchHelper, setShowSearchHelper] = useState(!embedUrl);
 
   useEffect(() => {
-    // Try to get embed URL from API
-    const url = getYouTubeEmbedUrl(launch.livestream);
-    setEmbedUrl(url);
-
-    // If no URL, show search helper
-    if (!url) {
-      setShowSearchHelper(true);
-    }
-  }, [launch.livestream]);
+    // Update search helper visibility when embed URL changes
+    setShowSearchHelper(!embedUrl);
+  }, [embedUrl]);
 
   const searchUrl = generateYouTubeSearchUrl(launch);
   const channelUrl = getProviderYouTubeChannel(launch);
 
   return (
-    <div className="w-full bg-gradient-to-b from-red-900/20 to-transparent border-2 border-red-500/50 rounded-lg p-6 mb-8 animate-fade-in">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="glass border-2 border-[var(--live)]/50 rounded-xl p-4 animate-glow">
+      <div className="flex items-center gap-2 mb-3">
         <div className="relative">
-          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-          <div className="absolute inset-0 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+          <div className="w-2.5 h-2.5 bg-[var(--live)] rounded-full animate-pulse"></div>
+          <div className="absolute inset-0 w-2.5 h-2.5 bg-[var(--live)] rounded-full animate-ping"></div>
         </div>
-        <h2 className="text-3xl font-bold text-red-500">LAUNCH HAPPENING NOW!</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-[var(--live)]">LIVE NOW</h2>
       </div>
 
       {embedUrl && !embedUrl.includes('/results') && (
-        <div className="aspect-video w-full mb-6 rounded-lg overflow-hidden bg-black">
+        <div className="aspect-video w-full mb-4 rounded-lg overflow-hidden glass border border-[var(--live)]/30">
           <iframe
             src={embedUrl}
             className="w-full h-full"
@@ -49,73 +43,47 @@ export default function LiveNow({ launch }: LiveNowProps) {
       )}
 
       {showSearchHelper && !embedUrl && (
-        <div className="bg-yellow-900/20 border-2 border-yellow-500/50 rounded-lg p-6 mb-6">
-          <h3 className="text-yellow-400 font-bold text-lg mb-3">🔍 Find Livestream</h3>
-          <p className="text-gray-300 mb-4 text-sm">
-            The API doesn't have a livestream link yet. You can search for it:
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href={searchUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              <span>🔍</span>
-              <span>Search YouTube</span>
+        <div className="glass border border-[var(--warning)]/50 rounded-lg p-3 mb-4">
+          <h3 className="text-[var(--warning)] font-bold text-sm mb-2">🔍 Find Livestream</h3>
+          <div className="flex flex-wrap gap-2">
+            <a href={searchUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-[var(--live)] text-white text-xs rounded-lg">
+              Search YouTube
             </a>
             {channelUrl && (
-              <a
-                href={channelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors"
-              >
-                <span>📺</span>
-                <span>Provider Channel</span>
+              <a href={channelUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 glass glass-hover text-white text-xs rounded-lg">
+                Provider Channel
               </a>
             )}
-            <a
-              href="https://www.youtube.com/results?search_query=space+launch+live"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              <span>🚀</span>
-              <span>All Space Streams</span>
-            </a>
           </div>
         </div>
       )}
 
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-2xl font-bold text-white mb-2">{launch.name}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
-            <div>
-              <span className="text-gray-400">Rocket:</span> <span className="font-semibold">{launch.rocket}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">Launch Site:</span> <span className="font-semibold">{launch.launchSite}</span>
-            </div>
+      <div className="space-y-3">
+        <h3 className="text-lg font-bold text-[var(--text-primary)]">{launch.name}</h3>
+        
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="glass rounded-lg p-2">
+            <p className="text-[var(--text-muted)]">Rocket</p>
+            <p className="font-medium text-[var(--text-primary)]">{launch.rocket}</p>
+          </div>
+          <div className="glass rounded-lg p-2">
+            <p className="text-[var(--text-muted)]">Site</p>
+            <p className="font-medium text-[var(--text-primary)] truncate">{launch.launchSite}</p>
           </div>
         </div>
 
         {launch.description && (
-          <p className="text-gray-300 text-sm">{launch.description}</p>
+          <p className="text-[var(--text-secondary)] text-sm line-clamp-2">{launch.description}</p>
         )}
 
-        <div className="pt-4 border-t border-gray-700">
-          <p className="text-gray-400 text-sm mb-2">Time to Launch:</p>
-          <Countdown targetDate={launch.date} />
-        </div>
+        <Countdown targetDate={launch.date} />
 
         {launch.livestream && !embedUrl?.includes('/results') && (
           <a
             href={launch.livestream}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+            className="block text-center px-4 py-2 bg-[var(--live)] hover:bg-[var(--live)]/80 text-white text-sm font-semibold rounded-lg transition-all"
           >
             Watch Live Stream →
           </a>

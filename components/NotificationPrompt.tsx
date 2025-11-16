@@ -51,27 +51,23 @@ export default function NotificationPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-fade-in">
-      <div className="bg-gradient-to-r from-blue-900 to-purple-900 border border-blue-500 rounded-lg shadow-lg p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-3xl">🔔</span>
-          <div className="flex-1">
-            <h3 className="text-white font-bold mb-1">
-              Get Launch Notifications
-            </h3>
-            <p className="text-gray-300 text-sm mb-3">
-              Receive alerts when launches are about to happen
-            </p>
-            <div className="flex gap-2">
+    <div className="fixed bottom-4 right-4 z-50 max-w-xs animate-fade-in">
+      <div className="glass border border-[var(--primary)]/50 rounded-xl shadow-lg p-3 animate-glow">
+        <div className="flex gap-2">
+          <span className="text-2xl flex-shrink-0">🔔</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-white font-bold text-sm mb-1">Launch Alerts</h3>
+            <p className="text-[var(--text-secondary)] text-xs mb-2">Get notified before launches</p>
+            <div className="flex gap-1.5">
               <button
                 onClick={handleEnable}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="flex-1 px-3 py-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-xs font-semibold rounded-lg transition-all"
               >
                 Enable
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="px-3 py-1.5 glass glass-hover text-white text-xs rounded-lg"
               >
                 Later
               </button>
@@ -79,7 +75,7 @@ export default function NotificationPrompt() {
           </div>
           <button
             onClick={handleDismiss}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-[var(--text-muted)] hover:text-white text-xs flex-shrink-0"
           >
             ✕
           </button>

@@ -45,6 +45,9 @@ export default function PastLaunches() {
           livestream: launch.links.webcast,
           description: launch.details,
           isLive: false,
+          image: launch.links.flickr?.original?.[0] || null,
+          missionPatch: launch.links.patch?.small || null,
+          location: null
         }));
 
         setLaunches(converted);
@@ -103,18 +106,18 @@ export default function PastLaunches() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-12 bg-gray-800 border border-gray-700 rounded-lg animate-pulse"></div>
+        <div className="h-12 glass rounded-xl animate-pulse"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(9)].map((_, i) => (
             <div
               key={i}
-              className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 animate-pulse"
+              className="glass rounded-xl p-5 sm:p-6 animate-pulse"
             >
-              <div className="h-6 bg-gray-700 rounded mb-4"></div>
+              <div className="h-6 bg-[var(--surface)] rounded mb-4"></div>
               <div className="space-y-3">
-                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-3/4"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-1/2"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-2/3"></div>
               </div>
             </div>
           ))}
@@ -125,17 +128,19 @@ export default function PastLaunches() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-400 text-lg">{error}</p>
-        <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
+      <div className="text-center py-12 glass rounded-xl p-8">
+        <span className="text-4xl mb-4 block">⚠️</span>
+        <p className="text-[var(--live)] text-lg font-semibold">{error}</p>
+        <p className="text-[var(--text-secondary)] text-sm mt-2">Please try refreshing the page</p>
       </div>
     );
   }
 
   if (launches.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400 text-lg">No past launches found</p>
+      <div className="text-center py-12 glass rounded-xl p-8">
+        <span className="text-4xl mb-4 block">📜</span>
+        <p className="text-[var(--text-secondary)] text-lg">No past launches found</p>
       </div>
     );
   }
@@ -147,24 +152,24 @@ export default function PastLaunches() {
   const successRate = ((successfulLaunches / totalLaunches) * 100).toFixed(1);
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-blue-900/20 to-blue-900/5 border border-blue-500/30 rounded-lg p-4">
-          <div className="text-3xl font-bold text-blue-400">{totalLaunches}</div>
-          <div className="text-sm text-gray-400 mt-1">Total Launches</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="glass rounded-xl p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--primary-hover)]">{totalLaunches}</div>
+          <div className="text-sm text-[var(--text-muted)] mt-1">Total</div>
         </div>
-        <div className="bg-gradient-to-br from-green-900/20 to-green-900/5 border border-green-500/30 rounded-lg p-4">
-          <div className="text-3xl font-bold text-green-400">{successfulLaunches}</div>
-          <div className="text-sm text-gray-400 mt-1">Successful</div>
+        <div className="glass rounded-xl p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--success)]">{successfulLaunches}</div>
+          <div className="text-sm text-[var(--text-muted)] mt-1">Success</div>
         </div>
-        <div className="bg-gradient-to-br from-red-900/20 to-red-900/5 border border-red-500/30 rounded-lg p-4">
-          <div className="text-3xl font-bold text-red-400">{failedLaunches}</div>
-          <div className="text-sm text-gray-400 mt-1">Failed</div>
+        <div className="glass rounded-xl p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--live)]">{failedLaunches}</div>
+          <div className="text-sm text-[var(--text-muted)] mt-1">Failed</div>
         </div>
-        <div className="bg-gradient-to-br from-purple-900/20 to-purple-900/5 border border-purple-500/30 rounded-lg p-4">
-          <div className="text-3xl font-bold text-purple-400">{successRate}%</div>
-          <div className="text-sm text-gray-400 mt-1">Success Rate</div>
+        <div className="glass rounded-xl p-4 text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-[var(--secondary)]">{successRate}%</div>
+          <div className="text-sm text-[var(--text-muted)] mt-1">Rate</div>
         </div>
       </div>
 
@@ -173,21 +178,16 @@ export default function PastLaunches() {
 
       {/* Results */}
       {filteredLaunches.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">No launches match your filters</p>
-          <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter criteria</p>
+        <div className="text-center py-8 glass rounded-xl p-6">
+          <span className="text-3xl mb-3 block">🔍</span>
+          <p className="text-[var(--text-secondary)]">No launches match your filters</p>
         </div>
       ) : (
-        <>
-          <div className="mb-4 text-gray-400 text-sm">
-            Showing {filteredLaunches.length} of {totalLaunches} launches
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLaunches.map((launch) => (
-              <LaunchCard key={launch.id} launch={launch} />
-            ))}
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredLaunches.map((launch) => (
+            <LaunchCard key={launch.id} launch={launch} showVideo={false} />
+          ))}
+        </div>
       )}
     </div>
   );

@@ -239,7 +239,10 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
         status: launch.upcoming ? 'upcoming' as const : (launch.success ? 'success' as const : 'failure' as const),
         livestream: launch.links.webcast,
         description: launch.details,
-        isLive: false
+        isLive: false,
+        image: launch.links.flickr?.original?.[0] || null,
+        missionPatch: launch.links.patch?.small || null,
+        location: null // SpaceX API would need launchpad details for coordinates
       })),
       ...ll2Launches.map(launch => ({
         id: `ll2-${launch.id}`,
@@ -251,7 +254,15 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
         status: launch.status.abbrev === 'Go' ? 'upcoming' as const : 'tbd' as const,
         livestream: launch.vidURLs?.[0]?.url || null,
         description: launch.mission?.description || null,
-        isLive: launch.webcast_live
+        isLive: launch.webcast_live,
+        image: launch.rocket.configuration.image_url || launch.image || null,
+        missionPatch: null,
+        location: launch.pad.latitude && launch.pad.longitude ? {
+          lat: parseFloat(launch.pad.latitude),
+          lng: parseFloat(launch.pad.longitude),
+          name: launch.pad.location.name,
+          countryCode: launch.pad.location.country_code
+        } : null
       }))
     ];
 

@@ -36,18 +36,17 @@ export default function AddToCalendar({ launch, variant = 'button' }: AddToCalen
       {variant === 'button' ? (
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="flex-1 px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white text-xs font-semibold rounded-lg transition-all text-center"
         >
-          <span>📅</span>
-          <span>Add to Calendar</span>
+          📅 Calendar
         </button>
       ) : (
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+          className="px-3 py-1.5 glass glass-hover rounded-lg transition-all"
           title="Add to Calendar"
         >
-          <span className="text-xl">📅</span>
+          <span className="text-sm">📅</span>
         </button>
       )}
 
@@ -55,37 +54,34 @@ export default function AddToCalendar({ launch, variant = 'button' }: AddToCalen
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[60]"
             onClick={() => setShowMenu(false)}
           />
 
           {/* Menu */}
-          <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-20 overflow-hidden">
-            <div className="py-1">
+          <div className="absolute right-0 mt-2 w-48 glass rounded-lg shadow-lg z-[70] border border-[var(--glass-border)]">
+            <div className="p-1">
               <button
                 onClick={handleGoogleCalendar}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-700 transition-colors flex items-center gap-3"
+                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded flex items-center gap-2"
               >
-                <span className="text-lg">📆</span>
-                <span>Google Calendar</span>
+                <span>📆</span>
+                <span>Google</span>
               </button>
-
               <button
                 onClick={handleDownloadICS}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-700 transition-colors flex items-center gap-3"
+                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded flex items-center gap-2"
               >
-                <span className="text-lg">🗓️</span>
-                <span>Apple/Outlook (.ics)</span>
+                <span>🗓️</span>
+                <span>Apple/Outlook</span>
               </button>
-
-              <hr className="border-gray-700 my-1" />
-
+              <hr className="border-[var(--glass-border)] my-1" />
               <button
                 onClick={handleCopy}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-700 transition-colors flex items-center gap-3"
+                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded flex items-center gap-2"
               >
-                <span className="text-lg">{copied ? '✅' : '📋'}</span>
-                <span>{copied ? 'Copied!' : 'Copy Details'}</span>
+                <span>{copied ? '✅' : '📋'}</span>
+                <span>{copied ? 'Copied!' : 'Copy'}</span>
               </button>
             </div>
           </div>

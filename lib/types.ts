@@ -12,6 +12,13 @@ export interface SpaceXLaunch {
     youtube_id: string | null;
     article: string | null;
     wikipedia: string | null;
+    flickr?: {
+      original?: string[];
+    };
+    patch?: {
+      small?: string | null;
+      large?: string | null;
+    };
   };
   launchpad: string | { id: string; name: string; full_name?: string };
   upcoming: boolean;
@@ -64,15 +71,19 @@ export interface LL2Launch {
       name: string;
       family: string;
       variant: string;
+      image_url?: string | null;
     };
   };
   pad: {
     id: number;
     name: string;
+    latitude?: string | null;
+    longitude?: string | null;
     location: {
       name: string;
       country_code: string;
     };
+    map_image?: string | null;
   };
   webcast_live: boolean;
   vidURLs: Array<{
@@ -84,6 +95,7 @@ export interface LL2Launch {
     description: string;
     type: string;
   } | null;
+  image?: string | null;
 }
 
 // NASA APOD Type
@@ -109,6 +121,14 @@ export interface Launch {
   livestream: string | null;
   description: string | null;
   isLive: boolean;
+  image?: string | null;
+  missionPatch?: string | null;
+  location?: {
+    lat: number;
+    lng: number;
+    name: string;
+    countryCode?: string;
+  } | null;
 }
 
 // Rocket Facts Type

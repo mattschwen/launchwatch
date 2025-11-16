@@ -19,12 +19,10 @@ export default function RocketFacts() {
 
   if (loading || !currentFact) {
     return (
-      <div className="w-full bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-t border-purple-500/30 py-6 px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-1/4 mb-2"></div>
-            <div className="h-6 bg-gray-700 rounded w-3/4"></div>
-          </div>
+      <div className="w-full glass border-t border-[var(--glass-border)] py-4 px-4">
+        <div className="max-w-7xl mx-auto animate-pulse">
+          <div className="h-3 bg-[var(--surface)] rounded w-1/4 mb-1.5"></div>
+          <div className="h-4 bg-[var(--surface)] rounded w-3/4"></div>
         </div>
       </div>
     );
@@ -46,24 +44,17 @@ export default function RocketFacts() {
   };
 
   return (
-    <div className="w-full bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-t border-purple-500/30 py-6 px-8">
+    <div className="w-full glass border-t border-[var(--glass-border)] py-4 px-4">
       <div className="max-w-7xl mx-auto">
-        <div
-          className={`transition-opacity duration-300 ${
-            isVisible ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">{getIcon(currentFact.type)}</span>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-purple-400 mb-1 uppercase tracking-wide">
+        <div className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="flex items-start gap-2">
+            <span className="text-xl flex-shrink-0">{getIcon(currentFact.type)}</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xs font-semibold gradient-text uppercase tracking-wide">
                 {currentFact.title}
               </h3>
-              <p className="text-gray-300 text-base leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
                 {currentFact.value}
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Source: {currentFact.source.toUpperCase()}
               </p>
             </div>
           </div>

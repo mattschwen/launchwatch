@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { useLaunches } from '@/lib/hooks';
 import LaunchCard from './LaunchCard';
 import FilterBar, { FilterOptions } from './FilterBar';
-import { Launch } from '@/lib/types';
 
 export default function LaunchList() {
   const { launches, loading, error } = useLaunches();
@@ -14,6 +13,7 @@ export default function LaunchList() {
     status: 'all',
     sortBy: 'date-asc',
   });
+  const [showFilters, setShowFilters] = useState(false);
 
   // Apply filters and sorting
   const filteredLaunches = useMemo(() => {
@@ -83,18 +83,18 @@ export default function LaunchList() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-12 bg-gray-800 border border-gray-700 rounded-lg animate-pulse"></div>
+        <div className="h-12 glass rounded-xl animate-pulse"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 animate-pulse"
+              className="glass rounded-xl p-5 sm:p-6 animate-pulse"
             >
-              <div className="h-6 bg-gray-700 rounded mb-4"></div>
+              <div className="h-6 bg-[var(--surface)] rounded mb-4"></div>
               <div className="space-y-3">
-                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-3/4"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-1/2"></div>
+                <div className="h-4 bg-[var(--surface)] rounded w-2/3"></div>
               </div>
             </div>
           ))}
@@ -105,42 +105,49 @@ export default function LaunchList() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-400 text-lg">{error}</p>
-        <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
+      <div className="text-center py-12 glass rounded-xl p-8">
+        <span className="text-4xl mb-4 block">⚠️</span>
+        <p className="text-[var(--live)] text-lg font-semibold">{error}</p>
+        <p className="text-[var(--text-secondary)] text-sm mt-2">Please try refreshing the page</p>
       </div>
     );
   }
 
   if (launches.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-400 text-lg">No upcoming launches found</p>
+      <div className="text-center py-12 glass rounded-xl p-8">
+        <span className="text-4xl mb-4 block">🚀</span>
+        <p className="text-[var(--text-secondary)] text-lg">No upcoming launches found</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <FilterBar onFilterChange={setFilters} />
+    <section className="space-y-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Upcoming Launches</h2>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className="glass glass-hover px-4 py-2 text-sm text-[var(--text-primary)] rounded-lg"
+        >
+          {showFilters ? '✕ Close' : '⚙️ Filter'} ({filteredLaunches.length})
+        </button>
+      </div>
+
+      {showFilters && <FilterBar onFilterChange={setFilters} />}
 
       {filteredLaunches.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">No launches match your filters</p>
-          <p className="text-gray-500 text-sm mt-2">Try adjusting your search or filter criteria</p>
+        <div className="text-center py-12 glass rounded-xl p-8">
+          <span className="text-4xl mb-4 block">🔍</span>
+          <p className="text-[var(--text-secondary)] text-lg">No launches match your filters</p>
         </div>
       ) : (
-        <>
-          <div className="mb-4 text-gray-400 text-sm">
-            Showing {filteredLaunches.length} of {launches.length} launches
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLaunches.map((launch) => (
-              <LaunchCard key={launch.id} launch={launch} />
-            ))}
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredLaunches.map((launch) => (
+            <LaunchCard key={launch.id} launch={launch} showVideo={false} />
+          ))}
+        </div>
       )}
-    </div>
+    </section>
   );
 }

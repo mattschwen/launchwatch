@@ -12,31 +12,31 @@ export default function Countdown({ targetDate, className = '' }: CountdownProps
 
   if (timeLeft.total <= 0) {
     return (
-      <div className={`text-2xl font-bold text-red-500 animate-pulse ${className}`}>
-        LAUNCHING NOW! 🚀
+      <div className={`text-lg font-bold text-[var(--live)] animate-pulse flex items-center gap-2 ${className}`}>
+        <span>LAUNCHING NOW! 🚀</span>
       </div>
     );
   }
 
   return (
-    <div className={`flex gap-4 ${className}`}>
+    <div className={`flex gap-2 ${className}`}>
       {timeLeft.days > 0 && (
-        <div className="flex flex-col items-center">
-          <div className="text-4xl font-bold text-white">{timeLeft.days}</div>
-          <div className="text-sm text-gray-400">days</div>
+        <div className="glass rounded-lg p-2 flex flex-col items-center min-w-[60px]">
+          <div className="text-2xl font-bold gradient-text">{timeLeft.days}</div>
+          <div className="text-xs text-[var(--text-muted)]">days</div>
         </div>
       )}
-      <div className="flex flex-col items-center">
-        <div className="text-4xl font-bold text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
-        <div className="text-sm text-gray-400">hours</div>
+      <div className="glass rounded-lg p-2 flex flex-col items-center min-w-[60px]">
+        <div className="text-2xl font-bold gradient-text">{String(timeLeft.hours).padStart(2, '0')}</div>
+        <div className="text-xs text-[var(--text-muted)]">hrs</div>
       </div>
-      <div className="flex flex-col items-center">
-        <div className="text-4xl font-bold text-white">{String(timeLeft.minutes).padStart(2, '0')}</div>
-        <div className="text-sm text-gray-400">minutes</div>
+      <div className="glass rounded-lg p-2 flex flex-col items-center min-w-[60px]">
+        <div className="text-2xl font-bold gradient-text">{String(timeLeft.minutes).padStart(2, '0')}</div>
+        <div className="text-xs text-[var(--text-muted)]">min</div>
       </div>
-      <div className="flex flex-col items-center">
-        <div className="text-4xl font-bold text-white animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</div>
-        <div className="text-sm text-gray-400">seconds</div>
+      <div className="glass rounded-lg p-2 flex flex-col items-center min-w-[60px]">
+        <div className="text-2xl font-bold text-[var(--primary)] animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</div>
+        <div className="text-xs text-[var(--text-muted)]">sec</div>
       </div>
     </div>
   );
