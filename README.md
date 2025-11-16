@@ -1,208 +1,130 @@
-# LaunchWatch 🚀
+<div align="center">
+  <img src="public/logo.svg" alt="LaunchWatch Logo" width="200" height="200">
+  
+  # LaunchWatch
+  
+  **Track upcoming rocket launches, watch live streams, and discover space facts.**
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+  [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+  
+</div>
 
-A modern, minimal web app that tracks upcoming NASA and SpaceX rocket launches, displays live streams, and showcases fascinating rocket facts.
+## Features
 
-![LaunchWatch](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square&logo=next.js)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.0-38B2AC?style=flat-square&logo=tailwind-css)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)
+- **Live Launch Tracking** - Automatically detects launches happening within ±2 hours
+- **Embedded Livestreams** - Watch SpaceX and NASA launches directly in the app
+- **Push Notifications** - Get notified before launches (PWA)
+- **Countdown Timers** - Real-time countdowns to upcoming launches
+- **Calendar Integration** - Add launches to your calendar with one click
+- **Rocket Facts** - Rotating banner with space trivia and NASA's Astronomy Picture of the Day
+- **Filter by Agency** - Filter launches by SpaceX, NASA, ESA, and more
+- **3-Month View** - See all upcoming launches for the next 3 months
+- **Offline Support** - PWA with offline capabilities
 
-## ✨ Features
+## Quick Start
 
-- **🔴 Live Launch Detection** - Automatically detects launches happening within ±2 hours and displays livestreams
-- **📅 Upcoming Launches** - Comprehensive list of upcoming launches from SpaceX and global space agencies
-- **⏱️ Countdown Timers** - Real-time countdowns to upcoming launches
-- **🎥 Livestream Integration** - Embedded YouTube livestreams for active launches
-- **💡 Rocket Facts** - Rotating banner with fascinating rocket statistics and space facts
-- **🌙 Dark Theme** - Beautiful space-themed dark UI
-- **📱 Mobile Responsive** - Works perfectly on all devices
-- **⚡ Fast & Lightweight** - Built with Next.js 16, loads instantly
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 20.x or higher
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+# Clone the repository
+git clone https://github.com/yourusername/launchwatch.git
 cd launchwatch
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-3. (Optional) Set up NASA API key:
-```bash
-cp .env.example .env.local
-# Edit .env.local and add your NASA API key from https://api.nasa.gov
-```
-
-4. Run the development server:
-```bash
+# Run development server
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript
-- **Styling:** TailwindCSS 4
-- **APIs:**
-  - [SpaceX API](https://api.spacexdata.com) - SpaceX launch data
-  - [Launch Library 2](https://ll.thespacedevs.com) - Global launch data
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **APIs**:
+  - [SpaceX API v4](https://api.spacexdata.com) - SpaceX launch data
+  - [The Space Devs Launch Library 2](https://ll.thespacedevs.com) - Global launch data
   - [NASA API](https://api.nasa.gov) - Astronomy Picture of the Day
+- **Deployment**: Vercel
 
-## 📦 Project Structure
+## Environment Variables
+
+Create a `.env.local` file (optional):
+
+```env
+# Optional: NASA API Key (get free key at https://api.nasa.gov)
+NEXT_PUBLIC_NASA_API_KEY=your_key_here
+
+# Optional: Launch Library 2 API Key for higher rate limits
+NEXT_PUBLIC_LL2_API_KEY=your_key_here
+```
+
+Without API keys, the app uses free public endpoints with rate limits.
+
+## Project Structure
 
 ```
 launchwatch/
-├── app/
-│   ├── layout.tsx          # Root layout with metadata
-│   ├── page.tsx            # Main page component
-│   └── globals.css         # Global styles & animations
-├── components/
-│   ├── Countdown.tsx       # Countdown timer component
-│   ├── LiveLaunches.tsx    # Live launches wrapper
-│   ├── LiveNow.tsx         # Live launch display with stream
-│   ├── LaunchCard.tsx      # Individual launch card
-│   ├── LaunchList.tsx      # Launches grid
-│   ├── NextLaunch.tsx      # Next upcoming launch
-│   └── RocketFacts.tsx     # Rotating facts banner
-├── lib/
-│   ├── api.ts              # API integration functions
-│   ├── hooks.ts            # React hooks for data fetching
-│   └── types.ts            # TypeScript type definitions
-└── public/                 # Static assets
+├── app/                    # Next.js App Router
+│   ├── api/launches/       # API route for launch data
+│   ├── history/            # Past launches page
+│   ├── page.tsx            # Home page
+│   └── layout.tsx          # Root layout
+├── components/             # React components
+├── lib/                    # Utilities and API functions
+│   ├── api.ts              # External API integrations
+│   ├── hooks.ts            # React hooks
+│   ├── types.ts            # TypeScript types
+│   └── notifications.ts    # Push notification logic
+├── public/                 # Static assets
+│   ├── manifest.json       # PWA manifest
+│   └── sw.js               # Service worker
+└── docs/                   # Documentation
 ```
 
-## 🌐 API Data Sources
-
-This app uses **free, open-source APIs** with no authentication required (except NASA APOD which has a generous free tier):
-
-- **SpaceX API v4** - Real-time SpaceX launch data
-- **The Space Devs LL2** - Global launch schedule
-- **NASA Open APIs** - Astronomy Picture of the Day
-
-## 🎨 Features Breakdown
-
-### Live Launch Detection
-The app automatically checks for launches happening within a 2-hour window (±2 hours from current time) and displays:
-- Live countdown
-- Embedded YouTube livestream
-- Launch details and quick facts
-
-### Data Caching
-- Smart caching system reduces API calls
-- Upcoming launches: 5-minute cache
-- Rocket data: 24-hour cache
-- Auto-refresh every 2 minutes for launch list
-- Auto-refresh every 30 seconds for live launches
-
-### Countdown Timers
-Real-time countdowns showing:
-- Days (if >24 hours)
-- Hours
-- Minutes
-- Seconds (with pulse animation)
-
-### Rocket Facts
-Rotating banner displaying:
-- Rocket specifications (height, mass, success rate)
-- NASA Astronomy Picture of the Day
-- Curated space trivia
-- Auto-rotates every 15 seconds
-
-## 🚢 Deployment
-
-### Deploy to Vercel (Recommended)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-1. Push your code to GitHub
-2. Import the project in Vercel
-3. (Optional) Add `NEXT_PUBLIC_NASA_API_KEY` environment variable
-4. Deploy!
-
-### Deploy to Netlify
-
-1. Build the project:
-```bash
-npm run build
-```
-
-2. Deploy the `.next` directory
-
-### Deploy to any Node.js host
-
-```bash
-npm run build
-npm start
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-Create a `.env.local` file:
-
-```env
-# Optional: NASA API Key
-# Without this, the app uses DEMO_KEY (rate-limited)
-# Get a free key at https://api.nasa.gov
-NEXT_PUBLIC_NASA_API_KEY=your_nasa_api_key_here
-```
-
-## 🎯 MVP Checklist
-
-- ✅ Live launch detection and display
-- ✅ Embedded livestreams
-- ✅ Countdown timers
-- ✅ Upcoming launches list (20+ launches)
-- ✅ Launch details (mission, rocket, site, time)
-- ✅ Status indicators
-- ✅ Rotating rocket facts banner
-- ✅ Dark space theme
-- ✅ Mobile responsive design
-- ✅ Fast loading (<1 second)
-- ✅ No authentication required
-- ✅ Auto-refresh data
-- ✅ Ready for Vercel deployment
-
-## 📝 Scripts
+## Scripts
 
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
-npm run start        # Start production server
+npm start            # Start production server
 npm run lint         # Run ESLint
 ```
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 📄 License
+## API Rate Limits
 
-This project is open source and available under the MIT License.
+- **SpaceX API**: No authentication required, no rate limits
+- **Launch Library 2 (Free)**: 15 requests/hour
+- **Launch Library 2 (With API Key)**: Higher limits
+- **NASA API (DEMO_KEY)**: 30 requests/hour
+- **NASA API (With Key)**: 1000 requests/hour
 
-## 🙏 Credits
+The app uses intelligent caching to stay within these limits.
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+
+## Credits
 
 - Launch data from [SpaceX API](https://github.com/r-spacex/SpaceX-API)
 - Global launch data from [The Space Devs](https://thespacedevs.com)
 - Space imagery from [NASA](https://api.nasa.gov)
 - Built with [Next.js](https://nextjs.org)
 
+## Support
+
+- **Bug Reports**: [Open an issue](https://github.com/yourusername/launchwatch/issues/new?template=bug_report.md)
+- **Feature Requests**: [Open an issue](https://github.com/yourusername/launchwatch/issues/new?template=feature_request.md)
+- **Questions**: [Start a discussion](https://github.com/yourusername/launchwatch/discussions)
+
 ---
 
-**Made with ❤️ for space enthusiasts**
+Made with ❤️ for space enthusiasts

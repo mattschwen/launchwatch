@@ -1,82 +1,68 @@
-## Description
+## What does this PR do?
 
-<!-- Provide a clear and concise description of what this PR does -->
+Brief description of the changes.
+
+## Why is this needed?
+
+Explain the problem this PR solves or the feature it adds.
 
 ## Type of Change
 
-- [ ] `feat:` New feature
-- [ ] `fix:` Bug fix
-- [ ] `docs:` Documentation update
-- [ ] `refactor:` Code refactoring (no functional changes)
-- [ ] `chore:` Build/tooling changes
-- [ ] `test:` Adding or updating tests
-- [ ] `perf:` Performance improvement
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Code refactoring (no functional changes)
+- [ ] Performance improvement
+- [ ] Dependency update
 
-## Motivation and Context
+## How to Test
 
-<!-- Why is this change required? What problem does it solve? -->
-<!-- Link to related issues: Fixes #123, Relates to #456 -->
-
-## Changes Made
-
-<!-- List the specific changes made in this PR -->
-
-- 
-- 
-- 
-
-## Testing
-
-<!-- Describe how you tested these changes -->
-
-- [ ] Tested locally in development mode (`npm run dev`)
-- [ ] Tested production build (`npm run build && npm start`)
-- [ ] Tested on mobile/responsive viewports
-- [ ] Tested with live launch data
-- [ ] No console errors or warnings
+1. Step 1
+2. Step 2
+3. Expected result
 
 ## Screenshots (if applicable)
 
-<!-- Add screenshots for UI changes -->
+| Before | After |
+|--------|-------|
+| [screenshot] | [screenshot] |
 
-## Risk Assessment
+## Checklist
 
-<!-- Low/Medium/High - Explain potential risks and mitigation -->
+### Code Quality
 
-**Risk Level:** 
+- [ ] Code follows project style guidelines
+- [ ] ESLint passes (`npm run lint`)
+- [ ] TypeScript compiles (`npx tsc --noEmit`)
+- [ ] Build succeeds (`npm run build`)
+- [ ] No console errors in browser
 
-## Rollout Plan
+### Testing
 
-<!-- How should this be deployed? Any special considerations? -->
+- [ ] Tested on Chrome (desktop)
+- [ ] Tested on Safari (desktop)
+- [ ] Tested on mobile (iOS or Android)
+- [ ] Tested with slow network (if applicable)
+- [ ] Tested offline mode (if PWA changes)
 
-- [ ] Can be deployed immediately
-- [ ] Requires environment variable updates
-- [ ] Requires coordination with external services
-- [ ] Backwards compatible
+### Documentation
 
-## Definition of Done
+- [ ] Updated README (if needed)
+- [ ] Updated relevant documentation
+- [ ] Added/updated code comments
+- [ ] Updated TypeScript types
 
-<!-- All items must be checked before merge -->
+### Performance
 
-- [ ] Code follows project conventions and style guidelines
-- [ ] TypeScript types are correct (no `any` unless justified)
-- [ ] ESLint passes with no errors
-- [ ] Build completes successfully
-- [ ] No console errors or warnings
-- [ ] Mobile responsive (tested at 320px, 768px, 1024px widths)
-- [ ] Works in dark mode
-- [ ] No secrets or API keys committed
-- [ ] Documentation updated (if behavior changed)
-- [ ] README updated (if setup/config changed)
-- [ ] CI/CD checks pass
-- [ ] PR title follows Conventional Commits format
-- [ ] Reviewed and approved by code owner
+- [ ] No significant performance degradation
+- [ ] Bundle size impact acceptable
+- [ ] Images optimized (if added)
 
-## Rollback Strategy
+## Related Issues
 
-<!-- How can this change be rolled back if issues arise? -->
+Closes #[issue number]
 
 ## Additional Notes
 
-<!-- Any additional information reviewers should know -->
-
+Any additional information reviewers should know.

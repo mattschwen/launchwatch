@@ -36,17 +36,19 @@ export default function AddToCalendar({ launch, variant = 'button' }: AddToCalen
       {variant === 'button' ? (
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="flex-1 px-3 py-1.5 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white text-xs font-semibold rounded-lg transition-all text-center"
+          className="flex-1 px-3 py-2.5 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 active:bg-[var(--secondary)]/80 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all text-center min-h-[44px] flex items-center justify-center gap-1.5"
         >
-          📅 Calendar
+          <span className="text-base">📅</span>
+          <span className="hidden sm:inline">Calendar</span>
+          <span className="sm:hidden">Cal</span>
         </button>
       ) : (
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="px-3 py-1.5 glass glass-hover rounded-lg transition-all"
+          className="px-3 py-2.5 glass glass-hover rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
           title="Add to Calendar"
         >
-          <span className="text-sm">📅</span>
+          <span className="text-base">📅</span>
         </button>
       )}
 
@@ -59,7 +61,7 @@ export default function AddToCalendar({ launch, variant = 'button' }: AddToCalen
           />
 
           {/* Menu */}
-          <div className="absolute right-0 mt-2 w-48 glass rounded-lg shadow-lg z-[70] border border-[var(--glass-border)]">
+          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg z-[70] border border-gray-200">
             <div className="p-1">
               <button
                 onClick={handleGoogleCalendar}

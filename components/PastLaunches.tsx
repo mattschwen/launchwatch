@@ -185,7 +185,7 @@ export default function PastLaunches() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredLaunches.map((launch) => (
-            <LaunchCard key={launch.id} launch={launch} showVideo={false} />
+            <LaunchCard key={launch.id} launch={launch} showVideo={false} showCalendar={false} />
           ))}
         </div>
       )}
