@@ -1,0 +1,30 @@
+# LaunchWatch Code Owners
+# These owners will be automatically requested for review when someone opens a pull request.
+#
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Root configuration files
+/.github/ @matthewschwen
+/package.json @matthewschwen
+/package-lock.json @matthewschwen
+/tsconfig.json @matthewschwen
+/next.config.ts @matthewschwen
+/vercel.json @matthewschwen
+
+# Core application components
+/components/ @matthewschwen
+/lib/ @matthewschwen
+/app/ @matthewschwen
+
+# Documentation
+/docs/ @matthewschwen
+/README.md @matthewschwen
+
+# CI/CD and deployment
+/.github/workflows/ @matthewschwen
+/vercel.json @matthewschwen
+
+# Environment and security
+/.env.example @matthewschwen
+/.gitignore @matthewschwen
+
