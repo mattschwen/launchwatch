@@ -1,5 +1,5 @@
 // Service Worker for LaunchWatch PWA
-const CACHE_NAME = 'launchwatch-v2';
+const CACHE_NAME = 'launchwatch-v3';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately
@@ -50,6 +50,27 @@ self.addEventListener('fetch', (event) => {
   // Skip caching for POST requests (API calls)
   if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            event.waitUntil(
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache))
+            );
+          }
+
+          return response;
+        })
+        .catch(async () => {
+          const cachedResponse = await caches.match(event.request);
+          return cachedResponse || caches.match(OFFLINE_URL);
+        })
+    );
     return;
   }
 
