@@ -6,14 +6,14 @@ const LL2_API_KEY = process.env.NEXT_PUBLIC_LL2_API_KEY || '';
 const LL2_API = LL2_API_KEY
   ? 'https://lldev.thespacedevs.com/2.2.0' // Premium endpoint (higher limits)
   : 'https://ll.thespacedevs.com/2.2.0';   // Free endpoint (15 req/hour)
-const ROCKETLAUNCH_API = 'https://fdo.rocketlaunch.live/json/launches/next/5'; // Fallback API
 const NASA_API = 'https://api.nasa.gov';
 const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY || 'DEMO_KEY';
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
 const LL2_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for LL2 (rate limited - 15 req/hour)
-let cache: { [key: string]: { data: any; timestamp: number } } = {};
+type CacheEntry<T> = { data: T; timestamp: number };
+const cache: Record<string, CacheEntry<unknown>> = {};
 
 function getCachedData<T>(key: string, customDuration?: number): T | null {
   const cached = cache[key];
@@ -29,7 +29,7 @@ function getStaleCachedData<T>(key: string): T | null {
   return cached ? (cached.data as T) : null;
 }
 
-function setCachedData(key: string, data: any) {
+function setCachedData<T>(key: string, data: T) {
   cache[key] = { data, timestamp: Date.now() };
 }
 
@@ -167,37 +167,6 @@ export async function getLL2UpcomingLaunches(limit: number = 20): Promise<LL2Lau
   }
 }
 
-// RocketLaunch.Live API (Fallback when LL2 is rate limited)
-export async function getRocketLaunchLiveData(limit: number = 5): Promise<LL2Launch[]> {
-  const cacheKey = `rll_upcoming_${limit}`;
-  const cached = getCachedData<LL2Launch[]>(cacheKey, LL2_CACHE_DURATION);
-  if (cached) return cached;
-
-  try {
-    const response = await fetch(ROCKETLAUNCH_API, {
-      next: { revalidate: 1800 } // 30 minutes
-    });
-
-    if (!response.ok) {
-      console.warn('RocketLaunch.Live API failed');
-      return [];
-    }
-
-    const data = await response.json();
-    // RocketLaunch.Live has different structure, so we'll use LL2 as it's also available there
-    // For now, return empty and rely on stale cache
-    console.log('RocketLaunch.Live response:', data);
-
-    // Note: RocketLaunch.Live structure may differ, needs mapping
-    // This is a placeholder - would need proper mapping if using this API
-    setCachedData(cacheKey, []);
-    return [];
-  } catch (error) {
-    console.error('Error fetching RocketLaunch.Live:', error);
-    return [];
-  }
-}
-
 // NASA API Functions
 export async function getNASAAPOD(): Promise<APOD | null> {
   const cacheKey = 'nasa_apod';
@@ -215,6 +184,71 @@ export async function getNASAAPOD(): Promise<APOD | null> {
   } catch (error) {
     console.error('Error fetching NASA APOD:', error);
     return null;
+  }
+}
+
+function buildYouTubeThumbnail(url: string | null | undefined): string | null {
+  if (!url) {
+    return null;
+  }
+
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/live\/)([^&?/]+)/
+  );
+
+  if (!match?.[1]) {
+    return null;
+  }
+
+  return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+}
+
+function inferProvider(launch: LL2Launch): { name: string; logo: string | null } {
+  if (launch.launch_service_provider?.name) {
+    return {
+      name: launch.launch_service_provider.name,
+      logo: launch.launch_service_provider.logo_url || null,
+    };
+  }
+
+  const name = launch.name.toLowerCase();
+  const rocketFamily = launch.rocket.configuration.family.toLowerCase();
+
+  if (name.includes('spacex') || rocketFamily.includes('falcon') || rocketFamily.includes('starship')) {
+    return { name: 'SpaceX', logo: null };
+  }
+  if (name.includes('nasa') || name.includes('artemis')) {
+    return { name: 'NASA', logo: null };
+  }
+  if (name.includes('ula') || rocketFamily.includes('atlas') || rocketFamily.includes('vulcan') || rocketFamily.includes('delta')) {
+    return { name: 'ULA', logo: null };
+  }
+  if (name.includes('rocket lab') || rocketFamily.includes('electron') || rocketFamily.includes('neutron')) {
+    return { name: 'Rocket Lab', logo: null };
+  }
+  if (name.includes('blue origin') || rocketFamily.includes('new glenn') || rocketFamily.includes('new shepard')) {
+    return { name: 'Blue Origin', logo: null };
+  }
+  if (name.includes('ariane') || name.includes('vega')) {
+    return { name: 'Arianespace', logo: null };
+  }
+
+  return { name: 'Unknown', logo: null };
+}
+
+function mapLaunchStatus(abbrev: string): Launch['status'] {
+  switch (abbrev) {
+    case 'Go':
+      return 'upcoming';
+    case 'Success':
+      return 'success';
+    case 'Failure':
+    case 'Partial Failure':
+      return 'failure';
+    case 'In Flight':
+      return 'live';
+    default:
+      return 'tbd';
   }
 }
 
@@ -237,33 +271,94 @@ export async function getAllUpcomingLaunches(): Promise<Launch[]> {
         rocket: typeof launch.rocket === 'object' ? launch.rocket.name : launch.rocket,
         launchSite: typeof launch.launchpad === 'object' ? launch.launchpad.name : launch.launchpad,
         status: launch.upcoming ? 'upcoming' as const : (launch.success ? 'success' as const : 'failure' as const),
+        statusName: launch.upcoming ? 'Scheduled' : (launch.success ? 'Success' : 'Failure'),
+        missionName: launch.name,
         livestream: launch.links.webcast,
+        livestreams: launch.links.webcast ? [{
+          url: launch.links.webcast,
+          title: 'Official webcast',
+          isLive: false,
+          thumbnail: buildYouTubeThumbnail(launch.links.webcast),
+        }] : null,
         description: launch.details,
         isLive: false,
+        webcastLive: false,
         image: launch.links.flickr?.original?.[0] || null,
         missionPatch: launch.links.patch?.small || null,
-        location: null // SpaceX API would need launchpad details for coordinates
+        rocketImageUrl: null,
+        launchImageUrl: launch.links.flickr?.original?.[0] || null,
+        padMapImage: null,
+        location: null, // SpaceX API would need launchpad details for coordinates
+        provider: 'SpaceX',
+        providerLogo: null,
+        program: null,
+        timeline: null,
+        videoThumbnail: buildYouTubeThumbnail(launch.links.webcast),
+        source: 'spacex' as const,
+        ll2Id: null,
+        orbit: null,
+        rocketFamily: typeof launch.rocket === 'object' ? launch.rocket.name : launch.rocket,
+        rocketVariant: null,
       })),
-      ...ll2Launches.map(launch => ({
-        id: `ll2-${launch.id}`,
-        name: launch.name,
-        date: launch.net,
-        dateUnix: new Date(launch.net).getTime() / 1000,
-        rocket: launch.rocket.configuration.name,
-        launchSite: launch.pad.name,
-        status: launch.status.abbrev === 'Go' ? 'upcoming' as const : 'tbd' as const,
-        livestream: launch.vidURLs?.[0]?.url || null,
-        description: launch.mission?.description || null,
-        isLive: launch.webcast_live,
-        image: launch.rocket.configuration.image_url || launch.image || null,
-        missionPatch: null,
-        location: launch.pad.latitude && launch.pad.longitude ? {
-          lat: parseFloat(launch.pad.latitude),
-          lng: parseFloat(launch.pad.longitude),
-          name: launch.pad.location.name,
-          countryCode: launch.pad.location.country_code
-        } : null
-      }))
+      ...ll2Launches.map(launch => {
+        const provider = inferProvider(launch);
+        const livestreams = launch.vidURLs?.map((stream) => ({
+          url: stream.url,
+          title: stream.title || 'Stream',
+          priority: stream.priority,
+          source: stream.source || null,
+          thumbnail: stream.feature_image || buildYouTubeThumbnail(stream.url),
+          type: stream.type?.name || null,
+          startTime: stream.start_time || null,
+          endTime: stream.end_time || null,
+          isLive: launch.webcast_live,
+        })) || null;
+
+        return {
+          id: `ll2-${launch.id}`,
+          name: launch.name,
+          date: launch.net,
+          dateUnix: new Date(launch.net).getTime() / 1000,
+          rocket: launch.rocket.configuration.name,
+          launchSite: launch.pad.name,
+          status: mapLaunchStatus(launch.status.abbrev),
+          statusName: launch.status.name,
+          missionName: launch.mission?.name || null,
+          missionType: launch.mission?.type || null,
+          windowStart: launch.window_start || null,
+          windowEnd: launch.window_end || null,
+          livestream: livestreams?.[0]?.url || null,
+          livestreams,
+          description: launch.mission?.description || null,
+          isLive: launch.webcast_live,
+          webcastLive: launch.webcast_live,
+          image: launch.rocket.configuration.image_url || launch.image || null,
+          missionPatch: null,
+          rocketImageUrl: launch.rocket.configuration.image_url || null,
+          launchImageUrl: launch.image || null,
+          padMapImage: launch.pad.map_image || null,
+          location: launch.pad.latitude && launch.pad.longitude ? {
+            lat: parseFloat(launch.pad.latitude),
+            lng: parseFloat(launch.pad.longitude),
+            name: launch.pad.location.name,
+            countryCode: launch.pad.location.country_code
+          } : null,
+          provider: provider.name,
+          providerLogo: provider.logo,
+          program: launch.program?.[0]?.name || null,
+          timeline: launch.timeline?.map((event) => ({
+            type: event.type.name,
+            relativeTime: event.relative_time,
+            description: event.description,
+          })) || null,
+          videoThumbnail: livestreams?.[0]?.thumbnail || null,
+          source: 'll2' as const,
+          ll2Id: launch.id,
+          orbit: launch.mission?.orbit?.name || null,
+          rocketFamily: launch.rocket.configuration.family,
+          rocketVariant: launch.rocket.configuration.variant,
+        };
+      })
     ];
 
     // Calculate date ranges

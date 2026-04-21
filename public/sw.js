@@ -5,8 +5,11 @@ const OFFLINE_URL = '/offline.html';
 // Assets to cache immediately
 const STATIC_CACHE_URLS = [
   '/',
+  '/history',
   '/offline.html',
   '/manifest.json',
+  '/icon-192.svg',
+  '/icon-512.svg',
 ];
 
 // Install event - cache static assets
@@ -105,7 +108,8 @@ async function syncLaunches() {
   try {
     // Fetch latest launch data
     const response = await fetch('/api/launches');
-    const launches = await response.json();
+    const result = await response.json();
+    const launches = Array.isArray(result.launches) ? result.launches : [];
 
     // Check for upcoming launches and send notifications
     const now = Date.now();
@@ -117,8 +121,8 @@ async function syncLaunches() {
       if (timeUntilLaunch > 0 && timeUntilLaunch <= 60 * 60 * 1000) {
         self.registration.showNotification('🚀 Launch Alert!', {
           body: `${launch.name} launching in ${Math.floor(timeUntilLaunch / 60000)} minutes`,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
+          icon: '/icon-192.svg',
+          badge: '/icon-192.svg',
           tag: `launch-${launch.id}`,
           data: { launchId: launch.id },
         });
@@ -135,8 +139,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || 'New rocket launch update!',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icon-192.svg',
+    badge: '/icon-192.svg',
     vibrate: [200, 100, 200],
     data: data,
     actions: [

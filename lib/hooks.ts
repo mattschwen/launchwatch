@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Launch, RocketFact } from './types';
-import { getAllUpcomingLaunches, getLiveLaunches, getNextLaunch, getRocketFacts } from './api';
+import { Launch, LaunchIntel, RocketFact } from './types';
+import { getRocketFacts } from './api';
+import { serializeLaunchForIntel } from './launch-intel-params';
 import { checkAndNotify, clearOldNotificationFlags } from './notifications';
 
 export function useLaunches() {
@@ -162,6 +163,55 @@ export function useRocketFacts() {
   return { currentFact, facts, loading, error };
 }
 
+export function useLaunchIntel(launch: Launch | null, enabled: boolean = true) {
+  const [intel, setIntel] = useState<LaunchIntel | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!launch || !enabled) {
+      return;
+    }
+
+    let cancelled = false;
+    const query = serializeLaunchForIntel(launch);
+
+    async function fetchIntel() {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/launch-intel?${query}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch launch intelligence');
+        }
+        const result = await response.json();
+        if (!cancelled) {
+          setIntel(result);
+          setError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError('Failed to load launch intelligence');
+          console.error(err);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchIntel();
+    const interval = setInterval(fetchIntel, 2 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [enabled, launch]);
+
+  return { intel, loading, error };
+}
+
 export function useCountdown(targetDate: string) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -201,4 +251,22 @@ export function useCountdown(targetDate: string) {
   }, [targetDate]);
 
   return timeLeft;
+}
+
+export function useCompactCountdown(targetDate: string): string {
+  const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
+
+  if (total <= 0) {
+    return 'LIFTOFF';
+  }
+
+  if (days > 0) {
+    return `T-${days}d ${hours}h`;
+  }
+
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+
+  return `T-${hh}:${mm}:${ss}`;
 }

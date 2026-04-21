@@ -70,32 +70,32 @@ export function extractYouTubeId(url: string): string | null {
  */
 async function searchViaAPI(launch: Launch): Promise<string | null> {
   try {
-    // Build search query
     const query = buildSearchQuery(launch);
 
-    const params = new URLSearchParams({
-      part: 'snippet',
-      q: query,
-      type: 'video',
-      eventType: 'completed,live', // Include both live and recent
-      order: 'date', // Most recent first
-      maxResults: '5',
-      key: YOUTUBE_API_KEY,
-    });
+    for (const eventType of ['live', 'upcoming'] as const) {
+      const params = new URLSearchParams({
+        part: 'snippet',
+        q: query,
+        type: 'video',
+        eventType,
+        order: 'date',
+        maxResults: '5',
+        key: YOUTUBE_API_KEY,
+      });
 
-    const response = await fetch(`${YOUTUBE_SEARCH_BASE}?${params.toString()}`);
+      const response = await fetch(`${YOUTUBE_SEARCH_BASE}?${params.toString()}`);
 
-    if (!response.ok) {
-      console.warn('YouTube API error:', response.status);
-      return null;
-    }
+      if (!response.ok) {
+        console.warn('YouTube API error:', response.status);
+        continue;
+      }
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.items && data.items.length > 0) {
-      // Return the most recent/relevant video
-      const videoId = data.items[0].id.videoId;
-      return `https://www.youtube.com/watch?v=${videoId}`;
+      if (data.items && data.items.length > 0) {
+        const videoId = data.items[0].id.videoId;
+        return `https://www.youtube.com/watch?v=${videoId}`;
+      }
     }
   } catch (error) {
     console.error('YouTube API search failed:', error);
@@ -107,21 +107,34 @@ async function searchViaAPI(launch: Launch): Promise<string | null> {
 /**
  * Build search query for YouTube
  */
-function buildSearchQuery(launch: Launch): string {
-  const keywords = [];
+export function inferLaunchProvider(launch: Launch): string {
+  const name = launch.name.toLowerCase();
+  const rocket = launch.rocket.toLowerCase();
 
-  // Add provider-specific keywords
-  if (launch.name.toLowerCase().includes('spacex') ||
-      launch.rocket.toLowerCase().includes('falcon') ||
-      launch.rocket.toLowerCase().includes('starship')) {
-    keywords.push('SpaceX');
-  } else if (launch.name.toLowerCase().includes('nasa')) {
-    keywords.push('NASA');
-  } else if (launch.name.toLowerCase().includes('ula')) {
-    keywords.push('ULA');
-  } else if (launch.name.toLowerCase().includes('rocket lab')) {
-    keywords.push('Rocket Lab');
+  if (name.includes('spacex') || rocket.includes('falcon') || rocket.includes('starship')) {
+    return 'SpaceX';
   }
+  if (name.includes('nasa') || name.includes('artemis') || name.includes('sls')) {
+    return 'NASA';
+  }
+  if (name.includes('ula') || rocket.includes('atlas') || rocket.includes('vulcan') || rocket.includes('delta')) {
+    return 'ULA';
+  }
+  if (name.includes('rocket lab') || rocket.includes('electron') || rocket.includes('neutron')) {
+    return 'Rocket Lab';
+  }
+  if (name.includes('blue origin') || rocket.includes('new glenn') || rocket.includes('new shepard')) {
+    return 'Blue Origin';
+  }
+  if (name.includes('arianespace') || rocket.includes('ariane')) {
+    return 'Arianespace';
+  }
+
+  return 'Launch Provider';
+}
+
+export function buildSearchQuery(launch: Launch): string {
+  const keywords = [inferLaunchProvider(launch)];
 
   // Add rocket name
   keywords.push(launch.rocket);
@@ -166,11 +179,7 @@ export function getYouTubeEmbedUrl(url: string | null): string | null {
  */
 export async function findSpaceflightNowStream(launch: Launch): Promise<string | null> {
   try {
-    // Spaceflight Now often has streams for major launches
-    const searchUrl = `https://spaceflightnow.com/launch-schedule/`;
-
-    // This would require server-side scraping
-    // For client-side, we can generate a search URL
+    // This would require server-side scraping. Generate a focused search URL instead.
     const query = `${launch.rocket} ${launch.name} launch live`;
     const params = new URLSearchParams({
       q: `site:youtube.com ${query}`,
@@ -230,20 +239,39 @@ export async function findLivestream(launch: Launch): Promise<{
  * Get the channel for a provider
  */
 export function getProviderYouTubeChannel(launch: Launch): string | null {
-  const name = launch.name.toLowerCase();
-  const rocket = launch.rocket.toLowerCase();
-
-  if (name.includes('spacex') || rocket.includes('falcon') || rocket.includes('starship')) {
-    return 'https://www.youtube.com/@SpaceX/streams';
-  } else if (name.includes('nasa')) {
-    return 'https://www.youtube.com/@NASA/streams';
-  } else if (name.includes('ula')) {
-    return 'https://www.youtube.com/@ulalaunch/streams';
-  } else if (name.includes('rocket lab')) {
-    return 'https://www.youtube.com/@RocketLab/streams';
-  } else if (name.includes('blue origin')) {
-    return 'https://www.youtube.com/@blueorigin/streams';
+  switch (inferLaunchProvider(launch)) {
+    case 'SpaceX':
+      return 'https://www.youtube.com/@SpaceX/streams';
+    case 'NASA':
+      return 'https://www.youtube.com/@NASA/streams';
+    case 'ULA':
+      return 'https://www.youtube.com/@ulalaunch/streams';
+    case 'Rocket Lab':
+      return 'https://www.youtube.com/@RocketLab/streams';
+    case 'Blue Origin':
+      return 'https://www.youtube.com/@blueorigin/streams';
+    case 'Arianespace':
+      return 'https://www.youtube.com/@arianespace/streams';
+    default:
+      return null;
   }
+}
 
-  return null;
+export function getRedditSearchUrl(launch: Launch): string {
+  const params = new URLSearchParams({
+    q: buildSearchQuery(launch),
+    sort: 'new',
+  });
+
+  return `https://www.reddit.com/search/?${params.toString()}`;
+}
+
+export function getXSearchUrl(launch: Launch): string {
+  const params = new URLSearchParams({
+    q: buildSearchQuery(launch),
+    src: 'typed_query',
+    f: 'live',
+  });
+
+  return `https://x.com/search?${params.toString()}`;
 }

@@ -1,5 +1,10 @@
 import { Launch } from './types';
 
+function markNotified(notificationKey: string): void {
+  localStorage.setItem(notificationKey, 'true');
+  localStorage.setItem(`${notificationKey}-timestamp`, Date.now().toString());
+}
+
 /**
  * Request notification permission from the user
  */
@@ -61,16 +66,15 @@ export function checkAndNotify(launches: Launch[]): void {
     const launchTime = new Date(launch.date).getTime();
     const timeUntilLaunch = launchTime - now;
 
-    // Notify for launches happening in 1 hour
-    if (timeUntilLaunch > 0 && timeUntilLaunch <= 60 * 60 * 1000) {
-      const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
-      const notificationKey = `notified-1h-${launch.id}`;
+    // Notify for live launches
+    if (launch.isLive) {
+      const notificationKey = `notified-live-${launch.id}`;
 
-      // Check if we've already notified for this launch
       if (!localStorage.getItem(notificationKey)) {
-        showLaunchNotification(launch, `${minutes} minutes`);
-        localStorage.setItem(notificationKey, 'true');
+        showLaunchNotification(launch, 'NOW!');
+        markNotified(notificationKey);
       }
+      return;
     }
 
     // Notify for launches happening in 10 minutes
@@ -80,17 +84,20 @@ export function checkAndNotify(launches: Launch[]): void {
 
       if (!localStorage.getItem(notificationKey)) {
         showLaunchNotification(launch, `${minutes} minutes`);
-        localStorage.setItem(notificationKey, 'true');
+        markNotified(notificationKey);
       }
+      return;
     }
 
-    // Notify for live launches
-    if (launch.isLive) {
-      const notificationKey = `notified-live-${launch.id}`;
+    // Notify for launches happening in 1 hour
+    if (timeUntilLaunch > 0 && timeUntilLaunch <= 60 * 60 * 1000) {
+      const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
+      const notificationKey = `notified-1h-${launch.id}`;
 
+      // Check if we've already notified for this launch
       if (!localStorage.getItem(notificationKey)) {
-        showLaunchNotification(launch, 'NOW!');
-        localStorage.setItem(notificationKey, 'true');
+        showLaunchNotification(launch, `${minutes} minutes`);
+        markNotified(notificationKey);
       }
     }
   });
@@ -107,7 +114,7 @@ export function clearOldNotificationFlags(): void {
     if (key.startsWith('notified-')) {
       // Remove notification flags older than 7 days
       const timestamp = localStorage.getItem(`${key}-timestamp`);
-      if (timestamp && now - parseInt(timestamp) > 7 * 24 * 60 * 60 * 1000) {
+      if (timestamp && now - Number.parseInt(timestamp, 10) > 7 * 24 * 60 * 60 * 1000) {
         localStorage.removeItem(key);
         localStorage.removeItem(`${key}-timestamp`);
       }

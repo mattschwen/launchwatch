@@ -1,21 +1,9 @@
 'use client';
 
 import { useRocketFacts } from '@/lib/hooks';
-import { useEffect, useState } from 'react';
 
 export default function RocketFacts() {
   const { currentFact, loading } = useRocketFacts();
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    // Fade out animation before changing fact
-    setIsVisible(false);
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [currentFact]);
 
   if (loading || !currentFact) {
     return (
@@ -46,7 +34,7 @@ export default function RocketFacts() {
   return (
     <div className="w-full glass border-t border-[var(--glass-border)] py-4 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div key={currentFact.id} className="animate-fade-in">
           <div className="flex items-start gap-2">
             <span className="text-xl flex-shrink-0">{getIcon(currentFact.type)}</span>
             <div className="flex-1 min-w-0">

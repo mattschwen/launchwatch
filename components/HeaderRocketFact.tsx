@@ -1,27 +1,18 @@
 'use client';
 
 import { useRocketFacts } from '@/lib/hooks';
-import { useEffect, useState } from 'react';
 
 export default function HeaderRocketFact() {
   const { currentFact, loading } = useRocketFacts();
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    // Fade out animation before changing fact
-    setIsVisible(false);
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [currentFact]);
 
   if (loading || !currentFact) {
     return (
-      <div className="flex-1 min-w-0 px-3 py-2 animate-pulse">
-        <div className="h-3 bg-[var(--surface)] rounded w-24 mb-1"></div>
-        <div className="h-4 bg-[var(--surface)] rounded w-full"></div>
+      <div className="px-5 py-5">
+        <div className="animate-pulse space-y-2">
+          <div className="h-3 w-24 rounded-full bg-[var(--line-soft)]" />
+          <div className="h-5 w-full rounded-full bg-[var(--line-soft)]" />
+          <div className="h-5 w-4/5 rounded-full bg-[var(--line-soft)]" />
+        </div>
       </div>
     );
   }
@@ -29,52 +20,45 @@ export default function HeaderRocketFact() {
   const getIcon = (type: string) => {
     switch (type) {
       case 'stat':
-        return '📊';
+        return 'Vector';
       case 'mission':
-        return '🎯';
+        return 'Mission';
       case 'apod':
-        return '🌌';
+        return 'Sky';
       case 'trivia':
-        return '💡';
+        return 'Fact';
       default:
-        return '🚀';
+        return 'Launch';
     }
   };
 
-  // Highlight important text like numbers, percentages, dates, etc.
   const highlightText = (text: string) => {
-    // Match numbers (including decimals, commas, percentages, etc.)
     const parts = text.split(/(\d[\d,\.]*%?|\b\d{4}\b)/g);
-    
+
     return parts.map((part, index) => {
-      // Check if it's a number or year
       if (/\d/.test(part)) {
         return (
-          <span key={index} className="font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1 rounded">
+          <span key={index} className="rounded-full bg-[rgba(36,84,166,0.1)] px-1.5 py-0.5 font-semibold text-[var(--primary)]">
             {part}
           </span>
         );
       }
+
       return <span key={index}>{part}</span>;
     });
   };
 
   return (
-    <div className="flex-1 min-w-0 px-3 py-2">
-      <div className={`transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex items-start gap-2">
-          <span className="text-base flex-shrink-0 mt-0.5">{getIcon(currentFact.type)}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-0.5">
-              {currentFact.title}
-            </p>
-            <p className="text-xs text-[var(--text-secondary)] font-medium leading-tight line-clamp-2">
-              {highlightText(currentFact.value)}
-            </p>
-          </div>
-        </div>
+    <div className="px-5 py-5">
+      <div key={currentFact.id} className="reveal-up">
+        <p className="section-kicker">{getIcon(currentFact.type)}</p>
+        <p className="mt-3 font-display text-2xl uppercase leading-none text-[var(--text-primary)] sm:text-3xl">
+          {currentFact.title}
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+          {highlightText(currentFact.value)}
+        </p>
       </div>
     </div>
   );
 }
-

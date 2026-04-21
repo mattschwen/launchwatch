@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 export interface FilterOptions {
   search: string;
@@ -11,174 +12,184 @@ export interface FilterOptions {
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
+  initialFilters?: Partial<FilterOptions>;
+  showProvider?: boolean;
+  statusOptions?: Array<{ value: string; label: string }>;
 }
 
-export default function FilterBar({ onFilterChange }: FilterBarProps) {
+const defaultFilters: FilterOptions = {
+  search: '',
+  provider: 'all',
+  status: 'all',
+  sortBy: 'date-asc',
+};
+
+const defaultProviders = [
+  { value: 'all', label: 'ALL' },
+  { value: 'spacex', label: 'SPACEX' },
+  { value: 'nasa', label: 'NASA' },
+  { value: 'ula', label: 'ULA' },
+  { value: 'rocket-lab', label: 'ROCKETLAB' },
+  { value: 'blue-origin', label: 'BLUE ORIGIN' },
+  { value: 'arianespace', label: 'ARIANESPACE' },
+];
+
+const defaultStatusOptions = [
+  { value: 'all', label: 'ALL' },
+  { value: 'upcoming', label: 'GO' },
+  { value: 'live', label: 'LIVE' },
+  { value: 'success', label: 'SUCCESS' },
+  { value: 'failure', label: 'FAILURE' },
+  { value: 'tbd', label: 'HOLD' },
+];
+
+export default function FilterBar({
+  onFilterChange,
+  initialFilters,
+  showProvider = true,
+  statusOptions = defaultStatusOptions,
+}: FilterBarProps): React.ReactElement {
   const [filters, setFilters] = useState<FilterOptions>({
-    search: '',
-    provider: 'all',
-    status: 'all',
-    sortBy: 'date-asc',
+    ...defaultFilters,
+    ...initialFilters,
   });
+  const activeFilterCount =
+    Number(Boolean(filters.search)) +
+    Number(showProvider && filters.provider !== 'all') +
+    Number(filters.status !== 'all');
 
-  const [showFilters, setShowFilters] = useState(false);
-
-  const updateFilter = (key: keyof FilterOptions, value: string) => {
+  const updateFilter = (key: keyof FilterOptions, value: string): void => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
 
-  const providers = [
-    { value: 'all', label: 'All', icon: '🚀' },
-    { value: 'spacex', label: 'SpaceX', icon: '🔵' },
-    { value: 'nasa', label: 'NASA', icon: '🔴' },
-    { value: 'ula', label: 'ULA', icon: '🟠' },
-    { value: 'rocket-lab', label: 'Rocket Lab', icon: '⚫' },
-    { value: 'blue-origin', label: 'Blue Origin', icon: '🔷' },
-  ];
-
   return (
-    <div className="mb-6 space-y-3">
-      {/* Search Bar */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="🔍 Search launches..."
-          value={filters.search}
-          onChange={(e) => updateFilter('search', e.target.value)}
-          className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-[var(--text-primary)] text-sm placeholder-gray-400 focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all"
-        />
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            showFilters 
-              ? 'bg-[var(--primary)] text-white' 
-              : 'bg-white border border-gray-200 text-[var(--text-primary)] hover:border-[var(--primary)]'
-          }`}
-        >
-          <span className="flex items-center gap-2">
-            ⚙️ Filters
-            <span className="text-xs">{showFilters ? '▲' : '▼'}</span>
-          </span>
-        </button>
+    <div className="panel corner-brackets p-4 sm:p-5 space-y-5 animate-fade-in">
+      <div className="flex items-start justify-between gap-4 border-b border-[var(--panel-border)] pb-3">
+        <div>
+          <p className="console-label mb-1 text-[10px]">SEARCH & FILTER</p>
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+            Narrow the board by mission name, provider, and launch state.
+          </p>
+        </div>
+        <span className="console-value text-xs tracking-[0.2em]">
+          {String(activeFilterCount).padStart(2, '0')} ACTIVE
+        </span>
       </div>
 
-      {/* Filter Options */}
-      {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4 animate-fade-in">
-          {/* Provider Filter - Buttons */}
-          <div>
-            <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
-              Provider
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {providers.map((provider) => (
+      {/* Search Bar */}
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--console-green)] font-[family-name:var(--font-geist-mono)] text-sm">&gt;</span>
+        <input
+          type="text"
+          placeholder="search launches..."
+          value={filters.search}
+          onChange={(e) => updateFilter('search', e.target.value)}
+          className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-4 py-3 pl-7 text-sm text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)] placeholder-[var(--text-muted)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)]"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-4 border-r border-[var(--console-green)] animate-blink" />
+      </div>
+
+      {/* Provider Filter */}
+      {showProvider && (
+        <div>
+          <label className="console-label text-[10px] mb-2 block">PROVIDER</label>
+          <div className="flex flex-wrap gap-1.5">
+            {defaultProviders.map((provider) => {
+              const isActive = filters.provider === provider.value;
+              return (
                 <button
                   key={provider.value}
                   onClick={() => updateFilter('provider', provider.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    filters.provider === provider.value
-                      ? 'bg-[var(--primary)] text-white shadow-sm'
-                      : 'bg-gray-100 text-[var(--text-primary)] hover:bg-gray-200'
+                  className={`px-2.5 py-1.5 text-[10px] sm:text-xs font-[family-name:var(--font-geist-mono)] font-medium tracking-wider transition-[transform,border-color,color,background-color] duration-200 [transition-timing-function:var(--ease-out-quart)] motion-safe:hover:-translate-y-px border ${
+                    isActive
+                      ? 'border-[var(--console-green)]/50 text-[var(--console-green)] bg-[var(--console-green)]/5'
+                      : 'border-[var(--panel-border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--panel-border)]'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    <span>{provider.icon}</span>
-                    <span>{provider.label}</span>
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${isActive ? 'bg-[var(--console-green)] shadow-[0_0_4px_var(--console-green)]' : 'bg-[var(--text-muted)]/30'}`} />
+                    {provider.label}
                   </span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-
-          {/* Status & Sort - Inline Dropdowns */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
-                Status
-              </label>
-              <select
-                value={filters.status}
-                onChange={(e) => updateFilter('status', e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all"
-              >
-                <option value="all">All Launches</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="live">Live Now</option>
-                <option value="success">Successful</option>
-                <option value="failure">Failed</option>
-                <option value="tbd">TBD</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
-                Sort By
-              </label>
-              <select
-                value={filters.sortBy}
-                onChange={(e) => updateFilter('sortBy', e.target.value as FilterOptions['sortBy'])}
-                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition-all"
-              >
-                <option value="date-asc">Soonest First</option>
-                <option value="date-desc">Latest First</option>
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Clear All Button */}
-          {(filters.search || filters.provider !== 'all' || filters.status !== 'all') && (
-            <div className="pt-2 border-t border-gray-200">
-              <button
-                onClick={() => {
-                  const newFilters = {
-                    search: '',
-                    provider: 'all',
-                    status: 'all',
-                    sortBy: filters.sortBy,
-                  };
-                  setFilters(newFilters);
-                  onFilterChange(newFilters);
-                }}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--primary)] font-medium transition-colors"
-              >
-                ✕ Clear all filters
-              </button>
-            </div>
-          )}
         </div>
       )}
 
+      {/* Status & Sort */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="console-label text-[10px] mb-2 block">STATUS</label>
+          <select
+            value={filters.status}
+            onChange={(e) => updateFilter('status', e.target.value)}
+            className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-3 py-2.5 text-xs text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)] sm:text-sm"
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="console-label text-[10px] mb-2 block">SORT</label>
+          <select
+            value={filters.sortBy}
+            onChange={(e) => updateFilter('sortBy', e.target.value as FilterOptions['sortBy'])}
+            className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-3 py-2.5 text-xs text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)] sm:text-sm"
+          >
+            <option value="date-asc">SOONEST</option>
+            <option value="date-desc">LATEST</option>
+            <option value="name-asc">NAME A-Z</option>
+            <option value="name-desc">NAME Z-A</option>
+          </select>
+        </div>
+      </div>
+
       {/* Active Filter Tags */}
-      {(filters.search || filters.provider !== 'all' || filters.status !== 'all') && (
-        <div className="flex flex-wrap gap-2">
+      {(filters.search || (showProvider && filters.provider !== 'all') || filters.status !== 'all') && (
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--panel-border)]">
           {filters.search && (
             <button
               onClick={() => updateFilter('search', '')}
-              className="px-3 py-1.5 bg-[var(--primary)]/10 border border-[var(--primary)]/30 text-[var(--primary)] rounded-lg text-sm font-medium hover:bg-[var(--primary)]/20 transition-all"
+              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-cyan)]/30 text-[var(--console-cyan)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
             >
-              🔍 &quot;{filters.search}&quot; ✕
+              [{filters.search}]
+              <X size={10} />
             </button>
           )}
-          {filters.provider !== 'all' && (
+          {showProvider && filters.provider !== 'all' && (
             <button
               onClick={() => updateFilter('provider', 'all')}
-              className="px-3 py-1.5 bg-[var(--secondary)]/10 border border-[var(--secondary)]/30 text-[var(--secondary)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)]/20 transition-all"
+              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-green)]/30 text-[var(--console-green)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
             >
-              {providers.find(p => p.value === filters.provider)?.icon} {providers.find(p => p.value === filters.provider)?.label} ✕
+              [{defaultProviders.find((provider) => provider.value === filters.provider)?.label}]
+              <X size={10} />
             </button>
           )}
           {filters.status !== 'all' && (
             <button
               onClick={() => updateFilter('status', 'all')}
-              className="px-3 py-1.5 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded-lg text-sm font-medium hover:bg-[var(--accent)]/20 transition-all"
+              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-amber)]/30 text-[var(--console-amber)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
             >
-              {filters.status} ✕
+              [{filters.status.toUpperCase()}]
+              <X size={10} />
             </button>
           )}
+          <button
+            onClick={() => {
+              const reset = { ...defaultFilters, ...initialFilters, sortBy: filters.sortBy };
+              setFilters(reset);
+              onFilterChange(reset);
+            }}
+            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--console-green)] font-[family-name:var(--font-geist-mono)] tracking-wider transition-colors"
+          >
+            CLEAR ALL
+          </button>
         </div>
       )}
     </div>

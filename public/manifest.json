@@ -22,13 +22,6 @@
     }
   ],
   "categories": ["news", "education", "entertainment"],
-  "screenshots": [
-    {
-      "src": "/screenshot-1.png",
-      "sizes": "1280x720",
-      "type": "image/png"
-    }
-  ],
   "shortcuts": [
     {
       "name": "View Upcoming Launches",

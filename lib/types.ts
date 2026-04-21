@@ -85,16 +85,42 @@ export interface LL2Launch {
     };
     map_image?: string | null;
   };
+  launch_service_provider?: {
+    name: string;
+    logo_url?: string | null;
+  } | null;
   webcast_live: boolean;
   vidURLs: Array<{
     url: string;
     title: string;
+    priority?: number;
+    source?: string | null;
+    feature_image?: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    type?: {
+      name: string;
+    } | null;
   }> | null;
   mission: {
     name: string;
     description: string;
     type: string;
+    orbit?: {
+      name: string;
+      abbrev: string;
+    } | null;
   } | null;
+  timeline?: Array<{
+    type: {
+      name: string;
+    };
+    relative_time: string;
+    description: string;
+  }> | null;
+  program?: Array<{
+    name: string;
+  }> | null;
   image?: string | null;
 }
 
@@ -109,7 +135,31 @@ export interface APOD {
   url: string;
 }
 
-// Combined Launch Type (for our app)
+export interface LaunchLocation {
+  lat: number;
+  lng: number;
+  name: string;
+  countryCode?: string;
+}
+
+export interface LaunchStream {
+  url: string;
+  title: string;
+  priority?: number;
+  source?: string | null;
+  thumbnail?: string | null;
+  type?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  isLive?: boolean;
+}
+
+export interface LaunchTimelineEvent {
+  type: string;
+  relativeTime: string;
+  description: string;
+}
+
 export interface Launch {
   id: string;
   name: string;
@@ -118,17 +168,89 @@ export interface Launch {
   rocket: string;
   launchSite: string;
   status: 'upcoming' | 'live' | 'success' | 'failure' | 'tbd';
+  statusName?: string | null;
+  missionName?: string | null;
+  missionType?: string | null;
+  windowStart?: string | null;
+  windowEnd?: string | null;
   livestream: string | null;
+  livestreams?: LaunchStream[] | null;
   description: string | null;
   isLive: boolean;
+  webcastLive?: boolean;
   image?: string | null;
   missionPatch?: string | null;
-  location?: {
-    lat: number;
-    lng: number;
-    name: string;
-    countryCode?: string;
-  } | null;
+  rocketImageUrl?: string | null;
+  launchImageUrl?: string | null;
+  padMapImage?: string | null;
+  location?: LaunchLocation | null;
+  provider?: string | null;
+  providerLogo?: string | null;
+  program?: string | null;
+  timeline?: LaunchTimelineEvent[] | null;
+  videoThumbnail?: string | null;
+  source: 'spacex' | 'll2';
+  ll2Id?: string | null;
+  orbit?: string | null;
+  rocketFamily?: string | null;
+  rocketVariant?: string | null;
+}
+
+export interface LaunchStreamCandidate {
+  id: string;
+  title: string;
+  url: string;
+  channelTitle: string;
+  channelUrl?: string | null;
+  source: 'provided' | 'youtube-api' | 'provider-channel' | 'search';
+  confidence: 'high' | 'medium' | 'low';
+  liveStatus: 'live' | 'upcoming' | 'ended' | 'unknown';
+  thumbnail?: string | null;
+  scheduledStartTime?: string | null;
+  actualStartTime?: string | null;
+  actualEndTime?: string | null;
+  concurrentViewers?: number | null;
+  note?: string | null;
+  score?: number | null;
+}
+
+export interface LaunchNewsItem {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  summary?: string | null;
+}
+
+export interface LaunchSocialItem {
+  id: string;
+  platform: 'reddit' | 'x';
+  title: string;
+  url: string;
+  publishedAt?: string | null;
+  author?: string | null;
+  community?: string | null;
+  note?: string | null;
+}
+
+export interface LaunchIntel {
+  summary: {
+    streamState: 'live' | 'upcoming' | 'standby' | 'search' | 'none';
+    recommendedLabel: string;
+    recommendedUrl: string | null;
+    rationale: string;
+    lastUpdated: string;
+  };
+  streamCandidates: LaunchStreamCandidate[];
+  newsItems: LaunchNewsItem[];
+  socialItems: LaunchSocialItem[];
+  quickLinks: {
+    youtubeSearch: string;
+    providerChannel: string | null;
+    redditSearch: string;
+    xSearch: string;
+  };
 }
 
 // Rocket Facts Type

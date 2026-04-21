@@ -1,280 +1,156 @@
 # API Documentation
 
-LaunchWatch uses three external APIs to provide launch data and space content.
+LaunchWatch pulls data from external launch/media APIs and exposes internal API routes for normalized launch data and launch intelligence.
 
 ## External APIs
 
 ### SpaceX API v4
 
-**Base URL**: `https://api.spacexdata.com/v4`
+- Base URL: `https://api.spacexdata.com/v4`
+- Auth: none
+- Used for: upcoming launches, past launches, rocket metadata
 
-**Authentication**: None required
+LaunchWatch uses the SpaceX query endpoint so rocket and launchpad references can be populated in one request.
 
-**Rate Limits**: None
+### Launch Library 2
 
-**Usage in LaunchWatch**:
-- Fetch upcoming SpaceX launches
-- Get rocket specifications
-- Access launch history
+- Free URL: `https://ll.thespacedevs.com/2.2.0`
+- Premium URL: `https://lldev.thespacedevs.com/2.2.0`
+- Auth: optional `Token` header
+- Used for: non-SpaceX upcoming launches, launch status, launch pad coordinates, and webcast hints
 
-**Example Request**:
-```bash
-curl -X POST https://api.spacexdata.com/v4/launches/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": { "upcoming": true },
-    "options": {
-      "populate": ["rocket", "launchpad"],
-      "sort": { "date_unix": "asc" }
-    }
-  }'
-```
+LaunchWatch keeps a longer cache window on Launch Library 2 responses to stay under free-tier limits.
 
-**Response**:
+### NASA APOD
+
+- Base URL: `https://api.nasa.gov`
+- Auth: optional key, otherwise `DEMO_KEY`
+- Used for: rotating fact content in the header
+
+### YouTube Data API
+
+- Base URL: `https://www.googleapis.com/youtube/v3`
+- Auth: optional `YOUTUBE_DATA_API_KEY`
+- Used for: ranking candidate livestreams when provider-supplied links are missing or ambiguous
+
+### Spaceflight News API
+
+- Base URL: `https://api.spaceflightnewsapi.net/v4`
+- Auth: none
+- Used for: recent launch-related coverage in the launch-intel layer
+
+### Reddit Search API
+
+- Base URL: `https://www.reddit.com/search.json`
+- Auth: none
+- Used for: recent mission-related community chatter in the launch-intel layer
+
+### X Recent Search
+
+- Base URL: `https://api.x.com/2`
+- Auth: optional `X_BEARER_TOKEN`, or OAuth 1.0a user-context credentials via `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`, `X_CONSUMER_KEY`, and `X_CONSUMER_KEY_SECRET`
+- Used for: recent mission-related X posts in the launch-intel layer
+
+## Internal API Routes
+
+### `GET /api/launches?type=all`
+
+Returns normalized upcoming launches.
+
+Response shape:
+
 ```json
 {
-  "docs": [
-    {
-      "id": "abc123",
-      "name": "Starlink Mission",
-      "date_utc": "2025-12-01T10:00:00.000Z",
-      "date_unix": 1733050800,
-      "rocket": {
-        "id": "5e9d0d95eda69973a809d1ec",
-        "name": "Falcon 9"
-      },
-      "links": {
-        "webcast": "https://youtube.com/watch?v=...",
-        "youtube_id": "..."
-      }
-    }
-  ]
-}
-```
-
-**Documentation**: [SpaceX API Docs](https://github.com/r-spacex/SpaceX-API/tree/master/docs)
-
----
-
-### Launch Library 2 API
-
-**Base URL**: 
-- Free: `https://ll.thespacedevs.com/2.2.0`
-- Premium: `https://lldev.thespacedevs.com/2.2.0`
-
-**Authentication**: Optional (Token in header for premium)
-
-**Rate Limits**:
-- Free: 15 requests/hour
-- Premium: Higher limits
-
-**Usage in LaunchWatch**:
-- Fetch global launch schedule (all space agencies)
-- Get launch status updates
-- Access livestream URLs
-
-**Example Request**:
-```bash
-# Free tier
-curl https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=20
-
-# With API key (premium)
-curl https://lldev.thespacedevs.com/2.2.0/launch/upcoming/?limit=20 \
-  -H "Authorization: Token YOUR_API_KEY"
-```
-
-**Response**:
-```json
-{
-  "results": [
-    {
-      "id": "abc-123-def",
-      "name": "Falcon 9 | Starlink Mission",
-      "net": "2025-12-01T10:00:00Z",
-      "status": {
-        "id": 1,
-        "name": "Go",
-        "abbrev": "Go"
-      },
-      "rocket": {
-        "configuration": {
-          "name": "Falcon 9",
-          "family": "Falcon"
-        }
-      },
-      "pad": {
-        "name": "SLC-40",
-        "location": {
-          "name": "Cape Canaveral, FL",
-          "country_code": "USA"
-        }
-      },
-      "webcast_live": false,
-      "vidURLs": [
-        {
-          "url": "https://youtube.com/watch?v=...",
-          "title": "SpaceX Livestream"
-        }
-      ]
-    }
-  ]
-}
-```
-
-**Documentation**: [Launch Library 2 Docs](https://ll.thespacedevs.com/2.2.0/swagger/)
-
----
-
-### NASA API
-
-**Base URL**: `https://api.nasa.gov`
-
-**Authentication**: API Key required (free)
-
-**Rate Limits**:
-- DEMO_KEY: 30 requests/hour
-- Personal Key: 1000 requests/hour
-
-**Usage in LaunchWatch**:
-- Fetch Astronomy Picture of the Day (APOD)
-- Display space imagery and facts
-
-**Example Request**:
-```bash
-curl "https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY"
-```
-
-**Response**:
-```json
-{
-  "date": "2025-11-16",
-  "explanation": "What's that in the night sky? A beautiful nebula...",
-  "hdurl": "https://apod.nasa.gov/apod/image/2511/nebula_hd.jpg",
-  "media_type": "image",
-  "title": "The Eagle Nebula",
-  "url": "https://apod.nasa.gov/apod/image/2511/nebula.jpg"
-}
-```
-
-**Get API Key**: [https://api.nasa.gov](https://api.nasa.gov)
-
-**Documentation**: [NASA API Docs](https://api.nasa.gov/)
-
----
-
-## LaunchWatch Internal API
-
-### GET /api/launches
-
-Internal API route for fetching launch data with server-side caching.
-
-**Parameters**:
-- `type`: string (required) - One of: `all`, `live`, `next`
-
-**Examples**:
-
-```bash
-# Get all upcoming launches
-curl http://localhost:3000/api/launches?type=all
-
-# Get launches happening now (±2 hours)
-curl http://localhost:3000/api/launches?type=live
-
-# Get next upcoming launch
-curl http://localhost:3000/api/launches?type=next
-```
-
-**Response (type=all)**:
-```json
-{
-  "launches": [
-    {
-      "id": "spacex-abc123",
-      "name": "Starlink Mission",
-      "date": "2025-12-01T10:00:00.000Z",
-      "dateUnix": 1733050800,
-      "rocket": "Falcon 9",
-      "launchSite": "SLC-40",
-      "status": "upcoming",
-      "livestream": "https://youtube.com/watch?v=...",
-      "description": "Launch of 23 Starlink satellites",
-      "isLive": false,
-      "image": null,
-      "missionPatch": null,
-      "location": null
-    }
-  ],
+  "launches": [],
   "cached": true,
   "source": "server-cache"
 }
 ```
 
-**Response (type=next)**:
+### `GET /api/launches?type=live`
+
+Returns launches inside the live-launch window.
+
+### `GET /api/launches?type=next`
+
+Returns the next upcoming launch.
+
+Response shape:
+
 ```json
 {
-  "launch": {
-    "id": "spacex-abc123",
-    "name": "Starlink Mission",
-    "date": "2025-12-01T10:00:00.000Z",
-    "dateUnix": 1733050800,
-    "rocket": "Falcon 9",
-    "launchSite": "SLC-40",
-    "status": "upcoming",
-    "livestream": "https://youtube.com/watch?v=...",
-    "description": "Launch of 23 Starlink satellites",
-    "isLive": false
-  },
+  "launch": null,
   "cached": false,
   "source": "api"
 }
 ```
 
-**Caching**: Responses are cached server-side for 30 minutes.
+### `GET /api/launch-intel`
 
----
+Returns launch-specific intelligence for a serialized launch payload. The route aggregates:
 
-## API Integration Code
+- ranked YouTube/provider stream candidates
+- recent coverage from Spaceflight News API
+- recent Reddit items
+- recent X items when either `X_BEARER_TOKEN` or the X OAuth credential set is configured
+- quick links for YouTube, provider channels, Reddit, and X search
 
-All API integration code is in `lib/api.ts`:
+## Normalized Launch Shape
 
-- `getSpaceXUpcomingLaunches()` - Fetch SpaceX launches
-- `getLL2UpcomingLaunches(limit)` - Fetch Launch Library 2 launches
-- `getNASAAPOD()` - Fetch NASA Astronomy Picture of the Day
-- `getAllUpcomingLaunches()` - Combined launch data from all sources
-- `getLiveLaunches()` - Filter for launches happening now
-- `getNextLaunch()` - Get next upcoming launch
-- `getRocketFacts()` - Generate rocket facts for banner
+The app UI works from the shared `Launch` type in [lib/types.ts](/Users/matthewschwen/projects/launchwatch/lib/types.ts).
 
----
+Fields include:
 
-## Rate Limit Handling
+- `id`
+- `name`
+- `date`
+- `dateUnix`
+- `rocket`
+- `launchSite`
+- `status`
+- `livestream`
+- `description`
+- `isLive`
+- `image`
+- `missionPatch`
+- `location`
+- `provider`
+- `program`
+- `timeline`
+- `livestreams`
+- `rocketFamily`
+- `rocketVariant`
 
-LaunchWatch implements smart caching to avoid hitting rate limits:
+## Current Cache Durations
 
-1. **Client-side caching**: Launches refresh every 10 minutes
-2. **Server-side caching**: API responses cached for 30 minutes
-3. **Stale-while-revalidate**: Returns stale cache on rate limit errors
-4. **Extended cache for LL2**: 30-minute cache for rate-limited endpoints
+| Payload | Duration |
+| --- | --- |
+| `all` | 30 minutes |
+| `live` | 2 minutes |
+| `next` | 5 minutes |
+| `launch-intel` aggregate | 2 minutes fresh, 10 minutes stale fallback |
+| `launch-intel` stream candidates | 2 minutes fresh, 10 minutes stale fallback |
+| `launch-intel` news items | 10 minutes fresh, 60 minutes stale fallback |
+| `launch-intel` Reddit/X items | 5 minutes fresh, 30 minutes stale fallback |
+| Launch Library 2 raw fetches | 30 minutes |
+| NASA APOD | 24 hours |
+| SpaceX rockets | 24 hours |
 
----
+## Client Fetching
 
-## Error Handling
+The app currently fetches:
 
-All API functions handle errors gracefully:
+- upcoming launches through `/api/launches?type=all`
+- live launches through `/api/launches?type=live`
+- next launch through `/api/launches?type=next`
+- launch intelligence through `/api/launch-intel`
+- past SpaceX launches directly through `lib/api.ts`
+- rocket facts directly through `lib/api.ts`
 
-```typescript
-try {
-  const data = await fetch(API_URL);
-  return data;
-} catch (error) {
-  console.error('API error:', error);
-  // Return stale cache if available
-  const staleCache = getStaleCachedData(cacheKey);
-  if (staleCache) return staleCache;
-  // Return empty array as fallback
-  return [];
-}
-```
+## Notes
 
-This ensures the app continues working even if external APIs are down.
-
+- There is no authentication layer
+- There is no database-backed API
+- The service worker is not a data API source of truth
+- Launch-intel caches and dedupes in-flight source fetches server-side to reduce repeated upstream work
+- If you change response shape or cache timing, update this file and [docs/ARCHITECTURE.md](/Users/matthewschwen/projects/launchwatch/docs/ARCHITECTURE.md)

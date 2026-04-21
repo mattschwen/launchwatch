@@ -1,117 +1,180 @@
 'use client';
 
-import { useState } from 'react';
-import { useNextLaunch } from '@/lib/hooks';
+import Image from 'next/image';
+import { useMemo, useState } from 'react';
+import { useLaunchIntel, useNextLaunch } from '@/lib/hooks';
+import { getFallbackLaunchSummary } from '@/lib/launch-action';
+import { inferLaunchProvider } from '@/lib/youtube';
 import Countdown from './Countdown';
 import AddToCalendar from './AddToCalendar';
-import { generateYouTubeSearchUrl, getProviderYouTubeChannel } from '@/lib/youtube';
+import LaunchBriefingDrawer from './LaunchBriefingDrawer';
+import OrbitalField from './OrbitalField';
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
+
+function getSignalPill(state: 'live' | 'upcoming' | 'standby' | 'search' | 'none') {
+  switch (state) {
+    case 'live':
+      return 'signal-pill signal-pill-live';
+    case 'upcoming':
+      return 'signal-pill signal-pill-upcoming';
+    case 'standby':
+      return 'signal-pill signal-pill-standby';
+    default:
+      return 'signal-pill signal-pill-upcoming';
+  }
+}
 
 export default function NextLaunch() {
   const { nextLaunch, loading } = useNextLaunch();
-  const [showStreamMenu, setShowStreamMenu] = useState(false);
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const { intel, loading: intelLoading } = useLaunchIntel(nextLaunch, Boolean(nextLaunch));
 
-  if (loading || !nextLaunch) {
+  const action = useMemo(() => {
+    if (!nextLaunch) return null;
+    return intel?.summary || getFallbackLaunchSummary(nextLaunch);
+  }, [intel, nextLaunch]);
+
+  if (loading || !nextLaunch || !action) {
     return null;
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
-  };
+  const provider = inferLaunchProvider(nextLaunch);
+  const displayImage = nextLaunch.missionPatch || nextLaunch.image;
 
   return (
-    <div className="glass border border-[var(--primary)]/30 rounded-xl p-4 sm:p-5 lg:p-6">
-      <h2 className="text-base sm:text-lg lg:text-xl font-bold gradient-text mb-3">Next Launch</h2>
+    <>
+      <section className="panel-strong mission-frame reveal-up overflow-hidden rounded-[2rem] p-5 sm:p-6 lg:p-7">
+        <div className="relative z-10 grid gap-6 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="section-kicker">Next launch</p>
+              <span className={getSignalPill(action.streamState)}>{action.recommendedLabel}</span>
+              {intelLoading && <span className="text-xs text-[var(--text-tertiary)]">Refreshing stream leads…</span>}
+            </div>
 
-      <div className="space-y-3 sm:space-y-4">
-        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-[var(--text-primary)]">{nextLaunch.name}</h3>
-        
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="glass rounded-lg p-2 sm:p-3">
-            <p className="text-[var(--text-muted)] text-xs">Rocket</p>
-            <p className="font-medium text-[var(--text-primary)] text-xs sm:text-sm">{nextLaunch.rocket}</p>
-          </div>
-          <div className="glass rounded-lg p-2 sm:p-3">
-            <p className="text-[var(--text-muted)] text-xs">Site</p>
-            <p className="font-medium text-[var(--text-primary)] truncate text-xs sm:text-sm">{nextLaunch.launchSite}</p>
-          </div>
-        </div>
+            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.92] text-[var(--text-primary)] sm:text-5xl">
+              {nextLaunch.name}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
+              {nextLaunch.description || 'Mission briefing is still building. Open the drawer for ranked streams, news radar, and community pulse.'}
+            </p>
 
-        {nextLaunch.description && (
-          <p className="text-[var(--text-secondary)] text-sm line-clamp-2">{nextLaunch.description}</p>
-        )}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="panel rounded-[1.25rem] p-4">
+                <p className="section-kicker">Operator</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{provider}</p>
+              </div>
+              <div className="panel rounded-[1.25rem] p-4">
+                <p className="section-kicker">Vehicle</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{nextLaunch.rocket}</p>
+              </div>
+              <div className="panel rounded-[1.25rem] p-4 sm:col-span-2 xl:col-span-1">
+                <p className="section-kicker">Pad</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{nextLaunch.launchSite}</p>
+              </div>
+            </div>
 
-        <Countdown targetDate={nextLaunch.date} />
+            <div className="mt-5 rounded-[1.5rem] border border-[var(--line-soft)] bg-white/58 p-4 sm:p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="section-kicker">Window</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{formatDate(nextLaunch.date)}</p>
+              </div>
+              <Countdown targetDate={nextLaunch.date} />
+            </div>
 
-        <div className="flex gap-2 sm:gap-3 relative">
-          {nextLaunch.livestream ? (
-            <a
-              href={nextLaunch.livestream}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 text-center px-3 sm:px-4 py-2.5 sm:py-3 bg-[var(--primary)] hover:bg-[var(--primary-hover)] active:bg-[var(--primary-hover)] text-white text-xs sm:text-sm font-semibold rounded-lg transition-all min-h-[44px] flex items-center justify-center"
-            >
-              <span className="hidden sm:inline">Watch Stream →</span>
-              <span className="sm:hidden">Watch →</span>
-            </a>
-          ) : (
-            <>
-              <button
-                onClick={() => setShowStreamMenu(!showStreamMenu)}
-                className="flex-1 text-center px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-gray-200 hover:border-[var(--primary)] text-[var(--text-primary)] hover:text-[var(--primary)] active:border-[var(--primary)] text-xs sm:text-sm font-semibold rounded-lg transition-all min-h-[44px] flex items-center justify-center shadow-sm hover:shadow-md"
-              >
-                <span className="hidden sm:inline">Find Stream 🔍</span>
-                <span className="sm:hidden">Find 🔍</span>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {action.recommendedUrl && (
+                <a
+                  href={action.recommendedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="button-primary px-5"
+                >
+                  {action.recommendedLabel}
+                </a>
+              )}
+              <button onClick={() => setBriefingOpen(true)} className="button-secondary px-5">
+                Mission brief
               </button>
-              
-              {showStreamMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[60]"
-                    onClick={() => setShowStreamMenu(false)}
+              <AddToCalendar launch={nextLaunch} variant="icon" />
+            </div>
+
+            <div className="mt-4 grid gap-3 border-t border-[var(--line-soft)] pt-4 sm:grid-cols-3">
+              <div>
+                <p className="section-kicker">Signal</p>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">{action.rationale}</p>
+              </div>
+              <div>
+                <p className="section-kicker">Coverage</p>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  {intel ? `${intel.streamCandidates.length} ranked stream leads, ${intel.newsItems.length} news hits.` : 'Building ranked stream leads.'}
+                </p>
+              </div>
+              <div>
+                <p className="section-kicker">Community</p>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  {intel ? `${intel.socialItems.length} recent community items surfaced for this mission.` : 'Reddit and X lookups load with the briefing.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="panel overflow-hidden rounded-[1.6rem]">
+              <div className="telemetry-divider px-5 py-4">
+                <p className="section-kicker">Watch posture</p>
+                <p className="mt-2 font-display text-3xl uppercase leading-none text-[var(--text-primary)]">
+                  {action.streamState === 'live' ? 'Live signal' : action.streamState === 'upcoming' ? 'Standby feed' : 'Awaiting verification'}
+                </p>
+              </div>
+
+              {displayImage ? (
+                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  <Image
+                    src={displayImage}
+                    alt={nextLaunch.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1280px) 100vw, 28rem"
                   />
-                  <div className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-lg shadow-lg z-[70] border border-gray-200">
-                    <div className="p-2 space-y-1">
-                      <p className="text-xs text-[var(--text-muted)] px-2 py-1">Find livestream:</p>
-                      {getProviderYouTubeChannel(nextLaunch) && (
-                        <a
-                          href={getProviderYouTubeChannel(nextLaunch)!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-gray-100 rounded flex items-center gap-2"
-                          onClick={() => setShowStreamMenu(false)}
-                        >
-                          <span>📺</span>
-                          <span>Provider Channel</span>
-                        </a>
-                      )}
-                      <a
-                        href={generateYouTubeSearchUrl(nextLaunch)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-gray-100 rounded flex items-center gap-2"
-                        onClick={() => setShowStreamMenu(false)}
-                      >
-                        <span>🔍</span>
-                        <span>Search YouTube</span>
-                      </a>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[rgba(9,17,29,0.18)] via-transparent to-transparent" />
+                </div>
+              ) : (
+                <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,rgba(36,84,166,0.18),rgba(216,106,36,0.14))]">
+                  <OrbitalField variant="panel" />
+                  <div className="absolute inset-0 grid place-items-center">
+                    <div className="text-center">
+                      <p className="section-kicker">Operator</p>
+                      <p className="mt-2 font-display text-5xl uppercase text-[var(--text-primary)]">{provider}</p>
                     </div>
                   </div>
-                </>
+                </div>
               )}
-            </>
-          )}
-          <AddToCalendar launch={nextLaunch} variant="icon" />
+            </div>
+
+            <div className="panel rounded-[1.5rem] p-5">
+              <p className="section-kicker">What changed</p>
+              <div className="mt-3 space-y-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+                <p>The countdown no longer flips into a generic watch state just because launch data contains a webcast URL.</p>
+                <p>Primary action now follows ranked launch intel when it exists, otherwise it falls back to official channel tracking or search.</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <LaunchBriefingDrawer launch={nextLaunch} open={briefingOpen} onClose={() => setBriefingOpen(false)} />
+    </>
   );
 }

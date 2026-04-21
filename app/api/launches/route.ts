@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllUpcomingLaunches, getLiveLaunches, getNextLaunch } from '@/lib/api';
+import type { Launch } from '@/lib/types';
 
-// Server-side cache (shared across all users!)
-let serverCache: {
-  all?: { data: any; timestamp: number };
-  live?: { data: any; timestamp: number };
-  next?: { data: any; timestamp: number };
-} = {};
+type CacheKey = 'all' | 'live' | 'next';
+type CacheValueMap = {
+  all: Launch[];
+  live: Launch[];
+  next: Launch | null;
+};
 
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+type CacheEntry = {
+  data: Launch[] | Launch | null;
+  timestamp: number;
+};
 
-function getCached(key: 'all' | 'live' | 'next') {
+const serverCache: Partial<Record<CacheKey, CacheEntry>> = {};
+
+const CACHE_DURATIONS: Record<CacheKey, number> = {
+  all: 30 * 60 * 1000,
+  live: 2 * 60 * 1000,
+  next: 5 * 60 * 1000,
+};
+
+function getCached<K extends CacheKey>(key: K): CacheValueMap[K] | null {
   const cached = serverCache[key];
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATIONS[key]) {
+    return cached.data as CacheValueMap[K];
   }
   return null;
 }
 
-function setCache(key: 'all' | 'live' | 'next', data: any) {
+function setCache<K extends CacheKey>(key: K, data: CacheValueMap[K]) {
   serverCache[key] = { data, timestamp: Date.now() };
 }
 

@@ -1,86 +1,42 @@
 # Quick Start for Contributors
 
-Get started contributing to LaunchWatch in 5 minutes.
+This is the fastest path to making a safe change in LaunchWatch.
 
-## 1. Fork & Clone
+## 1. Install and Run
 
 ```bash
-# Fork the repo on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/launchwatch.git
+git clone https://github.com/mattschwen/launchwatch.git
 cd launchwatch
-```
-
-## 2. Install Dependencies
-
-```bash
 npm install
-```
-
-## 3. Run Locally
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+## 2. Make a Focused Change
 
-## 4. Make Changes
+Common edit areas:
 
-Create a branch:
-```bash
-git checkout -b feat/your-feature-name
-```
+- `app/` for routes and layout
+- `components/` for UI
+- `lib/` for data, hooks, and helpers
+- `docs/` and `.memory/` for documentation
 
-Make your changes, then test:
-```bash
-npm run lint      # Check code style
-npm run build     # Test build
-```
-
-## 5. Submit Pull Request
+## 3. Verify
 
 ```bash
-git add .
-git commit -m "feat: add awesome feature"
-git push origin feat/your-feature-name
+npm run lint
+npm run build
 ```
 
-Open a Pull Request on GitHub!
+## 4. Update Docs
 
-## Need More Details?
+If you changed behavior, UI, branding, cache timing, or setup, update the docs in the same branch.
 
-- **Full Contributing Guide**: [CONTRIBUTING.md](../CONTRIBUTING.md)
-- **Architecture**: [ARCHITECTURE.md](./ARCHITECTURE.md)
-- **API Docs**: [API.md](./API.md)
+## 5. Open a PR
 
-## Quick Reference
+Include:
 
-### Project Structure
-```
-app/          # Pages and routes
-components/   # React components
-lib/          # Utilities and API functions
-public/       # Static assets
-docs/         # Documentation
-```
+- a short summary
+- screenshots for UI changes
+- the commands you ran to verify the change
 
-### Important Files
-- `lib/api.ts` - External API integrations
-- `lib/types.ts` - TypeScript types
-- `lib/hooks.ts` - React hooks
-- `components/LaunchCard.tsx` - Launch display component
-
-### Commands
-```bash
-npm run dev    # Development server
-npm run build  # Production build
-npm run lint   # Check code quality
-npm start      # Run production build
-```
-
-## Questions?
-
-Open a [Discussion](https://github.com/yourusername/launchwatch/discussions) or comment on the relevant issue.
-
-Happy coding! 🚀
-
+For the full workflow, see [CONTRIBUTING.md](/Users/matthewschwen/projects/launchwatch/CONTRIBUTING.md).
