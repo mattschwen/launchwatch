@@ -1,187 +1,230 @@
-// Service Worker for LaunchWatch PWA
-const CACHE_NAME = 'launchwatch-v3';
+const CACHE_PREFIX = 'launchwatch-';
+const CACHE_VERSION = 'v5';
+const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
+const STATIC_CACHE = `${CACHE_PREFIX}static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
+const MAX_STATIC_ENTRIES = 96;
 
-// Assets to cache immediately
-const STATIC_CACHE_URLS = [
-  '/',
-  '/history',
-  '/offline.html',
-  '/manifest.json',
-  '/icon-192.svg',
-  '/icon-512.svg',
+const SHELL_ASSETS = [
+  OFFLINE_URL,
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
 ];
+const SHELL_ASSET_PATHS = new Set(SHELL_ASSETS);
 
-// Install event - cache static assets
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_CACHE_URLS);
-    })
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isFrameworkDataRequest(request, url) {
+  return (
+    url.searchParams.has('_rsc') ||
+    request.headers.has('RSC') ||
+    request.headers.has('Next-Router-Prefetch') ||
+    request.headers.has('Next-Router-State-Tree') ||
+    request.headers.get('Accept')?.includes('text/x-component')
   );
-  // Force waiting service worker to become active
-  self.skipWaiting();
-});
+}
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  // Claim all clients immediately
-  self.clients.claim();
-});
+function isImmutableNextAsset(url) {
+  return url.pathname.startsWith('/_next/static/');
+}
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
+function isExplicitShellAsset(url) {
+  return url.search === '' && SHELL_ASSET_PATHS.has(url.pathname);
+}
 
-  // Skip caching for POST requests (API calls)
-  if (event.request.method !== 'GET') {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            event.waitUntil(
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache))
-            );
-          }
-
-          return response;
-        })
-        .catch(async () => {
-          const cachedResponse = await caches.match(event.request);
-          return cachedResponse || caches.match(OFFLINE_URL);
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Return cached response and update cache in background
-        event.waitUntil(
-          fetch(event.request).then((response) => {
-            if (response && response.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, response.clone());
-              });
-            }
-          }).catch(() => {
-            // Silently fail background updates
-          })
-        );
-        return cachedResponse;
-      }
-
-      // Not in cache, fetch from network
-      return fetch(event.request)
-        .then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type === 'error') {
-            return response;
-          }
-
-          // Cache successful responses (GET only)
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-
-          return response;
-        })
-        .catch(() => {
-          // Network failed, return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL);
-          }
-        });
-    })
-  );
-});
-
-// Background sync for notifications
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-launches') {
-    event.waitUntil(syncLaunches());
-  }
-});
-
-async function syncLaunches() {
+async function networkFirstNavigation(request) {
   try {
-    // Fetch latest launch data
-    const response = await fetch('/api/launches');
-    const result = await response.json();
-    const launches = Array.isArray(result.launches) ? result.launches : [];
-
-    // Check for upcoming launches and send notifications
-    const now = Date.now();
-    launches.forEach((launch) => {
-      const launchTime = new Date(launch.date).getTime();
-      const timeUntilLaunch = launchTime - now;
-
-      // Notify for launches in 1 hour
-      if (timeUntilLaunch > 0 && timeUntilLaunch <= 60 * 60 * 1000) {
-        self.registration.showNotification('🚀 Launch Alert!', {
-          body: `${launch.name} launching in ${Math.floor(timeUntilLaunch / 60000)} minutes`,
-          icon: '/icon-192.svg',
-          badge: '/icon-192.svg',
-          tag: `launch-${launch.id}`,
-          data: { launchId: launch.id },
-        });
-      }
-    });
-  } catch (error) {
-    console.error('Background sync failed:', error);
+    return await fetch(request);
+  } catch {
+    return (await caches.match(OFFLINE_URL, { cacheName: SHELL_CACHE })) || Response.error();
   }
 }
 
-// Push notification handler
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+async function cacheFirstShellAsset(request) {
+  const cachedResponse = await caches.match(request, { cacheName: SHELL_CACHE });
+  return cachedResponse || fetch(request);
+}
 
-  const options = {
-    body: data.body || 'New rocket launch update!',
-    icon: '/icon-192.svg',
-    badge: '/icon-192.svg',
-    vibrate: [200, 100, 200],
-    data: data,
-    actions: [
-      { action: 'view', title: 'View Launch' },
-      { action: 'close', title: 'Close' },
-    ],
-  };
+async function trimStaticCache(cache) {
+  const cachedRequests = await cache.keys();
+  const overflow = cachedRequests.length - MAX_STATIC_ENTRIES;
 
+  if (overflow <= 0) {
+    return;
+  }
+
+  await Promise.all(
+    cachedRequests.slice(0, overflow).map((cachedRequest) => cache.delete(cachedRequest))
+  );
+}
+
+async function cacheFirstImmutableAsset(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cachedResponse = await cache.match(request);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetch(request);
+  if (networkResponse.ok && networkResponse.type === 'basic') {
+    await cache.put(request, networkResponse.clone());
+    await trimStaticCache(cache);
+  }
+
+  return networkResponse;
+}
+
+function cleanPushText(value, fallback, maxLength) {
+  return typeof value === 'string' && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : fallback;
+}
+
+function normalizePushPayload(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+
+  return value;
+}
+
+function safeNotificationUrl(value) {
+  if (typeof value !== 'string') {
+    return self.location.origin;
+  }
+
+  try {
+    const destination = new URL(value, self.location.origin);
+    return destination.origin === self.location.origin
+      ? destination.href
+      : self.location.origin;
+  } catch {
+    return self.location.origin;
+  }
+}
+
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    self.registration.showNotification(data.title || 'LaunchWatch', options)
+    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS))
   );
 });
 
-// Notification click handler
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter(
+              (cacheName) =>
+                cacheName.startsWith(CACHE_PREFIX) &&
+                cacheName !== SHELL_CACHE &&
+                cacheName !== STATIC_CACHE
+            )
+            .map((cacheName) => caches.delete(cacheName))
+        )
+      )
+      .then(() => caches.open(STATIC_CACHE))
+      .then((cache) => trimStaticCache(cache))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET' || !isSameOrigin(url)) {
+    return;
+  }
+
+  // Launch data and Next.js flight payloads always use the network so a
+  // service worker cannot pin stale application state.
+  if (url.pathname.startsWith('/api/') || isFrameworkDataRequest(request, url)) {
+    return;
+  }
+
+  // Navigations are never cached. A failed request receives only the static
+  // offline document, including navigations with a query string.
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  // Never cache arbitrary query-string GETs.
+  if (url.search.length > 0) {
+    return;
+  }
+
+  if (isExplicitShellAsset(url)) {
+    event.respondWith(cacheFirstShellAsset(request));
+    return;
+  }
+
+  // Only content-hashed Next.js build assets are safe to cache indefinitely.
+  if (isImmutableNextAsset(url)) {
+    event.respondWith(cacheFirstImmutableAsset(request));
+  }
+});
+
+self.addEventListener('push', (event) => {
+  let rawPayload = {};
+
+  try {
+    rawPayload = event.data?.json() ?? {};
+  } catch {
+    rawPayload = { body: event.data?.text() || 'New rocket launch update!' };
+  }
+
+  const data = normalizePushPayload(rawPayload);
+  const title = cleanPushText(data.title, 'LaunchWatch', 80);
+  const body = cleanPushText(data.body, 'New rocket launch update!', 240);
+  const tag = cleanPushText(data.tag, 'launchwatch-update', 80);
+  const url = safeNotificationUrl(data.url);
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag,
+      data: { url },
+      actions: [
+        { action: 'view', title: 'View launch' },
+        { action: 'close', title: 'Close' },
+      ],
+    })
+  );
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'view' || !event.action) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url || '/')
-    );
+  if (event.action === 'close') {
+    return;
   }
+
+  const safeUrl = safeNotificationUrl(event.notification.data?.url);
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+      const existingClient = clients.find((client) => client.url === safeUrl);
+
+      if (existingClient) {
+        return existingClient.focus();
+      }
+
+      return self.clients.openWindow(safeUrl);
+    })
+  );
 });

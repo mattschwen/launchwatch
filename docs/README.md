@@ -1,20 +1,30 @@
 # LaunchWatch Documentation
 
-This directory contains the maintained project docs that should stay in sync with the codebase.
+These files describe the current product and must change with the code contracts they document.
 
 ## Start Here
 
-- [README.md](/Users/matthewschwen/projects/launchwatch/README.md) for the product overview and current branding
-- [ARCHITECTURE.md](/Users/matthewschwen/projects/launchwatch/docs/ARCHITECTURE.md) for app structure and data flow
-- [API.md](/Users/matthewschwen/projects/launchwatch/docs/API.md) for external and internal API behavior
-- [DEPLOYMENT.md](/Users/matthewschwen/projects/launchwatch/docs/DEPLOYMENT.md) for deployment steps
+- [`../README.md`](../README.md) — product overview, setup, routes, and release summary
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — data boundaries, shared client feed, UX responsibilities, and PWA policy
+- [`API.md`](API.md) — canonical IDs, internal endpoints, response states, and provider integrations
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) — local gates, preview review, production promotion, and rollback
+- [`../MOBILE_OPTIMIZATION.md`](../MOBILE_OPTIMIZATION.md) — responsive behavior and QA matrix
 
 ## Contributor Docs
 
-- [CONTRIBUTING.md](/Users/matthewschwen/projects/launchwatch/CONTRIBUTING.md)
-- [CONTRIBUTING_QUICK_START.md](/Users/matthewschwen/projects/launchwatch/docs/CONTRIBUTING_QUICK_START.md)
-- [DOCUMENTATION_INDEX.md](/Users/matthewschwen/projects/launchwatch/docs/DOCUMENTATION_INDEX.md)
+- [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
+- [`CONTRIBUTING_QUICK_START.md`](CONTRIBUTING_QUICK_START.md)
+- [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)
 
-## Internal Reference Notes
+## Documentation Ownership
 
-Internal snapshots and assistant-facing notes live in [.memory/README.md](/Users/matthewschwen/projects/launchwatch/.memory/README.md).
+Update docs in the same pull request when changing:
+
+- canonical launch IDs or normalized fields;
+- `/api/launches`, `/api/launches/[id]`, or `/api/launch-intel`;
+- provider, cache, stale fallback, or environment behavior;
+- Home, Watch, History, detail, navigation, or responsive UX;
+- service-worker caching or update activation;
+- validation commands, CI, preview, or production workflow.
+
+Avoid user-specific absolute paths in tracked Markdown. Repository links should remain relative so they work in forks and code hosts.

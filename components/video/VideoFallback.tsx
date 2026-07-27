@@ -1,55 +1,44 @@
-'use client';
-
-import { Search, Tv, Bell } from 'lucide-react';
-import { Launch } from '@/lib/types';
-import { generateYouTubeSearchUrl, getProviderYouTubeChannel } from '@/lib/youtube';
+import { ExternalLink, Search } from 'lucide-react';
+import type { Launch } from '@/lib/types';
+import {
+  generateYouTubeSearchUrl,
+  getProviderYouTubeChannel,
+} from '@/lib/youtube';
 
 interface VideoFallbackProps {
   launch: Launch;
   className?: string;
 }
 
-export default function VideoFallback({ launch, className = '' }: VideoFallbackProps): React.ReactElement {
+export default function VideoFallback({
+  launch,
+  className = '',
+}: VideoFallbackProps): React.ReactElement {
   const searchUrl = generateYouTubeSearchUrl(launch);
   const channelUrl = getProviderYouTubeChannel(launch);
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       <a
-        href={searchUrl}
+        href={channelUrl || searchUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-medium rounded-lg transition-colors min-h-[44px]"
+        className="action-button action-button-primary"
       >
-        <Search size={16} />
-        <span>Search YouTube</span>
+        <ExternalLink aria-hidden="true" size={16} />
+        {channelUrl ? 'Provider channel' : 'Find stream'}
       </a>
-
-      {channelUrl && (
+      {channelUrl ? (
         <a
-          href={channelUrl}
+          href={searchUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2.5 panel-interactive rounded-lg text-sm font-medium text-[var(--text-primary)] min-h-[44px]"
+          className="action-button action-button-secondary"
         >
-          <Tv size={16} />
-          <span>Provider Channel</span>
+          <Search aria-hidden="true" size={16} />
+          Search YouTube
         </a>
-      )}
-
-      <button
-        onClick={() => {
-          if ('Notification' in window && Notification.permission === 'granted') {
-            alert('Reminder set! You\'ll be notified when the stream goes live.');
-          } else {
-            alert('Enable notifications to get launch reminders.');
-          }
-        }}
-        className="inline-flex items-center gap-2 px-4 py-2.5 panel-interactive rounded-lg text-sm font-medium text-[var(--text-primary)] min-h-[44px]"
-      >
-        <Bell size={16} />
-        <span className="hidden sm:inline">Set Reminder</span>
-      </button>
+      ) : null}
     </div>
   );
 }

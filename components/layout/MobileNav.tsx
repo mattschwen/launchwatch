@@ -2,61 +2,49 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Code2, Home, Tv } from 'lucide-react';
 import { useLiveContext } from '@/lib/contexts';
+import { isNavItemActive, PRIMARY_NAV_ITEMS } from './navigation';
 
 export default function MobileNav(): React.ReactElement {
   const pathname = usePathname();
   const { hasLiveLaunches } = useLiveContext();
 
-  const navLinks = [
-    { href: '/', label: 'HOME', icon: Home },
-    { href: '/watch', label: 'WATCH', icon: Tv, showLiveDot: true },
-  ];
-
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-[rgba(0,255,136,0.15)] bg-[var(--bg-primary)] safe-area-pb">
-      <div className="flex items-center justify-around h-16 px-4">
-        {navLinks.map((link) => {
-          const isActive = pathname === link.href;
+    <nav
+      aria-label="Primary navigation"
+      className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl md:hidden"
+    >
+      <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around px-2">
+        {PRIMARY_NAV_ITEMS.map((link) => {
+          const isActive = isNavItemActive(pathname, link.href);
           const Icon = link.icon;
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-lg mx-1 transition-all ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative mx-0.5 flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] py-2 transition-colors ${
                 isActive
-                  ? 'text-[var(--console-green)] bg-[var(--console-green)]/8'
-                  : 'text-[var(--text-muted)] active:bg-[var(--bg-tertiary)]'
+                  ? 'bg-[var(--surface-accent)] text-[var(--console-green)]'
+                  : 'text-[var(--text-muted)] active:bg-[var(--surface-subtle)] active:text-[var(--text-primary)]'
               }`}
             >
               <div className="relative">
-                <Icon size={22} />
-                {link.showLiveDot && hasLiveLaunches && (
+                <Icon size={20} />
+                {link.showLiveStatus && hasLiveLaunches && (
                   <span className="absolute -top-1 -right-1.5 flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--live)] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--live)]" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--live)]" />
+                    <span className="sr-only">Live launch available</span>
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-[family-name:var(--font-geist-mono)] font-medium tracking-wider">
-                {link.label}
+              <span className="text-[11px] font-medium uppercase tracking-[0.12em] font-[family-name:var(--font-geist-mono)]">
+                {link.label.toUpperCase()}
               </span>
             </Link>
           );
         })}
-        {/* GitHub link */}
-        <a
-          href="https://github.com/mattschwen/launchwatch"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-lg mx-1 text-[var(--text-muted)] active:bg-[var(--bg-tertiary)] transition-all"
-        >
-          <Code2 size={22} />
-          <span className="text-[10px] font-[family-name:var(--font-geist-mono)] font-medium tracking-wider">
-            SOURCE
-          </span>
-        </a>
       </div>
     </nav>
   );

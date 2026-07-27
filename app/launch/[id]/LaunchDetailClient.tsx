@@ -1,0 +1,252 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  CalendarDays,
+  ExternalLink,
+  MapPin,
+  Orbit,
+  Rocket,
+} from 'lucide-react';
+import Countdown from '@/components/Countdown';
+import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import LaunchActions from '@/components/launch/LaunchActions';
+import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
+import StatusBadge from '@/components/ui/StatusBadge';
+import VideoPlayer from '@/components/video/VideoPlayer';
+import {
+  formatLaunchDate,
+  isCompletedLaunch,
+  shortenLaunchSite,
+} from '@/lib/format';
+import { useLaunchIntel } from '@/lib/hooks';
+import type { Launch } from '@/lib/types';
+import { extractYouTubeId } from '@/lib/youtube';
+
+export default function LaunchDetailClient({
+  launch,
+}: {
+  launch: Launch;
+}): React.ReactElement {
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
+    launch,
+    true
+  );
+
+  const completed = isCompletedLaunch(launch);
+  const hasPlayableVideo = Boolean(
+    launch.livestream && extractYouTubeId(launch.livestream)
+  );
+
+  return (
+    <>
+      <div className="page-container py-4 sm:py-6 lg:py-8">
+        <Link
+          href={completed ? '/history' : '/'}
+          className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
+        >
+          <ArrowLeft aria-hidden="true" size={16} />
+          {completed ? 'Back to history' : 'Back to launches'}
+        </Link>
+
+        <section className="surface-card grid min-w-0 gap-7 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusBadge
+                status={launch.status}
+                statusName={launch.statusName}
+              />
+              {launch.provider ? (
+                <span className="text-sm text-[var(--text-muted)]">
+                  {launch.provider}
+                </span>
+              ) : null}
+            </div>
+
+            <h1 className="mt-5 max-w-5xl break-words text-[clamp(2.35rem,5vw,5rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
+              {launch.name}
+            </h1>
+
+            <p className="mt-5 flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <CalendarDays
+                aria-hidden="true"
+                size={17}
+                className="text-[var(--console-green)]"
+              />
+              {formatLaunchDate(launch.date)}
+            </p>
+
+            {launch.description ? (
+              <p className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7">
+                {launch.description}
+              </p>
+            ) : null}
+
+            <LaunchActions
+              launch={launch}
+              onOpenBriefing={() => setBriefingOpen(true)}
+              showCalendar={!completed}
+              className="mt-6"
+            />
+          </div>
+
+          <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-5">
+            {!completed && !launch.isLive ? (
+              <div className="border-b border-[var(--border-subtle)] pb-5">
+                <p className="data-label">T-minus</p>
+                <Countdown
+                  targetDate={launch.date}
+                  className="mt-3 [&>span:first-child]:!text-[clamp(1.8rem,4vw,3.4rem)]"
+                />
+              </div>
+            ) : launch.isLive ? (
+              <div className="border-b border-[var(--border-subtle)] pb-5">
+                <p className="data-label">Mission state</p>
+                <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-red)]">
+                  LIVE NOW
+                </p>
+              </div>
+            ) : null}
+
+            <dl className={`${!completed || launch.isLive ? 'mt-5' : ''} space-y-4`}>
+              <div className="relative pl-8">
+                <MapPin
+                  aria-hidden="true"
+                  size={18}
+                  className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+                />
+                <dt className="data-label">Launch site</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {shortenLaunchSite(launch.launchSite)}
+                </dd>
+              </div>
+              <div className="relative pl-8">
+                <Rocket
+                  aria-hidden="true"
+                  size={18}
+                  className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+                />
+                <dt className="data-label">Launch vehicle</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {launch.rocket}
+                </dd>
+              </div>
+              <div className="relative pl-8">
+                <Orbit
+                  aria-hidden="true"
+                  size={18}
+                  className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+                />
+                <dt className="data-label">Mission profile</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {launch.orbit || launch.missionType || 'Not provided'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        {launch.timeline?.length ? (
+          <section
+            aria-labelledby="launch-timeline-title"
+            className="surface-card mt-5 overflow-hidden p-5 sm:p-6"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="launch-timeline-title" className="section-title">
+                Launch timeline
+              </h2>
+              <span className="data-label">
+                {launch.timeline.length} events
+              </span>
+            </div>
+            <ol className="mt-6 flex gap-0 overflow-x-auto pb-3">
+              {launch.timeline.map((event, index) => (
+                <li
+                  key={`${event.relativeTime}-${event.type}`}
+                  className="relative min-w-[11rem] flex-1 border-t border-[var(--border-strong)] px-3 pt-5 first:pl-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -top-[5px] left-3 h-2.5 w-2.5 rounded-full border-2 border-[var(--surface-base)] ${
+                      index === 0
+                        ? 'bg-[var(--console-green)]'
+                        : 'bg-[var(--text-muted)]'
+                    } first:left-0`}
+                  />
+                  <p className="font-mono text-xs text-[var(--console-cyan)]">
+                    {event.relativeTime}
+                  </p>
+                  <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+                    {event.type}
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+                    {event.description}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+
+        <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)]">
+          <LaunchIntelDeck
+            launch={launch}
+            intel={intel}
+            loading={intelLoading}
+          />
+
+          <section aria-labelledby="watch-replay-title" className="surface-card p-5">
+            <h2 id="watch-replay-title" className="section-title text-[1.2rem]">
+              {completed
+                ? hasPlayableVideo
+                  ? 'Watch replay'
+                  : 'Mission coverage'
+                : hasPlayableVideo
+                  ? 'Watch mission'
+                  : 'Mission coverage'}
+            </h2>
+            <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border-subtle)]">
+              <VideoPlayer
+                url={launch.livestream}
+                title={launch.name}
+                autoplay={launch.isLive}
+                className="rounded-none"
+              />
+            </div>
+            {launch.livestream ? (
+              <a
+                href={launch.livestream}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--console-cyan)] hover:underline"
+              >
+                {hasPlayableVideo
+                  ? 'Open official provider video'
+                  : 'Open provider coverage'}
+                <ExternalLink aria-hidden="true" size={15} />
+              </a>
+            ) : (
+              <p className="mt-4 text-sm leading-6 text-[var(--text-muted)]">
+                The provider has not attached a verified stream or replay yet.
+              </p>
+            )}
+            {intelError ? (
+              <p className="mt-3 text-sm text-[var(--console-amber)]">
+                Intelligence feed: {intelError}
+              </p>
+            ) : null}
+          </section>
+        </div>
+      </div>
+
+      <LaunchBriefingDrawer
+        launch={launch}
+        open={briefingOpen}
+        onClose={() => setBriefingOpen(false)}
+      />
+    </>
+  );
+}

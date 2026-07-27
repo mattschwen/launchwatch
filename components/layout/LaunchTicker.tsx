@@ -1,37 +1,64 @@
 'use client';
 
+import Link from 'next/link';
 import { useLaunches, useCompactCountdown } from '@/lib/hooks';
 import { Launch } from '@/lib/types';
 
-function TickerItem({ launch }: { launch: Launch }): React.ReactElement {
+function NextLaunchStatus({ launch }: { launch: Launch }): React.ReactElement {
   const countdown = useCompactCountdown(launch.date);
-  const isLive = launch.isLive;
 
   return (
-    <span className={`inline-flex items-center gap-2 whitespace-nowrap ${isLive ? 'text-[var(--console-red)]' : 'text-[var(--text-muted)]'}`}>
-      {isLive && <span className="status-dot status-dot-critical animate-pulse" />}
-      <span className="font-medium">{launch.name}</span>
-      <span className="text-[var(--console-cyan)]">&gt;&gt;</span>
-      <span className={isLive ? 'text-[var(--console-red)] font-bold' : 'text-[var(--console-green)]'}>{countdown}</span>
-    </span>
+    <Link
+      href={launch.isLive ? `/watch?id=${launch.id}` : `/launch/${launch.id}`}
+      className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+    >
+      <span className={launch.isLive ? 'text-[var(--console-red)]' : 'text-[var(--console-cyan)]'}>
+        {launch.isLive ? 'LIVE' : 'NEXT'}
+      </span>
+      <span aria-hidden="true" className="text-[var(--border-strong)]">/</span>
+      <span className="max-w-[48vw] truncate font-medium text-[var(--text-secondary)]">{launch.name}</span>
+      <span
+        suppressHydrationWarning
+        className={launch.isLive ? 'font-semibold text-[var(--console-red)]' : 'text-[var(--console-green)]'}
+      >
+        {countdown}
+      </span>
+    </Link>
   );
 }
 
 export default function LaunchTicker(): React.ReactElement | null {
-  const { launches } = useLaunches();
+  const { launches, loading, error } = useLaunches();
 
-  if (launches.length === 0) return null;
+  if (loading) {
+    return (
+      <div className="mx-5 min-w-0 flex-1 text-center text-[var(--text-muted)]">
+        SYNCING SCHEDULE
+      </div>
+    );
+  }
 
-  const tickerLaunches = launches.slice(0, 10);
+  if (error) {
+    return (
+      <div className="mx-5 min-w-0 flex-1 text-center text-[var(--console-amber)]">
+        SCHEDULE DEGRADED
+      </div>
+    );
+  }
+
+  const primaryLaunch = launches.find((launch) => launch.isLive) || launches[0];
+
+  if (!primaryLaunch) {
+    return (
+      <div className="mx-5 min-w-0 flex-1 text-center text-[var(--text-muted)]">
+        NO SCHEDULED LAUNCHES
+      </div>
+    );
+  }
 
   return (
-    <div className="overflow-hidden flex-1 mx-4">
-      <div className="flex animate-ticker text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider gap-8">
-        {/* Double for seamless loop */}
-        {[...tickerLaunches, ...tickerLaunches].map((launch, i) => (
-          <TickerItem key={`${launch.id}-${i}`} launch={launch} />
-        ))}
-      </div>
+    <div className="mx-5 flex min-w-0 flex-1 justify-center overflow-hidden">
+      <NextLaunchStatus launch={primaryLaunch} />
     </div>
   );
 }

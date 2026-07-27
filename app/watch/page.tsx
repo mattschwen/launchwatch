@@ -2,324 +2,381 @@
 
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { ChevronRight, ExternalLink, Rocket, Search } from 'lucide-react';
-import { useLaunchIntel, useLaunches, useLiveLaunches } from '@/lib/hooks';
-import AddToCalendar from '@/components/AddToCalendar';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ExternalLink,
+  Radio,
+  Rocket,
+} from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
-import AppShell from '@/components/layout/AppShell';
-import ConsolePanel from '@/components/ui/ConsolePanel';
+import LaunchActions from '@/components/launch/LaunchActions';
 import StatusBadge from '@/components/ui/StatusBadge';
-import TelemetryReadout from '@/components/ui/TelemetryReadout';
-import VideoFallback from '@/components/video/VideoFallback';
 import VideoPlayer from '@/components/video/VideoPlayer';
+import { formatLaunchDate, shortenLaunchSite } from '@/lib/format';
+import {
+  useLaunchById,
+  useLaunchIntel,
+  useLaunches,
+  useLiveLaunches,
+} from '@/lib/hooks';
+import { getFallbackLaunchSummary } from '@/lib/launch-action';
+import type { Launch } from '@/lib/types';
 
-function WatchPageContent(): React.ReactElement {
-  const searchParams = useSearchParams();
-  const requestedId = searchParams.get('id');
-  const { liveLaunches } = useLiveLaunches();
-  const { launches } = useLaunches();
-  const [manualSelectionId, setManualSelectionId] = useState<string | null>(null);
-  const [briefingOpen, setBriefingOpen] = useState(false);
+function WatchStage({ launch }: { launch: Launch }): React.ReactElement {
+  const fallback = getFallbackLaunchSummary(launch);
 
-  const upcomingLaunches = useMemo(
-    () => launches.filter((launch) => !launch.isLive && (launch.status === 'upcoming' || launch.status === 'tbd')),
-    [launches]
-  );
-
-  const selectedLaunch = useMemo(() => {
-    const targetId = manualSelectionId || requestedId;
-    if (targetId) {
-      const found = [...liveLaunches, ...launches].find((launch) => launch.id === targetId);
-      if (found) return found;
-    }
-    if (liveLaunches.length > 0) return liveLaunches[0];
-    if (upcomingLaunches.length > 0) return upcomingLaunches[0];
-    if (launches.length > 0) return launches[0];
-    return null;
-  }, [manualSelectionId, requestedId, liveLaunches, launches, upcomingLaunches]);
-
-  const isLive = selectedLaunch?.isLive || false;
-  const isPast = selectedLaunch?.status === 'success' || selectedLaunch?.status === 'failure';
-  const { intel } = useLaunchIntel(selectedLaunch, Boolean(selectedLaunch));
-
-  const formatDate = (dateString: string): string =>
-    new Date(dateString).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+  if (launch.livestream) {
+    return (
+      <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-black">
+        <VideoPlayer
+          url={launch.livestream}
+          title={launch.name}
+          autoplay={launch.isLive}
+          className="rounded-none"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="min-w-0 flex-1">
-          {selectedLaunch ? (
-            <>
-              {selectedLaunch.livestream ? (
-                <div className="mb-4">
-                  <VideoPlayer url={selectedLaunch.livestream} title={selectedLaunch.name} autoplay={isLive} />
-                  {isLive && (
-                    <div className="mt-2 flex items-center gap-2 px-1">
-                      <span className="status-dot status-dot-critical animate-pulse" />
-                      <span className="text-xs font-bold tracking-wider text-[var(--console-red)] font-[family-name:var(--font-geist-mono)]">
-                        LIVE NOW
-                      </span>
-                    </div>
-                  )}
-                  {isPast && (
-                    <div className="mt-2 flex items-center gap-2 px-1">
-                      <span className="text-xs tracking-wider text-[var(--text-muted)] font-[family-name:var(--font-geist-mono)]">
-                        RECORDED STREAM
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : isPast ? (
-                <div className="panel mb-4 flex aspect-video w-full flex-col items-center justify-center gap-4 border border-[var(--panel-border)] bg-[var(--bg-tertiary)]">
-                  <Rocket size={40} className="text-[var(--text-muted)]" />
-                  <p className="text-lg font-bold tracking-wider text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)]">
-                    LAUNCH COMPLETE
-                  </p>
-                  <StatusBadge status={selectedLaunch.status} statusName={selectedLaunch.statusName} />
-                </div>
-              ) : (
-                <div className="panel mb-4 flex aspect-video w-full flex-col items-center justify-center gap-4 border border-[var(--panel-border)] bg-[var(--bg-tertiary)]">
-                  {selectedLaunch.videoThumbnail ? (
-                    <div className="relative h-full w-full">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={selectedLaunch.videoThumbnail}
-                        alt={selectedLaunch.name}
-                        className="h-full w-full object-cover opacity-20"
-                      />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                        <p className="console-label text-xs">STREAM STARTS IN</p>
-                        <Countdown targetDate={selectedLaunch.date} />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="console-label text-xs">STREAM STARTS IN</p>
-                      <Countdown targetDate={selectedLaunch.date} />
-                    </>
-                  )}
-                </div>
-              )}
+    <section className="relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] px-5 text-center sm:aspect-video">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(rgba(94,230,168,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(94,230,168,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
+      />
+      <Rocket
+        aria-hidden="true"
+        size={88}
+        strokeWidth={0.8}
+        className="absolute bottom-[-0.6rem] right-[7%] text-[var(--border-strong)]"
+      />
+      <div className="relative max-w-xl">
+        <Radio
+          aria-hidden="true"
+          className="mx-auto text-[var(--text-muted)]"
+          size={34}
+        />
+        <h2 className="mt-5 text-[clamp(1.65rem,4vw,2.5rem)] font-bold tracking-[-0.035em] text-[var(--text-primary)]">
+          No live stream right now
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+          We are between launches. Follow the next mission or use the official
+          provider channel while coverage is being scheduled.
+        </p>
+        <div className="my-6 h-px bg-[var(--border-subtle)]" />
+        <p className="data-label">Next mission</p>
+        <Link
+          href={`/launch/${encodeURIComponent(launch.id)}`}
+          className="mt-2 block text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
+        >
+          {launch.name}
+        </Link>
+        <div className="mt-3">
+          <Countdown targetDate={launch.date} compact />
+        </div>
+        {fallback.recommendedUrl ? (
+          <a
+            href={fallback.recommendedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="action-button action-button-secondary mt-6"
+          >
+            <ExternalLink aria-hidden="true" size={16} />
+            Open provider channel
+          </a>
+        ) : null}
+      </div>
+    </section>
+  );
+}
 
-              <ConsolePanel label="STREAM INFO">
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
-                    <div className="mb-1 flex items-center gap-2">
-                      <StatusBadge status={selectedLaunch.status} statusName={selectedLaunch.statusName} />
-                      {selectedLaunch.provider && <span className="console-label text-[10px]">{selectedLaunch.provider}</span>}
-                    </div>
+function MissionQueue({
+  launches,
+  selectedId,
+  onSelect,
+}: {
+  launches: Launch[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}): React.ReactElement {
+  return (
+    <aside aria-labelledby="next-up-title" className="surface-card overflow-hidden">
+      <div className="border-b border-[var(--border-subtle)] p-4">
+        <h2 id="next-up-title" className="section-title text-[1.2rem]">
+          Next up
+        </h2>
+      </div>
+      <div className="max-h-[42rem] overflow-y-auto">
+        {launches.slice(0, 10).map((launch) => {
+          const selected = launch.id === selectedId;
+          return (
+            <button
+              key={launch.id}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onSelect(launch.id)}
+              className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
+                selected
+                  ? 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-green)]'
+                  : 'hover:bg-[var(--surface-subtle)]'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  launch.isLive
+                    ? 'bg-[var(--console-red)]'
+                    : launch.status === 'tbd'
+                      ? 'bg-[var(--console-amber)]'
+                      : 'bg-[var(--console-green)]'
+                }`}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">
+                  {launch.name}
+                </span>
+                <span className="mt-1 block truncate text-xs text-[var(--text-muted)]">
+                  {formatLaunchDate(launch.date)}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-[var(--console-cyan)]">
+                  {launch.provider || launch.rocket}
+                </span>
+              </span>
+              <ArrowRight
+                aria-hidden="true"
+                size={16}
+                className="shrink-0 text-[var(--text-muted)]"
+              />
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
 
-                    <Link href={`/launch/${selectedLaunch.id}`}>
-                      <h1 className="display-title text-xl text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)] sm:text-[1.8rem]">
-                        {selectedLaunch.name}
-                      </h1>
-                    </Link>
-                  </div>
+function WatchContent(): React.ReactElement {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedId = searchParams.get('id');
+  const { launches, loading: feedLoading, error, meta, refresh } = useLaunches();
+  const { liveLaunches } = useLiveLaunches();
+  const requested = useLaunchById(requestedId);
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
-                  <div className="flex flex-wrap gap-2">
-                    {selectedLaunch.livestream && (
-                      <a
-                        href={selectedLaunch.livestream}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 border border-[var(--panel-border)] px-3 py-2 text-xs tracking-wider text-[var(--text-muted)] transition-colors hover:border-[var(--console-cyan)]/30 hover:text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)]"
-                      >
-                        <ExternalLink size={12} />
-                        <span className="hidden sm:inline">YOUTUBE</span>
-                      </a>
-                    )}
+  const queue = useMemo(() => {
+    const byId = new Map<string, Launch>();
+    [...liveLaunches, ...launches].forEach((launch) => byId.set(launch.id, launch));
+    return [...byId.values()].sort((a, b) => {
+      if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+      return a.dateUnix - b.dateUnix;
+    });
+  }, [launches, liveLaunches]);
 
-                    <button
-                      onClick={() => setBriefingOpen(true)}
-                      className="inline-flex items-center gap-1.5 border border-[var(--console-green)]/35 px-3 py-2 text-xs tracking-wider text-[var(--console-green)] transition-colors hover:bg-[var(--console-green)]/10 font-[family-name:var(--font-geist-mono)]"
-                    >
-                      <Search size={12} />
-                      BRIEF
-                    </button>
+  const fallbackLaunch = liveLaunches[0] ?? queue[0] ?? null;
+  const requestedUnavailable = Boolean(
+    requestedId &&
+      !requested.loading &&
+      !requested.launch &&
+      (requested.notFound || requested.error),
+  );
+  const selectedLaunch = requestedId
+    ? requested.launch ?? (requestedUnavailable ? fallbackLaunch : null)
+    : fallbackLaunch;
+  const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
+    selectedLaunch,
+    Boolean(selectedLaunch)
+  );
 
-                    <AddToCalendar launch={selectedLaunch} variant="icon" />
-                  </div>
-                </div>
+  const selectLaunch = (id: string): void => {
+    router.replace(`/watch?id=${encodeURIComponent(id)}`, { scroll: false });
+  };
 
-                <div className="mb-4 space-y-0.5">
-                  <TelemetryReadout label="VEHICLE" value={selectedLaunch.rocket} status="nominal" />
-                  <TelemetryReadout label="PAD" value={selectedLaunch.launchSite} />
-                  <TelemetryReadout label="WINDOW" value={formatDate(selectedLaunch.date)} />
-                  {selectedLaunch.missionType && <TelemetryReadout label="MISSION" value={selectedLaunch.missionType} />}
-                </div>
+  const loading =
+    (feedLoading && queue.length === 0) ||
+    (Boolean(requestedId) && requested.loading && !requested.launch);
 
-                {selectedLaunch.description && (
-                  <p className="body-copy text-sm">{selectedLaunch.description}</p>
-                )}
+  if (loading) {
+    return (
+      <div className="page-container py-5 sm:py-7">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="skeleton min-h-[22rem] w-full min-w-0 rounded-[var(--radius-md)] sm:aspect-video" />
+          <div className="skeleton min-h-[30rem] rounded-[var(--radius-md)]" />
+        </div>
+      </div>
+    );
+  }
 
-                <div className="mt-4 grid gap-3 border-t border-[var(--panel-border)] pt-3 sm:grid-cols-3">
-                  <div>
-                    <p className="console-label text-[10px]">STREAM LEADS</p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)]">
-                      {String(intel?.streamCandidates?.length || 0).padStart(2, '0')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="console-label text-[10px]">NEWS MATCHES</p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--console-green)] font-[family-name:var(--font-geist-mono)]">
-                      {String(intel?.newsItems?.length || 0).padStart(2, '0')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="console-label text-[10px]">COMMUNITY SIGNAL</p>
-                    <p className="mt-1 text-lg font-semibold text-[var(--console-amber)] font-[family-name:var(--font-geist-mono)]">
-                      {String(intel?.socialItems?.length || 0).padStart(2, '0')}
-                    </p>
-                  </div>
-                </div>
+  if (!selectedLaunch) {
+    return (
+      <div className="page-container py-16 text-center">
+        <AlertTriangle
+          aria-hidden="true"
+          className="mx-auto text-[var(--console-amber)]"
+          size={38}
+        />
+        <h1 className="mt-5 text-3xl font-bold text-[var(--text-primary)]">
+          The watch schedule is unavailable.
+        </h1>
+        <p className="mt-2 text-[var(--text-secondary)]">
+          {requested.error || error || 'No missions were returned.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          className="action-button action-button-secondary mt-6"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
-                {!selectedLaunch.livestream && (
-                  <div className="mt-4 border-t border-[var(--panel-border)] pt-3">
-                    <p className="console-label mb-2 text-[10px]">FIND STREAM</p>
-                    {intel?.summary.recommendedUrl ? (
-                      <div className="flex flex-wrap gap-2">
-                        <a
-                          href={intel.summary.recommendedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 border border-[var(--console-green)]/35 px-4 py-2.5 text-xs tracking-wider text-[var(--console-green)] transition-colors hover:bg-[var(--console-green)]/10 font-[family-name:var(--font-geist-mono)]"
-                        >
-                          {intel.summary.recommendedLabel.toUpperCase()}
-                        </a>
-                        <button
-                          onClick={() => setBriefingOpen(true)}
-                          className="panel-interactive inline-flex items-center gap-2 px-4 py-2.5 text-xs tracking-wider text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)]"
-                        >
-                          OPEN BRIEFING
-                        </button>
-                      </div>
-                    ) : (
-                      <VideoFallback launch={selectedLaunch} />
-                    )}
-                  </div>
-                )}
+  return (
+    <>
+      <div className="page-container py-4 sm:py-6 lg:py-8">
+        {requestedUnavailable ? (
+          <div
+            role="alert"
+            className="mb-4 flex flex-col gap-3 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_42%,transparent)] bg-[color-mix(in_srgb,var(--console-amber)_8%,var(--surface-base))] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-[var(--text-secondary)]">
+              The requested mission could not be opened. Showing{' '}
+              <span className="font-semibold text-[var(--text-primary)]">
+                {selectedLaunch.name}
+              </span>{' '}
+              from the current queue instead.
+            </p>
+            <Link
+              href="/watch"
+              className="shrink-0 font-mono text-xs uppercase tracking-[0.12em] text-[var(--console-cyan)] hover:underline"
+            >
+              Clear deep link
+            </Link>
+          </div>
+        ) : null}
 
-                {selectedLaunch.livestreams && selectedLaunch.livestreams.length > 1 && (
-                  <div className="mt-4 border-t border-[var(--panel-border)] pt-3">
-                    <p className="console-label mb-2 text-[10px]">AVAILABLE STREAMS</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLaunch.livestreams.map((stream, idx) => (
-                        <a
-                          key={idx}
-                          href={stream.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="panel-interactive inline-flex items-center gap-2 px-3 py-2 text-xs tracking-wider text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)]"
-                        >
-                          {stream.isLive ? (
-                            <span className="status-dot status-dot-critical animate-pulse" />
-                          ) : (
-                            <ExternalLink size={12} />
-                          )}
-                          {stream.title || `STREAM ${idx + 1}`}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </ConsolePanel>
-
-              <LaunchIntelDeck launch={selectedLaunch} intel={intel} loading={Boolean(selectedLaunch && !intel)} className="mt-4" />
-            </>
-          ) : (
-            <ConsolePanel label="STREAM MONITOR">
-              <div className="py-12 text-center">
-                <Rocket size={48} className="mx-auto mb-4 text-[var(--text-muted)]" />
-                <h2 className="display-title mb-2 text-xl text-[var(--text-primary)]">
-                  NO STREAM AVAILABLE
-                </h2>
-                <p className="text-sm text-[var(--text-muted)]">Check back when a launch is scheduled.</p>
-              </div>
-            </ConsolePanel>
-          )}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="data-label">Watch room</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {liveLaunches.length > 0
+                ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
+                : 'Provider streams and launch windows'}
+              {meta?.partial ? ' · partial provider data' : ''}
+            </p>
+          </div>
+          <StatusBadge
+            status={selectedLaunch.status}
+            statusName={selectedLaunch.statusName}
+          />
         </div>
 
-        <div className="space-y-4 lg:w-72 lg:flex-shrink-0">
-          {liveLaunches.length > 0 && (
-            <div>
-              <p className="console-label mb-2 text-[10px]">LIVE NOW</p>
-              <div className="space-y-1">
-                {liveLaunches.map((launch) => (
-                  <button
-                    key={launch.id}
-                    onClick={() => setManualSelectionId(launch.id)}
-                    className={`flex w-full items-center gap-2.5 p-2.5 text-left transition-colors ${
-                      selectedLaunch?.id === launch.id ? 'panel-live' : 'panel-interactive'
-                    }`}
-                  >
-                    <span className="status-dot status-dot-critical animate-pulse" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)]">
-                        {launch.name}
-                      </p>
-                      <p className="text-[10px] text-[var(--text-muted)] font-[family-name:var(--font-geist-mono)]">{launch.rocket}</p>
-                    </div>
-                    <ChevronRight size={12} className="flex-shrink-0 text-[var(--text-muted)]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+          <div className="min-w-0">
+            <WatchStage launch={selectedLaunch} />
 
-          <div>
-            <p className="console-label mb-2 text-[10px]">UPCOMING</p>
-            <div className="space-y-1">
-              {upcomingLaunches.slice(0, 8).map((launch) => (
-                <button
-                  key={launch.id}
-                  onClick={() => setManualSelectionId(launch.id)}
-                  className={`flex w-full items-center gap-2.5 p-2.5 text-left transition-colors ${
-                    selectedLaunch?.id === launch.id
-                      ? 'border border-[var(--console-green)]/30 bg-[var(--console-green)]/5'
-                      : 'panel-interactive'
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)]">
-                      {launch.name}
-                    </p>
-                    <p className="text-[10px] text-[var(--text-muted)] font-[family-name:var(--font-geist-mono)]">
-                      {new Date(launch.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {'//'} {launch.rocket}
-                    </p>
-                  </div>
-                  <ChevronRight size={12} className="flex-shrink-0 text-[var(--text-muted)]" />
-                </button>
-              ))}
-            </div>
+            <section className="surface-card mt-4 p-5 sm:p-6">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <Link
+                    href={`/launch/${encodeURIComponent(selectedLaunch.id)}`}
+                    className="group"
+                  >
+                    <h1 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+                      {selectedLaunch.name}
+                    </h1>
+                  </Link>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    {selectedLaunch.rocket} ·{' '}
+                    {shortenLaunchSite(selectedLaunch.launchSite)}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-[var(--console-cyan)]">
+                    {formatLaunchDate(selectedLaunch.date)}
+                  </p>
+                </div>
+                <LaunchActions
+                  launch={selectedLaunch}
+                  onOpenBriefing={() => setBriefingOpen(true)}
+                  compact
+                  className="shrink-0"
+                />
+              </div>
+              {selectedLaunch.description ? (
+                <p className="mt-5 max-w-4xl border-t border-[var(--border-subtle)] pt-5 text-sm leading-6 text-[var(--text-secondary)]">
+                  {selectedLaunch.description}
+                </p>
+              ) : null}
+            </section>
           </div>
+
+          <MissionQueue
+            launches={queue}
+            selectedId={selectedLaunch.id}
+            onSelect={selectLaunch}
+          />
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <LaunchIntelDeck
+            launch={selectedLaunch}
+            intel={intel}
+            loading={intelLoading}
+          />
+          <aside className="surface-card p-5">
+            <h2 className="section-title text-[1.15rem]">Source & status</h2>
+            <div className="mt-4 flex items-center gap-2 text-sm text-[var(--console-green)]">
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 rounded-full bg-[var(--console-green)]"
+              />
+              {meta?.partial ? 'Schedule partially available' : 'Schedule online'}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
+              Schedules and stream links are aggregated from official providers.
+              Launch times can change.
+            </p>
+            {intelError ? (
+              <p className="mt-4 text-sm text-[var(--console-amber)]">
+                Intelligence feed: {intelError}
+              </p>
+            ) : null}
+            <Link
+              href="/history"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--console-cyan)] hover:underline"
+            >
+              Browse launch archive
+              <ArrowRight aria-hidden="true" size={15} />
+            </Link>
+          </aside>
         </div>
       </div>
 
-      <LaunchBriefingDrawer launch={selectedLaunch} open={briefingOpen} onClose={() => setBriefingOpen(false)} />
+      <LaunchBriefingDrawer
+        launch={selectedLaunch}
+        open={briefingOpen}
+        onClose={() => setBriefingOpen(false)}
+      />
+    </>
+  );
+}
+
+function WatchFallback(): React.ReactElement {
+  return (
+    <div className="page-container py-5">
+      <div className="skeleton aspect-video rounded-[var(--radius-md)]" />
     </div>
   );
 }
 
 export default function WatchPage(): React.ReactElement {
   return (
-    <AppShell>
-      <Suspense
-        fallback={
-          <div className="mx-auto max-w-7xl px-3 py-6 sm:px-4 lg:px-6">
-            <div className="panel mb-4 aspect-video animate-pulse bg-[var(--bg-tertiary)]" />
-            <div className="panel animate-pulse p-6">
-              <div className="mb-4 h-6 w-2/3 rounded bg-[var(--bg-tertiary)]" />
-              <div className="h-4 w-1/3 rounded bg-[var(--bg-tertiary)]" />
-            </div>
-          </div>
-        }
-      >
-        <WatchPageContent />
-      </Suspense>
-    </AppShell>
+    <Suspense fallback={<WatchFallback />}>
+      <WatchContent />
+    </Suspense>
   );
 }

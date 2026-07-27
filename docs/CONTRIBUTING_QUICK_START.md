@@ -1,42 +1,43 @@
 # Quick Start for Contributors
 
-This is the fastest path to making a safe change in LaunchWatch.
-
 ## 1. Install and Run
 
 ```bash
 git clone https://github.com/mattschwen/launchwatch.git
 cd launchwatch
-npm install
+npm ci
 npm run dev
 ```
 
-## 2. Make a Focused Change
+## 2. Preserve the Core Contracts
 
-Common edit areas:
-
-- `app/` for routes and layout
-- `components/` for UI
-- `lib/` for data, hooks, and helpers
-- `docs/` and `.memory/` for documentation
+- Provider access and secrets stay on the server.
+- Launch IDs are `spacex-*` or `ll2-*`.
+- Intel requests send only the canonical ID.
+- Upcoming consumers share `LaunchDataProvider`.
+- History uses `/api/launches?type=history`.
+- Service-worker caches never contain APIs or navigations.
 
 ## 3. Verify
 
 ```bash
-npm run lint
-npm run build
+npm run check
 ```
 
-## 4. Update Docs
+On a fresh environment, run `npx playwright install chromium` once. Then run `npm run test:e2e` and `npm run test:a11y` for route or interaction changes.
 
-If you changed behavior, UI, branding, cache timing, or setup, update the docs in the same branch.
+## 4. Review a Preview
 
-## 5. Open a PR
+Push the branch, wait for CI and a Vercel preview, then verify Home, Watch, History, canonical detail routes, API states, responsive layouts, and PWA behavior.
 
-Include:
+## 5. Document and Open the PR
 
-- a short summary
-- screenshots for UI changes
-- the commands you ran to verify the change
+Update affected docs and include:
 
-For the full workflow, see [CONTRIBUTING.md](/Users/matthewschwen/projects/launchwatch/CONTRIBUTING.md).
+- a short summary and rationale;
+- verification commands;
+- tests added or updated;
+- desktop and mobile screenshots for UI changes;
+- the reviewed preview URL.
+
+See [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for the full workflow.

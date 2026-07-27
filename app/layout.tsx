@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import RegisterServiceWorker from "./register-sw";
+import AppShell from "@/components/layout/AppShell";
 
 const geistSans = Space_Grotesk({
   variable: "--font-geist-sans",
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#000000",
+  themeColor: "#07110f",
 };
 
 export default function RootLayout({
@@ -50,15 +51,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
         <RegisterServiceWorker />
-        <div className="relative z-10">
-          {children}
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

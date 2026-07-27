@@ -1,278 +1,450 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { getSpaceXPastLaunches } from '@/lib/api';
-import { Launch } from '@/lib/types';
-import LaunchCard from './LaunchCard';
-import FilterBar, { FilterOptions } from './FilterBar';
-import ConsolePanel from './ui/ConsolePanel';
+import { useEffect, useId, useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  AlertTriangle,
+  Archive,
+  ChevronDown,
+  Search,
+} from 'lucide-react';
+import type { Launch, LaunchFeedMeta } from '@/lib/types';
+import {
+  formatLaunchDate,
+  launchOutcomeLabel,
+  shortenLaunchSite,
+} from '@/lib/format';
 
-export default function PastLaunches() {
+const PAGE_SIZE = 20;
+
+function readHistoryPayload(payload: unknown): {
+  launches: Launch[];
+  meta: LaunchFeedMeta | null;
+} {
+  if (!payload || typeof payload !== 'object') {
+    return { launches: [], meta: null };
+  }
+  const record = payload as Record<string, unknown>;
+  const nested =
+    record.data && typeof record.data === 'object' && !Array.isArray(record.data)
+      ? (record.data as Record<string, unknown>)
+      : null;
+  const launches = Array.isArray(record.launches)
+    ? (record.launches as Launch[])
+    : Array.isArray(record.data)
+      ? (record.data as Launch[])
+      : Array.isArray(nested?.launches)
+        ? (nested.launches as Launch[])
+        : [];
+
+  return {
+    launches,
+    meta:
+      record.meta && typeof record.meta === 'object'
+        ? (record.meta as LaunchFeedMeta)
+        : null,
+  };
+}
+
+function HistoryRow({
+  launch,
+  expanded,
+  onToggle,
+}: {
+  launch: Launch;
+  expanded: boolean;
+  onToggle: () => void;
+}): React.ReactElement {
+  const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+  const outcome = launchOutcomeLabel(launch);
+
+  return (
+    <article className="border-b border-[var(--border-subtle)] last:border-b-0">
+      <div className="grid items-center gap-3 px-3 py-3 sm:px-4 lg:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          onClick={onToggle}
+          className="group flex min-h-11 min-w-0 items-center gap-3 text-left lg:col-span-5 lg:grid lg:grid-cols-subgrid"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <ChevronDown
+              aria-hidden="true"
+              size={17}
+              className={`shrink-0 text-[var(--text-muted)] transition-transform ${
+                expanded ? 'rotate-180 text-[var(--console-cyan)]' : ''
+              }`}
+            />
+            <span className="min-w-0">
+              <span className="block truncate font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+                {launch.name}
+              </span>
+              <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)]">
+                {launch.provider || 'Launch provider'}
+              </span>
+            </span>
+          </span>
+          <span className="hidden text-sm text-[var(--text-secondary)] lg:block">
+            {formatLaunchDate(launch.date)}
+          </span>
+          <span className="hidden truncate text-sm text-[var(--text-secondary)] lg:block">
+            {launch.rocket}
+          </span>
+          <span className="hidden truncate text-sm text-[var(--text-secondary)] lg:block">
+            {shortenLaunchSite(launch.launchSite)}
+          </span>
+          <span
+            className={`hidden items-center gap-2 font-mono text-xs lg:flex ${
+              launch.status === 'failure'
+                ? 'text-[var(--console-red)]'
+                : 'text-[var(--console-green)]'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${
+                launch.status === 'failure'
+                  ? 'bg-[var(--console-red)]'
+                  : 'bg-[var(--console-green)]'
+              }`}
+            />
+            {outcome}
+          </span>
+        </button>
+
+        <Link
+          href={`/launch/${encodeURIComponent(launch.id)}`}
+          className="action-button action-button-quiet justify-self-start lg:justify-self-end"
+        >
+          View mission
+        </Link>
+      </div>
+
+      {expanded ? (
+        <div
+          id={panelId}
+          className="grid gap-5 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/45 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_18rem]"
+        >
+          <div>
+            <p className="max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+              {launch.description || 'No mission summary was supplied by the provider.'}
+            </p>
+            <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+              <div>
+                <dt className="data-label">Mission type</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {launch.missionType || 'Not provided'}
+                </dd>
+              </div>
+              <div>
+                <dt className="data-label">Orbit</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {launch.orbit || 'Not provided'}
+                </dd>
+              </div>
+              <div>
+                <dt className="data-label">Outcome</dt>
+                <dd className="mt-1 text-sm text-[var(--text-primary)]">
+                  {outcome}
+                </dd>
+              </div>
+            </dl>
+          </div>
+          <div className="flex flex-wrap content-start gap-2 lg:justify-end">
+            {launch.livestream ? (
+              <Link
+                href={`/watch?id=${encodeURIComponent(launch.id)}`}
+                className="action-button action-button-primary"
+              >
+                Watch replay
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+export default function PastLaunches(): React.ReactElement {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<FilterOptions>({
-    search: '',
-    provider: 'all',
-    status: 'all',
-    sortBy: 'date-desc', // Most recent first for history
-  });
+  const [meta, setMeta] = useState<LaunchFeedMeta | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [search, setSearch] = useState('');
+  const [provider, setProvider] = useState('all');
+  const [year, setYear] = useState('all');
+  const [outcome, setOutcome] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const id = useId();
 
   useEffect(() => {
-    async function fetchPastLaunches() {
+    const controller = new AbortController();
+
+    async function fetchHistory(): Promise<void> {
       try {
         setLoading(true);
-        const pastLaunches = await getSpaceXPastLaunches(50);
+        const response = await fetch('/api/launches?type=history&limit=100', {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        const payload: unknown = await response.json().catch(() => null);
+        if (!response.ok) {
+          const message =
+            payload && typeof payload === 'object'
+              ? (payload as Record<string, unknown>).error
+              : null;
+          throw new Error(
+            typeof message === 'string'
+              ? message
+              : `Archive unavailable (${response.status})`
+          );
+        }
 
-        // Convert to our Launch type
-        const converted: Launch[] = pastLaunches.map((launch) => ({
-          id: `past-${launch.id}`,
-          name: launch.name,
-          date: launch.date_utc,
-          dateUnix: launch.date_unix,
-          rocket: typeof launch.rocket === 'object' && launch.rocket !== null ? (launch.rocket.name || 'Unknown Rocket') : (launch.rocket || 'Unknown Rocket'),
-          launchSite: typeof launch.launchpad === 'object' && launch.launchpad !== null ? (launch.launchpad.name || launch.launchpad.full_name || 'Unknown Site') : (launch.launchpad || 'Unknown Site'),
-          status: launch.success ? 'success' as const : 'failure' as const,
-          statusName: launch.success ? 'Success' : 'Failure',
-          missionName: launch.name,
-          livestream: launch.links.webcast,
-          livestreams: launch.links.webcast ? [{
-            url: launch.links.webcast,
-            title: 'Recorded webcast',
-            isLive: false,
-          }] : null,
-          description: launch.details,
-          isLive: false,
-          image: launch.links.flickr?.original?.[0] || null,
-          missionPatch: launch.links.patch?.small || null,
-          rocketImageUrl: null,
-          launchImageUrl: launch.links.flickr?.original?.[0] || null,
-          location: null,
-          provider: 'SpaceX',
-          providerLogo: null,
-          program: null,
-          timeline: null,
-          videoThumbnail: null,
-          source: 'spacex',
-          ll2Id: null,
-          orbit: null,
-          rocketFamily: typeof launch.rocket === 'object' && launch.rocket !== null ? (launch.rocket.name || null) : (launch.rocket || null),
-          rocketVariant: null,
-        }));
-
-        setLaunches(converted);
+        const result = readHistoryPayload(payload);
+        setLaunches(result.launches);
+        setMeta(result.meta);
         setError(null);
-      } catch (err) {
-        setError('Failed to load past launches');
-        console.error(err);
+      } catch (requestError) {
+        if (controller.signal.aborted) return;
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Unable to load the archive'
+        );
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
-    fetchPastLaunches();
-  }, []);
+    void fetchHistory();
+    return () => controller.abort();
+  }, [reloadKey]);
 
-  // Apply filters and sorting
-  const filteredLaunches = useMemo(() => {
-    let filtered = [...launches];
+  const providers = useMemo(
+    () =>
+      [...new Set(launches.map((launch) => launch.provider).filter(Boolean))]
+        .sort((a, b) => String(a).localeCompare(String(b))) as string[],
+    [launches]
+  );
+  const years = useMemo(
+    () =>
+      [...new Set(launches.map((launch) => new Date(launch.date).getUTCFullYear()))]
+        .filter(Number.isFinite)
+        .sort((a, b) => b - a),
+    [launches]
+  );
 
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        (launch) =>
-          launch.name.toLowerCase().includes(searchLower) ||
-          launch.rocket.toLowerCase().includes(searchLower) ||
-          launch.launchSite.toLowerCase().includes(searchLower) ||
-          launch.description?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Status filter (success/failure)
-    if (filters.status !== 'all') {
-      filtered = filtered.filter((launch) => launch.status === filters.status);
-    }
-
-    // Sorting
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'date-asc':
-          return a.dateUnix - b.dateUnix;
-        case 'date-desc':
-          return b.dateUnix - a.dateUnix;
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        default:
-          return 0;
-      }
+  const filtered = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return launches.filter((launch) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        [launch.name, launch.rocket, launch.launchSite, launch.provider || '']
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedSearch);
+      const matchesProvider =
+        provider === 'all' || launch.provider === provider;
+      const matchesYear =
+        year === 'all' ||
+        new Date(launch.date).getUTCFullYear() === Number(year);
+      const matchesOutcome =
+        outcome === 'all' || launch.status === outcome;
+      return matchesSearch && matchesProvider && matchesYear && matchesOutcome;
     });
+  }, [launches, outcome, provider, search, year]);
 
-    return filtered;
-  }, [launches, filters]);
-
-  if (loading) {
+  if (loading && launches.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="h-12 panel animate-pulse"></div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-          {[...Array(9)].map((_, i) => (
-            <div
-              key={i}
-              className="panel p-5 sm:p-6 animate-pulse"
-            >
-              <div className="mb-4 h-6 bg-[var(--bg-tertiary)]"></div>
-              <div className="space-y-3">
-                <div className="h-4 w-3/4 bg-[var(--bg-tertiary)]"></div>
-                <div className="h-4 w-1/2 bg-[var(--bg-tertiary)]"></div>
-                <div className="h-4 w-2/3 bg-[var(--bg-tertiary)]"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <section className="surface-card overflow-hidden" aria-label="Loading launch history">
+        <div className="skeleton m-4 h-12 rounded" />
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="skeleton mx-4 mb-2 h-16 rounded"
+          />
+        ))}
+      </section>
     );
   }
 
-  if (error) {
+  if (error && launches.length === 0) {
     return (
-      <ConsolePanel label="ARCHIVE ERROR">
-        <div className="py-10 text-center">
-          <span className="mb-4 block text-4xl">⚠️</span>
-          <p className="text-lg font-semibold text-[var(--live)]">{error}</p>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">Please try refreshing the archive feed.</p>
-        </div>
-      </ConsolePanel>
+      <section className="surface-card p-8 text-center">
+        <AlertTriangle
+          aria-hidden="true"
+          className="mx-auto text-[var(--console-amber)]"
+          size={36}
+        />
+        <h2 className="section-title mt-4">The archive could not be synchronized.</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-[var(--text-secondary)]">
+          {error}
+        </p>
+        <button
+          type="button"
+          onClick={() => setReloadKey((key) => key + 1)}
+          className="action-button action-button-secondary mt-5"
+        >
+          Retry archive
+        </button>
+      </section>
     );
   }
-
-  if (launches.length === 0) {
-    return (
-      <ConsolePanel label="ARCHIVE EMPTY">
-        <div className="py-10 text-center">
-          <span className="mb-4 block text-4xl">📜</span>
-          <p className="text-lg text-[var(--text-primary)]">No past launches found.</p>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">The archive feed did not return any completed missions.</p>
-        </div>
-      </ConsolePanel>
-    );
-  }
-
-  // Stats
-  const totalLaunches = launches.length;
-  const successfulLaunches = launches.filter((l) => l.status === 'success').length;
-  const failedLaunches = launches.filter((l) => l.status === 'failure').length;
-  const successRate = ((successfulLaunches / totalLaunches) * 100).toFixed(1);
-  const activeFilterCount =
-    Number(Boolean(filters.search)) +
-    Number(filters.status !== 'all');
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)] xl:items-start">
-      <div className="space-y-4 xl:sticky xl:top-20">
-        <ConsolePanel label="ARCHIVE SNAPSHOT" className="animate-fade-in">
-          <div className="space-y-4">
-            <div>
-              <p className="console-label mb-2 text-[10px]">RECENT RECORD</p>
-              <h2 className="display-title text-xl text-[var(--text-primary)] sm:text-[1.7rem]">
-                Mission outcomes at a glance.
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-                This archive currently tracks recent SpaceX missions with result state and replay availability.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="border-l-2 border-[var(--console-cyan)]/35 pl-3">
-                <p className="console-label text-[10px]">TOTAL</p>
-                <p className="mt-1 text-2xl font-semibold text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)]">
-                  {totalLaunches}
-                </p>
-              </div>
-              <div className="border-l-2 border-[var(--console-green)]/35 pl-3">
-                <p className="console-label text-[10px]">SUCCESS</p>
-                <p className="mt-1 text-2xl font-semibold text-[var(--console-green)] font-[family-name:var(--font-geist-mono)]">
-                  {successfulLaunches}
-                </p>
-              </div>
-              <div className="border-l-2 border-[var(--console-red)]/35 pl-3">
-                <p className="console-label text-[10px]">ANOMALIES</p>
-                <p className="mt-1 text-2xl font-semibold text-[var(--console-red)] font-[family-name:var(--font-geist-mono)]">
-                  {failedLaunches}
-                </p>
-              </div>
-              <div className="border-l-2 border-[var(--console-amber)]/35 pl-3">
-                <p className="console-label text-[10px]">SUCCESS RATE</p>
-                <p className="mt-1 text-2xl font-semibold text-[var(--console-amber)] font-[family-name:var(--font-geist-mono)]">
-                  {successRate}%
-                </p>
-              </div>
-            </div>
+    <section aria-labelledby="archive-results-title" className="surface-card overflow-hidden">
+      <div className="border-b border-[var(--border-subtle)] p-4">
+        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
+          <div className="relative min-w-0">
+            <label htmlFor={`${id}-search`} className="sr-only">
+              Search missions
+            </label>
+            <Search
+              aria-hidden="true"
+              size={17}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+            />
+            <input
+              id={`${id}-search`}
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              placeholder="Search missions"
+              className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            />
           </div>
-        </ConsolePanel>
 
-        <FilterBar
-          onFilterChange={setFilters}
-          initialFilters={filters}
-          showProvider={false}
-          statusOptions={[
-            { value: 'all', label: 'All Results' },
-            { value: 'success', label: 'Successful' },
-            { value: 'failure', label: 'Failed' },
-          ]}
-        />
+          <label className="sr-only" htmlFor={`${id}-provider`}>
+            Provider
+          </label>
+          <select
+            id={`${id}-provider`}
+            value={provider}
+            onChange={(event) => setProvider(event.target.value)}
+            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          >
+            <option value="all">All providers</option>
+            {providers.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor={`${id}-year`}>
+            Year
+          </label>
+          <select
+            id={`${id}-year`}
+            value={year}
+            onChange={(event) => setYear(event.target.value)}
+            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          >
+            <option value="all">All years</option>
+            {years.map((item) => (
+              <option key={item} value={String(item)}>
+                {item}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor={`${id}-outcome`}>
+            Outcome
+          </label>
+          <select
+            id={`${id}-outcome`}
+            value={outcome}
+            onChange={(event) => setOutcome(event.target.value)}
+            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          >
+            <option value="all">All outcomes</option>
+            <option value="success">Success</option>
+            <option value="failure">Failure</option>
+          </select>
+
+          <p className="self-center justify-self-start text-sm text-[var(--text-muted)] xl:justify-self-end">
+            {filtered.length} result{filtered.length === 1 ? '' : 's'}
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <ConsolePanel label="MISSION LOG" className="animate-fade-in">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="console-label mb-2 text-[10px]">ARCHIVE FEED</p>
-              <h3 className="display-title text-xl text-[var(--text-primary)] sm:text-[1.8rem]">
-                Completed missions, recorded coverage, and anomalies.
-              </h3>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--text-secondary)]">
-                Search recent launches, isolate nominal or off-nominal outcomes, and reopen mission details without leaving the archive board.
-              </p>
-            </div>
+      {meta?.partial || meta?.stale ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
+          <p className="text-sm text-[var(--console-amber)]">
+            Some archive results may be delayed while a provider recovers.
+          </p>
+          <button
+            type="button"
+            onClick={() => setReloadKey((key) => key + 1)}
+            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--console-cyan)] hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-left sm:text-right">
-              <div>
-                <p className="console-label text-[10px]">VISIBLE</p>
-                <p className="mt-1 text-lg font-semibold text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)]">
-                  {filteredLaunches.length}
-                </p>
-              </div>
-              <div>
-                <p className="console-label text-[10px]">FILTERS</p>
-                <p className="mt-1 text-lg font-semibold text-[var(--console-green)] font-[family-name:var(--font-geist-mono)]">
-                  {String(activeFilterCount).padStart(2, '0')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </ConsolePanel>
-
-        {filteredLaunches.length === 0 ? (
-          <ConsolePanel label="NO MATCHES">
-            <div className="py-8 text-center">
-              <span className="mb-3 block text-3xl">🔍</span>
-              <p className="text-[var(--text-primary)]">No launches match the current archive filters.</p>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">Clear the search or result state to widen the mission log.</p>
-            </div>
-          </ConsolePanel>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {filteredLaunches.map((launch, index) => (
-              <div key={launch.id} className="animate-stagger-in" style={{ animationDelay: `${index * 45}ms` }}>
-                <LaunchCard launch={launch} showCalendar={false} />
-              </div>
-            ))}
-          </div>
+      <div className="hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 lg:grid">
+        {['Mission', 'Actual launch date', 'Vehicle', 'Site', 'Outcome', 'Actions'].map(
+          (label) => (
+            <span key={label} className="data-label">
+              {label}
+            </span>
+          )
         )}
       </div>
-    </div>
+
+      {filtered.length === 0 ? (
+        <div className="px-5 py-14 text-center">
+          <Archive
+            aria-hidden="true"
+            className="mx-auto text-[var(--text-muted)]"
+            size={34}
+          />
+          <h2 id="archive-results-title" className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
+            No archived missions match these filters.
+          </h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Clear the search, provider, year, or outcome selection.
+          </p>
+        </div>
+      ) : (
+        <>
+          <h2 id="archive-results-title" className="sr-only">
+            Archived launch results
+          </h2>
+          {filtered.slice(0, visibleCount).map((launch) => (
+            <HistoryRow
+              key={launch.id}
+              launch={launch}
+              expanded={expandedId === launch.id}
+              onToggle={() =>
+                setExpandedId((current) =>
+                  current === launch.id ? null : launch.id
+                )
+              }
+            />
+          ))}
+          {visibleCount < filtered.length ? (
+            <div className="border-t border-[var(--border-subtle)] p-4 text-center">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                className="action-button action-button-secondary"
+              >
+                Load more
+              </button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </section>
   );
 }

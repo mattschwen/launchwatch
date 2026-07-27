@@ -1,41 +1,52 @@
 {
-  "name": "LaunchWatch - Rocket Launch Tracker",
+  "id": "/",
+  "name": "LaunchWatch — Mission Control",
   "short_name": "LaunchWatch",
-  "description": "Track upcoming rocket launches from SpaceX, NASA, and more. Watch live streams and discover fascinating space facts.",
+  "description": "Track upcoming rocket launches, monitor live coverage, and explore mission intelligence.",
+  "lang": "en-US",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#3b82f6",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#050807",
+  "theme_color": "#07110f",
   "icons": [
     {
-      "src": "/icon-192.svg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.svg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["news", "education", "entertainment"],
+  "categories": ["news", "utilities", "education"],
   "shortcuts": [
     {
-      "name": "View Upcoming Launches",
-      "short_name": "Upcoming",
-      "description": "See all upcoming rocket launches",
+      "name": "Mission Board",
+      "short_name": "Launches",
+      "description": "View upcoming rocket launches",
       "url": "/",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Launch History",
+      "name": "Watch Center",
+      "short_name": "Watch",
+      "description": "Open live and upcoming launch coverage",
+      "url": "/watch",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Mission Archive",
       "short_name": "History",
-      "description": "Browse past launches",
+      "description": "Browse completed missions",
       "url": "/history",
-      "icons": [{ "src": "/icon-192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

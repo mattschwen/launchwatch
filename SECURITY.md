@@ -55,12 +55,19 @@ If you're contributing to LaunchWatch:
 
 ## Known Security Considerations
 
-LaunchWatch is a client-side application with no user authentication or database. However:
+LaunchWatch has a public Next.js server/API layer and no user authentication or
+database. The public routes still require input validation, quota protection,
+safe caching, and careful handling of provider credentials.
 
 - **API Keys**: NASA and LL2 API keys should be kept in `.env.local` (never committed)
 - **XSS Prevention**: React automatically escapes content
 - **HTTPS**: All production deployments must use HTTPS
-- **Rate Limiting**: External APIs have rate limits (not a security issue, but worth noting)
+- **Browser Hardening**: Global response headers disable framing and sensitive
+  browser capabilities, prevent MIME sniffing, restrict referrer data, and
+  enforce HSTS on HTTPS deployments
+- **Rate Limiting**: Provider-backed detail and intelligence endpoints enforce
+  bounded per-client and per-runtime request windows. Platform or edge rate
+  limiting should remain enabled as a second layer in production.
 
 ## Security Updates
 
@@ -76,5 +83,4 @@ We do not currently have a bug bounty program. However, we deeply appreciate sec
 
 ---
 
-**Last Updated**: 2025-11-16
-
+**Last Updated**: 2026-07-26

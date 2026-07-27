@@ -1,68 +1,93 @@
 import { Launch } from './types';
 
 function markNotified(notificationKey: string): void {
-  localStorage.setItem(notificationKey, 'true');
-  localStorage.setItem(`${notificationKey}-timestamp`, Date.now().toString());
+  try {
+    localStorage.setItem(notificationKey, 'true');
+    localStorage.setItem(`${notificationKey}-timestamp`, Date.now().toString());
+  } catch {
+    // Notification delivery must not fail because storage is unavailable.
+  }
 }
 
-/**
- * Request notification permission from the user
- */
-export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (!('Notification' in window)) {
-    console.warn('This browser does not support notifications');
-    return 'denied';
+function hasBeenNotified(notificationKey: string): boolean {
+  try {
+    return Boolean(localStorage.getItem(notificationKey));
+  } catch {
+    return false;
+  }
+}
+
+function launchDestination(launch: Launch): string {
+  return `/launch/${encodeURIComponent(launch.id)}`;
+}
+
+async function showViaServiceWorker(
+  title: string,
+  options: NotificationOptions
+): Promise<boolean> {
+  if (!('serviceWorker' in navigator)) {
+    return false;
   }
 
-  if (Notification.permission === 'granted') {
-    return 'granted';
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) {
+    return false;
   }
 
-  if (Notification.permission !== 'denied') {
-    const permission = await Notification.requestPermission();
-    return permission;
-  }
-
-  return Notification.permission;
+  await registration.showNotification(title, options);
+  return true;
 }
 
 /**
  * Show a notification for an upcoming launch
  */
-export function showLaunchNotification(launch: Launch, timeUntilLaunch: string): void {
+export async function showLaunchNotification(
+  launch: Launch,
+  timeUntilLaunch: string
+): Promise<boolean> {
   if (!('Notification' in window) || Notification.permission !== 'granted') {
-    return;
+    return false;
   }
 
-  const notification = new Notification(`🚀 ${launch.name}`, {
+  const title = `🚀 ${launch.name}`;
+  const destination = launchDestination(launch);
+  const options: NotificationOptions = {
     body: `Launching in ${timeUntilLaunch}\n${launch.rocket} from ${launch.launchSite}`,
-    icon: '/icon-192.svg',
-    badge: '/icon-192.svg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     tag: `launch-${launch.id}`,
     requireInteraction: false,
     silent: false,
     data: {
       launchId: launch.id,
-      livestream: launch.livestream,
+      url: destination,
     },
-  });
-
-  notification.onclick = () => {
-    window.focus();
-    if (launch.livestream) {
-      window.open(launch.livestream, '_blank');
-    }
-    notification.close();
   };
+
+  try {
+    if (await showViaServiceWorker(title, options)) {
+      return true;
+    }
+
+    const notification = new Notification(title, options);
+    notification.onclick = () => {
+      window.focus();
+      window.location.assign(destination);
+      notification.close();
+    };
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Check launches and send notifications for upcoming ones
  */
-export function checkAndNotify(launches: Launch[]): void {
+export async function checkAndNotify(launches: Launch[]): Promise<void> {
   const now = Date.now();
 
-  launches.forEach((launch) => {
+  for (const launch of launches) {
     const launchTime = new Date(launch.date).getTime();
     const timeUntilLaunch = launchTime - now;
 
@@ -70,11 +95,13 @@ export function checkAndNotify(launches: Launch[]): void {
     if (launch.isLive) {
       const notificationKey = `notified-live-${launch.id}`;
 
-      if (!localStorage.getItem(notificationKey)) {
-        showLaunchNotification(launch, 'NOW!');
+      if (
+        !hasBeenNotified(notificationKey) &&
+        (await showLaunchNotification(launch, 'NOW!'))
+      ) {
         markNotified(notificationKey);
       }
-      return;
+      continue;
     }
 
     // Notify for launches happening in 10 minutes
@@ -82,11 +109,13 @@ export function checkAndNotify(launches: Launch[]): void {
       const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
       const notificationKey = `notified-10m-${launch.id}`;
 
-      if (!localStorage.getItem(notificationKey)) {
-        showLaunchNotification(launch, `${minutes} minutes`);
+      if (
+        !hasBeenNotified(notificationKey) &&
+        (await showLaunchNotification(launch, `${minutes} minutes`))
+      ) {
         markNotified(notificationKey);
       }
-      return;
+      continue;
     }
 
     // Notify for launches happening in 1 hour
@@ -95,29 +124,38 @@ export function checkAndNotify(launches: Launch[]): void {
       const notificationKey = `notified-1h-${launch.id}`;
 
       // Check if we've already notified for this launch
-      if (!localStorage.getItem(notificationKey)) {
-        showLaunchNotification(launch, `${minutes} minutes`);
+      if (
+        !hasBeenNotified(notificationKey) &&
+        (await showLaunchNotification(launch, `${minutes} minutes`))
+      ) {
         markNotified(notificationKey);
       }
     }
-  });
+  }
 }
 
 /**
  * Clear old notification flags from localStorage
  */
 export function clearOldNotificationFlags(): void {
-  const keys = Object.keys(localStorage);
-  const now = Date.now();
+  try {
+    const keys = Object.keys(localStorage);
+    const now = Date.now();
 
-  keys.forEach((key) => {
-    if (key.startsWith('notified-')) {
-      // Remove notification flags older than 7 days
-      const timestamp = localStorage.getItem(`${key}-timestamp`);
-      if (timestamp && now - Number.parseInt(timestamp, 10) > 7 * 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(key);
-        localStorage.removeItem(`${key}-timestamp`);
+    keys.forEach((key) => {
+      if (key.startsWith('notified-') && !key.endsWith('-timestamp')) {
+        // Remove notification flags older than 7 days
+        const timestamp = localStorage.getItem(`${key}-timestamp`);
+        if (
+          timestamp &&
+          now - Number.parseInt(timestamp, 10) > 7 * 24 * 60 * 60 * 1000
+        ) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}-timestamp`);
+        }
       }
-    }
-  });
+    });
+  } catch {
+    // Storage can be unavailable in strict privacy modes.
+  }
 }

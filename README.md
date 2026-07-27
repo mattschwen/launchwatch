@@ -3,7 +3,7 @@
 
   # LaunchWatch
 
-  Mission control for rocket enthusiasts: live launch tracking, ranked stream discovery, mission briefings, launch-site telemetry, and a real-time media companion feed.
+  Mission control for upcoming launches, live coverage, mission briefings, launch-site telemetry, and completed-flight history.
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
   [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
@@ -12,67 +12,66 @@
 
 ## Overview
 
-LaunchWatch is a Next.js 16 app for rocket enthusiasts who want one operational surface for launches, livestreams, geography, and public mission context. The current product direction is:
+LaunchWatch is a responsive Next.js application for following a mission from schedule to replay. It combines SpaceX and Launch Library 2 data behind internal server routes, normalizes provider records into one launch model, and gives every launch a stable provider-qualified ID.
 
-- `public/newlogo.jpeg` as the active product logo
-- a green-and-black mission-control interface with console typography and telemetry styling
-- a first-visit boot sequence that hands off into the live board
-- ranked stream intelligence backed by provider links, YouTube leads, coverage, and community signal
-- an expandable telemetry globe with explicit close controls and active-pad follow mode
-- archive/history views that reuse the same mission-control shell
+The interface keeps its green-and-black mission-control identity while prioritizing clear navigation, readable data, and useful degraded states. Home, Watch, History, and mission details share one client launch feed, so a launch selected in one surface remains consistent everywhere else.
 
-## Current Features
+## Product Surfaces
 
-- Upcoming launch feed sourced from SpaceX and Launch Library 2
-- Live-launch detection for launches within approximately `±2 hours`
-- Mission-control hero with countdown and calendar actions
-- Embedded livestreams when a valid webcast URL is available
-- Ranked stream candidates via the launch-intel layer
-- Stream fallback links to provider channels, YouTube search, Reddit search, and X live search
-- Launch briefing drawer with news and community context
-- Launch filtering by search, provider, status, and sort order
-- Expandable telemetry globe with active-site follow mode, network arcs, and explicit close controls
-- Past SpaceX launch history with success and failure stats
-- Watch-room surface with stream info plus mission-control feed panels
-- Browser notification prompts and local notification scheduling
-- Calendar export for Google Calendar and `.ics` downloads
-- PWA manifest, service worker, and offline fallback page
-- Rotating rocket facts sourced from SpaceX rocket data and NASA APOD
+- **Home** highlights the live or next launch, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
+- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, queue, countdown, and intelligence.
+- **History** loads completed SpaceX missions through the internal server API and supports search, provider, year, outcome, expandable summaries, replay links, and mission details.
+- **Mission detail** resolves both upcoming and historical launches by canonical ID and combines status, timeline, actions, video, and ID-scoped intelligence.
+
+The desktop and mobile navigation both expose Home, Watch, and History. The first-visit synchronization message is a short, dismissible status toast; it never blocks the application.
+
+## Core Features
+
+- Upcoming, live, next, and historical launch feeds
+- Canonical IDs for SpaceX and Launch Library 2 records
+- Provider-aware detail lookup for current and completed missions
+- Ranked official/provider stream discovery
+- Useful Watch fallback when no verified stream is live
+- Searchable and filterable launch schedule and archive
+- Mission briefings, coverage, community links, and replay surfaces
+- Calendar export and local browser launch reminders
+- Responsive launch-site map with a collapsed mobile presentation
+- Partial, stale, offline, empty, error, and retry states
+- Installable PWA shell with network-first navigations and uncached data APIs
 
 ## Tech Stack
 
-- Framework: Next.js 16 App Router
-- Runtime: React 19
-- Language: TypeScript 5
-- Styling: Tailwind CSS 4 plus app-level CSS variables in [app/globals.css](/Users/matthewschwen/projects/launchwatch/app/globals.css)
-- Deployment target: Vercel
-
-## Data Sources
-
-- SpaceX API v4 for upcoming launches, past launches, and rocket metadata
-- The Space Devs Launch Library 2 for cross-provider upcoming launches and launch pad coordinates
-- NASA APOD for rotating header facts
+- Next.js 16 App Router
+- React 19
+- TypeScript 5 in strict mode
+- Tailwind CSS 4 and design tokens in [`app/globals.css`](app/globals.css)
+- Vercel deployment target
 
 ## Quick Start
+
+Prerequisites: Node.js 22+ and npm.
 
 ```bash
 git clone https://github.com/mattschwen/launchwatch.git
 cd launchwatch
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`. If that port is busy, Next.js will automatically choose another open port.
+Open `http://localhost:3000`.
 
 ## Environment Variables
 
-All environment variables are optional.
+The app runs without keys using public provider endpoints. Optional credentials belong in `.env.local` and are server-only:
 
 ```env
-NEXT_PUBLIC_NASA_API_KEY=your_nasa_key
-NEXT_PUBLIC_LL2_API_KEY=your_launch_library_key
+LL2_API_KEY=your_launch_library_2_key
+NASA_API_KEY=your_nasa_key
 YOUTUBE_DATA_API_KEY=your_youtube_data_api_key
-NEXT_PUBLIC_YOUTUBE_API_KEY=your_youtube_data_api_key
+# Optional per-runtime safety budget for quota-expensive YouTube lookups.
+YOUTUBE_DAILY_LOOKUP_BUDGET=25
+
+# Use either the bearer token or the complete OAuth 1.0a set.
 X_BEARER_TOKEN=your_x_api_bearer_token
 X_ACCESS_TOKEN=your_x_access_token
 X_ACCESS_TOKEN_SECRET=your_x_access_token_secret
@@ -80,58 +79,99 @@ X_CONSUMER_KEY=your_x_consumer_key
 X_CONSUMER_KEY_SECRET=your_x_consumer_key_secret
 ```
 
-For X recent search, configure either `X_BEARER_TOKEN` or the four OAuth 1.0a credentials above. Without keys, the app still runs against public endpoints and falls back to the NASA `DEMO_KEY`.
+Do not prefix secrets with `NEXT_PUBLIC_`; that makes them eligible for client bundles. Migrate legacy `NEXT_PUBLIC_LL2_API_KEY`, `NEXT_PUBLIC_NASA_API_KEY`, and `NEXT_PUBLIC_YOUTUBE_API_KEY` values to `LL2_API_KEY`, `NASA_API_KEY`, and `YOUTUBE_DATA_API_KEY`.
+
+For deterministic browser tests or a controlled provider mirror,
+`SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` can override the server-only
+upstream origins. Normal deployments should keep the production defaults.
+
+## Canonical Launch IDs
+
+Every normalized launch uses a provider-qualified ID:
+
+```text
+spacex-<provider-id>
+ll2-<provider-id>
+```
+
+Use the canonical value for `/launch/[id]`, `/watch?id=...`, `/api/launches/[id]`, and `/api/launch-intel?id=...`. Historical `past-<SpaceX-id>` links are accepted only as a compatibility format and resolve to `spacex-<SpaceX-id>`; new code must not create them.
 
 ## Routes
 
-- `/` for the mission-control board, boot sequence, hero countdown, launch list, and telemetry globe
-- `/watch` for the watch-room view and media companion feed
-- `/launch/[id]` for mission detail, briefing, stream intelligence, and timeline views
-- `/history` for past SpaceX launches and archive stats
-- `/api/launches?type=all|live|next` for the app’s internal cached launch API
-- `/api/launch-intel` for ranked stream leads, news, social items, and quick links
+| Route | Purpose |
+| --- | --- |
+| `/` | Live/next mission, upcoming schedule, filters, and mission map |
+| `/watch` | Live stream or next-mission fallback with queue and intelligence |
+| `/launch/[id]` | Current or historical mission detail by canonical ID |
+| `/history` | Searchable completed-launch archive |
+| `/api/launches?type=all` | Merged upcoming launch feed |
+| `/api/launches?type=live` | Launches currently in the live window |
+| `/api/launches?type=next` | Next upcoming launch |
+| `/api/launches?type=history&limit=50` | Completed SpaceX launches; limit `1–100` |
+| `/api/launches/[id]` | One current or historical launch |
+| `/api/launch-intel?id=[id]` | Stream, coverage, and community intelligence for one launch |
 
-## Caching Model
+See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
 
-- `all` launches are cached server-side for `30 minutes`
-- `live` launches are cached server-side for `2 minutes`
-- `next` launch is cached server-side for `5 minutes`
-- client hooks refresh on their own intervals for upcoming, live, and next-launch views
-- Launch Library 2 uses a longer in-memory cache to stay under free-tier rate limits
+## Data and Cache Policy
 
-## Quality Checks
+- Provider calls happen on the server; browser components do not contact SpaceX or Launch Library 2 directly.
+- Home, Watch, the header, and launch selectors share one deduplicated client request to `type=all`, refreshed every two minutes and when a stale visible tab reconnects.
+- Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
+- The service worker never caches `/api/*`, Next.js flight responses, navigations, or arbitrary query-string requests.
+- Only the offline document, explicit shell icons, and content-hashed Next.js static assets are cached. Production clients check for a newer worker and apply updates explicitly.
+
+## Validation
+
+Run the complete local gate before opening a pull request:
 
 ```bash
-npm run lint
-npm run build
+npm run check
 ```
 
-At the time of this documentation refresh, both commands pass.
+Run the browser and accessibility suites when a change affects routing, data states, responsive behavior, or interaction:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+npm run test:a11y
+```
+
+The Playwright install is required once per fresh development environment. `npm run check` runs lint, type-checking, unit tests, and the production build.
+
+## Deployment
+
+Ship through a Vercel preview first:
+
+1. Run the validation commands above.
+2. deploy or open a pull request to create a preview;
+3. smoke-test Home, Watch, History, a canonical detail route, launch APIs, and service-worker behavior;
+4. review responsive screenshots and degraded states;
+5. promote the reviewed preview to production.
+
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full workflow.
 
 ## Project Structure
 
 ```text
 launchwatch/
-├── app/                  # App Router pages, layout, watch/detail/history routes, API routes
-├── components/           # Mission-control UI, launch intel, map, media, and layout components
-├── lib/                  # Data fetching, launch-intel aggregation, hooks, calendar, notifications, types
-├── public/               # Active logo, icons, manifest, service worker, offline page
-├── docs/                 # User-facing and contributor documentation
-└── .memory/              # Internal reference notes for future work
+├── app/                  # Pages and internal server API routes
+├── components/           # Mission UI, actions, map, media, and app shell
+├── lib/                  # Provider clients, normalization, shared feed, intel, and types
+├── public/               # Manifest, icons, service worker, and offline document
+├── docs/                 # Architecture, API, deployment, and contributor docs
+└── .github/workflows/    # Validation in CI
 ```
 
 ## Documentation
 
-- [docs/README.md](/Users/matthewschwen/projects/launchwatch/docs/README.md)
-- [docs/ARCHITECTURE.md](/Users/matthewschwen/projects/launchwatch/docs/ARCHITECTURE.md)
-- [docs/API.md](/Users/matthewschwen/projects/launchwatch/docs/API.md)
-- [docs/DEPLOYMENT.md](/Users/matthewschwen/projects/launchwatch/docs/DEPLOYMENT.md)
-- [CONTRIBUTING.md](/Users/matthewschwen/projects/launchwatch/CONTRIBUTING.md)
-
-## Contributing
-
-Pull requests are welcome. Keep documentation changes in the same PR as the code they describe.
+- [`docs/README.md`](docs/README.md)
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/API.md`](docs/API.md)
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+- [`MOBILE_OPTIMIZATION.md`](MOBILE_OPTIMIZATION.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](/Users/matthewschwen/projects/launchwatch/LICENSE).
+LaunchWatch is licensed under the MIT License. See [`LICENSE`](LICENSE).

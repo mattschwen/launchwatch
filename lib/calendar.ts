@@ -1,5 +1,45 @@
 import { Launch } from './types';
 
+function escapeICSText(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function safeCalendarUrl(value: string | null | undefined): string | null {
+  if (!value || /[\r\n]/.test(value)) return null;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:'
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function foldICSLine(line: string): string {
+  const encoder = new TextEncoder();
+  const folded: string[] = [];
+  let segment = '';
+
+  for (const character of line) {
+    const candidate = `${segment}${character}`;
+    if (segment && encoder.encode(candidate).length > 75) {
+      folded.push(segment);
+      segment = ` ${character}`;
+    } else {
+      segment = candidate;
+    }
+  }
+
+  folded.push(segment);
+  return folded.join('\r\n');
+}
+
 /**
  * Generate .ics file content for calendar apps
  */
@@ -11,42 +51,41 @@ export function generateICS(launch: Launch): string {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   };
 
-  const escapeText = (text: string): string => {
-    return text.replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
-  };
+  const livestream = safeCalendarUrl(launch.livestream);
+  const uid = launch.id.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 140);
 
-  const icsContent = [
+  const icsLines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//LaunchWatch//Rocket Launch//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:launch-${launch.id}@launchwatch.app`,
+    `UID:launch-${uid}@launchwatch.app`,
     `DTSTAMP:${formatDate(new Date())}`,
     `DTSTART:${formatDate(startDate)}`,
     `DTEND:${formatDate(endDate)}`,
-    `SUMMARY:${escapeText(launch.name)}`,
-    `DESCRIPTION:${escapeText([
+    `SUMMARY:${escapeICSText(launch.name)}`,
+    `DESCRIPTION:${escapeICSText([
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launch.launchSite}`,
-      launch.description ? `\\n${launch.description}` : '',
-      launch.livestream ? `\\n\\nWatch Live: ${launch.livestream}` : '',
-    ].filter(Boolean).join('\\n'))}`,
-    `LOCATION:${escapeText(launch.launchSite)}`,
+      launch.description || '',
+      livestream ? `Watch Live: ${livestream}` : '',
+    ].filter(Boolean).join('\n'))}`,
+    `LOCATION:${escapeICSText(launch.launchSite)}`,
     `STATUS:CONFIRMED`,
     `SEQUENCE:0`,
-    launch.livestream ? `URL:${launch.livestream}` : '',
+    livestream ? `URL:${livestream}` : '',
     'BEGIN:VALARM',
     'TRIGGER:-PT1H',
     'ACTION:DISPLAY',
-    `DESCRIPTION:${escapeText(launch.name)} launching in 1 hour!`,
+    `DESCRIPTION:${escapeICSText(launch.name)} launching in 1 hour!`,
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
-  ].filter(Boolean).join('\r\n');
+  ].filter(Boolean);
 
-  return icsContent;
+  return `${icsLines.map(foldICSLine).join('\r\n')}\r\n`;
 }
 
 /**

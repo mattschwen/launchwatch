@@ -19,21 +19,49 @@ import {
 import { serializeLaunchForIntel } from './launch-intel-params';
 import { TTLCache } from './ttl-cache';
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_DATA_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || '';
+const YOUTUBE_API_KEY = process.env.YOUTUBE_DATA_API_KEY || '';
 const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN || '';
 const X_ACCESS_TOKEN = process.env.X_ACCESS_TOKEN || '';
 const X_ACCESS_TOKEN_SECRET = process.env.X_ACCESS_TOKEN_SECRET || '';
 const X_CONSUMER_KEY = process.env.X_CONSUMER_KEY || '';
 const X_CONSUMER_KEY_SECRET = process.env.X_CONSUMER_KEY_SECRET || '';
 const USER_AGENT = 'launchwatch/1.1.1';
-const AGGREGATE_FRESH_MS = 2 * 60 * 1000;
-const AGGREGATE_STALE_MS = 10 * 60 * 1000;
-const STREAM_FRESH_MS = 2 * 60 * 1000;
-const STREAM_STALE_MS = 10 * 60 * 1000;
+const AGGREGATE_FRESH_MS = 5 * 60 * 1000;
+const AGGREGATE_STALE_MS = 30 * 60 * 1000;
+const STREAM_FRESH_MS = 5 * 60 * 1000;
+const STREAM_STALE_MS = 60 * 60 * 1000;
 const NEWS_FRESH_MS = 10 * 60 * 1000;
 const NEWS_STALE_MS = 60 * 60 * 1000;
 const SOCIAL_FRESH_MS = 5 * 60 * 1000;
 const SOCIAL_STALE_MS = 30 * 60 * 1000;
+const parsedYouTubeBudget = Number.parseInt(
+  process.env.YOUTUBE_DAILY_LOOKUP_BUDGET || '25',
+  10,
+);
+const YOUTUBE_DAILY_LOOKUP_BUDGET = Number.isFinite(parsedYouTubeBudget)
+  ? Math.min(100, Math.max(1, parsedYouTubeBudget))
+  : 25;
+
+interface YouTubeLookupBudget {
+  day: string;
+  used: number;
+}
+
+const globalWithIntelBudget = globalThis as typeof globalThis & {
+  __launchWatchYouTubeLookupBudget?: YouTubeLookupBudget;
+};
+
+function reserveYouTubeLookup(): boolean {
+  const day = new Date().toISOString().slice(0, 10);
+  const budget = globalWithIntelBudget.__launchWatchYouTubeLookupBudget;
+  if (!budget || budget.day !== day) {
+    globalWithIntelBudget.__launchWatchYouTubeLookupBudget = { day, used: 1 };
+    return true;
+  }
+  if (budget.used >= YOUTUBE_DAILY_LOOKUP_BUDGET) return false;
+  budget.used += 1;
+  return true;
+}
 
 const aggregateCache = new TTLCache<LaunchIntel>({
   freshMs: AGGREGATE_FRESH_MS,
@@ -274,7 +302,37 @@ function scoreRecency(publishedAt?: string | null, thresholds: Array<[number, nu
     }
   }
 
-  return -6;
+  return -30;
+}
+
+function hasExactMissionMatch(launch: Launch, text: string): boolean {
+  const mission = normalizeForMatch(normalizeMissionName(launch.name));
+  return mission.length >= 4 && normalizeForMatch(text).includes(mission);
+}
+
+function isFreshMissionSignal(
+  launch: Launch,
+  publishedAt: string | null | undefined,
+  text: string,
+): boolean {
+  if (!publishedAt) return false;
+
+  const publishedMs = new Date(publishedAt).getTime();
+  const launchMs = new Date(launch.date).getTime();
+  if (Number.isNaN(publishedMs) || Number.isNaN(launchMs)) return false;
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const exactMission = hasExactMissionMatch(launch, text);
+  const completed = launch.status === 'success' || launch.status === 'failure';
+
+  if (completed) {
+    const distanceFromLaunch = Math.abs(publishedMs - launchMs);
+    return distanceFromLaunch <= (exactMission ? 365 : 120) * dayMs;
+  }
+
+  const age = Date.now() - publishedMs;
+  if (age < -dayMs) return false;
+  return age <= (exactMission ? 365 : 120) * dayMs;
 }
 
 function scoreCandidate(launch: Launch, title: string, channelTitle: string, liveStatus: LaunchStreamCandidate['liveStatus']): number {
@@ -309,6 +367,9 @@ function scoreCandidate(launch: Launch, title: string, channelTitle: string, liv
 function scoreNewsItem(launch: Launch, item: LaunchNewsItem): number {
   let score = scoreTextRelevance(launch, `${item.title} ${item.summary || ''}`);
   score += scoreRecency(item.publishedAt, [[12, 18], [36, 12], [96, 6], [240, 2]]);
+  if (hasExactMissionMatch(launch, `${item.title} ${item.summary || ''}`)) {
+    score += 24;
+  }
 
   const normalizedSource = normalizeForMatch(item.source);
   if (NEWS_PRIORITY_SOURCES.some((source) => normalizedSource.includes(source))) {
@@ -380,16 +441,74 @@ function getLiveStatus(video: YouTubeVideoItem, fallback?: 'live' | 'upcoming' |
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+    return response.json() as Promise<T>;
+  } finally {
+    clearTimeout(timeout);
   }
-  return response.json() as Promise<T>;
 }
 
 async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCandidate[]> {
   const candidates: LaunchStreamCandidate[] = [];
   const providedId = launch.livestream ? extractYouTubeId(launch.livestream) : null;
+  const addFallbacks = (reason: string): LaunchStreamCandidate[] => {
+    if (launch.livestream && providedId) {
+      candidates.push({
+        id: providedId,
+        title: 'Provider stream link',
+        url: launch.livestream,
+        channelTitle: inferLaunchProvider(launch),
+        channelUrl: getProviderYouTubeChannel(launch),
+        source: 'provided',
+        confidence: 'medium',
+        liveStatus: launch.isLive ? 'live' : 'unknown',
+        note: `${reason} The provider-supplied video remains available.`,
+      });
+    }
+
+    const providerChannel = getProviderYouTubeChannel(launch);
+    if (providerChannel) {
+      candidates.push({
+        id: `${launch.id}-provider-channel`,
+        title: `${inferLaunchProvider(launch)} channel`,
+        url: providerChannel,
+        channelTitle: inferLaunchProvider(launch),
+        channelUrl: providerChannel,
+        source: 'provider-channel',
+        confidence: 'medium',
+        liveStatus: launch.isLive ? 'live' : 'upcoming',
+        note: reason,
+      });
+    }
+
+    candidates.push({
+      id: `${launch.id}-yt-search`,
+      title: 'YouTube search fallback',
+      url: generateYouTubeSearchUrl(launch),
+      channelTitle: 'YouTube',
+      source: 'search',
+      confidence: 'low',
+      liveStatus: 'unknown',
+      note: reason,
+    });
+
+    return candidates.filter(
+      (candidate, index, allCandidates) =>
+        allCandidates.findIndex(
+          (other) => other.id === candidate.id || other.url === candidate.url,
+        ) === index,
+    );
+  };
 
   if (launch.livestream && !providedId) {
     candidates.push({
@@ -406,33 +525,14 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
   }
 
   if (!YOUTUBE_API_KEY) {
-    const providerChannel = getProviderYouTubeChannel(launch);
-    if (providerChannel) {
-      candidates.push({
-        id: `${launch.id}-provider-channel`,
-        title: `${inferLaunchProvider(launch)} channel`,
-        url: providerChannel,
-        channelTitle: inferLaunchProvider(launch),
-        channelUrl: providerChannel,
-        source: 'provider-channel',
-        confidence: 'medium',
-        liveStatus: launch.isLive ? 'live' : 'upcoming',
-        note: 'Provider channel fallback when no verified video candidate is available.',
-      });
-    }
-
-    candidates.push({
-      id: `${launch.id}-yt-search`,
-      title: 'YouTube search fallback',
-      url: generateYouTubeSearchUrl(launch),
-      channelTitle: 'YouTube',
-      source: 'search',
-      confidence: 'low',
-      liveStatus: 'unknown',
-      note: 'Search fallback because no YouTube Data API key is configured.',
-    });
-
-    return candidates;
+    return addFallbacks(
+      'Search fallback because no YouTube Data API key is configured.',
+    );
+  }
+  if (!reserveYouTubeLookup()) {
+    return addFallbacks(
+      'The daily YouTube verification budget is exhausted; using safe fallbacks.',
+    );
   }
 
   const query = buildSearchQuery(launch);
@@ -447,7 +547,7 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
   };
 
   const searches = await Promise.allSettled(
-    (['live', 'upcoming'] as const).map(async (eventType) => {
+    ([launch.isLive ? 'live' : 'upcoming'] as const).map(async (eventType) => {
       const params = new URLSearchParams({
         ...searchParamsBase,
         eventType,
@@ -472,21 +572,9 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
   );
 
   if (ids.length === 0) {
-    const providerChannel = getProviderYouTubeChannel(launch);
-    if (providerChannel) {
-      candidates.push({
-        id: `${launch.id}-provider-channel`,
-        title: `${inferLaunchProvider(launch)} channel`,
-        url: providerChannel,
-        channelTitle: inferLaunchProvider(launch),
-        channelUrl: providerChannel,
-        source: 'provider-channel',
-        confidence: 'medium',
-        liveStatus: launch.isLive ? 'live' : 'upcoming',
-        note: 'No matching YouTube video candidates were returned, falling back to provider channel.',
-      });
-    }
-    return candidates;
+    return addFallbacks(
+      'No matching YouTube video candidates were returned.',
+    );
   }
 
   const videoParams = new URLSearchParams({
@@ -494,7 +582,16 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
     id: ids.join(','),
     key: YOUTUBE_API_KEY,
   });
-  const videosResult = await fetchJson<{ items?: YouTubeVideoItem[] }>(`https://www.googleapis.com/youtube/v3/videos?${videoParams.toString()}`);
+  let videosResult: { items?: YouTubeVideoItem[] };
+  try {
+    videosResult = await fetchJson<{ items?: YouTubeVideoItem[] }>(
+      `https://www.googleapis.com/youtube/v3/videos?${videoParams.toString()}`,
+    );
+  } catch {
+    return addFallbacks(
+      'YouTube verification is temporarily unavailable; using safe fallbacks.',
+    );
+  }
   const videos = videosResult.items || [];
 
   const ranked = videos.map((video) => {
@@ -567,16 +664,7 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
   });
 
   if (candidates.length === 0) {
-    candidates.push({
-      id: `${launch.id}-yt-search`,
-      title: 'YouTube search fallback',
-      url: generateYouTubeSearchUrl(launch),
-      channelTitle: 'YouTube',
-      source: 'search',
-      confidence: 'low',
-      liveStatus: 'unknown',
-      note: 'No verified candidates were returned from the API, falling back to search.',
-    });
+    return addFallbacks('No verified candidates were returned from the API.');
   }
 
   return candidates.filter((candidate, index, allCandidates) => {
@@ -611,8 +699,15 @@ async function fetchLaunchNews(launch: Launch): Promise<LaunchNewsItem[]> {
         publishedAt: item.published_at,
         summary: item.summary || null,
       }))
+      .filter((item) =>
+        isFreshMissionSignal(
+          launch,
+          item.publishedAt,
+          `${item.title} ${item.summary || ''}`,
+        )
+      )
       .map((item) => ({ item, score: scoreNewsItem(launch, item) }))
-      .filter(({ score }) => score >= 18)
+      .filter(({ score }) => score >= 28)
       .sort((a, b) => b.score - a.score)
       .slice(0, 4)
       .map(({ item }) => item);
@@ -671,6 +766,9 @@ async function fetchRedditItems(launch: Launch): Promise<LaunchSocialItem[]> {
           },
         ];
       })
+      .filter((item) =>
+        isFreshMissionSignal(launch, item.publishedAt, item.title)
+      )
       .map((item) => ({ item, score: scoreSocialItem(launch, item) }))
       .filter(({ score }) => score >= 14)
       .sort((a, b) => b.score - a.score)
@@ -736,6 +834,9 @@ async function fetchXItems(launch: Launch): Promise<LaunchSocialItem[]> {
           note: 'Returned by X recent search.',
         };
       })
+      .filter((item) =>
+        isFreshMissionSignal(launch, item.publishedAt, item.title)
+      )
       .map((item) => ({ item, score: scoreSocialItem(launch, item) }))
       .filter(({ score }) => score >= 12)
       .sort((a, b) => b.score - a.score)
@@ -779,6 +880,18 @@ function summarizeCandidates(candidates: LaunchStreamCandidate[]): LaunchIntel['
     };
   }
 
+  if (recommended.source === 'provided') {
+    return {
+      streamState: 'standby',
+      recommendedLabel: 'Open Provider Stream',
+      recommendedUrl: recommended.url,
+      rationale:
+        recommended.note ||
+        'The schedule provider supplied this stream link; live status is not yet confirmed.',
+      lastUpdated: new Date().toISOString(),
+    };
+  }
+
   if (recommended.source === 'provider-channel') {
     return {
       streamState: 'standby',
@@ -792,7 +905,7 @@ function summarizeCandidates(candidates: LaunchStreamCandidate[]): LaunchIntel['
   if (recommended.url) {
     return {
       streamState: 'search',
-      recommendedLabel: 'Search for Stream',
+      recommendedLabel: 'Open Stream Lead',
       recommendedUrl: recommended.url,
       rationale: recommended.note || 'Search fallback is currently the best available lead.',
       lastUpdated: new Date().toISOString(),

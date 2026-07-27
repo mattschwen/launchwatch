@@ -1,54 +1,130 @@
-# Mobile Optimization Notes
+# Responsive and Mobile Validation
 
-This document describes the current mobile behavior of LaunchWatch and what to verify when changing responsive UI.
+LaunchWatch supports portrait, landscape, and resizable desktop layouts. The PWA manifest does not lock orientation, and no route should require portrait mode.
 
-## Current Mobile Priorities
+## Information Priority
 
-- readable launch cards on narrow screens
-- sticky but compact headers
-- clear tap targets for stream, history, home, filter, and calendar actions
-- stable overlays that can always be dismissed
-- countdown layouts that do not overflow
-- usable expanded map behavior with visible close controls
+On narrow screens, content should appear in this order:
 
-## Current Responsive Patterns
+1. sticky product header and any live indicator;
+2. live or next-mission hero with one clear primary action;
+3. upcoming mission schedule;
+4. collapsed mission-map disclosure;
+5. footer and fixed Home/Watch/History navigation.
 
-- Header fact ribbon is hidden on smaller breakpoints and shown on large screens
-- Header nav collapses to a single mobile action button
-- Launch cards move from `3 columns` to `1 column`
-- History stats compress into a `2 x 2` grid on smaller screens
-- Filter UI uses a collapsible control panel
-- Expanded map uses a full-screen modal with both `Collapse Map` and `×`
+The schedule must remain reachable without scrolling through a fully rendered map or dense telemetry wall.
 
-## Touch Targets to Preserve
+## Navigation
 
-- notification prompt buttons
-- launch card stream buttons
-- calendar menu trigger
-- filter toggle and provider chips
-- map expand and collapse controls
+- Desktop uses the sticky top navigation for Home, Watch, and History.
+- Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
+- The external source-code link remains secondary and is not a primary mobile destination.
+- The app shell includes a keyboard skip link.
+- Live state may add an indicator to Watch but must not change the navigation order.
 
-## Manual QA Checklist
+## Home
 
-- Load `/` on a narrow viewport
-- Open and close the filter panel
-- Open and close the stream fallback menu
-- Open and close the calendar menu
-- Expand the map and close it with both available controls
-- Tap outside the expanded map and confirm it closes
-- Visit `/history` and verify the header and stats remain readable
+- The featured mission uses fluid type and a single-column action hierarchy on narrow screens.
+- Countdown values wrap without horizontal overflow.
+- Mission metadata adapts from multiple columns to stacked groups.
+- Upcoming missions render as compact responsive rows.
+- Filters are collapsed until requested.
+- The map appears beside the hero only at wide desktop widths.
+- On smaller widths, the map is behind an explicit disclosure after the schedule.
 
-## Known Constraints
+The optional expanded map remains a modal dialog. It must:
 
-- countdown tiles get visually dense on very narrow widths
-- browser notifications remain platform-dependent, especially on iOS
-- offline mode only serves cached content and the offline fallback page
+- move focus to its Close Map control;
+- trap focus while open;
+- close with Escape and the labeled close control;
+- restore focus to the expand control;
+- remain usable in portrait and landscape.
+
+## Watch
+
+- Video preserves its aspect ratio without forcing horizontal overflow.
+- When no verified stream is available, the route presents the next mission, countdown, and provider fallback instead of an empty stage.
+- The mission queue follows the stage on smaller screens and becomes a side rail on larger screens.
+- Mission selection updates the canonical `?id=` URL without a full navigation.
+- Launch actions wrap into labeled, touch-friendly controls.
+
+## History
+
+- Search and provider/year/outcome filters stack on narrow screens.
+- Each archive row keeps the mission and View Mission action readable before exposing secondary metadata.
+- Expanded summaries remain in normal document flow.
+- Replay and detail links use canonical `spacex-*` IDs.
+- Empty, error, stale, and retry states must fit without overflow.
+
+## Mission Detail
+
+- Long names wrap as phrases within the available width.
+- The status, title, description, actions, and telemetry summary stack on narrow screens.
+- Primary and secondary actions remain labeled; icon-only controls require accessible names.
+- Timeline events scroll within their own region when necessary.
+- Video and intelligence sections become a single column.
+- Completed missions return to History and omit future-only calendar actions.
+
+## Touch and Keyboard Requirements
+
+- Minimum interactive target: 44 by 44 CSS pixels.
+- Keep fixed navigation clear of `env(safe-area-inset-bottom)`.
+- Do not hide focus outlines.
+- Keep the active navigation item available through `aria-current`.
+- Connect disclosures to controlled regions with `aria-expanded` and `aria-controls`.
+- Give icon-only buttons an accessible name.
+- Prevent background scrolling while modal drawers or the expanded map are open.
+
+## Motion and Readability
+
+- Respect `prefers-reduced-motion`.
+- Avoid using animation as the only live-status cue.
+- Keep body text at a readable size and WCAG AA contrast.
+- Avoid dense all-uppercase labels for primary reading content.
+- The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
+
+## PWA and Offline Behavior
+
+- Installed mode uses the same responsive layouts and supports both orientations.
+- API responses and navigations are not served from a service-worker cache.
+- Offline navigation displays the static offline document.
+- A newly available worker is applied explicitly before reloading into a new shell.
+- Bottom navigation and safe-area spacing remain correct in standalone mode.
+
+## Manual QA Matrix
+
+Test at minimum:
+
+| Viewport | Orientation | Focus |
+| --- | --- | --- |
+| `320 × 568` | Portrait | Long text, countdown, actions, bottom nav |
+| `390 × 844` | Portrait | Primary mobile journey and safe areas |
+| `844 × 390` | Landscape | Height constraints, video, dialogs |
+| `768 × 1024` | Portrait | Tablet stacking and map disclosure |
+| `1024 × 768` | Landscape | Tablet/desktop transition |
+| `1440 × 900` | Landscape | Full navigation, hero/map split, status bar |
+
+For each relevant viewport:
+
+- visit `/`, `/watch`, `/history`, and one `/launch/[id]`;
+- test no-live-stream and unavailable-provider states;
+- open and close filters, briefing drawer, calendar menu, and expanded map;
+- navigate by keyboard only;
+- enable reduced motion;
+- simulate offline navigation;
+- check for horizontal overflow with long mission names;
+- confirm Home, Watch, and History remain reachable.
 
 ## Related Files
 
-- [app/page.tsx](/Users/matthewschwen/projects/launchwatch/app/page.tsx)
-- [app/history/page.tsx](/Users/matthewschwen/projects/launchwatch/app/history/page.tsx)
-- [components/LaunchCard.tsx](/Users/matthewschwen/projects/launchwatch/components/LaunchCard.tsx)
-- [components/LaunchList.tsx](/Users/matthewschwen/projects/launchwatch/components/LaunchList.tsx)
-- [components/LaunchMap.tsx](/Users/matthewschwen/projects/launchwatch/components/LaunchMap.tsx)
-- [app/globals.css](/Users/matthewschwen/projects/launchwatch/app/globals.css)
+- [`app/page.tsx`](app/page.tsx)
+- [`app/watch/page.tsx`](app/watch/page.tsx)
+- [`app/history/page.tsx`](app/history/page.tsx)
+- [`app/launch/[id]/page.tsx`](<app/launch/[id]/page.tsx>)
+- [`components/LaunchList.tsx`](components/LaunchList.tsx)
+- [`components/PastLaunches.tsx`](components/PastLaunches.tsx)
+- [`components/LaunchMap.tsx`](components/LaunchMap.tsx)
+- [`components/layout/MobileNav.tsx`](components/layout/MobileNav.tsx)
+- [`app/globals.css`](app/globals.css)
+- [`public/manifest.json`](public/manifest.json)
+- [`public/sw.js`](public/sw.js)

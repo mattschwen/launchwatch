@@ -33,13 +33,13 @@ export default function ConsolePanel({
 }: ConsolePanelProps): React.ReactElement {
   return (
     <div
-      className={`relative ${variantStyles[variant]} rounded-none ${
+      className={`relative overflow-hidden rounded-[var(--radius-md)] ${variantStyles[variant]} ${
         showBrackets ? bracketVariant[variant] : ''
       } ${glowing ? 'animate-console-glow' : ''} ${className}`}
     >
       {label && (
         <div className="absolute -top-2.5 left-4 z-10 px-2 bg-[var(--bg-primary)]">
-          <span className="console-label text-[10px]">{label}</span>
+          <span className="console-label">{label}</span>
         </div>
       )}
       <div className="p-4 sm:p-5">

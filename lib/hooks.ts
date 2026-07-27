@@ -1,272 +1,324 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Launch, LaunchIntel, RocketFact } from './types';
-import { getRocketFacts } from './api';
-import { serializeLaunchForIntel } from './launch-intel-params';
-import { checkAndNotify, clearOldNotificationFlags } from './notifications';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import type { Launch, LaunchIntel, RocketFact } from './types';
+import { useLaunchData } from './contexts';
+
+const clockListeners = new Set<() => void>();
+let clockInterval: ReturnType<typeof setInterval> | null = null;
+let currentTime = Date.now();
+
+function subscribeToClock(listener: () => void): () => void {
+  clockListeners.add(listener);
+  if (!clockInterval) {
+    clockInterval = setInterval(() => {
+      currentTime = Date.now();
+      clockListeners.forEach((notify) => notify());
+    }, 1000);
+  }
+
+  return () => {
+    clockListeners.delete(listener);
+    if (clockListeners.size === 0 && clockInterval) {
+      clearInterval(clockInterval);
+      clockInterval = null;
+    }
+  };
+}
+
+function getClockSnapshot(): number {
+  return currentTime;
+}
+
+function getServerClockSnapshot(): number {
+  return currentTime;
+}
+
+export function useCurrentTime(): number {
+  return useSyncExternalStore(
+    subscribeToClock,
+    getClockSnapshot,
+    getServerClockSnapshot
+  );
+}
+
+function checkedMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== 'object') return fallback;
+  const record = payload as Record<string, unknown>;
+  return typeof record.error === 'string'
+    ? record.error
+    : typeof record.message === 'string'
+      ? record.message
+      : fallback;
+}
+
+function extractLaunch(payload: unknown): Launch | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const record = payload as Record<string, unknown>;
+  if (record.launch && typeof record.launch === 'object') {
+    return record.launch as Launch;
+  }
+  if (
+    record.data &&
+    typeof record.data === 'object' &&
+    !Array.isArray(record.data)
+  ) {
+    const nested = record.data as Record<string, unknown>;
+    if (nested.launch && typeof nested.launch === 'object') {
+      return nested.launch as Launch;
+    }
+    if (typeof nested.id === 'string') return nested as unknown as Launch;
+  }
+  return typeof record.id === 'string' ? (record as unknown as Launch) : null;
+}
 
 export function useLaunches() {
-  const [launches, setLaunches] = useState<Launch[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchLaunches() {
-      try {
-        setLoading(true);
-
-        // Use server-side API route (shared cache across all users!)
-        const response = await fetch('/api/launches?type=all');
-        const result = await response.json();
-        const data = result.launches || [];
-
-        setLaunches(data);
-        setError(null);
-
-        // Check for notifications
-        if (typeof window !== 'undefined') {
-          checkAndNotify(data);
-        }
-      } catch (err) {
-        setError('Failed to load launches');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // Clear old notification flags on mount
-    if (typeof window !== 'undefined') {
-      clearOldNotificationFlags();
-    }
-
-    fetchLaunches();
-    // Refresh every 10 minutes (server has 30 min cache)
-    const interval = setInterval(fetchLaunches, 10 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return { launches, loading, error };
+  const data = useLaunchData();
+  return data;
 }
 
 export function useLiveLaunches() {
-  const [liveLaunches, setLiveLaunches] = useState<Launch[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchLiveLaunches() {
-      try {
-        setLoading(true);
-
-        // Use server-side API route
-        const response = await fetch('/api/launches?type=live');
-        const result = await response.json();
-        const data = result.launches || [];
-
-        setLiveLaunches(data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load live launches');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchLiveLaunches();
-    // Refresh every 2 minutes for live launches (server cache helps)
-    const interval = setInterval(fetchLiveLaunches, 2 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return { liveLaunches, loading, error };
+  const data = useLaunchData();
+  const liveLaunches = useMemo(
+    () => data.launches.filter((launch) => launch.isLive),
+    [data.launches]
+  );
+  return {
+    liveLaunches,
+    loading: data.loading,
+    refreshing: data.refreshing,
+    error: data.error,
+    meta: data.meta,
+    refresh: data.refresh,
+  };
 }
 
 export function useNextLaunch() {
-  const [nextLaunch, setNextLaunch] = useState<Launch | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const data = useLaunchData();
+  const nextLaunch = useMemo(() => {
+    return (
+      data.launches.find(
+        (launch) =>
+          launch.isLive ||
+          launch.status === 'upcoming' ||
+          launch.status === 'tbd'
+      ) ?? null
+    );
+  }, [data.launches]);
 
-  useEffect(() => {
-    async function fetchNextLaunch() {
-      try {
-        setLoading(true);
-
-        // Use server-side API route
-        const response = await fetch('/api/launches?type=next');
-        const result = await response.json();
-        const data = result.launch || null;
-
-        setNextLaunch(data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load next launch');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchNextLaunch();
-    // Refresh every 5 minutes (server cache helps)
-    const interval = setInterval(fetchNextLaunch, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return { nextLaunch, loading, error };
+  return {
+    nextLaunch,
+    loading: data.loading,
+    refreshing: data.refreshing,
+    error: data.error,
+    meta: data.meta,
+    refresh: data.refresh,
+  };
 }
 
-export function useRocketFacts() {
-  const [facts, setFacts] = useState<RocketFact[]>([]);
-  const [currentFact, setCurrentFact] = useState<RocketFact | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useLaunchById(id: string | null | undefined) {
+  const { launches, loading: feedLoading } = useLaunchData();
+  const feedLaunch = useMemo(
+    () => (id ? launches.find((launch) => launch.id === id) ?? null : null),
+    [id, launches]
+  );
+  const [remoteLaunch, setRemoteLaunch] = useState<Launch | null>(null);
+  const [loading, setLoading] = useState(Boolean(id));
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    async function fetchFacts() {
+    if (!id) {
+      setRemoteLaunch(null);
+      setLoading(false);
+      setNotFound(false);
+      setError(null);
+      return;
+    }
+
+    if (feedLaunch) {
+      setRemoteLaunch(null);
+      setLoading(false);
+      setNotFound(false);
+      setError(null);
+      return;
+    }
+
+    if (feedLoading) return;
+
+    const controller = new AbortController();
+    setLoading(true);
+    setNotFound(false);
+
+    async function fetchLaunch(): Promise<void> {
       try {
-        setLoading(true);
-        const data = await getRocketFacts();
-        setFacts(data);
-        if (data.length > 0) {
-          setCurrentFact(data[Math.floor(Math.random() * data.length)]);
+        const response = await fetch(`/api/launches/${encodeURIComponent(id!)}`, {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        const payload: unknown = await response.json().catch(() => null);
+
+        if (response.status === 404) {
+          setRemoteLaunch(null);
+          setNotFound(true);
+          setError(null);
+          return;
         }
+        if (!response.ok) {
+          throw new Error(
+            checkedMessage(payload, `Mission unavailable (${response.status})`)
+          );
+        }
+
+        const launch = extractLaunch(payload);
+        if (!launch) throw new Error('Mission response was incomplete');
+        setRemoteLaunch(launch);
+        setNotFound(false);
         setError(null);
-      } catch (err) {
-        setError('Failed to load rocket facts');
-        console.error(err);
+      } catch (requestError) {
+        if (controller.signal.aborted) return;
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Unable to load this mission'
+        );
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
-    fetchFacts();
-  }, []);
+    void fetchLaunch();
+    return () => controller.abort();
+  }, [feedLaunch, feedLoading, id]);
 
-  useEffect(() => {
-    if (facts.length === 0) return;
-
-    // Rotate facts every 15 seconds
-    const interval = setInterval(() => {
-      const randomFact = facts[Math.floor(Math.random() * facts.length)];
-      setCurrentFact(randomFact);
-    }, 15 * 1000);
-
-    return () => clearInterval(interval);
-  }, [facts]);
-
-  return { currentFact, facts, loading, error };
+  return {
+    launch: feedLaunch ?? remoteLaunch,
+    loading: Boolean(id) && (feedLoading || loading),
+    error,
+    notFound,
+  };
 }
 
-export function useLaunchIntel(launch: Launch | null, enabled: boolean = true) {
+export function useLaunchIntel(
+  launch: Launch | null,
+  enabled: boolean = true
+) {
+  const launchId = launch?.id ?? null;
+  const launchIsLive = Boolean(launch?.isLive);
   const [intel, setIntel] = useState<LaunchIntel | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!launch || !enabled) {
+    if (!launchId || !enabled) {
+      setIntel(null);
+      setLoading(false);
+      setError(null);
       return;
     }
 
-    let cancelled = false;
-    const query = serializeLaunchForIntel(launch);
+    const controller = new AbortController();
 
-    async function fetchIntel() {
+    async function fetchIntel(): Promise<void> {
       try {
         setLoading(true);
-        const response = await fetch(`/api/launch-intel?${query}`);
+        const response = await fetch(
+          `/api/launch-intel?id=${encodeURIComponent(launchId!)}`,
+          {
+            signal: controller.signal,
+            headers: { Accept: 'application/json' },
+            cache: 'no-store',
+          }
+        );
+        const payload: unknown = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error('Failed to fetch launch intelligence');
+          throw new Error(
+            checkedMessage(
+              payload,
+              `Mission intelligence unavailable (${response.status})`
+            )
+          );
         }
-        const result = await response.json();
-        if (!cancelled) {
-          setIntel(result);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError('Failed to load launch intelligence');
-          console.error(err);
-        }
+
+        const record =
+          payload && typeof payload === 'object'
+            ? (payload as Record<string, unknown>)
+            : null;
+        const result =
+          record?.data && typeof record.data === 'object'
+            ? (record.data as LaunchIntel)
+            : (payload as LaunchIntel);
+
+        setIntel(result);
+        setError(null);
+      } catch (requestError) {
+        if (controller.signal.aborted) return;
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Unable to load mission intelligence'
+        );
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
-    fetchIntel();
-    const interval = setInterval(fetchIntel, 2 * 60 * 1000);
-
+    void fetchIntel();
+    const interval = window.setInterval(
+      () => void fetchIntel(),
+      launchIsLive ? 2 * 60 * 1000 : 15 * 60 * 1000,
+    );
     return () => {
-      cancelled = true;
-      clearInterval(interval);
+      controller.abort();
+      window.clearInterval(interval);
     };
-  }, [enabled, launch]);
+  }, [enabled, launchId, launchIsLive]);
 
   return { intel, loading, error };
 }
 
+export function useRocketFacts() {
+  const facts: RocketFact[] = [];
+  return {
+    currentFact: null as RocketFact | null,
+    facts,
+    loading: false,
+    error: null as string | null,
+  };
+}
+
 export function useCountdown(targetDate: string) {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    total: 0
-  });
+  const now = useCurrentTime();
+  const difference = new Date(targetDate).getTime() - now;
 
-  useEffect(() => {
-    function calculateTimeLeft() {
-      const difference = new Date(targetDate).getTime() - new Date().getTime();
+  if (difference <= 0) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+    };
+  }
 
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-          total: difference
-        });
-      } else {
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          total: 0
-        });
-      }
-    }
-
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-
-    return () => clearInterval(interval);
-  }, [targetDate]);
-
-  return timeLeft;
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+    total: difference,
+  };
 }
 
 export function useCompactCountdown(targetDate: string): string {
   const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
 
-  if (total <= 0) {
-    return 'LIFTOFF';
-  }
+  if (total <= 0) return 'Complete';
+  if (days > 0) return `T−${days}d ${hours}h`;
 
-  if (days > 0) {
-    return `T-${days}d ${hours}h`;
-  }
-
-  const hh = String(hours).padStart(2, '0');
-  const mm = String(minutes).padStart(2, '0');
-  const ss = String(seconds).padStart(2, '0');
-
-  return `T-${hh}:${mm}:${ss}`;
+  return `T−${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+    2,
+    '0'
+  )}:${String(seconds).padStart(2, '0')}`;
 }

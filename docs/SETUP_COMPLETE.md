@@ -1,38 +1,41 @@
 # Setup Status
 
-The current repo setup is ready for day-to-day development.
+LaunchWatch is ready for local development with Node.js 22+ and npm.
 
-## Verified Commands
+## Install and Validate
 
 ```bash
-npm install
-npm run lint
-npm run build
+npm ci
+npm run check
 ```
 
-## Current Environment Requirements
+Run browser tests for route, data-state, responsive, or interaction changes:
 
-- Node.js 20+
-- npm
-- optional API keys for NASA APOD and Launch Library 2
+```bash
+npx playwright install chromium
+npm run test:e2e
+npm run test:a11y
+```
 
-## Current App Entry Points
+## Optional Server Environment
 
-- `/` for the mission-control board
-- `/watch` for the watch room
-- `/launch/[id]` for mission detail and launch intelligence
-- `/history` for past launches
-- `/api/launches` for internal cached launch data
-- `/api/launch-intel` for mission-specific stream and media intelligence
+- `LL2_API_KEY`
+- `NASA_API_KEY`
+- `YOUTUBE_DATA_API_KEY`
+- `X_BEARER_TOKEN`, or the complete X OAuth 1.0a credential set
 
-## Current Branding Assets
+Legacy `NEXT_PUBLIC_*` secret names are unsupported.
 
-- active app logo: `public/newlogo.jpeg`
-- source variants: `LaunchWatch_Logo.svg`, `LaunchWatch_Logo_1.svg`
+## Current Entry Points
 
-## Current UI Summary
+- `/` — live/next mission, schedule, filters, and responsive map
+- `/watch` — stream or next-mission fallback and queue
+- `/history` — completed-launch archive
+- `/launch/[id]` — current or historical canonical detail
+- `/api/launches?type=all|live|next|history`
+- `/api/launches/[id]`
+- `/api/launch-intel?id=[id]`
 
-- green-and-black mission-control shell
-- console panels and telemetry typography
-- one-time boot sequence on first load
-- watch-room intel feed and expandable map with explicit close controls
+## Release Path
+
+Validate locally, review a Vercel preview, complete the route/API/responsive/PWA smoke checks, and only then promote to production. See [`DEPLOYMENT.md`](DEPLOYMENT.md).

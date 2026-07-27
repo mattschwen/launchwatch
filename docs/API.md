@@ -1,156 +1,281 @@
 # API Documentation
 
-LaunchWatch pulls data from external launch/media APIs and exposes internal API routes for normalized launch data and launch intelligence.
+LaunchWatch exposes a small same-origin API for normalized launch data and mission intelligence. Browser code must use these routes instead of calling SpaceX, Launch Library 2, YouTube, or social providers directly.
 
-## External APIs
+## Base and Format
 
-### SpaceX API v4
+- Local base URL: `http://localhost:3000`
+- Production base URL: the active LaunchWatch origin
+- Format: JSON
+- Authentication: none for internal read routes
+- Credentials: optional, server-side provider credentials only
 
-- Base URL: `https://api.spacexdata.com/v4`
-- Auth: none
-- Used for: upcoming launches, past launches, rocket metadata
+## Canonical Launch IDs
 
-LaunchWatch uses the SpaceX query endpoint so rocket and launchpad references can be populated in one request.
+Every launch ID combines its provider and native identifier:
 
-### Launch Library 2
+```text
+spacex-<provider-id>
+ll2-<provider-id>
+```
 
-- Free URL: `https://ll.thespacedevs.com/2.2.0`
-- Premium URL: `https://lldev.thespacedevs.com/2.2.0`
-- Auth: optional `Token` header
-- Used for: non-SpaceX upcoming launches, launch status, launch pad coordinates, and webcast hints
+Examples:
 
-LaunchWatch keeps a longer cache window on Launch Library 2 responses to stay under free-tier limits.
+```text
+spacex-5eb87d46ffd86e000604b388
+ll2-0d2f8c4a-3b6a-4f9c-a632-example
+```
 
-### NASA APOD
+Use the canonical ID in:
 
-- Base URL: `https://api.nasa.gov`
-- Auth: optional key, otherwise `DEMO_KEY`
-- Used for: rotating fact content in the header
+- `/launch/[id]`
+- `/watch?id=[id]`
+- `/api/launches/[id]`
+- `/api/launch-intel?id=[id]`
 
-### YouTube Data API
+IDs are validated, capped at 140 characters, and limited to supported source prefixes and provider-safe characters. The historical `past-<SpaceX-id>` format is accepted by the detail resolver for compatibility and maps to `spacex-<SpaceX-id>`; it is not a format for new links or stored data.
 
-- Base URL: `https://www.googleapis.com/youtube/v3`
-- Auth: optional `YOUTUBE_DATA_API_KEY`
-- Used for: ranking candidate livestreams when provider-supplied links are missing or ambiguous
+## Feed Metadata
 
-### Spaceflight News API
+Successful launch responses include provider status:
 
-- Base URL: `https://api.spaceflightnewsapi.net/v4`
-- Auth: none
-- Used for: recent launch-related coverage in the launch-intel layer
+```json
+{
+  "generatedAt": "2026-07-27T01:10:00.000Z",
+  "partial": false,
+  "stale": false,
+  "cached": true,
+  "providers": {
+    "spacex": {
+      "state": "ok",
+      "cached": true,
+      "updatedAt": "2026-07-27T01:09:30.000Z"
+    },
+    "ll2": {
+      "state": "ok",
+      "cached": true,
+      "updatedAt": "2026-07-27T01:02:00.000Z"
+    }
+  }
+}
+```
 
-### Reddit Search API
+Provider `state` is one of:
 
-- Base URL: `https://www.reddit.com/search.json`
-- Auth: none
-- Used for: recent mission-related community chatter in the launch-intel layer
+- `ok`: provider returned usable data;
+- `stale`: the provider failed, but a last-known response is available;
+- `error`: provider failed and there is no usable fallback;
+- `not-requested`: that provider is outside the endpoint’s scope.
 
-### X Recent Search
+`partial` is true when any requested provider is stale or unavailable.
 
-- Base URL: `https://api.x.com/2`
-- Auth: optional `X_BEARER_TOKEN`, or OAuth 1.0a user-context credentials via `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`, `X_CONSUMER_KEY`, and `X_CONSUMER_KEY_SECRET`
-- Used for: recent mission-related X posts in the launch-intel layer
-
-## Internal API Routes
+## Launch Feed
 
 ### `GET /api/launches?type=all`
 
-Returns normalized upcoming launches.
-
-Response shape:
+Returns merged, normalized, deduplicated upcoming launches from SpaceX and Launch Library 2 for the current three-month window.
 
 ```json
 {
   "launches": [],
   "cached": true,
-  "source": "server-cache"
+  "source": "server-cache",
+  "meta": {}
 }
 ```
 
+CDN policy: 5 minutes fresh, 10 minutes stale-while-revalidate.
+
 ### `GET /api/launches?type=live`
 
-Returns launches inside the live-launch window.
+Returns upcoming-feed launches marked live by provider state or the supported webcast/window heuristic.
+
+```json
+{
+  "launches": [],
+  "cached": false,
+  "source": "api",
+  "meta": {}
+}
+```
+
+CDN policy: 1 minute fresh, 2 minutes stale-while-revalidate.
 
 ### `GET /api/launches?type=next`
 
-Returns the next upcoming launch.
-
-Response shape:
+Returns the first live or upcoming launch, or `null` when the usable provider response has no scheduled mission.
 
 ```json
 {
   "launch": null,
   "cached": false,
-  "source": "api"
+  "source": "api",
+  "meta": {}
 }
 ```
 
-### `GET /api/launch-intel`
+CDN policy: 2 minutes fresh, 4 minutes stale-while-revalidate.
 
-Returns launch-specific intelligence for a serialized launch payload. The route aggregates:
+### `GET /api/launches?type=history&limit=50`
 
-- ranked YouTube/provider stream candidates
-- recent coverage from Spaceflight News API
-- recent Reddit items
-- recent X items when either `X_BEARER_TOKEN` or the X OAuth credential set is configured
-- quick links for YouTube, provider channels, Reddit, and X search
+Returns completed SpaceX launches in reverse chronological order.
+
+- `limit` is optional and defaults to `50`.
+- Valid values are integers from `1` through `100`.
+- Launches use canonical `spacex-*` IDs.
+- Launch Library 2 appears as `not-requested` in provider metadata.
+
+```json
+{
+  "launches": [],
+  "cached": true,
+  "source": "server-cache",
+  "meta": {}
+}
+```
+
+CDN policy: 60 minutes fresh, 120 minutes stale-while-revalidate.
+
+### Feed errors
+
+| Condition | Status | Body |
+| --- | --- | --- |
+| Unknown `type` | `400` | `{ "error": "Invalid type parameter..." }` |
+| Invalid history limit | `400` | `{ "error": "Invalid limit parameter..." }` |
+| No requested provider has usable data | `502` | Error plus empty data and provider metadata |
+| Unexpected route failure | `500` | `{ "error": "Failed to fetch launches" }` |
+
+## Launch Detail
+
+### `GET /api/launches/[id]`
+
+Looks up one provider record directly, so it supports upcoming launches, completed SpaceX launches, and LL2 launches outside the current feed window.
+
+Example:
+
+```http
+GET /api/launches/spacex-5eb87d46ffd86e000604b388
+```
+
+Successful response:
+
+```json
+{
+  "launch": {
+    "id": "spacex-5eb87d46ffd86e000604b388",
+    "sourceId": "5eb87d46ffd86e000604b388",
+    "source": "spacex"
+  },
+  "canonicalId": "spacex-5eb87d46ffd86e000604b388",
+  "legacyId": false,
+  "cached": true,
+  "source": "server-cache",
+  "meta": {}
+}
+```
+
+Responses to accepted legacy `past-*` IDs include `legacyId: true` and a `Content-Location` header pointing to the canonical API URL.
+
+| Condition | Status |
+| --- | --- |
+| Invalid or unsupported ID | `400` |
+| Valid ID with no provider record | `404` |
+| Provider unavailable without cached data | `502` |
+| Unexpected route failure | `500` |
+
+CDN policy: 5 minutes fresh, 15 minutes stale-while-revalidate.
+
+## Launch Intelligence
+
+### `GET /api/launch-intel?id=[canonical-id]`
+
+The route accepts only a launch identifier as input. It resolves the authoritative normalized launch on the server before using provider links, title, mission description, and timing to build:
+
+- ranked official and YouTube stream candidates;
+- a recommended watch state and URL;
+- relevant Spaceflight News coverage;
+- recent Reddit and X items when available;
+- provider, YouTube, Reddit, and X quick links.
+
+Example:
+
+```http
+GET /api/launch-intel?id=ll2-0d2f8c4a-3b6a-4f9c-a632-example
+```
+
+Do not serialize names, descriptions, URLs, dates, or entire launch objects into this request. Those mutable fields are not trusted as client input.
+
+The response includes:
+
+```json
+{
+  "summary": {
+    "streamState": "upcoming",
+    "recommendedLabel": "Official provider stream",
+    "recommendedUrl": "https://www.youtube.com/watch?v=example",
+    "rationale": "Provider-supplied launch coverage",
+    "lastUpdated": "2026-07-27T01:10:00.000Z"
+  },
+  "streamCandidates": [],
+  "newsItems": [],
+  "socialItems": [],
+  "quickLinks": {}
+}
+```
+
+The route adds:
+
+- `X-LaunchWatch-Canonical-Id`
+- `X-LaunchWatch-Data-State: fresh|stale`
+
+| Condition | Status |
+| --- | --- |
+| Missing or invalid ID | `400` |
+| Valid ID with no provider record | `404` |
+| Launch provider unavailable without cached data | `502` |
+| Aggregation failure | `500` |
+
+CDN policy: 2 minutes fresh, 10 minutes stale-while-revalidate. Individual intel sources have their own bounded fresh and stale windows.
 
 ## Normalized Launch Shape
 
-The app UI works from the shared `Launch` type in [lib/types.ts](/Users/matthewschwen/projects/launchwatch/lib/types.ts).
+The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.ts). Important fields include:
 
-Fields include:
-
-- `id`
-- `name`
-- `date`
-- `dateUnix`
-- `rocket`
-- `launchSite`
-- `status`
-- `livestream`
-- `description`
-- `isLive`
-- `image`
-- `missionPatch`
-- `location`
-- `provider`
-- `program`
-- `timeline`
-- `livestreams`
-- `rocketFamily`
-- `rocketVariant`
-
-## Current Cache Durations
-
-| Payload | Duration |
+| Field | Meaning |
 | --- | --- |
-| `all` | 30 minutes |
-| `live` | 2 minutes |
-| `next` | 5 minutes |
-| `launch-intel` aggregate | 2 minutes fresh, 10 minutes stale fallback |
-| `launch-intel` stream candidates | 2 minutes fresh, 10 minutes stale fallback |
-| `launch-intel` news items | 10 minutes fresh, 60 minutes stale fallback |
-| `launch-intel` Reddit/X items | 5 minutes fresh, 30 minutes stale fallback |
-| Launch Library 2 raw fetches | 30 minutes |
-| NASA APOD | 24 hours |
-| SpaceX rockets | 24 hours |
+| `id` | Canonical provider-qualified ID |
+| `sourceId` | Provider-native identifier |
+| `source` | `spacex` or `ll2` |
+| `name`, `date`, `dateUnix` | Mission identity and timing |
+| `rocket`, `launchSite`, `location` | Vehicle and pad data |
+| `status`, `statusName`, `isLive` | Normalized mission state |
+| `livestream`, `livestreams` | Verified provider video candidates |
+| `description`, `missionType`, `orbit`, `program` | Mission context |
+| `image`, `missionPatch`, `videoThumbnail` | Optional media |
+| `timeline` | Optional provider timeline events |
+
+Fields absent from an upstream provider are represented as `null`, omitted optional fields, or a documented fallback string.
+
+## External Providers
+
+| Provider | Use | Authentication |
+| --- | --- | --- |
+| SpaceX API v4 | Upcoming/history/detail and rocket data | None |
+| Launch Library 2 | Cross-provider schedule, pads, status, streams, detail | Optional `LL2_API_KEY` |
+| NASA APOD | Optional astronomy fact content | Optional `NASA_API_KEY`, otherwise `DEMO_KEY` |
+| YouTube Data API | Stream discovery and ranking | Optional `YOUTUBE_DATA_API_KEY` |
+| Spaceflight News API | Relevant coverage | None |
+| Reddit search | Community links | None |
+| X recent search | Recent public posts | `X_BEARER_TOKEN` or complete OAuth 1.0a set |
+
+All keys are server-only. Legacy `NEXT_PUBLIC_*` key names are unsupported and must be migrated.
 
 ## Client Fetching
 
-The app currently fetches:
+- `LaunchDataProvider` fetches `type=all` once for Home, Watch, navigation status, and shared selectors.
+- `useLiveLaunches` and `useNextLaunch` derive their values from that shared feed.
+- `useLaunchById` checks shared data first and calls `/api/launches/[id]` only when needed.
+- History fetches `type=history&limit=100`.
+- `useLaunchIntel` calls `/api/launch-intel?id=...`.
 
-- upcoming launches through `/api/launches?type=all`
-- live launches through `/api/launches?type=live`
-- next launch through `/api/launches?type=next`
-- launch intelligence through `/api/launch-intel`
-- past SpaceX launches directly through `lib/api.ts`
-- rocket facts directly through `lib/api.ts`
-
-## Notes
-
-- There is no authentication layer
-- There is no database-backed API
-- The service worker is not a data API source of truth
-- Launch-intel caches and dedupes in-flight source fetches server-side to reduce repeated upstream work
-- If you change response shape or cache timing, update this file and [docs/ARCHITECTURE.md](/Users/matthewschwen/projects/launchwatch/docs/ARCHITECTURE.md)
+Every client request checks `response.ok`, handles aborted requests, and presents an explicit retry or unavailable state where appropriate.

@@ -1,30 +1,25 @@
 # Documentation Summary
 
-This repo’s documentation has been refreshed to match the current application instead of the original MVP-era notes.
+The maintained docs reflect the current LaunchWatch architecture and UX:
 
-## What the Docs Now Reflect
+- provider-qualified `spacex-*` and `ll2-*` launch IDs;
+- `all`, `live`, `next`, and `history` feeds plus canonical detail lookup;
+- ID-only launch-intel requests resolved from authoritative server data;
+- one deduplicated upcoming feed shared by the app shell and route selectors;
+- internal server access to SpaceX history;
+- explicit partial, stale, unavailable, empty, and retry states;
+- Home, Watch, History, and detail responsibilities across responsive layouts;
+- server-only provider credentials;
+- narrow PWA caching that excludes data, navigation, and Next.js flight requests;
+- the aggregate `check` gate plus browser, accessibility, and preview review gates.
 
-- the active logo in `public/newlogo.jpeg`
-- the current green mission-control visual language
-- the first-visit boot sequence and watch-room intel surfaces
-- the integrated launch-sites map and expanded-map controls
-- the current cache durations for `all`, `live`, and `next`
-- the actual route structure and component layout
-- the current contributor workflow based on `lint` and `build`
+The first-visit status is non-blocking, mobile orientation is unrestricted, and schedule/archive content uses responsive rows.
 
-## What Was Corrected
+## Sources of Truth
 
-- old placeholder GitHub links
-- old local port assumptions
-- dark-theme language that no longer matches the product
-- “future feature” notes for features that now exist
-- outdated component references and stale setup claims
-
-## Source of Truth
-
-If behavior changes, update:
-
-- [README.md](/Users/matthewschwen/projects/launchwatch/README.md)
-- [docs/ARCHITECTURE.md](/Users/matthewschwen/projects/launchwatch/docs/ARCHITECTURE.md)
-- [docs/API.md](/Users/matthewschwen/projects/launchwatch/docs/API.md)
-- [.memory/README.md](/Users/matthewschwen/projects/launchwatch/.memory/README.md)
+- [`../README.md`](../README.md)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- [`API.md`](API.md)
+- [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- [`../MOBILE_OPTIMIZATION.md`](../MOBILE_OPTIMIZATION.md)
+- [`../CONTRIBUTING.md`](../CONTRIBUTING.md)

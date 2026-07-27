@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useCurrentTime } from '@/lib/hooks';
 
 interface UTCClockProps {
   showDate?: boolean;
@@ -13,37 +13,33 @@ export default function UTCClock({
   showLabel = true,
   className = '',
 }: UTCClockProps): React.ReactElement {
-  const [time, setTime] = useState<string>('--:--:--');
-  const [date, setDate] = useState<string>('');
-  const started = useRef(false);
-
-  useEffect(() => {
-    function tick(): void {
-      const now = new Date();
-      setTime(now.toISOString().slice(11, 19));
-      if (showDate) {
-        setDate(now.toISOString().slice(0, 10));
-      }
-    }
-
-    tick();
-    started.current = true;
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [showDate]);
+  const now = useCurrentTime();
+  const iso = new Date(now).toISOString();
+  const time = iso.slice(11, 19);
+  const date = iso.slice(0, 10);
 
   return (
-    <div className={`flex items-center gap-2 font-[family-name:var(--font-geist-mono)] ${className}`} suppressHydrationWarning>
-      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--console-green)] animate-blink" />
-      {showLabel && (
-        <span className="console-label text-[10px]">UTC</span>
-      )}
-      {showDate && date && (
-        <span className="text-xs text-[var(--text-muted)]" suppressHydrationWarning>{date}</span>
-      )}
-      <span className="text-sm text-[var(--console-green)] tabular-nums tracking-wider font-medium" suppressHydrationWarning>
+    <div
+      className={`flex items-center gap-2 font-[family-name:var(--font-geist-mono)] ${className}`}
+      suppressHydrationWarning
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--console-green)]"
+      />
+      {showLabel ? <span className="data-label">UTC</span> : null}
+      {showDate ? (
+        <span className="text-xs text-[var(--text-muted)]" suppressHydrationWarning>
+          {date}
+        </span>
+      ) : null}
+      <time
+        dateTime={iso}
+        className="font-mono text-sm font-medium tabular-nums tracking-wider text-[var(--console-green)]"
+        suppressHydrationWarning
+      >
         {time}
-      </span>
+      </time>
     </div>
   );
 }

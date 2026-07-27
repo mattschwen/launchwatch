@@ -21,13 +21,13 @@ export default function TelemetryReadout({
   className = '',
 }: TelemetryReadoutProps): React.ReactElement {
   return (
-    <div className={`flex items-center gap-2 py-1 ${className}`}>
+    <div className={`flex items-start gap-2 py-1.5 ${className}`}>
       {status && <span className={`status-dot ${statusDotClass[status]}`} />}
-      <span className="console-label text-[10px] sm:text-[11px] min-w-[70px] sm:min-w-[80px] flex-shrink-0">
+      <span className="console-label min-w-[70px] flex-shrink-0 sm:min-w-[80px]">
         {label}
       </span>
       <span
-        className={`text-xs sm:text-sm truncate ${
+        className={`min-w-0 break-words text-xs sm:text-sm ${
           mono ? 'console-value' : 'text-[var(--text-primary)]'
         }`}
       >

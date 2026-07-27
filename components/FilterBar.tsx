@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useId, useState } from 'react';
+import { Search, X } from 'lucide-react';
 
 export interface FilterOptions {
   search: string;
@@ -24,174 +24,140 @@ const defaultFilters: FilterOptions = {
   sortBy: 'date-asc',
 };
 
-const defaultProviders = [
-  { value: 'all', label: 'ALL' },
-  { value: 'spacex', label: 'SPACEX' },
+const providers = [
+  { value: 'all', label: 'All providers' },
+  { value: 'spacex', label: 'SpaceX' },
   { value: 'nasa', label: 'NASA' },
   { value: 'ula', label: 'ULA' },
-  { value: 'rocket-lab', label: 'ROCKETLAB' },
-  { value: 'blue-origin', label: 'BLUE ORIGIN' },
-  { value: 'arianespace', label: 'ARIANESPACE' },
+  { value: 'rocket-lab', label: 'Rocket Lab' },
+  { value: 'blue-origin', label: 'Blue Origin' },
+  { value: 'arianespace', label: 'Arianespace' },
 ];
 
-const defaultStatusOptions = [
-  { value: 'all', label: 'ALL' },
-  { value: 'upcoming', label: 'GO' },
-  { value: 'live', label: 'LIVE' },
-  { value: 'success', label: 'SUCCESS' },
-  { value: 'failure', label: 'FAILURE' },
-  { value: 'tbd', label: 'HOLD' },
+const statuses = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'upcoming', label: 'Scheduled' },
+  { value: 'live', label: 'Live' },
+  { value: 'tbd', label: 'To be confirmed' },
 ];
 
 export default function FilterBar({
   onFilterChange,
   initialFilters,
   showProvider = true,
-  statusOptions = defaultStatusOptions,
+  statusOptions = statuses,
 }: FilterBarProps): React.ReactElement {
   const [filters, setFilters] = useState<FilterOptions>({
     ...defaultFilters,
     ...initialFilters,
   });
-  const activeFilterCount =
-    Number(Boolean(filters.search)) +
-    Number(showProvider && filters.provider !== 'all') +
-    Number(filters.status !== 'all');
+  const id = useId();
 
-  const updateFilter = (key: keyof FilterOptions, value: string): void => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+  const update = <Key extends keyof FilterOptions>(
+    key: Key,
+    value: FilterOptions[Key]
+  ): void => {
+    const next = { ...filters, [key]: value };
+    setFilters(next);
+    onFilterChange(next);
   };
 
+  const active =
+    Boolean(filters.search) ||
+    (showProvider && filters.provider !== 'all') ||
+    filters.status !== 'all';
+
   return (
-    <div className="panel corner-brackets p-4 sm:p-5 space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-4 border-b border-[var(--panel-border)] pb-3">
-        <div>
-          <p className="console-label mb-1 text-[10px]">SEARCH & FILTER</p>
-          <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
-            Narrow the board by mission name, provider, and launch state.
-          </p>
-        </div>
-        <span className="console-value text-xs tracking-[0.2em]">
-          {String(activeFilterCount).padStart(2, '0')} ACTIVE
-        </span>
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--console-green)] font-[family-name:var(--font-geist-mono)] text-sm">&gt;</span>
-        <input
-          type="text"
-          placeholder="search launches..."
-          value={filters.search}
-          onChange={(e) => updateFilter('search', e.target.value)}
-          className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-4 py-3 pl-7 text-sm text-[var(--console-cyan)] font-[family-name:var(--font-geist-mono)] placeholder-[var(--text-muted)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)]"
+    <div className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(15rem,1fr)_12rem_12rem_12rem_auto]">
+      <div className="relative sm:col-span-2 lg:col-span-1">
+        <label htmlFor={`${id}-search`} className="sr-only">
+          Search launches
+        </label>
+        <Search
+          aria-hidden="true"
+          size={17}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-4 border-r border-[var(--console-green)] animate-blink" />
+        <input
+          id={`${id}-search`}
+          type="search"
+          value={filters.search}
+          onChange={(event) => update('search', event.target.value)}
+          placeholder="Search missions"
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+        />
       </div>
 
-      {/* Provider Filter */}
-      {showProvider && (
+      {showProvider ? (
         <div>
-          <label className="console-label text-[10px] mb-2 block">PROVIDER</label>
-          <div className="flex flex-wrap gap-1.5">
-            {defaultProviders.map((provider) => {
-              const isActive = filters.provider === provider.value;
-              return (
-                <button
-                  key={provider.value}
-                  onClick={() => updateFilter('provider', provider.value)}
-                  className={`px-2.5 py-1.5 text-[10px] sm:text-xs font-[family-name:var(--font-geist-mono)] font-medium tracking-wider transition-[transform,border-color,color,background-color] duration-200 [transition-timing-function:var(--ease-out-quart)] motion-safe:hover:-translate-y-px border ${
-                    isActive
-                      ? 'border-[var(--console-green)]/50 text-[var(--console-green)] bg-[var(--console-green)]/5'
-                      : 'border-[var(--panel-border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--panel-border)]'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${isActive ? 'bg-[var(--console-green)] shadow-[0_0_4px_var(--console-green)]' : 'bg-[var(--text-muted)]/30'}`} />
-                    {provider.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Status & Sort */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="console-label text-[10px] mb-2 block">STATUS</label>
+          <label htmlFor={`${id}-provider`} className="sr-only">
+            Provider
+          </label>
           <select
-            value={filters.status}
-            onChange={(e) => updateFilter('status', e.target.value)}
-            className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-3 py-2.5 text-xs text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)] sm:text-sm"
+            id={`${id}-provider`}
+            value={filters.provider}
+            onChange={(event) => update('provider', event.target.value)}
+            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {providers.map((provider) => (
+              <option key={provider.value} value={provider.value}>
+                {provider.label}
               </option>
             ))}
           </select>
         </div>
-        <div>
-          <label className="console-label text-[10px] mb-2 block">SORT</label>
-          <select
-            value={filters.sortBy}
-            onChange={(e) => updateFilter('sortBy', e.target.value as FilterOptions['sortBy'])}
-            className="w-full border border-[var(--panel-border)] bg-[var(--bg-primary)] px-3 py-2.5 text-xs text-[var(--text-primary)] font-[family-name:var(--font-geist-mono)] transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out-quart)] focus:outline-none focus:border-[var(--console-green)]/40 focus:shadow-[0_0_0_1px_rgba(0,255,136,0.12)] sm:text-sm"
-          >
-            <option value="date-asc">SOONEST</option>
-            <option value="date-desc">LATEST</option>
-            <option value="name-asc">NAME A-Z</option>
-            <option value="name-desc">NAME Z-A</option>
-          </select>
-        </div>
+      ) : null}
+
+      <div>
+        <label htmlFor={`${id}-status`} className="sr-only">
+          Status
+        </label>
+        <select
+          id={`${id}-status`}
+          value={filters.status}
+          onChange={(event) => update('status', event.target.value)}
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+        >
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Active Filter Tags */}
-      {(filters.search || (showProvider && filters.provider !== 'all') || filters.status !== 'all') && (
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--panel-border)]">
-          {filters.search && (
-            <button
-              onClick={() => updateFilter('search', '')}
-              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-cyan)]/30 text-[var(--console-cyan)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
-            >
-              [{filters.search}]
-              <X size={10} />
-            </button>
-          )}
-          {showProvider && filters.provider !== 'all' && (
-            <button
-              onClick={() => updateFilter('provider', 'all')}
-              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-green)]/30 text-[var(--console-green)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
-            >
-              [{defaultProviders.find((provider) => provider.value === filters.provider)?.label}]
-              <X size={10} />
-            </button>
-          )}
-          {filters.status !== 'all' && (
-            <button
-              onClick={() => updateFilter('status', 'all')}
-              className="inline-flex items-center gap-1 px-2 py-1 border border-[var(--console-amber)]/30 text-[var(--console-amber)] text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wider"
-            >
-              [{filters.status.toUpperCase()}]
-              <X size={10} />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              const reset = { ...defaultFilters, ...initialFilters, sortBy: filters.sortBy };
-              setFilters(reset);
-              onFilterChange(reset);
-            }}
-            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--console-green)] font-[family-name:var(--font-geist-mono)] tracking-wider transition-colors"
-          >
-            CLEAR ALL
-          </button>
-        </div>
-      )}
+      <div>
+        <label htmlFor={`${id}-sort`} className="sr-only">
+          Sort launches
+        </label>
+        <select
+          id={`${id}-sort`}
+          value={filters.sortBy}
+          onChange={(event) =>
+            update('sortBy', event.target.value as FilterOptions['sortBy'])
+          }
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+        >
+          <option value="date-asc">Soonest first</option>
+          <option value="date-desc">Latest first</option>
+          <option value="name-asc">Mission A–Z</option>
+          <option value="name-desc">Mission Z–A</option>
+        </select>
+      </div>
+
+      <button
+        type="button"
+        disabled={!active}
+        onClick={() => {
+          const next = { ...defaultFilters, ...initialFilters };
+          setFilters(next);
+          onFilterChange(next);
+        }}
+        className="icon-button disabled:cursor-not-allowed disabled:opacity-35"
+        aria-label="Clear launch filters"
+      >
+        <X aria-hidden="true" size={17} />
+      </button>
     </div>
   );
 }

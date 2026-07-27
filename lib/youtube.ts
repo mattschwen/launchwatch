@@ -5,45 +5,6 @@
 
 import { Launch } from './types';
 
-const YOUTUBE_SEARCH_BASE = 'https://www.googleapis.com/youtube/v3/search';
-const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || '';
-
-/**
- * Search YouTube for a launch livestream
- * Falls back to web scraping if no API key
- */
-export async function searchYouTubeLivestream(launch: Launch): Promise<string | null> {
-  // If we already have a livestream, validate it
-  if (launch.livestream) {
-    const validated = await validateYouTubeUrl(launch.livestream);
-    if (validated) return validated;
-  }
-
-  // Try YouTube API search if key available
-  if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'DEMO_KEY') {
-    const apiResult = await searchViaAPI(launch);
-    if (apiResult) return apiResult;
-  }
-
-  // Fallback: Generate search URL for user to click
-  return generateYouTubeSearchUrl(launch);
-}
-
-/**
- * Validate and normalize YouTube URL
- */
-async function validateYouTubeUrl(url: string): Promise<string | null> {
-  try {
-    const videoId = extractYouTubeId(url);
-    if (videoId) {
-      return `https://www.youtube.com/watch?v=${videoId}`;
-    }
-  } catch (error) {
-    console.error('Invalid YouTube URL:', error);
-  }
-  return null;
-}
-
 /**
  * Extract YouTube video ID from various URL formats
  */
@@ -60,45 +21,6 @@ export function extractYouTubeId(url: string): string | null {
     if (match && match[1]) {
       return match[1];
     }
-  }
-
-  return null;
-}
-
-/**
- * Search YouTube API for livestream
- */
-async function searchViaAPI(launch: Launch): Promise<string | null> {
-  try {
-    const query = buildSearchQuery(launch);
-
-    for (const eventType of ['live', 'upcoming'] as const) {
-      const params = new URLSearchParams({
-        part: 'snippet',
-        q: query,
-        type: 'video',
-        eventType,
-        order: 'date',
-        maxResults: '5',
-        key: YOUTUBE_API_KEY,
-      });
-
-      const response = await fetch(`${YOUTUBE_SEARCH_BASE}?${params.toString()}`);
-
-      if (!response.ok) {
-        console.warn('YouTube API error:', response.status);
-        continue;
-      }
-
-      const data = await response.json();
-
-      if (data.items && data.items.length > 0) {
-        const videoId = data.items[0].id.videoId;
-        return `https://www.youtube.com/watch?v=${videoId}`;
-      }
-    }
-  } catch (error) {
-    console.error('YouTube API search failed:', error);
   }
 
   return null;
@@ -171,68 +93,6 @@ export function getYouTubeEmbedUrl(url: string | null): string | null {
   if (!videoId) return url; // Return original if can't parse
 
   return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0`;
-}
-
-/**
- * Scrape Spaceflight Now for livestream
- * This is a fallback when API has no data
- */
-export async function findSpaceflightNowStream(launch: Launch): Promise<string | null> {
-  try {
-    // This would require server-side scraping. Generate a focused search URL instead.
-    const query = `${launch.rocket} ${launch.name} launch live`;
-    const params = new URLSearchParams({
-      q: `site:youtube.com ${query}`,
-    });
-
-    // Use Google search as proxy
-    return `https://www.google.com/search?${params.toString()}`;
-  } catch (error) {
-    console.error('Spaceflight Now search failed:', error);
-    return null;
-  }
-}
-
-/**
- * Enhanced livestream detection for current launch
- * Tries multiple sources to find an active stream
- */
-export async function findLivestream(launch: Launch): Promise<{
-  url: string | null;
-  source: 'api' | 'youtube-api' | 'search' | 'fallback';
-  confidence: 'high' | 'medium' | 'low';
-}> {
-  // Priority 1: API provided URL
-  if (launch.livestream) {
-    const validated = await validateYouTubeUrl(launch.livestream);
-    if (validated) {
-      return {
-        url: validated,
-        source: 'api',
-        confidence: 'high'
-      };
-    }
-  }
-
-  // Priority 2: YouTube API search
-  if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'DEMO_KEY') {
-    const apiResult = await searchViaAPI(launch);
-    if (apiResult) {
-      return {
-        url: apiResult,
-        source: 'youtube-api',
-        confidence: 'high'
-      };
-    }
-  }
-
-  // Priority 3: Generate search URL
-  const searchUrl = generateYouTubeSearchUrl(launch);
-  return {
-    url: searchUrl,
-    source: 'search',
-    confidence: 'medium'
-  };
 }
 
 /**

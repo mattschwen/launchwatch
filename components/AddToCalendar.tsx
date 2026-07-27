@@ -1,88 +1,150 @@
 'use client';
 
-import { useState } from 'react';
-import { Launch } from '@/lib/types';
-import { downloadICS, getGoogleCalendarUrl, copyToClipboard } from '@/lib/calendar';
-import { Calendar, Copy, Check } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Calendar, Check, Copy } from 'lucide-react';
+import type { Launch } from '@/lib/types';
+import {
+  copyToClipboard,
+  downloadICS,
+  getGoogleCalendarUrl,
+} from '@/lib/calendar';
 
 interface AddToCalendarProps {
   launch: Launch;
   variant?: 'button' | 'icon';
 }
 
-export default function AddToCalendar({ launch, variant = 'button' }: AddToCalendarProps): React.ReactElement {
-  const [showMenu, setShowMenu] = useState(false);
+export default function AddToCalendar({
+  launch,
+  variant = 'button',
+}: AddToCalendarProps): React.ReactElement {
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const menuId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstItemRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    firstItemRef.current?.focus();
+
+    const closeOnOutsideClick = (event: PointerEvent): void => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  const close = (): void => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
 
   const handleCopy = async (): Promise<void> => {
     const success = await copyToClipboard(launch);
-    if (success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleDownloadICS = (): void => {
-    downloadICS(launch);
-    setShowMenu(false);
-  };
-
-  const handleGoogleCalendar = (): void => {
-    window.open(getGoogleCalendarUrl(launch), '_blank', 'noopener,noreferrer');
-    setShowMenu(false);
+    setCopied(success);
+    if (success) window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
-      {variant === 'button' ? (
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="flex-1 px-3 py-2.5 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all text-center min-h-[44px] flex items-center justify-center gap-1.5"
-        >
-          <Calendar size={14} />
-          <span className="hidden sm:inline">Calendar</span>
-        </button>
-      ) : (
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="px-3 py-2.5 panel-interactive rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-          title="Add to Calendar"
-        >
-          <Calendar size={16} />
-        </button>
-      )}
+    <div
+      ref={rootRef}
+      className="relative"
+      onClick={(event) => event.stopPropagation()}
+      onBlur={(event) => {
+        if (
+          open &&
+          !event.currentTarget.contains(event.relatedTarget as Node | null)
+        ) {
+          setOpen(false);
+        }
+      }}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-label={variant === 'icon' ? 'Add launch to calendar' : undefined}
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => setOpen((value) => !value)}
+        className={
+          variant === 'button'
+            ? 'action-button action-button-secondary'
+            : 'icon-button'
+        }
+      >
+        <Calendar aria-hidden="true" size={17} />
+        {variant === 'button' ? <span>Add to calendar</span> : null}
+      </button>
 
-      {showMenu && (
-        <>
-          <div className="fixed inset-0 z-[60]" onClick={() => setShowMenu(false)} />
-          <div className="absolute right-0 bottom-full mb-2 w-48 panel rounded-lg shadow-xl z-[70]">
-            <div className="p-1">
-              <button
-                onClick={handleGoogleCalendar}
-                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface)] rounded flex items-center gap-2"
-              >
-                <Calendar size={14} />
-                Google Calendar
-              </button>
-              <button
-                onClick={handleDownloadICS}
-                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface)] rounded flex items-center gap-2"
-              >
-                <Calendar size={14} />
-                Apple / Outlook
-              </button>
-              <hr className="border-[var(--panel-border)] my-1" />
-              <button
-                onClick={handleCopy}
-                className="w-full px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-[var(--surface)] rounded flex items-center gap-2"
-              >
-                {copied ? <Check size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
-                {copied ? 'Copied!' : 'Copy details'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      {open ? (
+        <div
+          id={menuId}
+          role="group"
+          aria-label="Calendar options"
+          className="panel absolute right-0 top-full z-[70] mt-2 w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)]"
+        >
+          <button
+            ref={firstItemRef}
+            type="button"
+            onClick={() => {
+              window.open(
+                getGoogleCalendarUrl(launch),
+                '_blank',
+                'noopener,noreferrer'
+              );
+              close();
+            }}
+            className="menu-item"
+          >
+            <Calendar aria-hidden="true" size={16} />
+            Google Calendar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              downloadICS(launch);
+              close();
+            }}
+            className="menu-item"
+          >
+            <Calendar aria-hidden="true" size={16} />
+            Apple or Outlook
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            className="menu-item"
+          >
+            {copied ? (
+              <Check
+                aria-hidden="true"
+                size={16}
+                className="text-[var(--console-green)]"
+              />
+            ) : (
+              <Copy aria-hidden="true" size={16} />
+            )}
+            {copied ? 'Details copied' : 'Copy launch details'}
+          </button>
+          <span className="sr-only" aria-live="polite">
+            {copied ? 'Launch details copied to clipboard' : ''}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

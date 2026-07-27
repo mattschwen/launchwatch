@@ -56,7 +56,7 @@ export default function StatusBadge({ status, statusName, className = '' }: Stat
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border font-[family-name:var(--font-geist-mono)] text-[10px] sm:text-xs font-bold tracking-wider ${config.textClass} ${config.bgClass} ${config.borderClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-[family-name:var(--font-geist-mono)] text-[11px] font-bold tracking-[0.08em] sm:text-xs ${config.textClass} ${config.bgClass} ${config.borderClass} ${className}`}
     >
       <WarningLight color={config.lightColor} size="sm" spinning={config.spinning} />
       {displayLabel}
