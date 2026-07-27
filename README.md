@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/newlogo.jpeg" alt="LaunchWatch logo" width="220" height="220">
+  <img src="public/brand/logo_launchwatch_horizontal_20260726_dark.svg" alt="LaunchWatch" width="384" height="88">
 
   # LaunchWatch
 

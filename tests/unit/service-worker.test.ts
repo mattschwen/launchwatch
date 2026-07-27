@@ -115,12 +115,13 @@ describe('service worker lifecycle', () => {
     });
     await installation;
 
-    expect(caches.open).toHaveBeenCalledWith('launchwatch-shell-v5');
+    expect(caches.open).toHaveBeenCalledWith('launchwatch-shell-v6');
     expect(cache.addAll).toHaveBeenCalledWith([
       '/offline.html',
       '/icon-192.png',
       '/icon-512.png',
       '/apple-touch-icon.png',
+      '/badge-96.png',
     ]);
   });
 
@@ -128,7 +129,7 @@ describe('service worker lifecycle', () => {
     const { handlers, caches, self } = createHarness();
     caches.keys.mockResolvedValue([
       'launchwatch-shell-v4',
-      'launchwatch-static-v5',
+      'launchwatch-static-v6',
       'other-app-cache',
     ]);
     let activation: Promise<unknown> | undefined;
@@ -184,7 +185,7 @@ describe('service worker request policy', () => {
 
     await expect(response).resolves.toBe(offlineResponse);
     expect(caches.match).toHaveBeenCalledWith('/offline.html', {
-      cacheName: 'launchwatch-shell-v5',
+      cacheName: 'launchwatch-shell-v6',
     });
   });
 

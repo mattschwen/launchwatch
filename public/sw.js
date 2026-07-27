@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'launchwatch-';
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `${CACHE_PREFIX}static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -10,6 +10,7 @@ const SHELL_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
+  '/badge-96.png',
 ];
 const SHELL_ASSET_PATHS = new Set(SHELL_ASSETS);
 
@@ -196,7 +197,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(title, {
       body,
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      badge: '/badge-96.png',
       tag,
       data: { url },
       actions: [

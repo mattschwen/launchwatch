@@ -51,7 +51,10 @@ npm run test:e2e
 npm run test:a11y
 ```
 
-Install Chromium once per fresh development environment. A Linux CI job that runs browser tests should use `npx playwright install --with-deps chromium`; the standard web CI gate does not install browsers.
+Install Chromium once per fresh development environment. A Linux CI job that
+runs browser tests should use `npx playwright install --with-deps chromium`.
+The standard web CI gate now installs Chromium before running the end-to-end
+and accessibility suites.
 
 Optionally exercise the production server locally:
 

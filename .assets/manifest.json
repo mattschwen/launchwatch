@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updated": "2026-07-26",
+  "assets": [
+    {
+      "id": "launchwatch-primary-mark-v1",
+      "path": "public/brand/logo_launchwatch_tracked-ascent_20260726_color.svg",
+      "type": "logo",
+      "role": "Primary icon-only mark",
+      "status": "active",
+      "palette": ["#58C8E8", "#5EE6A8", "#F3F6FA"]
+    },
+    {
+      "id": "launchwatch-horizontal-lockup-v1",
+      "path": "public/brand/logo_launchwatch_horizontal_20260726_dark.svg",
+      "type": "logo",
+      "role": "Horizontal lockup for dark surfaces",
+      "status": "active",
+      "palette": ["#080B10", "#58C8E8", "#5EE6A8", "#F3F6FA"]
+    },
+    {
+      "id": "launchwatch-app-icon-source-v1",
+      "path": "public/brand/icon_launchwatch_app-icon_20260726_dark.svg",
+      "type": "icon",
+      "role": "Source for PWA, Apple touch, and favicon exports",
+      "status": "active",
+      "palette": ["#080B10", "#58C8E8", "#5EE6A8", "#F3F6FA"]
+    },
+    {
+      "id": "launchwatch-notification-badge-source-v1",
+      "path": "public/brand/icon_launchwatch_notification-badge_20260726_mono.svg",
+      "type": "icon",
+      "role": "Monochrome notification badge source",
+      "status": "active",
+      "palette": ["#FFFFFF"]
+    }
+  ]
+}

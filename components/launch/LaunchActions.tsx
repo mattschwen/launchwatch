@@ -13,6 +13,7 @@ interface LaunchActionsProps {
   onOpenBriefing?: () => void;
   showCalendar?: boolean;
   compact?: boolean;
+  featured?: boolean;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export default function LaunchActions({
   onOpenBriefing,
   showCalendar = true,
   compact = false,
+  featured = false,
   className = '',
 }: LaunchActionsProps): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
@@ -45,7 +47,13 @@ export default function LaunchActions({
       : 'Find stream';
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+    <div
+      className={`${
+        featured
+          ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 [&>.action-button]:w-full'
+          : 'flex flex-wrap items-center gap-2'
+      } ${className}`}
+    >
       {launch.livestream ? (
         <Link
           href={`/watch?id=${encodeURIComponent(launch.id)}`}

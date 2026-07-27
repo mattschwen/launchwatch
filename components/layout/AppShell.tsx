@@ -3,7 +3,6 @@
 import { ReactNode } from 'react';
 import TopNav from './TopNav';
 import MobileNav from './MobileNav';
-import SystemStatusBar from './SystemStatusBar';
 import Footer from '@/components/Footer';
 import { LiveProvider } from '@/lib/contexts';
 
@@ -25,13 +24,11 @@ export default function AppShell({ children }: AppShellProps): React.ReactElemen
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none md:pb-10"
+          className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none md:pb-0"
         >
           {children}
         </main>
         <Footer />
-        <div className="hidden h-9 md:block" aria-hidden="true" />
-        <SystemStatusBar />
         <MobileNav />
       </div>
     </LiveProvider>

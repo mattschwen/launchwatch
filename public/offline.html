@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#07110f">
+    <meta name="theme-color" content="#080b10">
     <title>Signal Lost — LaunchWatch</title>
     <style>
       :root {
         color-scheme: dark;
-        --graphite: #050807;
-        --panel: #09100e;
-        --line: rgba(0, 255, 136, 0.22);
-        --green: #00ff88;
-        --cyan: #00d4ff;
-        --text: #e8edf5;
-        --muted: #a4acb9;
+        --graphite: #080b10;
+        --panel: #0b0f15;
+        --line: rgba(185, 197, 216, 0.18);
+        --green: #5ee6a8;
+        --cyan: #58c8e8;
+        --text: #f3f6fa;
+        --muted: #9aa4b2;
       }
 
       * {
@@ -96,13 +96,14 @@
         height: 42px;
         display: grid;
         place-items: center;
-        border: 1px solid rgba(0, 212, 255, 0.35);
-        color: var(--cyan);
+        border: 1px solid rgba(185, 197, 216, 0.18);
+        border-radius: 10px;
+        background: #111720;
       }
 
       .mark svg {
-        width: 24px;
-        height: 24px;
+        width: 32px;
+        height: 32px;
       }
 
       .eyebrow {
@@ -249,10 +250,12 @@
     <main>
       <div class="brand">
         <span class="mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 3c-3.2 2.6-4.7 5.7-4.7 9.5l2.3 1.7h4.8l2.3-1.7C16.7 8.7 15.2 5.6 12 3Z" stroke="currentColor" stroke-width="1.5"/>
-            <circle cx="12" cy="9" r="1.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="m9.5 15-1 3 3.5-1.6 3.5 1.6-1-3M12 17v4" stroke="currentColor" stroke-width="1.5"/>
+          <svg viewBox="0 0 48 48" fill="none">
+            <path d="M8.5 27.5A16 16 0 0 1 31.5 8.7" stroke="#58C8E8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M39.5 20.5A16 16 0 0 1 17.2 39.4" stroke="#5EE6A8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M16 35 36 15" stroke="#F3F6FA" stroke-width="4" stroke-linecap="round"/>
+            <path d="m29.5 13.5 9-2.2-2.2 9" stroke="#5EE6A8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.7" cy="27.6" r="2.6" fill="#58C8E8"/>
           </svg>
         </span>
         LaunchWatch Mission Control

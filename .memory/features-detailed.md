@@ -29,7 +29,7 @@
 ## Facts and Branding
 
 - rotating header ribbon fed by SpaceX rocket stats and NASA APOD
-- active logo in `public/newlogo.jpeg`
+- tracked-ascent mark in `public/brand/logo_launchwatch_tracked-ascent_20260726_color.svg`
 - green mission-control visual system
 
 ## Notifications and Calendar

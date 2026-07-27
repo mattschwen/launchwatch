@@ -6,7 +6,7 @@ import { useLaunches } from '@/lib/hooks';
 import LaunchCard from './LaunchCard';
 import FilterBar, { type FilterOptions } from './FilterBar';
 
-const INITIAL_VISIBLE_COUNT = 12;
+const INITIAL_VISIBLE_COUNT = 5;
 
 function providerMatches(providerFilter: string, provider: string): boolean {
   const normalized = provider.toLowerCase();
@@ -111,26 +111,43 @@ export default function LaunchList(): React.ReactElement {
 
   return (
     <section aria-labelledby="upcoming-launches-title" className="surface-card overflow-hidden">
-      <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <h2 id="upcoming-launches-title" className="section-title">
             Upcoming launches
           </h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             {filtered.length} mission{filtered.length === 1 ? '' : 's'}
             {meta?.partial ? ' · provider data is partial' : ''}
           </p>
         </div>
-        <button
-          type="button"
-          aria-expanded={filtersOpen}
-          aria-controls="launch-filters"
-          onClick={() => setFiltersOpen((value) => !value)}
-          className="action-button action-button-secondary self-start sm:self-auto"
-        >
-          <Filter aria-hidden="true" size={16} />
-          {filtersOpen ? 'Hide filters' : 'Filter'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            aria-controls="launch-filters"
+            onClick={() => setFiltersOpen((value) => !value)}
+            className="action-button action-button-secondary"
+          >
+            <Filter aria-hidden="true" size={16} />
+            {filtersOpen ? 'Hide filters' : 'Filter'}
+          </button>
+          {filtered.length > INITIAL_VISIBLE_COUNT ? (
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleCount((count) =>
+                  count > INITIAL_VISIBLE_COUNT
+                    ? INITIAL_VISIBLE_COUNT
+                    : filtered.length,
+                )
+              }
+              className="action-button action-button-quiet"
+            >
+              {visibleCount > INITIAL_VISIBLE_COUNT ? 'Show fewer' : 'View all'}
+            </button>
+          ) : null}
+        </div>
       </header>
 
       {filtersOpen ? (
@@ -160,22 +177,21 @@ export default function LaunchList(): React.ReactElement {
         </div>
       ) : (
         <>
+          <div
+            aria-hidden="true"
+            className="hidden grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(9rem,.62fr)] gap-3 border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.012)] px-4 py-2.5 lg:grid"
+          >
+            <span className="data-label">Date (UTC)</span>
+            <span className="data-label">Mission</span>
+            <span className="data-label">Vehicle</span>
+            <span className="data-label">Site</span>
+            <span className="data-label">Status</span>
+          </div>
           <div>
             {filtered.slice(0, visibleCount).map((launch) => (
               <LaunchCard key={launch.id} launch={launch} />
             ))}
           </div>
-          {visibleCount < filtered.length ? (
-            <div className="border-t border-[var(--border-subtle)] p-4 text-center">
-              <button
-                type="button"
-                onClick={() => setVisibleCount((count) => count + 12)}
-                className="action-button action-button-secondary"
-              >
-                Load more missions
-              </button>
-            </div>
-          ) : null}
         </>
       )}
     </section>

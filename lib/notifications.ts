@@ -54,7 +54,7 @@ export async function showLaunchNotification(
   const options: NotificationOptions = {
     body: `Launching in ${timeUntilLaunch}\n${launch.rocket} from ${launch.launchSite}`,
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    badge: '/badge-96.png',
     tag: `launch-${launch.id}`,
     requireInteraction: false,
     silent: false,

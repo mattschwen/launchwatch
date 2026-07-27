@@ -24,7 +24,8 @@ npm start
 
 ## Current UI Direction
 
-- active logo: `public/newlogo.jpeg`
+- source-of-truth mark: `public/brand/logo_launchwatch_tracked-ascent_20260726_color.svg`
+- full lockup: `public/brand/logo_launchwatch_horizontal_20260726_dark.svg`
 - green-and-black mission-control shell
 - console panels and telemetry styling
 - green, cyan, amber, and live-state red palette

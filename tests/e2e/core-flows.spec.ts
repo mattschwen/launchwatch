@@ -8,6 +8,40 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('brand mark stays legible and tappable in the header', async ({ page }) => {
+  await page.goto('/');
+
+  const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
+  await expect(homeLink).toBeVisible();
+
+  const metrics = await homeLink.evaluate((element) => {
+    const image = element.querySelector('img');
+    const linkBox = element.getBoundingClientRect();
+    const imageBox = image?.getBoundingClientRect();
+
+    return {
+      imageSource: image?.getAttribute('src'),
+      imageSize: imageBox
+        ? { width: imageBox.width, height: imageBox.height }
+        : null,
+      linkHeight: linkBox.height,
+      wordmark: element.textContent?.trim(),
+    };
+  });
+
+  expect(metrics).toEqual({
+    imageSource:
+      '/brand/logo_launchwatch_tracked-ascent_20260726_color.svg',
+    imageSize: { width: 32, height: 32 },
+    linkHeight: 44,
+    wordmark: 'LaunchWatch',
+  });
+  await expect(page.locator('link[rel~="icon"][href="/favicon.ico"]')).toHaveCount(
+    1
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule filters missions and opens a detail route', async ({ page }) => {
   await page.goto('/');
 
@@ -113,59 +147,69 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   ).toBeVisible();
 });
 
-test('mission map keeps its expanded controls and zoom state in frame', async ({
+test('mission trajectory keeps modeled phases in frame and restores focus', async ({
   page,
 }) => {
   await page.goto('/');
 
-  const mapDisclosure = page.getByRole('button', { name: /Mission map/i });
-  const expandButton = page.getByRole('button', { name: 'Expand map' });
-  await expect(mapDisclosure.or(expandButton).first()).toBeVisible();
+  const mapDisclosure = page.getByRole('button', {
+    name: /Mission trajectory/i,
+  });
+  const expandButton = page.getByRole('button', {
+    name: 'View full illustrative trajectory map',
+  });
 
-  if (await mapDisclosure.isVisible()) {
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await expect(mapDisclosure).toBeVisible();
     await mapDisclosure.click();
   }
 
   await expect(expandButton).toBeVisible();
-  await expandButton.click();
+  await expect(
+    page
+      .locator('p:visible')
+      .filter({ hasText: /not vehicle telemetry or a planned flight path/i })
+      .first()
+  ).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: 'Trajectory model legend' })
+  ).toBeVisible();
 
-  const dialog = page.getByRole('dialog', { name: 'Expanded mission map' });
-  const controls = page.getByRole('group', { name: 'Map view controls' });
-  const map = page.getByTestId('telemetry-map');
-
-  await expect(dialog).toBeVisible();
-  await expect(controls).toBeVisible();
-  await expect(map).toBeVisible();
-
-  const controlLayout = await controls.evaluate((element) => {
-    const container = element.getBoundingClientRect();
-    const buttons = [...element.querySelectorAll('button')].map((button) =>
-      button.getBoundingClientRect()
-    );
-
-    return {
-      contained: buttons.every(
-        (button) =>
-          button.left >= container.left - 1 &&
-          button.right <= container.right + 1
-      ),
-      touchSized: buttons.every(
-        (button) => button.width >= 44 && button.height >= 44
-      ),
-      noInternalOverflow: element.scrollWidth <= element.clientWidth + 1,
-    };
+  const map = page.locator('[data-trajectory-map]:visible').first();
+  const pathsInFrame = await map.evaluate((element) => {
+    const svg = element as SVGSVGElement;
+    const viewBox = svg.viewBox.baseVal;
+    const phases = [
+      ...svg.querySelectorAll<SVGGraphicsElement>('[data-trajectory-phase]'),
+    ];
+    return phases.map((phase) => {
+      const box = phase.getBBox();
+      return {
+        id: phase.getAttribute('data-trajectory-phase'),
+        contained:
+          box.x >= viewBox.x &&
+          box.y >= viewBox.y &&
+          box.x + box.width <= viewBox.x + viewBox.width &&
+          box.y + box.height <= viewBox.y + viewBox.height,
+      };
+    });
   });
 
-  expect(controlLayout).toEqual({
-    contained: true,
-    touchSized: true,
-    noInternalOverflow: true,
-  });
+  expect(pathsInFrame).toEqual([
+    { id: 'ascent-model', contained: true },
+    { id: 'target-orbit-model', contained: true },
+  ]);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
-  await page.getByRole('button', { name: 'Zoom in' }).click();
-  await expect(map.getByText(/manual track/i)).toBeVisible();
+  await expandButton.click();
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const closeButton = dialog.getByRole('button', {
+    name: 'Close full trajectory map',
+  });
 
-  await page.getByRole('button', { name: 'Close map' }).click();
+  await expect(dialog).toBeVisible();
+  await expect(closeButton).toBeFocused();
+  await expect(closeButton).toHaveCSS('width', '44px');
+  await closeButton.click();
   await expect(expandButton).toBeFocused();
 });

@@ -9,7 +9,8 @@
 
 ## Current Product Identity
 
-- active logo: `public/newlogo.jpeg`
+- source-of-truth mark: `public/brand/logo_launchwatch_tracked-ascent_20260726_color.svg`
+- full lockup: `public/brand/logo_launchwatch_horizontal_20260726_dark.svg`
 - visual direction: green mission-control shell with telemetry panels
 - accent palette: green, cyan, amber, live-state red
 - compact sticky header with rotating rocket fact ribbon

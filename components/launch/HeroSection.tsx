@@ -3,34 +3,56 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, MapPin, Rocket, Target } from 'lucide-react';
-import { useLiveLaunches, useNextLaunch } from '@/lib/hooks';
-import { formatLaunchDate, shortenLaunchSite } from '@/lib/format';
+import type { Launch } from '@/lib/types';
+import { formatLaunchDay, shortenLaunchSite } from '@/lib/format';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
-import StatusBadge from '@/components/ui/StatusBadge';
 import LaunchActions from './LaunchActions';
 
-export default function HeroSection(): React.ReactElement {
-  const {
-    liveLaunches,
-    loading: liveLoading,
-    error,
-    meta,
-    refresh,
-  } = useLiveLaunches();
-  const { nextLaunch, loading: nextLoading } = useNextLaunch();
-  const [briefingOpen, setBriefingOpen] = useState(false);
+interface HeroSectionProps {
+  activeLaunch: Launch | null;
+  loading: boolean;
+  error: string | null;
+  partial: boolean;
+  refresh: () => Promise<void>;
+}
 
-  const activeLaunch = liveLaunches[0] ?? nextLaunch;
-  const loading = liveLoading || nextLoading;
+function launchTime(date: string): string {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return 'Time TBD';
+  return `${parsed.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  })} UTC`;
+}
+
+function splitSite(site: string): [string, string] {
+  const [primary, ...rest] = shortenLaunchSite(site).split(',');
+  return [primary.trim(), rest.join(',').trim()];
+}
+
+export default function HeroSection({
+  activeLaunch,
+  loading,
+  error,
+  partial,
+  refresh,
+}: HeroSectionProps): React.ReactElement {
+  const [briefingOpen, setBriefingOpen] = useState(false);
 
   if (loading && !activeLaunch) {
     return (
-      <section aria-label="Loading next launch" className="surface-card p-5 sm:p-7">
+      <section
+        aria-label="Loading next launch"
+        className="surface-card min-h-[27.5rem] p-5 sm:p-7"
+      >
         <div className="skeleton mb-5 h-4 w-28 rounded" />
         <div className="skeleton mb-4 h-12 w-3/4 rounded" />
         <div className="skeleton mb-7 h-16 w-full max-w-xl rounded" />
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
+          <div className="skeleton h-16 rounded" />
           <div className="skeleton h-16 rounded" />
           <div className="skeleton h-16 rounded" />
           <div className="skeleton h-16 rounded" />
@@ -41,7 +63,7 @@ export default function HeroSection(): React.ReactElement {
 
   if (!activeLaunch) {
     return (
-      <section className="surface-card p-6 sm:p-8">
+      <section className="surface-card min-h-[27.5rem] p-6 sm:p-8">
         <p className="data-label text-[var(--console-amber)]">Schedule unavailable</p>
         <h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]">
           We could not load the next mission.
@@ -61,12 +83,17 @@ export default function HeroSection(): React.ReactElement {
   }
 
   const live = activeLaunch.isLive;
+  const [siteName, siteLocality] = splitSite(activeLaunch.launchSite);
+  const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
+    .filter(Boolean)
+    .join(' ');
+  const missionDetail = activeLaunch.orbit || activeLaunch.program || 'Target pending';
 
   return (
     <>
       <section
         aria-labelledby="featured-launch-title"
-        className={`surface-card relative overflow-hidden p-5 sm:p-7 lg:p-8 ${
+        className={`surface-card relative flex min-h-[27.5rem] overflow-hidden p-5 sm:p-7 lg:p-8 ${
           live ? 'border-[var(--console-red)]/40' : ''
         }`}
       >
@@ -75,22 +102,16 @@ export default function HeroSection(): React.ReactElement {
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[var(--console-green)]/[0.035] blur-3xl"
         />
 
-        <div className="relative">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          <div className="mb-4 flex min-h-5 flex-wrap items-center justify-between gap-3">
             <p className="data-label text-[var(--console-green)]">
               {live ? 'Live mission' : 'Next launch'}
             </p>
-            <div className="flex items-center gap-2">
-              <StatusBadge
-                status={activeLaunch.status}
-                statusName={activeLaunch.statusName}
-              />
-              {meta?.partial ? (
-                <span className="text-xs text-[var(--console-amber)]">
-                  Partial provider data
-                </span>
-              ) : null}
-            </div>
+            {partial ? (
+              <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--console-amber)]">
+                Partial provider data
+              </span>
+            ) : null}
           </div>
 
           <Link
@@ -99,19 +120,13 @@ export default function HeroSection(): React.ReactElement {
           >
             <h1
               id="featured-launch-title"
-              className="max-w-4xl text-[clamp(2.25rem,5vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.055em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]"
+              className="max-w-3xl text-[clamp(2.15rem,4vw,3.65rem)] font-bold leading-[1.02] tracking-[-0.05em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]"
             >
               {activeLaunch.name}
             </h1>
           </Link>
 
-          <p className="mt-3 text-sm font-medium text-[var(--text-secondary)] sm:text-base">
-            {[activeLaunch.provider, activeLaunch.rocket]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
-
-          <div className="my-7 border-y border-[var(--border-subtle)] py-6">
+          <div className="my-5 border-b border-[var(--border-subtle)] pb-5 pt-1">
             {live ? (
               <div className="flex items-center gap-3">
                 <span
@@ -123,67 +138,75 @@ export default function HeroSection(): React.ReactElement {
                 </p>
               </div>
             ) : (
-              <Countdown targetDate={activeLaunch.date} />
+              <Countdown targetDate={activeLaunch.date} featured />
             )}
           </div>
 
-          <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="relative min-w-0 pl-8">
+          <dl className="grid grid-cols-2 gap-y-5 sm:grid-cols-4 sm:gap-y-0">
+            <div className="relative min-w-0 pr-3 pl-7 sm:border-r sm:border-[var(--border-subtle)]">
               <CalendarDays
                 aria-hidden="true"
                 className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                size={19}
+                size={18}
               />
               <dt className="data-label">Date (UTC)</dt>
-              <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                {formatLaunchDate(activeLaunch.date)}
+              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+                {formatLaunchDay(activeLaunch.date)}
+              </dd>
+              <dd className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]">
+                {launchTime(activeLaunch.date)}
               </dd>
             </div>
-            <div className="relative min-w-0 pl-8">
+            <div className="relative min-w-0 px-3 pl-10 sm:border-r sm:border-[var(--border-subtle)]">
               <MapPin
                 aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                size={19}
+                className="absolute left-3 top-0.5 text-[var(--text-muted)]"
+                size={18}
               />
               <dt className="data-label">Site</dt>
-              <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                {shortenLaunchSite(activeLaunch.launchSite)}
+              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+                {siteName}
+              </dd>
+              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+                {siteLocality || activeLaunch.location?.name || 'Location pending'}
               </dd>
             </div>
-            <div className="relative min-w-0 pl-8">
+            <div className="relative min-w-0 pr-3 pl-7 sm:border-r sm:border-[var(--border-subtle)] sm:px-3 sm:pl-10">
               <Rocket
                 aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                size={19}
+                className="absolute left-0 top-0.5 text-[var(--text-muted)] sm:left-3"
+                size={18}
               />
               <dt className="data-label">Vehicle</dt>
-              <dd className="mt-1 text-sm text-[var(--text-primary)]">
+              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
                 {activeLaunch.rocket}
               </dd>
+              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+                {vehicleDetail || activeLaunch.provider || 'Vehicle profile'}
+              </dd>
             </div>
-            <div className="relative min-w-0 pl-8">
+            <div className="relative min-w-0 px-3 pl-10">
               <Target
                 aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                size={19}
+                className="absolute left-3 top-0.5 text-[var(--text-muted)]"
+                size={18}
               />
               <dt className="data-label">Mission</dt>
-              <dd className="mt-1 text-sm text-[var(--text-primary)]">
+              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
                 {activeLaunch.missionType || activeLaunch.orbit || 'Launch'}
+              </dd>
+              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+                {missionDetail}
               </dd>
             </div>
           </dl>
 
-          {activeLaunch.description ? (
-            <p className="mt-6 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
-              {activeLaunch.description}
-            </p>
-          ) : null}
-
           <LaunchActions
             launch={activeLaunch}
             onOpenBriefing={() => setBriefingOpen(true)}
-            className="mt-6"
+            showCalendar={false}
+            featured
+            className="mt-auto pt-6"
           />
         </div>
       </section>

@@ -7,6 +7,7 @@ interface CountdownProps {
   className?: string;
   compact?: boolean;
   completedLabel?: string;
+  featured?: boolean;
 }
 
 export default function Countdown({
@@ -14,6 +15,7 @@ export default function Countdown({
   className = '',
   compact = false,
   completedLabel = 'Window open',
+  featured = false,
 }: CountdownProps): React.ReactElement {
   const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
 
@@ -55,12 +57,22 @@ export default function Countdown({
       suppressHydrationWarning
       aria-label={`${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds until launch`}
     >
-      <span className="block text-[clamp(2.1rem,5vw,4.25rem)] font-medium leading-none tracking-[-0.055em] tabular-nums text-[var(--console-green)]">
+      <span
+        className={`block font-medium leading-none tracking-[-0.055em] tabular-nums text-[var(--console-green)] ${
+          featured
+            ? 'text-[clamp(1.85rem,3.6vw,3.25rem)]'
+            : 'text-[clamp(2.1rem,5vw,4.25rem)]'
+        }`}
+      >
         T− {values.join(':')}
       </span>
       <span
         aria-hidden="true"
-        className="mt-2 grid max-w-[32rem] grid-cols-4 pl-[2.4rem] text-[0.7rem] font-medium uppercase tracking-[0.14em] text-[var(--text-muted)]"
+        className={`mt-2 grid grid-cols-4 font-medium uppercase tracking-[0.14em] text-[var(--text-muted)] ${
+          featured
+            ? 'max-w-[28rem] pl-[2.1rem] text-[0.64rem]'
+            : 'max-w-[32rem] pl-[2.4rem] text-[0.7rem]'
+        }`}
       >
         <span>days</span>
         <span>hrs</span>

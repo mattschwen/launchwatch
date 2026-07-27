@@ -21,7 +21,8 @@ LaunchWatch is a small launch-tracking web app with:
 
 ## Current UI Identity
 
-- logo: `public/newlogo.jpeg`
+- logo mark: `public/brand/logo_launchwatch_tracked-ascent_20260726_color.svg`
+- logo lockup: `public/brand/logo_launchwatch_horizontal_20260726_dark.svg`
 - background: black mission-control shell
 - surfaces: console panels
 - accents: green, cyan, amber, live-state red

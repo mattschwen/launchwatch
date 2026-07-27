@@ -61,6 +61,7 @@ describe('PWA install assets', () => {
     ['/icon-192.png', 192],
     ['/icon-512.png', 512],
     ['/apple-touch-icon.png', 180],
+    ['/badge-96.png', 96],
   ])('ships %s at its declared dimensions', (src, size) => {
     const pathname = publicPath(src);
 
@@ -87,6 +88,20 @@ describe('PWA install assets', () => {
         height: declaredSize,
       });
     }
+  });
+
+  it('ships one effect-free vector mark and a branded favicon', () => {
+    const mark = readFileSync(
+      publicPath('/brand/logo_launchwatch_tracked-ascent_20260726_color.svg'),
+      'utf8'
+    );
+    const favicon = readFileSync(resolve(process.cwd(), 'app', 'favicon.ico'));
+
+    expect(mark).toContain('LaunchWatch tracked ascent mark');
+    expect(mark).not.toMatch(/<(?:filter|linearGradient|radialGradient)\b/i);
+    expect(mark).toContain('#58C8E8');
+    expect(mark).toContain('#5EE6A8');
+    expect(favicon.subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
   });
 
   it('ships a standalone offline document without external dependencies', () => {
