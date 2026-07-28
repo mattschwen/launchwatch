@@ -270,9 +270,24 @@ test('upcoming and historical details place one trajectory before mission suppor
       page.getByRole('region', { name: 'Mission intelligence' })
     ).toBeVisible();
     if (hasTimeline) {
-      await expect(
-        page.getByRole('region', { name: 'Launch timeline' })
-      ).toBeVisible();
+      const timeline = page.getByRole('region', { name: 'Launch timeline' });
+      const timelineEvents = timeline.getByRole('list');
+
+      await expect(timeline).toBeVisible();
+      await expect(timelineEvents).toHaveAttribute('tabindex', '0');
+      await expect(timelineEvents).toHaveAttribute(
+        'aria-describedby',
+        'launch-timeline-instructions'
+      );
+
+      await timelineEvents.focus();
+      await expect(timelineEvents).toBeFocused();
+      await timelineEvents.press('ArrowRight');
+      await expect
+        .poll(() =>
+          timelineEvents.evaluate((element) => element.scrollLeft)
+        )
+        .toBeGreaterThan(0);
     }
 
     const order = await page.evaluate(() => {

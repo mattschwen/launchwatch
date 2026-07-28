@@ -10,6 +10,10 @@ const routes = [
     path: '/launch/spacex-demo-return',
     heading: 'Demo Return Flight',
   },
+  {
+    path: '/launch/ll2-demo-orbital-dawn',
+    heading: 'Orbital Dawn',
+  },
 ];
 
 test.beforeEach(async ({ page }) => {

@@ -51,9 +51,44 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     program: 'LaunchWatch Test Program',
     timeline: [
       {
+        type: 'Launch operations begin',
+        relativeTime: 'T−02:35:00',
+        description: 'Mission teams begin the terminal countdown sequence.',
+      },
+      {
+        type: 'Propellant load',
+        relativeTime: 'T−00:35:00',
+        description: 'Launch vehicle propellant loading begins.',
+      },
+      {
+        type: 'Strongback retract',
+        relativeTime: 'T−00:04:30',
+        description: 'The transporter erector moves to its launch position.',
+      },
+      {
+        type: 'Startup',
+        relativeTime: 'T−00:01:00',
+        description: 'Flight computers assume control of the countdown.',
+      },
+      {
         type: 'Liftoff',
         relativeTime: 'T+00:00',
-        description: 'Vehicle clears the tower.',
+        description: 'The vehicle clears the tower.',
+      },
+      {
+        type: 'Stage separation',
+        relativeTime: 'T+00:02:35',
+        description: 'The first and second stages separate.',
+      },
+      {
+        type: 'Fairing separation',
+        relativeTime: 'T+00:03:18',
+        description: 'The payload fairing separates after ascent.',
+      },
+      {
+        type: 'Payload deployment',
+        relativeTime: 'T+00:54:12',
+        description: 'The payload deploys into its target orbit.',
       },
     ],
     source: 'll2',

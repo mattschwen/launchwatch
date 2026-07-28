@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -26,6 +26,17 @@ import {
 import { useLaunchIntel } from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
+
+function handleTimelineKeyDown(
+  event: KeyboardEvent<HTMLOListElement>
+): void {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+    return;
+  }
+
+  event.preventDefault();
+  event.currentTarget.scrollLeft += event.key === 'ArrowLeft' ? -176 : 176;
+}
 
 export default function LaunchDetailClient({
   launch,
@@ -170,7 +181,16 @@ export default function LaunchDetailClient({
                 {launch.timeline.length} events
               </span>
             </div>
-            <ol className="mt-6 flex gap-0 overflow-x-auto pb-3">
+            <p id="launch-timeline-instructions" className="sr-only">
+              Use horizontal scrolling or the left and right arrow keys to
+              explore all timeline events.
+            </p>
+            <ol
+              aria-describedby="launch-timeline-instructions"
+              tabIndex={0}
+              onKeyDown={handleTimelineKeyDown}
+              className="mt-6 flex gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+            >
               {launch.timeline.map((event, index) => (
                 <li
                   key={`${event.relativeTime}-${event.type}`}

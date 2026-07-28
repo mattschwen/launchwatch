@@ -125,12 +125,78 @@ function ll2Launch({
     timeline: [
       {
         type: {
+          name: 'Launch operations begin',
+          abbrev: 'OPS',
+          description:
+            'Mission teams begin the terminal countdown sequence.',
+        },
+        relative_time: '-P0DT2H35M',
+        description: 'Mission teams begin the terminal countdown sequence.',
+      },
+      {
+        type: {
+          name: 'Propellant load',
+          abbrev: 'LOAD',
+          description: 'Launch vehicle propellant loading begins.',
+        },
+        relative_time: '-P0DT0H35M',
+        description: 'Launch vehicle propellant loading begins.',
+      },
+      {
+        type: {
+          name: 'Strongback retract',
+          abbrev: 'T/E',
+          description:
+            'The transporter erector moves to its launch position.',
+        },
+        relative_time: '-P0DT0H4M30S',
+        description: 'The transporter erector moves to its launch position.',
+      },
+      {
+        type: {
+          name: 'Startup',
+          abbrev: 'START',
+          description:
+            'Flight computers assume control of the countdown.',
+        },
+        relative_time: '-P0DT0H1M',
+        description: 'Flight computers assume control of the countdown.',
+      },
+      {
+        type: {
           name: 'Liftoff',
           abbrev: 'L/O',
-          description: 'Vehicle clears the tower.',
+          description: 'The vehicle clears the tower.',
         },
         relative_time: 'P0D',
-        description: 'Vehicle clears the tower.',
+        description: 'The vehicle clears the tower.',
+      },
+      {
+        type: {
+          name: 'Stage separation',
+          abbrev: 'SEP',
+          description: 'The first and second stages separate.',
+        },
+        relative_time: 'P0DT0H2M35S',
+        description: 'The first and second stages separate.',
+      },
+      {
+        type: {
+          name: 'Fairing separation',
+          abbrev: 'FAIR',
+          description: 'The payload fairing separates after ascent.',
+        },
+        relative_time: 'P0DT0H3M18S',
+        description: 'The payload fairing separates after ascent.',
+      },
+      {
+        type: {
+          name: 'Payload deployment',
+          abbrev: 'DEPLOY',
+          description: 'The payload deploys into its target orbit.',
+        },
+        relative_time: 'P0DT0H54M12S',
+        description: 'The payload deploys into its target orbit.',
       },
     ],
     program: [{ name: 'LaunchWatch Test Program' }],
