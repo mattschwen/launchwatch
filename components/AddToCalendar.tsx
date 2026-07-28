@@ -12,11 +12,15 @@ import {
 interface AddToCalendarProps {
   launch: Launch;
   variant?: 'button' | 'icon';
+  menuPlacement?: 'top' | 'bottom';
+  menuAlign?: 'right' | 'center';
 }
 
 export default function AddToCalendar({
   launch,
   variant = 'button',
+  menuPlacement = 'bottom',
+  menuAlign = 'right',
 }: AddToCalendarProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -35,16 +39,18 @@ export default function AddToCalendar({
     };
     const closeOnEscape = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
         setOpen(false);
         triggerRef.current?.focus();
       }
     };
 
     document.addEventListener('pointerdown', closeOnOutsideClick);
-    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('keydown', closeOnEscape, true);
     return () => {
       document.removeEventListener('pointerdown', closeOnOutsideClick);
-      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('keydown', closeOnEscape, true);
     };
   }, [open]);
 
@@ -95,7 +101,13 @@ export default function AddToCalendar({
           id={menuId}
           role="group"
           aria-label="Calendar options"
-          className="panel absolute right-0 top-full z-[70] mt-2 w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)]"
+          className={`panel absolute z-[70] w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
+            menuAlign === 'center'
+              ? 'left-1/2 -translate-x-1/2'
+              : 'right-0'
+          } ${
+            menuPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
         >
           <button
             ref={firstItemRef}

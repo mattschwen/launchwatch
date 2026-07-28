@@ -44,3 +44,36 @@ for (const route of routes) {
     ).toEqual([]);
   });
 }
+
+test('@a11y mission briefing calendar has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await dialog
+    .getByRole('button', { name: 'Add launch to calendar' })
+    .click();
+  await expect(
+    dialog.getByRole('group', { name: 'Calendar options' })
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});

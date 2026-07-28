@@ -93,6 +93,55 @@ test('watch provides a useful standby state and switches the mission queue', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('briefing calendar options stay visible and restore trigger focus', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const calendarTrigger = dialog.getByRole('button', {
+    name: 'Add launch to calendar',
+  });
+
+  await calendarTrigger.click();
+  const calendarOptions = dialog.getByRole('group', {
+    name: 'Calendar options',
+  });
+  const firstOption = calendarOptions.getByRole('button', {
+    name: 'Google Calendar',
+  });
+  await expect(calendarOptions).toBeVisible();
+  await expect(firstOption).toBeFocused();
+
+  const placement = await calendarOptions.evaluate((element) => {
+    const options = element.getBoundingClientRect();
+    const trigger = element.parentElement
+      ?.querySelector('button[aria-label="Add launch to calendar"]')
+      ?.getBoundingClientRect();
+
+    return {
+      fullyVisible:
+        options.top >= 0 &&
+        options.left >= 0 &&
+        options.right <= window.innerWidth &&
+        options.bottom <= window.innerHeight,
+      aboveTrigger: Boolean(trigger && options.bottom <= trigger.top),
+    };
+  });
+
+  expect(placement).toEqual({
+    fullyVisible: true,
+    aboveTrigger: true,
+  });
+
+  await firstOption.press('Escape');
+  await expect(calendarOptions).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(calendarTrigger).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history search reaches a completed mission detail', async ({ page }) => {
   await page.goto('/history');
 

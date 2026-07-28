@@ -121,7 +121,11 @@ export default function LaunchBriefingDrawer({
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+        <div
+          tabIndex={0}
+          aria-label="Mission briefing details"
+          className="flex-1 overflow-y-auto px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:px-6 sm:py-6"
+        >
           <StatusBadge status={launch.status} statusName={launch.statusName} />
 
           {launch.description ? (
@@ -135,57 +139,57 @@ export default function LaunchBriefingDrawer({
           )}
 
           <dl className="mt-6 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]">
-            <div className="flex gap-3 py-4">
-              <CalendarDays
-                aria-hidden="true"
-                size={18}
-                className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-              />
-              <div>
-                <dt className="data-label">Launch window</dt>
-                <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {formatLaunchDate(launch.date)}
-                </dd>
-              </div>
+            <div className="py-4">
+              <dt className="flex items-center gap-3">
+                <CalendarDays
+                  aria-hidden="true"
+                  size={18}
+                  className="shrink-0 text-[var(--text-muted)]"
+                />
+                <span className="data-label">Launch window</span>
+              </dt>
+              <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
+                {formatLaunchDate(launch.date)}
+              </dd>
             </div>
-            <div className="flex gap-3 py-4">
-              <Rocket
-                aria-hidden="true"
-                size={18}
-                className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-              />
-              <div>
-                <dt className="data-label">Vehicle</dt>
-                <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {launch.rocket}
-                </dd>
-              </div>
+            <div className="py-4">
+              <dt className="flex items-center gap-3">
+                <Rocket
+                  aria-hidden="true"
+                  size={18}
+                  className="shrink-0 text-[var(--text-muted)]"
+                />
+                <span className="data-label">Vehicle</span>
+              </dt>
+              <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
+                {launch.rocket}
+              </dd>
             </div>
-            <div className="flex gap-3 py-4">
-              <MapPin
-                aria-hidden="true"
-                size={18}
-                className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-              />
-              <div>
-                <dt className="data-label">Launch site</dt>
-                <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {shortenLaunchSite(launch.launchSite)}
-                </dd>
-              </div>
+            <div className="py-4">
+              <dt className="flex items-center gap-3">
+                <MapPin
+                  aria-hidden="true"
+                  size={18}
+                  className="shrink-0 text-[var(--text-muted)]"
+                />
+                <span className="data-label">Launch site</span>
+              </dt>
+              <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
+                {shortenLaunchSite(launch.launchSite)}
+              </dd>
             </div>
-            <div className="flex gap-3 py-4">
-              <Orbit
-                aria-hidden="true"
-                size={18}
-                className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-              />
-              <div>
-                <dt className="data-label">Mission profile</dt>
-                <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {firstLaunchValue([launch.orbit, launch.missionType])}
-                </dd>
-              </div>
+            <div className="py-4">
+              <dt className="flex items-center gap-3">
+                <Orbit
+                  aria-hidden="true"
+                  size={18}
+                  className="shrink-0 text-[var(--text-muted)]"
+                />
+                <span className="data-label">Mission profile</span>
+              </dt>
+              <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
+                {firstLaunchValue([launch.orbit, launch.missionType])}
+              </dd>
             </div>
           </dl>
 
@@ -239,7 +243,12 @@ export default function LaunchBriefingDrawer({
             </Link>
           ) : null}
           {launch.status === 'upcoming' || launch.status === 'tbd' ? (
-            <AddToCalendar launch={launch} variant="icon" />
+            <AddToCalendar
+              launch={launch}
+              variant="icon"
+              menuPlacement="top"
+              menuAlign="center"
+            />
           ) : null}
           {launch.livestream ? (
             <a
