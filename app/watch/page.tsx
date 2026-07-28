@@ -34,6 +34,14 @@ function WatchStage({
   streamLookupError?: string | null;
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
+  const hasProviderChannel = fallback.streamState === 'standby';
+  const fallbackDescription = streamLookupError
+    ? hasProviderChannel
+      ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the official provider channel while we retry.'
+      : 'The mission schedule is available, but detailed provider coverage could not be checked. Search for current mission coverage while we retry.'
+    : hasProviderChannel
+      ? 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
+      : 'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.';
 
   if (launch.livestream) {
     return (
@@ -80,9 +88,7 @@ function WatchStage({
             : 'No live stream right now'}
         </h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          {streamLookupError
-            ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the provider channel while we retry.'
-            : 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'}
+          {fallbackDescription}
         </p>
         <div className="my-6 h-px bg-[var(--border-subtle)]" />
         <p className="data-label">Next mission</p>
@@ -103,7 +109,7 @@ function WatchStage({
             className="action-button action-button-secondary mt-6"
           >
             <ExternalLink aria-hidden="true" size={16} />
-            Open provider channel
+            {hasProviderChannel ? 'Open provider channel' : 'Search for stream'}
           </a>
         ) : null}
       </div>

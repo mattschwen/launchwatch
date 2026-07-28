@@ -3,6 +3,10 @@ import {
   expectNoHorizontalOverflow,
   installApiFixtures,
 } from './support/api-fixtures';
+import {
+  FEED_META,
+  UPCOMING_LAUNCHES,
+} from '../fixtures/launches';
 
 test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
@@ -126,6 +130,86 @@ test('watch keeps the schedule usable when detail enrichment fails', async ({
     page.getByRole('heading', { name: 'No live stream right now' })
   ).toHaveCount(0);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch labels stream-search and provider-channel fallbacks truthfully', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+
+  await page.route('**/api/launches/*', async (route) => {
+    const id = decodeURIComponent(
+      new URL(route.request().url()).pathname.replace('/api/launches/', '')
+    );
+    const launch = UPCOMING_LAUNCHES.find((candidate) => candidate.id === id);
+
+    if (!launch) {
+      await route.fallback();
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: {
+          ...launch,
+          livestream: null,
+          livestreams: null,
+        },
+        canonicalId: launch.id,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+
+  const searchFallback = page.getByRole('link', {
+    name: 'Search for stream',
+    exact: true,
+  });
+  await expect(searchFallback).toBeVisible();
+  await expect(searchFallback).toHaveAttribute(
+    'href',
+    'https://www.youtube.com/results?search_query=Astra+Nova+Orbital+Dawn+launch+livestream'
+  );
+  await searchFallback.focus();
+  await expect(searchFallback).toBeFocused();
+  expect((await searchFallback.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(
+    page.getByText(
+      'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.'
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Open provider channel', exact: true })
+  ).toHaveCount(0);
+
+  await page.getByRole('button', { name: /Polaris Relay/i }).click();
+
+  const providerFallback = page.getByRole('link', {
+    name: 'Open provider channel',
+    exact: true,
+  });
+  await expect(providerFallback).toBeVisible();
+  await expect(providerFallback).toHaveAttribute(
+    'href',
+    'https://www.youtube.com/@SpaceX/streams'
+  );
+  await expect(
+    page.getByText(
+      'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
+    )
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('briefing calendar options stay visible and restore trigger focus', async ({

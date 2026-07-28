@@ -56,19 +56,21 @@ export function inferLaunchProvider(launch: Launch): string {
 }
 
 export function buildSearchQuery(launch: Launch): string {
-  const keywords = [inferLaunchProvider(launch)];
+  const provider = inferLaunchProvider(launch);
+  const missionName = launch.name.includes('|')
+    ? launch.name.split('|').slice(1).join('|').trim()
+    : launch.name.trim();
+  const keywords = provider === 'Launch Provider' ? [] : [provider];
 
-  // Add rocket name
   keywords.push(launch.rocket);
-
-  // Add mission keywords
-  const missionName = launch.name.split('|')[0].trim();
   keywords.push(missionName);
-
-  // Add "launch" and "livestream"
   keywords.push('launch livestream');
 
-  return keywords.join(' ');
+  return [...new Map(
+    keywords
+      .filter(Boolean)
+      .map((keyword) => [keyword.toLowerCase(), keyword]),
+  ).values()].join(' ');
 }
 
 /**
