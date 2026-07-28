@@ -8,34 +8,30 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
-test('brand mark stays legible and tappable in the header', async ({ page }) => {
+test('brand wordmark stays legible and tappable in the header', async ({ page }) => {
   await page.goto('/');
 
   const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
   await expect(homeLink).toBeVisible();
 
   const metrics = await homeLink.evaluate((element) => {
-    const image = element.querySelector('img');
     const linkBox = element.getBoundingClientRect();
-    const imageBox = image?.getBoundingClientRect();
+    const wordmark = element.querySelector('span');
 
     return {
-      imageSource: image?.getAttribute('src'),
-      imageSize: imageBox
-        ? { width: imageBox.width, height: imageBox.height }
-        : null,
+      imageCount: element.querySelectorAll('img').length,
       linkHeight: linkBox.height,
-      wordmark: element.textContent?.trim(),
+      wordmark: wordmark?.textContent?.trim(),
+      wordmarkSize: wordmark
+        ? Number.parseFloat(getComputedStyle(wordmark).fontSize)
+        : 0,
     };
   });
 
-  expect(metrics).toEqual({
-    imageSource:
-      '/brand/logo_launchwatch_tracked-ascent_20260726_color.svg',
-    imageSize: { width: 32, height: 32 },
-    linkHeight: 44,
-    wordmark: 'LaunchWatch',
-  });
+  expect(metrics.imageCount).toBe(0);
+  expect(metrics.linkHeight).toBeGreaterThanOrEqual(44);
+  expect(metrics.wordmark).toBe('LaunchWatch');
+  expect(metrics.wordmarkSize).toBeGreaterThanOrEqual(20);
   await expect(page.locator('link[rel~="icon"][href="/favicon.ico"]')).toHaveCount(
     1
   );
@@ -152,16 +148,29 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
 }) => {
   await page.goto('/');
 
-  const mapDisclosure = page.getByRole('button', {
-    name: /Mission trajectory/i,
-  });
+  const mapDisclosure = page.locator(
+    'button[aria-controls="mobile-mission-map"]'
+  );
   const expandButton = page.getByRole('button', {
-    name: 'View full illustrative trajectory map',
+    name: /illustrative trajectory map/i,
   });
 
   if ((page.viewportSize()?.width ?? 0) < 1024) {
     await expect(mapDisclosure).toBeVisible();
-    await mapDisclosure.click();
+    if ((await mapDisclosure.getAttribute('aria-expanded')) !== 'true') {
+      await mapDisclosure.click();
+    }
+
+    const mapTop = await page
+      .getByRole('region', { name: 'Mission trajectory' })
+      .boundingBox();
+    const scheduleTop = await page
+      .getByRole('region', { name: 'Upcoming launches' })
+      .boundingBox();
+    expect(mapTop).not.toBeNull();
+    expect(scheduleTop).not.toBeNull();
+    expect(mapTop!.y).toBeLessThan(scheduleTop!.y);
+    await expect(page.locator('[aria-label$=" UTC"]').first()).toBeVisible();
   }
 
   await expect(expandButton).toBeVisible();
@@ -176,29 +185,65 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   ).toBeVisible();
 
   const map = page.locator('[data-trajectory-map]:visible').first();
-  const pathsInFrame = await map.evaluate((element) => {
+  const overlaysInFrame = await map.evaluate((element) => {
     const svg = element as SVGSVGElement;
     const viewBox = svg.viewBox.baseVal;
-    const phases = [
-      ...svg.querySelectorAll<SVGGraphicsElement>('[data-trajectory-phase]'),
+    const overlays = [
+      ...svg.querySelectorAll<SVGGraphicsElement>(
+        '[data-trajectory-phase], [data-trajectory-label], [data-trajectory-marker]'
+      ),
     ];
-    return phases.map((phase) => {
-      const box = phase.getBBox();
-      return {
-        id: phase.getAttribute('data-trajectory-phase'),
-        contained:
-          box.x >= viewBox.x &&
-          box.y >= viewBox.y &&
-          box.x + box.width <= viewBox.x + viewBox.width &&
-          box.y + box.height <= viewBox.y + viewBox.height,
-      };
-    });
+    const svgBounds = svg.getBoundingClientRect();
+    const legend = svg.parentElement?.querySelector<HTMLElement>(
+      '[aria-label="Trajectory model legend"]'
+    );
+    const legendBounds = legend?.getBoundingClientRect();
+
+    return {
+      overlays: overlays.map((overlay) => {
+        const box = overlay.getBBox();
+        const inset = overlay.hasAttribute('data-trajectory-phase') ? 10 : 2;
+        return {
+          id:
+            overlay.getAttribute('data-trajectory-phase') ||
+            overlay.getAttribute('data-trajectory-label') ||
+            overlay.getAttribute('data-trajectory-marker'),
+          contained:
+            box.x - inset >= viewBox.x &&
+            box.y - inset >= viewBox.y &&
+            box.x + box.width + inset <= viewBox.x + viewBox.width &&
+            box.y + box.height + inset <= viewBox.y + viewBox.height,
+        };
+      }),
+      legendContained:
+        !legendBounds ||
+        (legendBounds.left >= svgBounds.left &&
+          legendBounds.top >= svgBounds.top &&
+          legendBounds.right <= svgBounds.right &&
+          legendBounds.bottom <= svgBounds.bottom),
+    };
   });
 
-  expect(pathsInFrame).toEqual([
-    { id: 'ascent-model', contained: true },
-    { id: 'target-orbit-model', contained: true },
-  ]);
+  expect(overlaysInFrame.overlays).toEqual(
+    expect.arrayContaining([
+      {
+        id: 'ascent-model',
+        contained: true,
+      },
+      {
+        id: 'target-orbit-model',
+        contained: true,
+      },
+      {
+        id: 'reported-launch-site',
+        contained: true,
+      },
+    ])
+  );
+  expect(
+    overlaysInFrame.overlays.every((overlay) => overlay.contained)
+  ).toBe(true);
+  expect(overlaysInFrame.legendContained).toBe(true);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await expandButton.click();
@@ -212,4 +257,19 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await expect(closeButton).toHaveCSS('width', '44px');
   await closeButton.click();
   await expect(expandButton).toBeFocused();
+});
+
+test('archive stays usable at the desktop-tablet boundary', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/history');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Launch archive' })
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View mission' }).first()).toBeVisible();
+  const firstRow = page.locator('article').first();
+  for (const label of ['Date (UTC)', 'Vehicle', 'Site', 'Outcome']) {
+    await expect(firstRow.getByText(label, { exact: true })).toBeVisible();
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

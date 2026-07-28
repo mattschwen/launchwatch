@@ -274,4 +274,27 @@ describe('Launch Library 2.3 adapter', () => {
       },
     });
   });
+
+  it('normalizes placeholder mission metadata to missing values', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      mission: {
+        ...NORMAL_LIST_LAUNCH.mission,
+        name: 'Unknown',
+        type: 'To Be Determined',
+        orbit: {
+          name: 'Unknown',
+          abbrev: 'N/A',
+        },
+      },
+      program: [{ name: 'N/A' }],
+    });
+
+    expect(normalized).toMatchObject({
+      missionName: null,
+      missionType: null,
+      orbit: null,
+      program: null,
+    });
+  });
 });

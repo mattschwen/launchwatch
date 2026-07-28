@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  firstLaunchValue,
   formatLaunchDate,
+  formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
+  isMeaningfulLaunchValue,
   launchOutcomeLabel,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -34,7 +37,20 @@ describe('launch formatting', () => {
       shortenLaunchSite(
         'Space Launch Complex 40, Cape Canaveral Space Force Station, USA'
       )
-    ).toBe('SLC 40, Cape Canaveral');
+    ).toBe('SLC-40, Cape Canaveral');
+    expect(shortenLaunchSite('LC 9A, Taiyuan')).toBe('LC-9A, Taiyuan');
+  });
+
+  it('replaces provider placeholder metadata with useful fallback copy', () => {
+    expect(isMeaningfulLaunchValue('Low Earth Orbit')).toBe(true);
+    expect(isMeaningfulLaunchValue('Unknown')).toBe(false);
+    expect(isMeaningfulLaunchValue('To Be Determined')).toBe(false);
+    expect(formatLaunchValue(' Unknown ', 'Target pending')).toBe(
+      'Target pending'
+    );
+    expect(
+      firstLaunchValue(['Unknown', null, '  Communications  '], 'Pending')
+    ).toBe('Communications');
   });
 
   it('labels completed and scheduled missions consistently', () => {

@@ -17,6 +17,10 @@ import type {
 } from 'topojson-specification';
 import landTopology from 'world-atlas/land-110m.json';
 import { Info, MapPin, Maximize2, Route, X } from 'lucide-react';
+import {
+  firstLaunchValue,
+  isMeaningfulLaunchValue,
+} from '@/lib/format';
 import { MAP_HEIGHT, MAP_WIDTH } from '@/lib/map-geometry';
 import {
   buildIllustrativeTrajectory,
@@ -83,18 +87,29 @@ function TrajectoryMapGraphic({
   const glowId = `${id}-glow`;
   const gridId = `${id}-grid`;
   const launchPoint = trajectory?.launchPoint;
+  const siteLabelPoint = trajectory?.siteLabelPoint;
   const transitionPoint = trajectory?.transitionPoint;
   const targetPoint = trajectory?.targetPoint;
-  const labelOnLeft = Boolean(launchPoint && launchPoint.x > MAP_WIDTH * 0.72);
-  const phaseTextSize = expanded ? 13 : 15;
-  const siteTextSize = expanded ? 14 : 16;
+  const phaseKickerSize = expanded ? 11 : 16;
+  const phaseTextSize = expanded ? 16 : 25;
+  const siteTextSize = expanded ? 16 : 25;
+  const ascentDrawn = Boolean(
+    trajectory?.phases.some((phase) => phase.id === 'ascent-model')
+  );
+  const orbitDrawn = Boolean(
+    trajectory?.phases.some((phase) => phase.id === 'target-orbit-model')
+  );
+  const showLegend =
+    trajectory?.availability === 'ready' &&
+    Boolean(launchPoint) &&
+    (ascentDrawn || orbitDrawn);
 
   return (
     <div
       className={`relative min-h-0 overflow-hidden bg-[#070b12] ${
         expanded
           ? 'h-full rounded-md border border-[var(--border-subtle)]'
-          : 'aspect-[1.8/1] lg:aspect-auto lg:flex-1'
+          : 'aspect-[2/1] lg:aspect-auto lg:flex-1'
       }`}
     >
       <svg
@@ -181,22 +196,35 @@ function TrajectoryMapGraphic({
                 y={phase.labelPoint.y}
                 fill={ascent ? '#72edb7' : '#70d4ef'}
                 fontFamily="var(--font-mono)"
-                fontSize={phaseTextSize}
                 fontWeight="700"
-                letterSpacing="1.2"
                 textAnchor="middle"
                 paintOrder="stroke"
                 stroke="#070b12"
-                strokeWidth="5"
+                strokeWidth="6"
                 strokeLinejoin="round"
+                data-trajectory-label={phase.id}
               >
-                {ascent ? 'ASCENT MODEL' : 'TARGET-ORBIT MODEL'}
+                <tspan
+                  x={phase.labelPoint.x}
+                  fontSize={phaseKickerSize}
+                  letterSpacing="1.8"
+                >
+                  {ascent ? 'PHASE 01' : 'PHASE 02'}
+                </tspan>
+                <tspan
+                  x={phase.labelPoint.x}
+                  dy={expanded ? 17 : 24}
+                  fontSize={phaseTextSize}
+                  letterSpacing="1.1"
+                >
+                  {ascent ? 'ASCENT MODEL' : 'TARGET-ORBIT MODEL'}
+                </tspan>
               </text>
             </g>
           );
         })}
 
-        {launchPoint && trajectory ? (
+        {launchPoint && siteLabelPoint && trajectory ? (
           <g data-trajectory-marker="reported-launch-site">
             <circle
               cx={launchPoint.x}
@@ -218,23 +246,24 @@ function TrajectoryMapGraphic({
             <line
               x1={launchPoint.x}
               y1={launchPoint.y}
-              x2={launchPoint.x + (labelOnLeft ? -18 : 18)}
-              y2={launchPoint.y + 20}
+              x2={siteLabelPoint.x}
+              y2={siteLabelPoint.y - (siteLabelPoint.y > launchPoint.y ? 9 : -9)}
               stroke="rgba(94,230,168,0.62)"
               strokeWidth="1.25"
             />
             <text
-              x={launchPoint.x + (labelOnLeft ? -23 : 23)}
-              y={launchPoint.y + 35}
+              x={siteLabelPoint.x}
+              y={siteLabelPoint.y}
               fill="#f3f6fa"
               fontFamily="var(--font-sans)"
               fontSize={siteTextSize}
               fontWeight="700"
-              textAnchor={labelOnLeft ? 'end' : 'start'}
+              textAnchor={trajectory.siteLabelAnchor}
               paintOrder="stroke"
               stroke="#070b12"
-              strokeWidth="5"
+              strokeWidth="6"
               strokeLinejoin="round"
+              data-trajectory-label="reported-launch-site"
             >
               {compactLabel(trajectory.siteLabel, expanded ? 32 : 24)}
             </text>
@@ -320,47 +349,49 @@ function TrajectoryMapGraphic({
         </div>
       ) : null}
 
-      <ul
-        aria-label="Trajectory model legend"
-        className="absolute bottom-3 right-3 grid gap-1.5 rounded-md border border-[var(--border-strong)] bg-[rgba(8,12,18,0.9)] px-3 py-2 text-[10px] font-medium text-[var(--text-secondary)] shadow-lg backdrop-blur-sm sm:text-[11px]"
-      >
-        <li className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="h-0.5 w-7 rounded-full bg-[var(--console-green)]"
-          />
-          Ascent model
-        </li>
-        <li
-          className={`flex items-center gap-2 ${
-            trajectory?.orbitAvailable ? '' : 'text-[var(--text-muted)]'
-          }`}
+      {showLegend ? (
+        <ul
+          aria-label="Trajectory model legend"
+          className="absolute bottom-3 right-3 grid gap-1.5 rounded-md border border-[var(--border-strong)] bg-[rgba(8,12,18,0.92)] px-3 py-2 text-[10px] font-medium text-[var(--text-secondary)] shadow-lg backdrop-blur-sm sm:text-[11px]"
         >
-          <span
-            aria-hidden="true"
-            className={`w-7 border-t-2 border-dashed ${
-              trajectory?.orbitAvailable
-                ? 'border-[var(--console-cyan)]'
-                : 'border-[var(--text-muted)]'
-            }`}
-          />
-          {trajectory?.orbitAvailable
-            ? 'Target-orbit model'
-            : 'Target orbit unavailable'}
-        </li>
-        <li className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="ml-2 h-2.5 w-2.5 rounded-full border-2 border-[var(--console-green)]"
-          />
-          Reported launch site
-        </li>
-      </ul>
+          {ascentDrawn ? (
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="h-0.5 w-7 rounded-full bg-[var(--console-green)]"
+              />
+              Ascent model
+            </li>
+          ) : null}
+          {orbitDrawn ? (
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="w-7 border-t-2 border-dashed border-[var(--console-cyan)]"
+              />
+              Target-orbit model
+            </li>
+          ) : null}
+          {launchPoint ? (
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="ml-2 h-2.5 w-2.5 rounded-full border-2 border-[var(--console-green)]"
+              />
+              Reported launch site
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
     </div>
   );
 }
 
 function MissionFacts({ launch }: { launch: Launch | null }): React.ReactElement {
+  const targetOrbit =
+    launch && isMeaningfulLaunchValue(launch.orbit)
+      ? launch.orbit.trim()
+      : 'Not supplied';
   const facts = launch
     ? [
         {
@@ -370,17 +401,17 @@ function MissionFacts({ launch }: { launch: Launch | null }): React.ReactElement
         },
         {
           label: 'Target orbit',
-          value: launch.orbit?.trim() || 'Not supplied',
-          className: launch.orbit
+          value: targetOrbit,
+          className: targetOrbit !== 'Not supplied'
             ? 'text-[var(--text-primary)]'
             : 'text-[var(--console-amber)]',
         },
         {
           label: 'Reported site',
-          value:
-            launch.location?.name?.trim() ||
-            launch.launchSite?.trim() ||
-            'Not supplied',
+          value: firstLaunchValue(
+            [launch.location?.name, launch.launchSite],
+            'Not supplied'
+          ),
           className: 'text-[var(--text-primary)]',
         },
         {
@@ -411,8 +442,7 @@ function MissionFacts({ launch }: { launch: Launch | null }): React.ReactElement
             {fact.label}
           </dt>
           <dd
-            title={fact.value}
-            className={`mt-1 truncate text-xs font-semibold ${fact.className}`}
+            className={`mt-1 break-words text-[11px] font-semibold leading-4 ${fact.className}`}
           >
             {fact.value}
           </dd>
@@ -426,6 +456,11 @@ export default function MissionTrajectory({
   launch,
   className = '',
 }: MissionTrajectoryProps): React.ReactElement {
+  const rawInstanceId = useId();
+  const instanceId = rawInstanceId.replaceAll(':', '');
+  const sectionTitleId = `${instanceId}-mission-trajectory-title`;
+  const dialogTitleId = `${instanceId}-enlarged-trajectory-title`;
+  const dialogDescriptionId = `${instanceId}-enlarged-trajectory-description`;
   const [expanded, setExpanded] = useState(false);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -501,7 +536,7 @@ export default function MissionTrajectory({
     expanded && typeof document !== 'undefined'
       ? createPortal(
           <div
-            className="fixed inset-0 z-[100] grid place-items-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/75 p-3 backdrop-blur-sm sm:p-6"
             onMouseDown={(event) => {
               if (event.currentTarget === event.target) closeExpanded();
             }}
@@ -510,21 +545,21 @@ export default function MissionTrajectory({
               ref={dialogRef}
               role="dialog"
               aria-modal="true"
-              aria-labelledby="expanded-trajectory-title"
-              aria-describedby="expanded-trajectory-description"
-              className="flex h-[min(90vh,54rem)] w-full max-w-7xl flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
+              aria-labelledby={dialogTitleId}
+              aria-describedby={dialogDescriptionId}
+              className="flex h-[min(90svh,54rem)] min-h-[18rem] w-full max-w-7xl flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
             >
               <header className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
                 <div className="min-w-0">
-                  <p className="console-label">Expanded model</p>
+                  <p className="console-label">Enlarged model</p>
                   <h2
-                    id="expanded-trajectory-title"
+                    id={dialogTitleId}
                     className="mt-1 truncate text-lg font-bold text-[var(--text-primary)] sm:text-xl"
                   >
                     {launch?.name || 'Mission trajectory'}
                   </h2>
                   <p
-                    id="expanded-trajectory-description"
+                    id={dialogDescriptionId}
                     className="mt-1 text-xs text-[var(--text-muted)]"
                   >
                     Inspect the illustrative phase geometry at a larger scale.
@@ -541,21 +576,29 @@ export default function MissionTrajectory({
                 </button>
               </header>
 
-              <div className="min-h-0 flex-1 p-3 sm:p-5">
+              <div
+                className="min-h-40 flex-1 p-3 sm:p-5"
+                data-enlarged-map-region
+              >
                 <TrajectoryMapGraphic
                   launch={launch}
                   trajectory={trajectory}
                   expanded
                 />
               </div>
-              <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
-                <Info
-                  aria-hidden="true"
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
-                />
-                {TRAJECTORY_DISCLOSURE}
-              </p>
-              <MissionFacts launch={launch} />
+              <div
+                className="max-h-[min(34svh,15rem)] shrink-0 overflow-y-auto border-t border-[var(--border-subtle)]"
+                data-enlarged-map-support
+              >
+                <p className="flex items-start gap-2 px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
+                  <Info
+                    aria-hidden="true"
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
+                  />
+                  {TRAJECTORY_DISCLOSURE}
+                </p>
+                <MissionFacts launch={launch} />
+              </div>
             </div>
           </div>,
           document.body
@@ -565,14 +608,14 @@ export default function MissionTrajectory({
   return (
     <>
       <section
-        aria-labelledby="mission-trajectory-title"
-        className={`surface-card flex min-h-0 flex-col overflow-hidden lg:h-[27.5rem] ${className}`}
+        aria-labelledby={sectionTitleId}
+        className={`surface-card flex min-h-0 flex-col overflow-hidden lg:h-full lg:min-h-[27.5rem] ${className}`}
       >
         <header className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2
-                id="mission-trajectory-title"
+                id={sectionTitleId}
                 className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]"
               >
                 Mission trajectory
@@ -591,9 +634,9 @@ export default function MissionTrajectory({
             className="action-button action-button-quiet shrink-0 px-2.5 text-xs"
             onClick={openExpanded}
             disabled={!launch}
-            aria-label="View full illustrative trajectory map"
+            aria-label="Enlarge illustrative trajectory map"
           >
-            <span className="hidden sm:inline">View full map</span>
+            <span className="hidden sm:inline">Enlarge map</span>
             <Maximize2 aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>

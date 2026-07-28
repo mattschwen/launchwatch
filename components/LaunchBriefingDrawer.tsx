@@ -11,7 +11,11 @@ import {
   X,
 } from 'lucide-react';
 import type { Launch } from '@/lib/types';
-import { formatLaunchDate, shortenLaunchSite } from '@/lib/format';
+import {
+  firstLaunchValue,
+  formatLaunchDate,
+  shortenLaunchSite,
+} from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
 import StatusBadge from './ui/StatusBadge';
 
@@ -179,7 +183,7 @@ export default function LaunchBriefingDrawer({
               <div>
                 <dt className="data-label">Mission profile</dt>
                 <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {launch.orbit || launch.missionType || 'Not provided'}
+                  {firstLaunchValue([launch.orbit, launch.missionType])}
                 </dd>
               </div>
             </div>

@@ -26,7 +26,7 @@ export default function LaunchCard({
     : launch.isLive
       ? 'Live now'
       : launch.status === 'tbd'
-        ? launch.statusName || 'To be confirmed'
+        ? 'TBC'
         : launch.statusName || 'Go for launch';
   const statusClass =
     launch.status === 'failure'
@@ -44,6 +44,12 @@ export default function LaunchCard({
         : launch.isLive
           ? 'bg-[var(--console-red)]'
           : 'bg-[var(--console-green)]';
+  const launchTime = new Date(launch.date).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  });
 
   return (
     <article className="group border-b border-[var(--border-subtle)] last:border-b-0">
@@ -61,14 +67,15 @@ export default function LaunchCard({
             <p className="truncate text-sm font-medium text-[var(--text-primary)]">
               {formatLaunchDay(launch.date)}
             </p>
-            <p className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]">
-              {new Date(launch.date).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-                timeZone: 'UTC',
-              })}{' '}
-              UTC
+            <p
+              aria-label={`${launchTime} UTC`}
+              className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]"
+            >
+              {launchTime}
+              <span aria-hidden="true" className="lg:hidden">
+                {' '}
+                UTC
+              </span>
             </p>
           </div>
         </div>

@@ -17,6 +17,7 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
+  firstLaunchValue,
   formatLaunchDate,
   isCompletedLaunch,
   shortenLaunchSite,
@@ -142,7 +143,7 @@ export default function LaunchDetailClient({
                 />
                 <dt className="data-label">Mission profile</dt>
                 <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {launch.orbit || launch.missionType || 'Not provided'}
+                  {firstLaunchValue([launch.orbit, launch.missionType])}
                 </dd>
               </div>
             </dl>

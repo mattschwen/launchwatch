@@ -12,6 +12,7 @@ import {
   LaunchSource,
   RocketFact,
 } from './types';
+import { isMeaningfulLaunchValue } from './format';
 
 // API Configuration
 const SPACEX_API = (
@@ -770,8 +771,12 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     launchSite: launch.pad.name || 'Unknown Site',
     status: isLive ? 'live' : sourceStatus,
     statusName: launch.status.name || launch.status.abbrev || null,
-    missionName: launch.mission?.name || null,
-    missionType: launch.mission?.type || null,
+    missionName: isMeaningfulLaunchValue(launch.mission?.name)
+      ? launch.mission.name.trim()
+      : null,
+    missionType: isMeaningfulLaunchValue(launch.mission?.type)
+      ? launch.mission.type.trim()
+      : null,
     windowStart: launch.window_start || null,
     windowEnd: launch.window_end || null,
     livestream: livestreams?.[0]?.url || null,
@@ -792,7 +797,11 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     } : null,
     provider: provider.name,
     providerLogo: provider.logo,
-    program: (Array.isArray(launch.program) ? launch.program : [])[0]?.name || null,
+    program: isMeaningfulLaunchValue(
+      (Array.isArray(launch.program) ? launch.program : [])[0]?.name
+    )
+      ? (Array.isArray(launch.program) ? launch.program : [])[0]!.name.trim()
+      : null,
     timeline: Array.isArray(launch.timeline)
       ? launch.timeline.flatMap((event) => {
         const type = event?.type?.name || event?.type?.abbrev;
@@ -809,7 +818,9 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     videoThumbnail: livestreams?.[0]?.thumbnail || null,
     source: 'll2',
     ll2Id: launch.id,
-    orbit: launch.mission?.orbit?.name || null,
+    orbit: isMeaningfulLaunchValue(launch.mission?.orbit?.name)
+      ? launch.mission.orbit.name.trim()
+      : null,
     rocketFamily: family,
     rocketVariant: configuration.variant || null,
   };

@@ -80,7 +80,7 @@ describe('PWA install assets', () => {
     expect(manifest.icons).toHaveLength(2);
     for (const icon of manifest.icons) {
       expect(icon.type).toBe('image/png');
-      expect(icon.purpose).toContain('maskable');
+      expect(icon.purpose).toBe('any');
       expect(existsSync(publicPath(icon.src))).toBe(true);
       const declaredSize = Number(icon.sizes.split('x')[0]);
       expect(readPngDimensions(publicPath(icon.src))).toEqual({
@@ -90,14 +90,14 @@ describe('PWA install assets', () => {
     }
   });
 
-  it('ships one effect-free vector mark and a branded favicon', () => {
+  it('ships one effect-free monogram and a branded favicon', () => {
     const mark = readFileSync(
       publicPath('/brand/logo_launchwatch_tracked-ascent_20260726_color.svg'),
       'utf8'
     );
     const favicon = readFileSync(resolve(process.cwd(), 'app', 'favicon.ico'));
 
-    expect(mark).toContain('LaunchWatch tracked ascent mark');
+    expect(mark).toContain('LaunchWatch LW monogram');
     expect(mark).not.toMatch(/<(?:filter|linearGradient|radialGradient)\b/i);
     expect(mark).toContain('#58C8E8');
     expect(mark).toContain('#5EE6A8');

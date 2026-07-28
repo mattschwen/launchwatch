@@ -18,6 +18,30 @@ const UTC_DATE = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 });
 
+const PLACEHOLDER_VALUE =
+  /^(?:unknown(?:\s+(?:orbit|mission|profile|vehicle|rocket|site|pad))?|tbd|tbc|to be (?:determined|confirmed)|not (?:available|applicable|provided|supplied)|n\/?a|none|null|-|—)$/i;
+
+export function isMeaningfulLaunchValue(
+  value: string | null | undefined
+): value is string {
+  const normalized = value?.trim();
+  return Boolean(normalized && !PLACEHOLDER_VALUE.test(normalized));
+}
+
+export function formatLaunchValue(
+  value: string | null | undefined,
+  fallback = 'Not provided'
+): string {
+  return isMeaningfulLaunchValue(value) ? value.trim() : fallback;
+}
+
+export function firstLaunchValue(
+  values: Array<string | null | undefined>,
+  fallback = 'Not provided'
+): string {
+  return values.find(isMeaningfulLaunchValue)?.trim() || fallback;
+}
+
 export function formatLaunchDate(date: string): string {
   const parsed = new Date(date);
   return Number.isNaN(parsed.getTime()) ? 'Date unavailable' : UTC_DATE_TIME.format(parsed);
@@ -45,6 +69,8 @@ export function shortenLaunchSite(site: string): string {
     .replace(/Space Launch Complex/gi, 'SLC')
     .replace(/Launch Complex/gi, 'LC')
     .replace(/Launch Pad/gi, 'Pad')
+    .replace(/\bSLC[\s-]+([0-9]+[A-Z]?)\b/gi, 'SLC-$1')
+    .replace(/\bLC[\s-]+([0-9]+[A-Z]?)\b/gi, 'LC-$1')
     .replace(/Cape Canaveral Space Force Station/gi, 'Cape Canaveral')
     .replace(/Kennedy Space Center/gi, 'Kennedy')
     .replace(/Vandenberg Space Force Base/gi, 'Vandenberg')

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
 import { useLiveContext } from '@/lib/contexts';
@@ -13,57 +12,52 @@ export default function TopNav(): React.ReactElement {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
-      <div className="page-container flex h-14 items-center justify-between sm:h-[4.375rem]">
+      <div className="page-container flex h-14 items-center sm:h-[4.375rem]">
         <Link
           href="/"
           aria-label="LaunchWatch home"
-          className="group flex min-h-11 flex-shrink-0 items-center gap-2 sm:gap-3"
+          className="group flex min-h-11 flex-shrink-0 items-center"
         >
-          <span className="grid h-10 w-10 place-items-center transition-transform group-hover:-translate-y-0.5">
-            <Image
-              src="/brand/logo_launchwatch_tracked-ascent_20260726_color.svg"
-              alt=""
-              aria-hidden="true"
-              width={32}
-              height={32}
-              priority
-              className="h-8 w-8"
-            />
-          </span>
-          <span className="display-title text-base tracking-[-0.025em] text-[var(--text-primary)] sm:text-[1.2rem]">
+          <span className="display-title text-[1.25rem] tracking-[-0.035em] text-[var(--text-primary)] transition-colors group-hover:text-white sm:text-[1.3rem]">
             Launch<span className="text-[var(--console-green)]">Watch</span>
           </span>
         </Link>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <nav aria-label="Primary navigation" className="mr-4 flex h-[4.375rem] items-stretch gap-5">
-            {PRIMARY_NAV_ITEMS.map((link) => {
-              const isActive = isNavItemActive(pathname, link.href);
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`relative flex min-h-11 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-[var(--console-green)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--console-green)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  <Icon size={17} />
-                  <span>{link.label}</span>
-                  {link.showLiveStatus && hasLiveLaunches && (
-                    <span className="relative ml-0.5 flex h-2 w-2" aria-label={`${liveCount} live`}>
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--live)]" />
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+        <nav
+          aria-label="Primary navigation"
+          className="ml-10 hidden h-[4.375rem] items-stretch gap-5 md:flex lg:ml-16"
+        >
+          {PRIMARY_NAV_ITEMS.map((link) => {
+            const isActive = isNavItemActive(pathname, link.href);
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={`relative flex min-h-11 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'text-[var(--console-green)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--console-green)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <Icon size={17} />
+                <span>{link.label}</span>
+                {link.showLiveStatus && hasLiveLaunches && (
+                  <span
+                    className="relative ml-0.5 flex h-2 w-2"
+                    aria-label={`${liveCount} live`}
+                  >
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--live)]" />
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
+        <div className="ml-auto hidden items-center gap-2 md:flex">
           <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
           <span className="flex items-center gap-2 px-2 font-mono text-xs font-medium text-[var(--console-green)]">
             <span
@@ -81,7 +75,7 @@ export default function TopNav(): React.ReactElement {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 md:hidden">
+        <div className="ml-auto flex items-center gap-1 md:hidden">
           {hasLiveLaunches && (
             <Link
               href="/watch"

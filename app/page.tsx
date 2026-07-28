@@ -19,7 +19,7 @@ const MissionTrajectory = dynamic(
 
 function HomeContent(): React.ReactElement {
   const { launches, loading, error, meta, refresh } = useLaunches();
-  const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [mobileMapOpen, setMobileMapOpen] = useState(true);
   const featuredLaunch =
     launches.find((launch) => launch.isLive) ??
     launches.find(
@@ -46,27 +46,23 @@ function HomeContent(): React.ReactElement {
           </aside>
         </div>
 
-        <div className="mt-4">
-          <LaunchList />
-        </div>
-
-        <section className="mt-4 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] lg:hidden">
+        <section className="mt-4 lg:hidden">
           <button
             type="button"
             aria-expanded={mobileMapOpen}
             aria-controls="mobile-mission-map"
             onClick={() => setMobileMapOpen((value) => !value)}
-            className="flex min-h-[4.75rem] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+            className="surface-card flex min-h-[4.5rem] w-full items-center gap-3 px-4 text-left transition-colors hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-green)]">
               <Globe2 aria-hidden="true" size={20} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold text-[var(--text-primary)]">
-                Mission trajectory
+                Illustrative mission path
               </span>
               <span className="mt-0.5 block text-sm text-[var(--text-muted)]">
-                Launch site and illustrative mission phases
+                Launch site and modeled mission phases
               </span>
             </span>
             <ChevronDown
@@ -80,12 +76,16 @@ function HomeContent(): React.ReactElement {
           {mobileMapOpen ? (
             <div
               id="mobile-mission-map"
-              className="border-t border-[var(--border-subtle)]"
+              className="mt-2"
             >
               <MissionTrajectory launch={featuredLaunch} />
             </div>
           ) : null}
         </section>
+
+        <div className="mt-4">
+          <LaunchList />
+        </div>
       </div>
     </>
   );

@@ -4,7 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, MapPin, Rocket, Target } from 'lucide-react';
 import type { Launch } from '@/lib/types';
-import { formatLaunchDay, shortenLaunchSite } from '@/lib/format';
+import {
+  firstLaunchValue,
+  formatLaunchDay,
+  shortenLaunchSite,
+} from '@/lib/format';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchActions from './LaunchActions';
@@ -20,12 +24,12 @@ interface HeroSectionProps {
 function launchTime(date: string): string {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return 'Time TBD';
-  return `${parsed.toLocaleTimeString('en-US', {
+  return parsed.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
     timeZone: 'UTC',
-  })} UTC`;
+  });
 }
 
 function splitSite(site: string): [string, string] {
@@ -87,7 +91,14 @@ export default function HeroSection({
   const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
     .filter(Boolean)
     .join(' ');
-  const missionDetail = activeLaunch.orbit || activeLaunch.program || 'Target pending';
+  const missionType = firstLaunchValue(
+    [activeLaunch.missionType, activeLaunch.orbit],
+    'Profile pending'
+  );
+  const missionDetail = firstLaunchValue(
+    [activeLaunch.orbit, activeLaunch.program],
+    'Target pending'
+  );
 
   return (
     <>
@@ -193,7 +204,7 @@ export default function HeroSection({
               />
               <dt className="data-label">Mission</dt>
               <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
-                {activeLaunch.missionType || activeLaunch.orbit || 'Launch'}
+                {missionType}
               </dd>
               <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
                 {missionDetail}

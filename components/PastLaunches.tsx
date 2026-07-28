@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { Launch, LaunchFeedMeta } from '@/lib/types';
 import {
+  formatLaunchValue,
   formatLaunchDate,
   launchOutcomeLabel,
   shortenLaunchSite,
@@ -60,13 +61,13 @@ function HistoryRow({
 
   return (
     <article className="border-b border-[var(--border-subtle)] last:border-b-0">
-      <div className="grid items-center gap-3 px-3 py-3 sm:px-4 lg:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
+      <div className="grid items-center gap-3 px-3 py-3 sm:px-4 xl:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
         <button
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
           onClick={onToggle}
-          className="group flex min-h-11 min-w-0 items-center gap-3 text-left lg:col-span-5 lg:grid lg:grid-cols-subgrid"
+          className="group min-h-11 min-w-0 text-left xl:col-span-5 xl:grid xl:grid-cols-subgrid xl:items-center"
         >
           <span className="flex min-w-0 items-center gap-3">
             <ChevronDown
@@ -85,17 +86,57 @@ function HistoryRow({
               </span>
             </span>
           </span>
-          <span className="hidden text-sm text-[var(--text-secondary)] lg:block">
+          <span className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--border-subtle)] pt-3 sm:grid-cols-4 xl:hidden">
+            <span className="min-w-0">
+              <span className="data-label block">Date (UTC)</span>
+              <span className="mt-1 block text-xs text-[var(--text-secondary)]">
+                {formatLaunchDate(launch.date)}
+              </span>
+            </span>
+            <span className="min-w-0">
+              <span className="data-label block">Vehicle</span>
+              <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
+                {launch.rocket}
+              </span>
+            </span>
+            <span className="min-w-0">
+              <span className="data-label block">Site</span>
+              <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
+                {shortenLaunchSite(launch.launchSite)}
+              </span>
+            </span>
+            <span className="min-w-0">
+              <span className="data-label block">Outcome</span>
+              <span
+                className={`mt-1 flex items-center gap-2 font-mono text-xs ${
+                  launch.status === 'failure'
+                    ? 'text-[var(--console-red)]'
+                    : 'text-[var(--console-green)]'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    launch.status === 'failure'
+                      ? 'bg-[var(--console-red)]'
+                      : 'bg-[var(--console-green)]'
+                  }`}
+                />
+                <span className="truncate">{outcome}</span>
+              </span>
+            </span>
+          </span>
+          <span className="hidden text-sm text-[var(--text-secondary)] xl:block">
             {formatLaunchDate(launch.date)}
           </span>
-          <span className="hidden truncate text-sm text-[var(--text-secondary)] lg:block">
+          <span className="hidden truncate text-sm text-[var(--text-secondary)] xl:block">
             {launch.rocket}
           </span>
-          <span className="hidden truncate text-sm text-[var(--text-secondary)] lg:block">
+          <span className="hidden truncate text-sm text-[var(--text-secondary)] xl:block">
             {shortenLaunchSite(launch.launchSite)}
           </span>
           <span
-            className={`hidden items-center gap-2 font-mono text-xs lg:flex ${
+            className={`hidden items-center gap-2 font-mono text-xs xl:flex ${
               launch.status === 'failure'
                 ? 'text-[var(--console-red)]'
                 : 'text-[var(--console-green)]'
@@ -115,7 +156,7 @@ function HistoryRow({
 
         <Link
           href={`/launch/${encodeURIComponent(launch.id)}`}
-          className="action-button action-button-quiet justify-self-start lg:justify-self-end"
+          className="action-button action-button-quiet justify-self-start xl:justify-self-end"
         >
           View mission
         </Link>
@@ -134,13 +175,13 @@ function HistoryRow({
               <div>
                 <dt className="data-label">Mission type</dt>
                 <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {launch.missionType || 'Not provided'}
+                  {formatLaunchValue(launch.missionType)}
                 </dd>
               </div>
               <div>
                 <dt className="data-label">Orbit</dt>
                 <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                  {launch.orbit || 'Not provided'}
+                  {formatLaunchValue(launch.orbit)}
                 </dd>
               </div>
               <div>
@@ -391,7 +432,7 @@ export default function PastLaunches(): React.ReactElement {
         </div>
       ) : null}
 
-      <div className="hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 lg:grid">
+      <div className="hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 xl:grid">
         {['Mission', 'Actual launch date', 'Vehicle', 'Site', 'Outcome', 'Actions'].map(
           (label) => (
             <span key={label} className="data-label">
