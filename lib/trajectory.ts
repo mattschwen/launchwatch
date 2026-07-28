@@ -1,9 +1,11 @@
 import {
   clamp,
+  fitMapPoints,
   MAP_HEIGHT,
   MAP_WIDTH,
   projectMapPoint,
   type MapPoint,
+  type MapViewport,
 } from '@/lib/map-geometry';
 import {
   firstLaunchValue,
@@ -19,9 +21,20 @@ export type TrajectoryModelKind =
   | 'departure'
   | 'unknown';
 
+export type TrajectoryAvailability =
+  | 'ready'
+  | 'site-only'
+  | 'orbit-only'
+  | 'unavailable';
+
+export type TrajectoryPhaseId =
+  | 'ascent-model'
+  | 'target-orbit-model';
+
 export interface TrajectoryPhase {
-  id: 'ascent-model' | 'target-orbit-model';
+  id: TrajectoryPhaseId;
   label: string;
+  shortLabel: string;
   description: string;
   path: string;
   start: MapPoint;
@@ -30,7 +43,7 @@ export interface TrajectoryPhase {
 }
 
 export interface IllustrativeTrajectory {
-  availability: 'ready' | 'missing-location';
+  availability: TrajectoryAvailability;
   disclosure: string;
   modelKind: TrajectoryModelKind;
   orbitAvailable: boolean;
@@ -42,56 +55,32 @@ export interface IllustrativeTrajectory {
   transitionPoint: MapPoint | null;
   targetPoint: MapPoint | null;
   phases: TrajectoryPhase[];
+  focusViewport: MapViewport;
 }
 
 export const TRAJECTORY_DISCLOSURE =
   'Illustrative trajectory model — geometry is derived from the reported launch site and target orbit, not vehicle telemetry or a planned flight path.';
 
 export const TRAJECTORY_GEOMETRY_FRAME = {
-  left: 50,
-  right: MAP_WIDTH - 50,
-  top: 55,
-  bottom: MAP_HEIGHT - 55,
+  left: 0,
+  right: MAP_WIDTH,
+  top: 0,
+  bottom: MAP_HEIGHT,
 } as const;
 
 export const TRAJECTORY_LABEL_FRAME = {
-  left: 155,
-  right: MAP_WIDTH - 155,
-  top: 82,
-  bottom: MAP_HEIGHT - 105,
+  left: 24,
+  right: MAP_WIDTH - 24,
+  top: 24,
+  bottom: MAP_HEIGHT - 24,
 } as const;
 
-function geometryPoint(x: number, y: number): MapPoint {
-  return {
-    x: clamp(
-      x,
-      TRAJECTORY_GEOMETRY_FRAME.left,
-      TRAJECTORY_GEOMETRY_FRAME.right
-    ),
-    y: clamp(
-      y,
-      TRAJECTORY_GEOMETRY_FRAME.top,
-      TRAJECTORY_GEOMETRY_FRAME.bottom
-    ),
-  };
-}
-
-function labelPoint(x: number, y: number): MapPoint {
-  return {
-    x: clamp(x, TRAJECTORY_LABEL_FRAME.left, TRAJECTORY_LABEL_FRAME.right),
-    y: clamp(y, TRAJECTORY_LABEL_FRAME.top, TRAJECTORY_LABEL_FRAME.bottom),
-  };
-}
-
-const MODEL_GEOMETRY: Record<
-  TrajectoryModelKind,
-  { ascentRun: number; ascentRise: number; orbitRun: number }
-> = {
-  inclined: { ascentRun: 125, ascentRise: 86, orbitRun: 340 },
-  polar: { ascentRun: 95, ascentRise: 110, orbitRun: 225 },
-  equatorial: { ascentRun: 120, ascentRise: 72, orbitRun: 330 },
-  departure: { ascentRun: 135, ascentRise: 96, orbitRun: 375 },
-  unknown: { ascentRun: 110, ascentRise: 70, orbitRun: 0 },
+const WORLD_VIEWPORT: MapViewport = {
+  x: 0,
+  y: 0,
+  width: MAP_WIDTH,
+  height: MAP_HEIGHT,
+  zoom: 1,
 };
 
 function round(value: number): number {
@@ -176,100 +165,146 @@ function hasValidLocation(
 
 function compactSiteLabel(launch: Launch): string {
   const reportedName = firstLaunchValue(
-    [launch.location?.name, launch.launchSite],
+    [launch.launchSite, launch.location?.name],
     'Launch site not supplied'
   );
-
   const firstSegment = shortenLaunchSite(
     reportedName.split(',')[0]?.trim() || reportedName
   );
-  return firstSegment.length > 28
-    ? `${firstSegment.slice(0, 27)}…`
+
+  return firstSegment.length > 30
+    ? `${firstSegment.slice(0, 29)}…`
     : firstSegment;
 }
 
-function horizontalDirection(
-  start: MapPoint,
-  requiredRun: number
-): 1 | -1 {
-  const roomToRight = TRAJECTORY_GEOMETRY_FRAME.right - start.x;
-  const roomToLeft = start.x - TRAJECTORY_GEOMETRY_FRAME.left;
-
-  if (roomToRight >= requiredRun) return 1;
-  if (roomToLeft >= requiredRun) return -1;
-  return roomToRight >= roomToLeft ? 1 : -1;
-}
-
 function buildSiteLabelPlacement(
-  launchPoint: MapPoint,
-  siteLabel: string
+  launchPoint: MapPoint
 ): Pick<
   IllustrativeTrajectory,
   'siteLabelPoint' | 'siteLabelAnchor'
 > {
-  const visibleCharacterCount = Math.min(siteLabel.length, 24);
-  const estimatedHalfWidth = clamp(
-    visibleCharacterCount * 7.25,
-    44,
-    (TRAJECTORY_LABEL_FRAME.right - TRAJECTORY_LABEL_FRAME.left) / 2
-  );
-  const minCenterX = TRAJECTORY_LABEL_FRAME.left + estimatedHalfWidth;
-  const maxCenterX = TRAJECTORY_LABEL_FRAME.right - estimatedHalfWidth;
   const placeOnLeft = launchPoint.x > MAP_WIDTH / 2;
-  const preferredCenterX =
-    launchPoint.x +
-    (placeOnLeft ? -1 : 1) * Math.min(estimatedHalfWidth + 18, 170);
-  const placeAbove = launchPoint.y > TRAJECTORY_GEOMETRY_FRAME.bottom - 58;
 
   return {
     siteLabelPoint: {
-      x: clamp(preferredCenterX, minCenterX, maxCenterX),
+      x: clamp(
+        launchPoint.x + (placeOnLeft ? -26 : 26),
+        TRAJECTORY_LABEL_FRAME.left,
+        TRAJECTORY_LABEL_FRAME.right
+      ),
       y: clamp(
-        launchPoint.y + (placeAbove ? -31 : 40),
+        launchPoint.y + (launchPoint.y > MAP_HEIGHT - 70 ? -30 : 34),
         TRAJECTORY_LABEL_FRAME.top,
         TRAJECTORY_LABEL_FRAME.bottom
       ),
     },
-    siteLabelAnchor: 'middle',
+    siteLabelAnchor: placeOnLeft ? 'end' : 'start',
   };
+}
+
+function verticalDirection(latitude: number): 1 | -1 {
+  return latitude >= 0 ? -1 : 1;
 }
 
 function buildTransitionPoint(
   start: MapPoint,
-  kind: TrajectoryModelKind,
-  direction: 1 | -1
+  latitude: number,
+  kind: TrajectoryModelKind
 ): MapPoint {
-  const geometry = MODEL_GEOMETRY[kind];
-  const verticalDirection = start.y <= MAP_HEIGHT / 2 ? -1 : 1;
+  const vertical = verticalDirection(latitude);
+  const geometry =
+    kind === 'polar'
+      ? { run: 72, rise: 122 }
+      : kind === 'equatorial'
+        ? { run: 142, rise: Math.abs(MAP_HEIGHT / 2 - start.y) * 0.62 }
+        : kind === 'departure'
+          ? { run: 156, rise: 104 }
+          : { run: 138, rise: 88 };
+  const targetY =
+    kind === 'equatorial'
+      ? start.y + (MAP_HEIGHT / 2 - start.y) * 0.62
+      : start.y + geometry.rise * vertical;
 
-  return geometryPoint(
-    start.x + geometry.ascentRun * direction,
-    start.y + geometry.ascentRise * verticalDirection
-  );
+  return {
+    x: start.x + geometry.run,
+    y: clamp(targetY, 42, MAP_HEIGHT - 42),
+  };
 }
 
 function buildTargetPoint(
   start: MapPoint,
   transition: MapPoint,
-  kind: TrajectoryModelKind,
-  direction: 1 | -1
+  latitude: number,
+  kind: TrajectoryModelKind
 ): MapPoint {
-  const verticalDirection = start.y <= MAP_HEIGHT / 2 ? -1 : 1;
+  const vertical = verticalDirection(latitude);
+  const run =
+    kind === 'polar'
+      ? 210
+      : kind === 'departure'
+        ? 382
+        : kind === 'equatorial'
+          ? 342
+          : 328;
   const targetY =
     kind === 'polar'
-      ? verticalDirection < 0
-        ? TRAJECTORY_GEOMETRY_FRAME.top + 14
-        : TRAJECTORY_GEOMETRY_FRAME.bottom - 14
+      ? clamp(transition.y + vertical * 72, 38, MAP_HEIGHT - 38)
       : kind === 'equatorial'
         ? MAP_HEIGHT / 2
         : kind === 'departure'
-          ? transition.y + verticalDirection * 58
-          : start.y - verticalDirection * 58;
+          ? clamp(transition.y + vertical * 56, 38, MAP_HEIGHT - 38)
+          : clamp(
+              transition.y + (MAP_HEIGHT / 2 - transition.y) * 0.28,
+              38,
+              MAP_HEIGHT - 38
+            );
 
-  return geometryPoint(
-    transition.x + MODEL_GEOMETRY[kind].orbitRun * direction,
-    targetY
-  );
+  return {
+    x: transition.x + run,
+    y: targetY || start.y,
+  };
+}
+
+function phaseLabelPoint(
+  start: MapPoint,
+  end: MapPoint,
+  vertical: 1 | -1
+): MapPoint {
+  return {
+    x: (start.x + end.x) / 2,
+    y: clamp(
+      Math.min(start.y, end.y) + (vertical < 0 ? -24 : 42),
+      28,
+      MAP_HEIGHT - 28
+    ),
+  };
+}
+
+function emptyTrajectory(
+  availability: Extract<
+    TrajectoryAvailability,
+    'orbit-only' | 'unavailable'
+  >,
+  modelKind: TrajectoryModelKind,
+  orbitLabel: string,
+  orbitAvailable: boolean,
+  siteLabel: string
+): IllustrativeTrajectory {
+  return {
+    availability,
+    disclosure: TRAJECTORY_DISCLOSURE,
+    modelKind,
+    orbitAvailable,
+    orbitLabel,
+    siteLabel,
+    launchPoint: null,
+    siteLabelPoint: null,
+    siteLabelAnchor: 'middle',
+    transitionPoint: null,
+    targetPoint: null,
+    phases: [],
+    focusViewport: WORLD_VIEWPORT,
+  };
 }
 
 export function buildIllustrativeTrajectory(
@@ -282,105 +317,129 @@ export function buildIllustrativeTrajectory(
   const orbitAvailable = Boolean(meaningfulOrbit);
   const siteLabel = compactSiteLabel(launch);
   const modelKind = classifyTargetOrbit(meaningfulOrbit);
+  const location = hasValidLocation(launch.location)
+    ? launch.location
+    : null;
 
-  if (!hasValidLocation(launch.location)) {
+  if (!location) {
+    return emptyTrajectory(
+      orbitAvailable ? 'orbit-only' : 'unavailable',
+      modelKind,
+      orbitLabel,
+      orbitAvailable,
+      siteLabel
+    );
+  }
+
+  const launchPoint = projectMapPoint(
+    location.lng,
+    location.lat
+  );
+  const sitePlacement = buildSiteLabelPlacement(launchPoint);
+
+  if (!orbitAvailable) {
     return {
-      availability: 'missing-location',
+      availability: 'site-only',
       disclosure: TRAJECTORY_DISCLOSURE,
       modelKind,
       orbitAvailable,
       orbitLabel,
       siteLabel,
-      launchPoint: null,
-      siteLabelPoint: null,
-      siteLabelAnchor: 'middle',
+      launchPoint,
+      ...sitePlacement,
       transitionPoint: null,
       targetPoint: null,
       phases: [],
+      focusViewport: fitMapPoints([launchPoint], {
+        minHeight: 250,
+        minWidth: 500,
+        padding: 96,
+      }),
     };
   }
 
-  const projectedLaunchPoint = projectMapPoint(
-    launch.location.lng,
-    launch.location.lat
-  );
-  const launchPoint = geometryPoint(
-    projectedLaunchPoint.x,
-    projectedLaunchPoint.y
-  );
-  const requiredRun =
-    MODEL_GEOMETRY[modelKind].ascentRun +
-    (orbitAvailable ? MODEL_GEOMETRY[modelKind].orbitRun : 0);
-  const direction = horizontalDirection(launchPoint, requiredRun);
+  const vertical = verticalDirection(location.lat);
   const transitionPoint = buildTransitionPoint(
     launchPoint,
-    modelKind,
-    direction
+    location.lat,
+    modelKind
   );
-  const targetPoint = orbitAvailable
-    ? buildTargetPoint(
-        launchPoint,
-        transitionPoint,
-        modelKind,
-        direction
-      )
-    : null;
-  const verticalDirection = launchPoint.y <= MAP_HEIGHT / 2 ? -1 : 1;
-  const ascentControl = geometryPoint(
-    (launchPoint.x + transitionPoint.x) / 2,
-    (launchPoint.y + transitionPoint.y) / 2 +
-      verticalDirection * (modelKind === 'polar' ? 30 : 24)
+  const targetPoint = buildTargetPoint(
+    launchPoint,
+    transitionPoint,
+    location.lat,
+    modelKind
   );
-  const ascentLabelPoint = labelPoint(
-    transitionPoint.x + direction * 38,
-    transitionPoint.y - verticalDirection * 32
-  );
-  const phases: TrajectoryPhase[] = [
+  const ascentControl: MapPoint = {
+    x: (launchPoint.x + transitionPoint.x) / 2,
+    y: clamp(
+      (launchPoint.y + transitionPoint.y) / 2 + vertical * 34,
+      34,
+      MAP_HEIGHT - 34
+    ),
+  };
+  const ascentPhase: TrajectoryPhase = {
+    id: 'ascent-model',
+    label: 'Illustrative ascent',
+    shortLabel: 'Ascent model',
+    description:
+      'Illustrative ascent segment beginning at the reported launch site.',
+    path: quadraticPath(launchPoint, ascentControl, transitionPoint),
+    start: launchPoint,
+    end: transitionPoint,
+    labelPoint: phaseLabelPoint(launchPoint, transitionPoint, vertical),
+  };
+  const deltaX = targetPoint.x - transitionPoint.x;
+  const deltaY = targetPoint.y - transitionPoint.y;
+  const arcDirection = transitionPoint.y <= MAP_HEIGHT / 2 ? -1 : 1;
+  const orbitControlOne: MapPoint = {
+    x: transitionPoint.x + deltaX * 0.3,
+    y: clamp(
+      transitionPoint.y + deltaY * 0.08 + arcDirection * 54,
+      34,
+      MAP_HEIGHT - 34
+    ),
+  };
+  const orbitControlTwo: MapPoint = {
+    x: transitionPoint.x + deltaX * 0.72,
+    y: clamp(
+      targetPoint.y - deltaY * 0.15 + arcDirection * 34,
+      34,
+      MAP_HEIGHT - 34
+    ),
+  };
+  const orbitPhase: TrajectoryPhase = {
+    id: 'target-orbit-model',
+    label: 'Reported target orbit',
+    shortLabel: 'Target-orbit model',
+    description:
+      'Illustrative continuation toward the provider-reported target orbit.',
+    path: cubicPath(
+      transitionPoint,
+      orbitControlOne,
+      orbitControlTwo,
+      targetPoint
+    ),
+    start: transitionPoint,
+    end: targetPoint,
+    labelPoint: phaseLabelPoint(transitionPoint, targetPoint, arcDirection),
+  };
+  const phases = [ascentPhase, orbitPhase];
+  const focusViewport = fitMapPoints(
+    [
+      launchPoint,
+      transitionPoint,
+      targetPoint,
+      ascentControl,
+      orbitControlOne,
+      orbitControlTwo,
+    ],
     {
-      id: 'ascent-model',
-      label: 'Ascent model',
-      description:
-        'Illustrative ascent segment beginning at the reported launch site.',
-      path: quadraticPath(launchPoint, ascentControl, transitionPoint),
-      start: launchPoint,
-      end: transitionPoint,
-      labelPoint: ascentLabelPoint,
-    },
-  ];
-
-  if (targetPoint) {
-    const deltaX = targetPoint.x - transitionPoint.x;
-    const deltaY = targetPoint.y - transitionPoint.y;
-    const arcDirection = transitionPoint.y <= MAP_HEIGHT / 2 ? -1 : 1;
-    const orbitControlOne = geometryPoint(
-      transitionPoint.x + deltaX * 0.28,
-      transitionPoint.y + deltaY * 0.08 + arcDirection * 62
-    );
-    const orbitControlTwo = geometryPoint(
-      transitionPoint.x + deltaX * 0.72,
-      targetPoint.y - deltaY * 0.16 + arcDirection * 44
-    );
-    const orbitLabelPoint = labelPoint(
-      targetPoint.x - direction * 54,
-      targetPoint.y + arcDirection * 46
-    );
-
-    phases.push({
-      id: 'target-orbit-model',
-      label: 'Target-orbit model',
-      description:
-        'Illustrative continuation toward the provider-reported target orbit.',
-      path: cubicPath(
-        transitionPoint,
-        orbitControlOne,
-        orbitControlTwo,
-        targetPoint
-      ),
-      start: transitionPoint,
-      end: targetPoint,
-      labelPoint: orbitLabelPoint,
-    });
-  }
+      minHeight: 245,
+      minWidth: 500,
+      padding: 82,
+    }
+  );
 
   return {
     availability: 'ready',
@@ -390,9 +449,10 @@ export function buildIllustrativeTrajectory(
     orbitLabel,
     siteLabel,
     launchPoint,
-    ...buildSiteLabelPlacement(launchPoint, siteLabel),
+    ...sitePlacement,
     transitionPoint,
     targetPoint,
     phases,
+    focusViewport,
   };
 }

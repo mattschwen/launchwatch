@@ -58,6 +58,7 @@ export default function Countdown({
       aria-label={`${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds until launch`}
     >
       <span
+        suppressHydrationWarning
         className={`block font-medium leading-none tracking-[-0.055em] tabular-nums text-[var(--console-green)] ${
           featured
             ? 'text-[clamp(1.85rem,3.6vw,3.25rem)]'

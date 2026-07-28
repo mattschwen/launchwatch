@@ -20,7 +20,15 @@ export interface SpaceXLaunch {
       large?: string | null;
     };
   };
-  launchpad: string | { id: string; name: string; full_name?: string };
+  launchpad: string | {
+    id: string;
+    name: string;
+    full_name?: string | null;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    locality?: string | null;
+    region?: string | null;
+  };
   upcoming: boolean;
 }
 

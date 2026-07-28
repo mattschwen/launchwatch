@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAP_HEIGHT,
+  MAP_WIDTH,
+  projectMapPoint,
+  type MapPoint,
+  type MapViewport,
+} from '@/lib/map-geometry';
+import {
   buildIllustrativeTrajectory,
   classifyTargetOrbit,
   TRAJECTORY_DISCLOSURE,
-  TRAJECTORY_GEOMETRY_FRAME,
-  TRAJECTORY_LABEL_FRAME,
 } from '@/lib/trajectory';
 import type { Launch } from '@/lib/types';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
@@ -16,13 +21,38 @@ function makeLaunch(overrides: Partial<Launch> = {}): Launch {
   };
 }
 
+function pathPoints(path: string): MapPoint[] {
+  const coordinates = (path.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+
+  expect(coordinates.length % 2).toBe(0);
+
+  return Array.from(
+    { length: coordinates.length / 2 },
+    (_, index) => ({
+      x: coordinates[index * 2],
+      y: coordinates[index * 2 + 1],
+    })
+  );
+}
+
+function expectPointInsideViewport(
+  point: MapPoint,
+  viewport: MapViewport
+): void {
+  expect(point.x).toBeGreaterThanOrEqual(viewport.x);
+  expect(point.x).toBeLessThanOrEqual(viewport.x + viewport.width);
+  expect(point.y).toBeGreaterThanOrEqual(viewport.y);
+  expect(point.y).toBeLessThanOrEqual(viewport.y + viewport.height);
+}
+
 describe('illustrative trajectory model', () => {
-  it('builds deterministic, explicitly disclosed phase geometry', () => {
+  it('builds a deterministic, explicitly disclosed ready-state model', () => {
     const launch = makeLaunch();
     const first = buildIllustrativeTrajectory(launch);
     const second = buildIllustrativeTrajectory(launch);
 
     expect(first).toEqual(second);
+    expect(first.availability).toBe('ready');
     expect(first.disclosure).toBe(TRAJECTORY_DISCLOSURE);
     expect(first.disclosure).toMatch(/not vehicle telemetry/i);
     expect(first.disclosure).toMatch(/not .*planned flight path/i);
@@ -32,6 +62,21 @@ describe('illustrative trajectory model', () => {
     ]);
     expect(first.phases[0].path).toMatch(/^M .* Q .*$/);
     expect(first.phases[1].path).toMatch(/^M .* C .*$/);
+  });
+
+  it('projects the reported launch coordinates exactly', () => {
+    const location = {
+      lat: 28.5619,
+      lng: -80.5774,
+      name: 'Cape Canaveral',
+      countryCode: 'US',
+    };
+    const model = buildIllustrativeTrajectory(makeLaunch({ location }));
+
+    expect(model.launchPoint).toEqual(
+      projectMapPoint(location.lng, location.lat)
+    );
+    expect(model.phases[0].start).toEqual(model.launchPoint);
   });
 
   it('makes a northern inclined ascent rise before a separate orbit continuation', () => {
@@ -70,38 +115,7 @@ describe('illustrative trajectory model', () => {
     expect(classifyTargetOrbit('TBD')).toBe('unknown');
   });
 
-  it('keeps generated geometry within a padded world-map frame', () => {
-    const model = buildIllustrativeTrajectory(
-      makeLaunch({
-        location: {
-          lat: 19.614,
-          lng: 110.951,
-          name: 'Wenchang Space Launch Site',
-          countryCode: 'CN',
-        },
-        orbit: 'Low Earth Orbit',
-      })
-    );
-    const coordinates = model.phases
-      .flatMap((phase) => phase.path.match(/-?\d+(?:\.\d+)?/g) || [])
-      .map(Number);
-
-    coordinates.forEach((coordinate, index) => {
-      const horizontal = index % 2 === 0;
-      expect(coordinate).toBeGreaterThanOrEqual(
-        horizontal
-          ? TRAJECTORY_GEOMETRY_FRAME.left
-          : TRAJECTORY_GEOMETRY_FRAME.top
-      );
-      expect(coordinate).toBeLessThanOrEqual(
-        horizontal
-          ? TRAJECTORY_GEOMETRY_FRAME.right
-          : TRAJECTORY_GEOMETRY_FRAME.bottom
-      );
-    });
-  });
-
-  it('keeps markers and every text anchor inside their padded frames', () => {
+  it('keeps complete route geometry inside its fitted focus viewport', () => {
     const launches = [
       makeLaunch(),
       makeLaunch({
@@ -135,68 +149,58 @@ describe('illustrative trajectory model', () => {
 
     launches.forEach((launch) => {
       const model = buildIllustrativeTrajectory(launch);
+      const routePoints = model.phases.flatMap((phase) =>
+        pathPoints(phase.path)
+      );
       const markers = [
         model.launchPoint,
         model.transitionPoint,
         model.targetPoint,
-      ].filter((item) => item !== null);
-      const labels = [
-        model.siteLabelPoint,
-        ...model.phases.map((phase) => phase.labelPoint),
-      ].filter((item) => item !== null);
+      ].filter((point): point is MapPoint => point !== null);
 
-      markers.forEach(({ x, y }) => {
-        expect(x).toBeGreaterThanOrEqual(TRAJECTORY_GEOMETRY_FRAME.left);
-        expect(x).toBeLessThanOrEqual(TRAJECTORY_GEOMETRY_FRAME.right);
-        expect(y).toBeGreaterThanOrEqual(TRAJECTORY_GEOMETRY_FRAME.top);
-        expect(y).toBeLessThanOrEqual(TRAJECTORY_GEOMETRY_FRAME.bottom);
-      });
-      labels.forEach(({ x, y }) => {
-        expect(x).toBeGreaterThanOrEqual(TRAJECTORY_LABEL_FRAME.left);
-        expect(x).toBeLessThanOrEqual(TRAJECTORY_LABEL_FRAME.right);
-        expect(y).toBeGreaterThanOrEqual(TRAJECTORY_LABEL_FRAME.top);
-        expect(y).toBeLessThanOrEqual(TRAJECTORY_LABEL_FRAME.bottom);
+      expect(model.availability).toBe('ready');
+      [...routePoints, ...markers].forEach((point) => {
+        expectPointInsideViewport(point, model.focusViewport);
+        expect(point.y).toBeGreaterThanOrEqual(0);
+        expect(point.y).toBeLessThanOrEqual(MAP_HEIGHT);
       });
     });
   });
 
-  it('keeps a long eastern-edge site label inside the map frame', () => {
+  it('preserves an eastern trajectory in an unwrapped world copy', () => {
     const model = buildIllustrativeTrajectory(
       makeLaunch({
-        launchSite:
-          'Easternmost Experimental Launch Facility Alpha, Pacific Ocean',
         location: {
-          lat: 12,
-          lng: 176,
-          name: 'Easternmost Experimental Launch Facility Alpha',
-          countryCode: 'KI',
+          lat: -39.2615,
+          lng: 177.8649,
+          name: 'Rocket Lab Launch Complex 1',
+          countryCode: 'NZ',
         },
+        orbit: 'Sun-synchronous orbit',
       })
     );
-    const renderedCharacterCount = Math.min(model.siteLabel.length, 24);
-    const estimatedHalfWidth = Math.max(
-      44,
-      renderedCharacterCount * 7.25
-    );
 
-    expect(model.siteLabelAnchor).toBe('middle');
-    expect(model.siteLabelPoint).not.toBeNull();
-    expect(model.siteLabelPoint!.x - estimatedHalfWidth).toBeGreaterThanOrEqual(
-      TRAJECTORY_LABEL_FRAME.left
+    expect(model.launchPoint).toEqual(
+      projectMapPoint(177.8649, -39.2615)
     );
-    expect(model.siteLabelPoint!.x + estimatedHalfWidth).toBeLessThanOrEqual(
-      TRAJECTORY_LABEL_FRAME.right
+    expect(model.launchPoint!.x).toBeLessThan(MAP_WIDTH);
+    expect(model.transitionPoint!.x).toBeGreaterThan(MAP_WIDTH);
+    expect(model.targetPoint!.x).toBeGreaterThan(
+      model.transitionPoint!.x
+    );
+    expect(model.focusViewport.x + model.focusViewport.width).toBeGreaterThan(
+      model.targetPoint!.x
     );
   });
 
-  it('prefers a meaningful reported site over placeholder location copy', () => {
+  it('prefers the reported pad over a broader location label', () => {
     const model = buildIllustrativeTrajectory(
       makeLaunch({
         launchSite: 'Space Launch Complex 40, Cape Canaveral',
         location: {
           lat: 28.5619,
           lng: -80.5774,
-          name: 'Unknown Site',
+          name: 'Cape Canaveral',
           countryCode: 'US',
         },
       })
@@ -205,29 +209,39 @@ describe('illustrative trajectory model', () => {
     expect(model.siteLabel).toBe('SLC-40');
   });
 
-  it('draws only the ascent model when the source has no target orbit', () => {
+  it('returns a site-only locator and does not infer a route without an orbit', () => {
     const model = buildIllustrativeTrajectory(makeLaunch({ orbit: null }));
 
-    expect(model.availability).toBe('ready');
+    expect(model.availability).toBe('site-only');
     expect(model.orbitAvailable).toBe(false);
     expect(model.orbitLabel).toBe('Target orbit not supplied');
+    expect(model.launchPoint).toEqual(
+      projectMapPoint(
+        UPCOMING_LAUNCHES[0].location!.lng,
+        UPCOMING_LAUNCHES[0].location!.lat
+      )
+    );
+    expect(model.transitionPoint).toBeNull();
     expect(model.targetPoint).toBeNull();
-    expect(model.phases.map((phase) => phase.id)).toEqual(['ascent-model']);
+    expect(model.phases).toEqual([]);
+    expectPointInsideViewport(model.launchPoint!, model.focusViewport);
   });
 
   it.each(['Unknown', 'Unknown orbit', 'TBD', 'N/A', '—'])(
-    'treats the placeholder orbit value %s as unavailable',
+    'treats placeholder orbit value %s as a site-only locator',
     (orbit) => {
       const model = buildIllustrativeTrajectory(makeLaunch({ orbit }));
 
+      expect(model.availability).toBe('site-only');
       expect(model.orbitAvailable).toBe(false);
       expect(model.orbitLabel).toBe('Target orbit not supplied');
+      expect(model.transitionPoint).toBeNull();
       expect(model.targetPoint).toBeNull();
-      expect(model.phases.map((phase) => phase.id)).toEqual(['ascent-model']);
+      expect(model.phases).toEqual([]);
     }
   );
 
-  it('does not invent geometry when launch coordinates are unavailable', () => {
+  it('returns orbit-only metadata without inventing an origin or route', () => {
     const model = buildIllustrativeTrajectory(
       makeLaunch({
         launchSite: 'Space Launch Complex 40, Cape Canaveral',
@@ -235,10 +249,36 @@ describe('illustrative trajectory model', () => {
       })
     );
 
-    expect(model.availability).toBe('missing-location');
+    expect(model.availability).toBe('orbit-only');
+    expect(model.orbitAvailable).toBe(true);
+    expect(model.orbitLabel).toBe('Low Earth Orbit');
     expect(model.siteLabel).toBe('SLC-40');
     expect(model.launchPoint).toBeNull();
     expect(model.siteLabelPoint).toBeNull();
+    expect(model.transitionPoint).toBeNull();
+    expect(model.targetPoint).toBeNull();
+    expect(model.phases).toEqual([]);
+    expect(model.focusViewport).toEqual({
+      x: 0,
+      y: 0,
+      width: MAP_WIDTH,
+      height: MAP_HEIGHT,
+      zoom: 1,
+    });
+  });
+
+  it('returns unavailable when neither coordinates nor an orbit are supplied', () => {
+    const model = buildIllustrativeTrajectory(
+      makeLaunch({
+        launchSite: 'Reported pad without coordinates',
+        location: null,
+        orbit: null,
+      })
+    );
+
+    expect(model.availability).toBe('unavailable');
+    expect(model.orbitAvailable).toBe(false);
+    expect(model.launchPoint).toBeNull();
     expect(model.transitionPoint).toBeNull();
     expect(model.targetPoint).toBeNull();
     expect(model.phases).toEqual([]);

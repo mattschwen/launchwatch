@@ -60,6 +60,10 @@ describe('SpaceX normalization', () => {
         id: '39a',
         name: 'LC-39A',
         full_name: 'Kennedy Space Center',
+        latitude: 28.6080585,
+        longitude: -80.6039558,
+        locality: 'Cape Canaveral',
+        region: 'Florida',
       },
       upcoming: false,
     };
@@ -74,7 +78,106 @@ describe('SpaceX normalization', () => {
       provider: 'SpaceX',
       rocket: 'Falcon 9',
       launchSite: 'LC-39A',
+      location: {
+        lat: 28.6080585,
+        lng: -80.6039558,
+        name: 'Cape Canaveral, Florida',
+      },
       livestream: launch.links.webcast,
     });
   });
+
+  it('accepts numeric coordinate strings and meaningful launchpad fallbacks', () => {
+    const launch: SpaceXLaunch = {
+      id: 'fallback-pad',
+      name: 'Fallback Pad Flight',
+      date_utc: '2026-08-01T12:00:00.000Z',
+      date_unix: 1785585600,
+      rocket: 'falcon-9',
+      success: null,
+      details: null,
+      links: {
+        webcast: null,
+        youtube_id: null,
+        article: null,
+        wikipedia: null,
+      },
+      launchpad: {
+        id: 'vafb-slc-4e',
+        name: 'Unknown Site',
+        full_name: 'Vandenberg Space Force Base Space Launch Complex 4E',
+        latitude: '34.632093',
+        longitude: '-120.610829',
+        locality: 'Vandenberg Space Force Base',
+        region: 'California',
+      },
+      upcoming: true,
+    };
+
+    expect(normalizeSpaceXLaunch(launch)).toMatchObject({
+      launchSite: 'Vandenberg Space Force Base Space Launch Complex 4E',
+      location: {
+        lat: 34.632093,
+        lng: -120.610829,
+        name: 'Vandenberg Space Force Base, California',
+      },
+    });
+  });
+
+  it.each([
+    {
+      label: 'an unpopulated launchpad',
+      launchpad: '39a',
+    },
+    {
+      label: 'a missing coordinate',
+      launchpad: {
+        id: '39a',
+        name: 'LC-39A',
+        latitude: 28.6080585,
+        longitude: null,
+      },
+    },
+    {
+      label: 'non-numeric coordinates',
+      launchpad: {
+        id: '39a',
+        name: 'LC-39A',
+        latitude: 'not-a-number',
+        longitude: -80.6039558,
+      },
+    },
+    {
+      label: 'out-of-range coordinates',
+      launchpad: {
+        id: '39a',
+        name: 'LC-39A',
+        latitude: 91,
+        longitude: -181,
+      },
+    },
+  ] satisfies Array<{ label: string; launchpad: SpaceXLaunch['launchpad'] }>)(
+    'keeps location null for $label',
+    ({ launchpad }) => {
+      const launch: SpaceXLaunch = {
+        id: 'no-location',
+        name: 'No Location Flight',
+        date_utc: '2026-08-01T12:00:00.000Z',
+        date_unix: 1785585600,
+        rocket: 'falcon-9',
+        success: null,
+        details: null,
+        links: {
+          webcast: null,
+          youtube_id: null,
+          article: null,
+          wikipedia: null,
+        },
+        launchpad,
+        upcoming: true,
+      };
+
+      expect(normalizeSpaceXLaunch(launch).location).toBeNull();
+    },
+  );
 });

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import MissionTrajectory from '@/components/MissionTrajectory';
 import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -149,6 +150,12 @@ export default function LaunchDetailClient({
             </dl>
           </div>
         </section>
+
+        <MissionTrajectory
+          launch={launch}
+          variant="detail"
+          className="mt-5"
+        />
 
         {launch.timeline?.length ? (
           <section

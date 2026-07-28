@@ -12,7 +12,7 @@ import {
   LaunchSource,
   RocketFact,
 } from './types';
-import { isMeaningfulLaunchValue } from './format';
+import { firstLaunchValue, isMeaningfulLaunchValue } from './format';
 
 // API Configuration
 const SPACEX_API = (
@@ -662,6 +662,22 @@ export function parseLaunchId(value: string | null | undefined): ParsedLaunchId 
   };
 }
 
+function spaceXCoordinate(
+  value: number | string | null | undefined,
+  minimum: number,
+  maximum: number,
+): number | null {
+  const parsed = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim()
+      ? Number(value.trim())
+      : Number.NaN;
+
+  return Number.isFinite(parsed) && parsed >= minimum && parsed <= maximum
+    ? parsed
+    : null;
+}
+
 export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
   const status: Launch['status'] = launch.upcoming
     ? 'upcoming'
@@ -680,9 +696,34 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
   const rocket = typeof launch.rocket === 'object'
     ? launch.rocket.name || 'Unknown Rocket'
     : launch.rocket || 'Unknown Rocket';
-  const launchSite = typeof launch.launchpad === 'object'
-    ? launch.launchpad.name || launch.launchpad.full_name || 'Unknown Site'
-    : launch.launchpad || 'Unknown Site';
+  const populatedLaunchpad = typeof launch.launchpad === 'object' && launch.launchpad
+    ? launch.launchpad
+    : null;
+  const launchSite = populatedLaunchpad
+    ? firstLaunchValue([
+        populatedLaunchpad.name,
+        populatedLaunchpad.full_name,
+        populatedLaunchpad.locality,
+        populatedLaunchpad.region,
+      ], 'Unknown Site')
+    : firstLaunchValue([
+        typeof launch.launchpad === 'string' ? launch.launchpad : null,
+      ], 'Unknown Site');
+  const latitude = spaceXCoordinate(populatedLaunchpad?.latitude, -90, 90);
+  const longitude = spaceXCoordinate(populatedLaunchpad?.longitude, -180, 180);
+  const locality = isMeaningfulLaunchValue(populatedLaunchpad?.locality)
+    ? populatedLaunchpad.locality.trim()
+    : null;
+  const region = isMeaningfulLaunchValue(populatedLaunchpad?.region)
+    ? populatedLaunchpad.region.trim()
+    : null;
+  const locationLabel = [
+    locality,
+    region && region !== locality ? region : null,
+  ].filter((value): value is string => Boolean(value)).join(', ') || firstLaunchValue([
+    populatedLaunchpad?.full_name,
+    populatedLaunchpad?.name,
+  ], launchSite);
   const webcast = launch.links.webcast || null;
   const image = launch.links.flickr?.original?.[0] || null;
 
@@ -712,7 +753,11 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     rocketImageUrl: null,
     launchImageUrl: image,
     padMapImage: null,
-    location: null,
+    location: latitude !== null && longitude !== null ? {
+      lat: latitude,
+      lng: longitude,
+      name: locationLabel,
+    } : null,
     provider: 'SpaceX',
     providerLogo: null,
     program: null,

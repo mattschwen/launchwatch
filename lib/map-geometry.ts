@@ -11,6 +11,14 @@ export interface MapViewport {
   zoom: number;
 }
 
+export interface FitMapPointsOptions {
+  aspectRatio?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  minWidth?: number;
+  padding?: number;
+}
+
 export interface MapFrame {
   left: number;
   right: number;
@@ -70,6 +78,56 @@ export function getMapViewport(
     width,
     height,
     zoom: safeZoom,
+  };
+}
+
+export function fitMapPoints(
+  points: MapPoint[],
+  {
+    aspectRatio = 2,
+    maxWidth = MAP_WIDTH,
+    minHeight = 230,
+    minWidth = 460,
+    padding = 72,
+  }: FitMapPointsOptions = {}
+): MapViewport {
+  if (!points.length) {
+    return {
+      x: 0,
+      y: 0,
+      width: MAP_WIDTH,
+      height: MAP_HEIGHT,
+      zoom: 1,
+    };
+  }
+
+  const minX = Math.min(...points.map((point) => point.x));
+  const maxX = Math.max(...points.map((point) => point.x));
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxY = Math.max(...points.map((point) => point.y));
+  let width = Math.max(minWidth, maxX - minX + padding * 2);
+  let height = Math.max(minHeight, maxY - minY + padding * 2);
+
+  if (width / height < aspectRatio) {
+    width = height * aspectRatio;
+  } else {
+    height = width / aspectRatio;
+  }
+
+  width = Math.min(width, maxWidth);
+  height = Math.min(height, MAP_HEIGHT);
+
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+  const x = centerX - width / 2;
+  const y = clamp(centerY - height / 2, 0, MAP_HEIGHT - height);
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    zoom: MAP_WIDTH / width,
   };
 }
 

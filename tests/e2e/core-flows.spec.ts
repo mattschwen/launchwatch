@@ -143,6 +143,85 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   ).toBeVisible();
 });
 
+test('upcoming and historical details place one trajectory before mission support', async ({
+  page,
+}) => {
+  const assertDetailTrajectory = async ({
+    path,
+    mission,
+    hasTimeline,
+  }: {
+    path: string;
+    mission: string;
+    hasTimeline: boolean;
+  }): Promise<void> => {
+    await page.goto(path);
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: mission })
+    ).toBeVisible();
+
+    const trajectory = page.getByRole('region', {
+      name: 'Mission trajectory',
+    });
+    await expect(trajectory).toHaveCount(1);
+    await expect(trajectory).toBeVisible();
+    await expect(
+      trajectory.locator('[data-trajectory-map]')
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole('region', { name: 'Mission intelligence' })
+    ).toBeVisible();
+    if (hasTimeline) {
+      await expect(
+        page.getByRole('region', { name: 'Launch timeline' })
+      ).toBeVisible();
+    }
+
+    const order = await page.evaluate(() => {
+      const mapSection = document.querySelector(
+        'section[aria-labelledby$="-mission-trajectory-title"]'
+      );
+      const timelineSection = document.querySelector(
+        'section[aria-labelledby="launch-timeline-title"]'
+      );
+      const intelSection = document.querySelector(
+        'section[aria-labelledby="mission-intelligence-title"]'
+      );
+      const appearsBefore = (
+        first: Element | null,
+        second: Element | null
+      ): boolean | null =>
+        first && second
+          ? Boolean(
+              first.compareDocumentPosition(second) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+            )
+          : null;
+
+      return {
+        mapBeforeTimeline: appearsBefore(mapSection, timelineSection),
+        mapBeforeIntel: appearsBefore(mapSection, intelSection),
+      };
+    });
+
+    expect(order.mapBeforeIntel).toBe(true);
+    expect(order.mapBeforeTimeline).toBe(hasTimeline ? true : null);
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  };
+
+  await assertDetailTrajectory({
+    path: '/launch/ll2-demo-orbital-dawn',
+    mission: 'Orbital Dawn',
+    hasTimeline: true,
+  });
+  await assertDetailTrajectory({
+    path: '/launch/spacex-demo-return',
+    mission: 'Demo Return Flight',
+    hasTimeline: false,
+  });
+});
+
 test('mission trajectory keeps modeled phases in frame and restores focus', async ({
   page,
 }) => {
@@ -192,7 +271,7 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
       ...svg.querySelectorAll<SVGGraphicsElement>(
         '[data-trajectory-phase], [data-trajectory-label], [data-trajectory-marker]'
       ),
-    ];
+    ].filter((overlay) => getComputedStyle(overlay).display !== 'none');
     const svgBounds = svg.getBoundingClientRect();
     const legend = svg.parentElement?.querySelector<HTMLElement>(
       '[aria-label="Trajectory model legend"]'

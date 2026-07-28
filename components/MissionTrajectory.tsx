@@ -9,19 +9,29 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { geoEquirectangular, geoPath } from 'd3-geo';
-import { feature, mesh } from 'topojson-client';
-import type {
-  GeometryCollection as TopologyGeometryCollection,
-  Topology,
-} from 'topojson-specification';
-import landTopology from 'world-atlas/land-110m.json';
-import { Info, MapPin, Maximize2, Route, X } from 'lucide-react';
 import {
-  firstLaunchValue,
-  isMeaningfulLaunchValue,
-} from '@/lib/format';
-import { MAP_HEIGHT, MAP_WIDTH } from '@/lib/map-geometry';
+  Focus,
+  Globe2,
+  Info,
+  Maximize2,
+  Minus,
+  Plus,
+  RotateCcw,
+  X,
+} from 'lucide-react';
+import MissionMapCanvas, {
+  type MissionMapSelection,
+} from '@/components/mission-map/MissionMapCanvas';
+import MissionPhaseRail, {
+  formatLaunchCoordinates,
+} from '@/components/mission-map/MissionPhaseRail';
+import { isMeaningfulLaunchValue } from '@/lib/format';
+import {
+  clamp,
+  MAP_HEIGHT,
+  MAP_WIDTH,
+  type MapViewport,
+} from '@/lib/map-geometry';
 import {
   buildIllustrativeTrajectory,
   TRAJECTORY_DISCLOSURE,
@@ -30,41 +40,40 @@ import {
 import type { Launch } from '@/lib/types';
 
 interface MissionTrajectoryProps {
-  launch: Launch | null;
   className?: string;
-}
-
-interface TrajectoryMapGraphicProps {
   launch: Launch | null;
-  trajectory: IllustrativeTrajectory | null;
-  expanded?: boolean;
+  variant?: 'compact' | 'detail';
 }
 
-const topology = landTopology as unknown as Topology;
-const landObject = topology.objects.land as TopologyGeometryCollection;
-const landFeatures = feature(topology, landObject);
-const projection = geoEquirectangular().fitSize(
-  [MAP_WIDTH, MAP_HEIGHT],
-  { type: 'Sphere' }
-);
-const path = geoPath(projection).digits(1);
-const LAND_PATH = path(landFeatures) || '';
-const COAST_PATH = path(mesh(topology, landObject)) || '';
+type MapViewMode = 'focus' | 'world';
 
-const statusLabels: Record<Launch['status'], string> = {
-  live: 'Live',
-  upcoming: 'Upcoming',
-  success: 'Successful',
-  failure: 'Unsuccessful',
-  tbd: 'To be determined',
+const WORLD_VIEWPORT: MapViewport = {
+  x: 0,
+  y: 0,
+  width: MAP_WIDTH,
+  height: MAP_HEIGHT,
+  zoom: 1,
 };
 
-function compactLabel(value: string, length = 24): string {
-  return value.length > length ? `${value.slice(0, length - 1)}…` : value;
-}
+function zoomViewport(
+  viewport: MapViewport,
+  zoomLevel: number
+): MapViewport {
+  if (!zoomLevel) return viewport;
 
-function sourceLabel(source: Launch['source']): string {
-  return source === 'll2' ? 'Launch Library 2' : 'SpaceX';
+  const scale = Math.max(0.58, 1 - zoomLevel * 0.16);
+  const width = viewport.width * scale;
+  const height = viewport.height * scale;
+  const centerX = viewport.x + viewport.width / 2;
+  const centerY = viewport.y + viewport.height / 2;
+
+  return {
+    x: centerX - width / 2,
+    y: clamp(centerY - height / 2, 0, MAP_HEIGHT - height),
+    width,
+    height,
+    zoom: MAP_WIDTH / width,
+  };
 }
 
 function statusTone(status: Launch['status']): string {
@@ -75,356 +84,57 @@ function statusTone(status: Launch['status']): string {
   return 'text-[var(--console-green)]';
 }
 
-function TrajectoryMapGraphic({
+function CompactFacts({
   launch,
   trajectory,
-  expanded = false,
-}: TrajectoryMapGraphicProps): React.ReactElement {
-  const rawId = useId();
-  const id = rawId.replaceAll(':', '');
-  const titleId = `${id}-title`;
-  const descriptionId = `${id}-description`;
-  const glowId = `${id}-glow`;
-  const gridId = `${id}-grid`;
-  const launchPoint = trajectory?.launchPoint;
-  const siteLabelPoint = trajectory?.siteLabelPoint;
-  const transitionPoint = trajectory?.transitionPoint;
-  const targetPoint = trajectory?.targetPoint;
-  const phaseKickerSize = expanded ? 11 : 16;
-  const phaseTextSize = expanded ? 16 : 25;
-  const siteTextSize = expanded ? 16 : 25;
-  const ascentDrawn = Boolean(
-    trajectory?.phases.some((phase) => phase.id === 'ascent-model')
-  );
-  const orbitDrawn = Boolean(
-    trajectory?.phases.some((phase) => phase.id === 'target-orbit-model')
-  );
-  const showLegend =
-    trajectory?.availability === 'ready' &&
-    Boolean(launchPoint) &&
-    (ascentDrawn || orbitDrawn);
-
-  return (
-    <div
-      className={`relative min-h-0 overflow-hidden bg-[#070b12] ${
-        expanded
-          ? 'h-full rounded-md border border-[var(--border-subtle)]'
-          : 'aspect-[2/1] lg:aspect-auto lg:flex-1'
-      }`}
-    >
-      <svg
-        viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-        preserveAspectRatio="xMidYMid meet"
-        className="h-full w-full"
-        role="img"
-        aria-labelledby={`${titleId} ${descriptionId}`}
-        data-trajectory-map
-      >
-        <title id={titleId}>
-          {launch
-            ? `Illustrative trajectory model for ${launch.name}`
-            : 'Mission trajectory model unavailable'}
-        </title>
-        <desc id={descriptionId}>
-          {trajectory
-            ? trajectory.disclosure
-            : 'Choose a mission to view an illustrative trajectory model.'}
-        </desc>
-        <defs>
-          <pattern
-            id={gridId}
-            width="50"
-            height="50"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M 50 0 L 0 0 0 50"
-              fill="none"
-              stroke="rgba(94,230,168,0.075)"
-              strokeWidth="0.8"
-            />
-          </pattern>
-          <filter id={glowId} x="-150%" y="-150%" width="400%" height="400%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <radialGradient id={`${id}-ambient`} cx="48%" cy="48%" r="62%">
-            <stop offset="0%" stopColor="#58c8e8" stopOpacity="0.11" />
-            <stop offset="100%" stopColor="#070b12" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="#070b12" />
-        <rect
-          width={MAP_WIDTH}
-          height={MAP_HEIGHT}
-          fill={`url(#${id}-ambient)`}
-        />
-        <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill={`url(#${gridId})`} />
-
-        <path d={LAND_PATH} fill="#17212d" fillRule="evenodd" />
-        <path
-          d={COAST_PATH}
-          fill="none"
-          stroke="rgba(151,174,197,0.3)"
-          strokeWidth="1"
-          vectorEffect="non-scaling-stroke"
-        />
-
-        {trajectory?.phases.map((phase) => {
-          const ascent = phase.id === 'ascent-model';
-          return (
-            <g key={phase.id}>
-              <path
-                d={phase.path}
-                data-trajectory-phase={phase.id}
-                fill="none"
-                stroke={ascent ? '#5ee6a8' : '#58c8e8'}
-                strokeWidth={ascent ? 3.5 : 3}
-                strokeDasharray={ascent ? undefined : '10 10'}
-                strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
-                filter={`url(#${glowId})`}
-              >
-                <title>{phase.description}</title>
-              </path>
-              <text
-                x={phase.labelPoint.x}
-                y={phase.labelPoint.y}
-                fill={ascent ? '#72edb7' : '#70d4ef'}
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-                textAnchor="middle"
-                paintOrder="stroke"
-                stroke="#070b12"
-                strokeWidth="6"
-                strokeLinejoin="round"
-                data-trajectory-label={phase.id}
-              >
-                <tspan
-                  x={phase.labelPoint.x}
-                  fontSize={phaseKickerSize}
-                  letterSpacing="1.8"
-                >
-                  {ascent ? 'PHASE 01' : 'PHASE 02'}
-                </tspan>
-                <tspan
-                  x={phase.labelPoint.x}
-                  dy={expanded ? 17 : 24}
-                  fontSize={phaseTextSize}
-                  letterSpacing="1.1"
-                >
-                  {ascent ? 'ASCENT MODEL' : 'TARGET-ORBIT MODEL'}
-                </tspan>
-              </text>
-            </g>
-          );
-        })}
-
-        {launchPoint && siteLabelPoint && trajectory ? (
-          <g data-trajectory-marker="reported-launch-site">
-            <circle
-              cx={launchPoint.x}
-              cy={launchPoint.y}
-              r="22"
-              fill="rgba(94,230,168,0.08)"
-              stroke="rgba(94,230,168,0.4)"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx={launchPoint.x}
-              cy={launchPoint.y}
-              r="10"
-              fill="#5ee6a8"
-              stroke="#e9fff4"
-              strokeWidth="2"
-              filter={`url(#${glowId})`}
-            />
-            <line
-              x1={launchPoint.x}
-              y1={launchPoint.y}
-              x2={siteLabelPoint.x}
-              y2={siteLabelPoint.y - (siteLabelPoint.y > launchPoint.y ? 9 : -9)}
-              stroke="rgba(94,230,168,0.62)"
-              strokeWidth="1.25"
-            />
-            <text
-              x={siteLabelPoint.x}
-              y={siteLabelPoint.y}
-              fill="#f3f6fa"
-              fontFamily="var(--font-sans)"
-              fontSize={siteTextSize}
-              fontWeight="700"
-              textAnchor={trajectory.siteLabelAnchor}
-              paintOrder="stroke"
-              stroke="#070b12"
-              strokeWidth="6"
-              strokeLinejoin="round"
-              data-trajectory-label="reported-launch-site"
-            >
-              {compactLabel(trajectory.siteLabel, expanded ? 32 : 24)}
-            </text>
-          </g>
-        ) : null}
-
-        {transitionPoint ? (
-          <g data-trajectory-marker="model-transition">
-            <circle
-              cx={transitionPoint.x}
-              cy={transitionPoint.y}
-              r="6"
-              fill="#dce6ef"
-              stroke="#070b12"
-              strokeWidth="2"
-            />
-            <circle
-              cx={transitionPoint.x}
-              cy={transitionPoint.y}
-              r="11"
-              fill="none"
-              stroke="rgba(220,230,239,0.45)"
-              strokeWidth="1"
-            />
-          </g>
-        ) : null}
-
-        {targetPoint ? (
-          <g data-trajectory-marker="target-orbit">
-            <circle
-              cx={targetPoint.x}
-              cy={targetPoint.y}
-              r="10"
-              fill="#070b12"
-              stroke="#58c8e8"
-              strokeWidth="3"
-              filter={`url(#${glowId})`}
-            />
-            <circle
-              cx={targetPoint.x}
-              cy={targetPoint.y}
-              r="4"
-              fill="#58c8e8"
-            />
-          </g>
-        ) : null}
-      </svg>
-
-      {!launch ? (
-        <div className="absolute inset-0 grid place-items-center p-6 text-center">
-          <div className="max-w-xs rounded-md border border-[var(--border-strong)] bg-[rgba(8,12,18,0.92)] p-4">
-            <Route
-              aria-hidden="true"
-              className="mx-auto mb-2 h-5 w-5 text-[var(--text-muted)]"
-            />
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              Awaiting mission selection
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
-              Choose a launch to generate an illustrative model.
-            </p>
-          </div>
-        </div>
-      ) : trajectory?.availability === 'missing-location' ? (
-        <div className="absolute inset-0 grid place-items-center p-6 text-center">
-          <div className="max-w-sm rounded-md border border-[var(--border-strong)] bg-[rgba(8,12,18,0.94)] p-4">
-            <MapPin
-              aria-hidden="true"
-              className="mx-auto mb-2 h-5 w-5 text-[var(--console-amber)]"
-            />
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              Launch coordinates unavailable
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
-              A trajectory model cannot be drawn until the source reports a
-              geographic launch location.
-            </p>
-          </div>
-        </div>
-      ) : !trajectory?.orbitAvailable ? (
-        <div className="absolute right-3 top-3 rounded border border-[rgba(244,185,95,0.3)] bg-[rgba(8,12,18,0.9)] px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--console-amber)]">
-          Target orbit unavailable
-        </div>
-      ) : null}
-
-      {showLegend ? (
-        <ul
-          aria-label="Trajectory model legend"
-          className="absolute bottom-3 right-3 grid gap-1.5 rounded-md border border-[var(--border-strong)] bg-[rgba(8,12,18,0.92)] px-3 py-2 text-[10px] font-medium text-[var(--text-secondary)] shadow-lg backdrop-blur-sm sm:text-[11px]"
-        >
-          {ascentDrawn ? (
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="h-0.5 w-7 rounded-full bg-[var(--console-green)]"
-              />
-              Ascent model
-            </li>
-          ) : null}
-          {orbitDrawn ? (
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="w-7 border-t-2 border-dashed border-[var(--console-cyan)]"
-              />
-              Target-orbit model
-            </li>
-          ) : null}
-          {launchPoint ? (
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="ml-2 h-2.5 w-2.5 rounded-full border-2 border-[var(--console-green)]"
-              />
-              Reported launch site
-            </li>
-          ) : null}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
-
-function MissionFacts({ launch }: { launch: Launch | null }): React.ReactElement {
-  const targetOrbit =
-    launch && isMeaningfulLaunchValue(launch.orbit)
-      ? launch.orbit.trim()
-      : 'Not supplied';
-  const facts = launch
+}: {
+  launch: Launch | null;
+  trajectory: IllustrativeTrajectory | null;
+}): React.ReactElement {
+  const facts = launch && trajectory
     ? [
         {
           label: 'Status',
-          value: launch.statusName?.trim() || statusLabels[launch.status],
+          value: isMeaningfulLaunchValue(launch.statusName)
+            ? launch.statusName.trim()
+            : launch.status === 'success'
+              ? 'Successful'
+              : launch.status === 'failure'
+                ? 'Unsuccessful'
+                : launch.status === 'live'
+                  ? 'Live'
+                  : launch.status === 'tbd'
+                    ? 'To be determined'
+                    : 'Upcoming',
           className: statusTone(launch.status),
         },
         {
           label: 'Target orbit',
-          value: targetOrbit,
-          className: targetOrbit !== 'Not supplied'
+          value: trajectory.orbitAvailable
+            ? trajectory.orbitLabel
+            : 'Not supplied',
+          className: trajectory.orbitAvailable
             ? 'text-[var(--text-primary)]'
             : 'text-[var(--console-amber)]',
         },
         {
           label: 'Reported site',
-          value: firstLaunchValue(
-            [launch.location?.name, launch.launchSite],
-            'Not supplied'
-          ),
+          value: trajectory.siteLabel,
           className: 'text-[var(--text-primary)]',
         },
         {
-          label: 'Data source',
-          value: sourceLabel(launch.source),
-          className: 'text-[var(--text-primary)]',
+          label: 'Coordinates',
+          value: formatLaunchCoordinates(launch),
+          className: launch.location
+            ? 'text-[var(--text-primary)]'
+            : 'text-[var(--console-amber)]',
         },
       ]
     : [
         { label: 'Status', value: 'No mission', className: '' },
         { label: 'Target orbit', value: '—', className: '' },
         { label: 'Reported site', value: '—', className: '' },
-        { label: 'Data source', value: '—', className: '' },
+        { label: 'Coordinates', value: '—', className: '' },
       ];
 
   return (
@@ -452,9 +162,118 @@ function MissionFacts({ launch }: { launch: Launch | null }): React.ReactElement
   );
 }
 
-export default function MissionTrajectory({
+interface MapToolbarProps {
+  canFocus: boolean;
+  disabled: boolean;
+  expandButtonRef?: React.RefObject<HTMLButtonElement | null>;
+  onEnlarge: () => void;
+  onReset: () => void;
+  onViewMode: (mode: MapViewMode) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  viewMode: MapViewMode;
+  zoomLevel: number;
+  showEnlarge?: boolean;
+}
+
+function MapToolbar({
+  canFocus,
+  disabled,
+  expandButtonRef,
+  onEnlarge,
+  onReset,
+  onViewMode,
+  onZoomIn,
+  onZoomOut,
+  viewMode,
+  zoomLevel,
+  showEnlarge = true,
+}: MapToolbarProps): React.ReactElement {
+  return (
+    <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
+      <div
+        role="group"
+        aria-label="Map view"
+        className="flex w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface-base)] p-0.5 sm:w-auto"
+      >
+        <button
+          type="button"
+          aria-pressed={viewMode === 'focus'}
+          disabled={!canFocus}
+          onClick={() => onViewMode('focus')}
+          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
+            viewMode === 'focus'
+              ? 'bg-[rgba(94,230,168,0.1)] text-[var(--console-green)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Focus aria-hidden="true" size={14} />
+          <span className="hidden sm:inline">Mission focus</span>
+          <span className="sm:hidden">Focus</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={viewMode === 'world'}
+          onClick={() => onViewMode('world')}
+          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
+            viewMode === 'world'
+              ? 'bg-[rgba(88,200,232,0.1)] text-[var(--console-cyan)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Globe2 aria-hidden="true" size={14} />
+          Global
+        </button>
+      </div>
+
+      <button
+        type="button"
+        className="icon-button h-11 w-11"
+        onClick={onZoomOut}
+        disabled={disabled || zoomLevel === 0}
+        aria-label="Zoom map out"
+      >
+        <Minus aria-hidden="true" size={16} />
+      </button>
+      <button
+        type="button"
+        className="icon-button h-11 w-11"
+        onClick={onZoomIn}
+        disabled={disabled || zoomLevel === 2}
+        aria-label="Zoom map in"
+      >
+        <Plus aria-hidden="true" size={16} />
+      </button>
+      <button
+        type="button"
+        className="icon-button h-11 w-11"
+        onClick={onReset}
+        disabled={disabled}
+        aria-label="Reset map view"
+      >
+        <RotateCcw aria-hidden="true" size={16} />
+      </button>
+      {showEnlarge ? (
+        <button
+          ref={expandButtonRef}
+          type="button"
+          className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs"
+          onClick={onEnlarge}
+          disabled={disabled}
+          aria-label="Enlarge illustrative trajectory map"
+        >
+          <span className="hidden sm:inline">Enlarge map</span>
+          <Maximize2 aria-hidden="true" className="h-4 w-4" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function MissionTrajectoryController({
   launch,
   className = '',
+  variant = 'compact',
 }: MissionTrajectoryProps): React.ReactElement {
   const rawInstanceId = useId();
   const instanceId = rawInstanceId.replaceAll(':', '');
@@ -462,6 +281,10 @@ export default function MissionTrajectory({
   const dialogTitleId = `${instanceId}-enlarged-trajectory-title`;
   const dialogDescriptionId = `${instanceId}-enlarged-trajectory-description`;
   const [expanded, setExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<MapViewMode>('focus');
+  const [zoomLevel, setZoomLevel] = useState(0);
+  const [activeSelection, setActiveSelection] =
+    useState<MissionMapSelection>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -470,6 +293,41 @@ export default function MissionTrajectory({
     () => (launch ? buildIllustrativeTrajectory(launch) : null),
     [launch]
   );
+  const canFocus = Boolean(
+    trajectory?.launchPoint || trajectory?.phases.length
+  );
+  const effectiveViewMode =
+    viewMode === 'focus' && !canFocus ? 'world' : viewMode;
+  const activeSelectionAvailable =
+    activeSelection === 'reported-site'
+      ? Boolean(trajectory?.launchPoint)
+      : activeSelection
+        ? Boolean(
+            trajectory?.phases.some((phase) => phase.id === activeSelection)
+          )
+        : true;
+  const effectiveSelection = activeSelectionAvailable
+    ? activeSelection
+    : null;
+  const baseViewport =
+    effectiveViewMode === 'focus' && trajectory
+      ? trajectory.focusViewport
+      : WORLD_VIEWPORT;
+  const viewport = useMemo(
+    () => zoomViewport(baseViewport, zoomLevel),
+    [baseViewport, zoomLevel]
+  );
+
+  const resetMap = useCallback((): void => {
+    setViewMode(canFocus ? 'focus' : 'world');
+    setZoomLevel(0);
+    setActiveSelection(null);
+  }, [canFocus]);
+
+  const changeViewMode = useCallback((mode: MapViewMode): void => {
+    setViewMode(mode);
+    setZoomLevel(0);
+  }, []);
 
   const closeExpanded = useCallback((): void => {
     setExpanded(false);
@@ -489,6 +347,24 @@ export default function MissionTrajectory({
     const previousOverflow = document.body.style.overflow;
     const expandButton = expandButtonRef.current;
     const previousFocus = previousFocusRef.current;
+    const backgroundElements = [
+      ...document.body.querySelectorAll<HTMLElement>(
+        ':scope > :not([data-mission-map-dialog])'
+      ),
+    ].filter(
+      (element) =>
+        !['LINK', 'SCRIPT', 'STYLE'].includes(element.tagName)
+    );
+    const backgroundState = backgroundElements.map((element) => ({
+      element,
+      ariaHidden: element.getAttribute('aria-hidden'),
+      inert: element.inert,
+    }));
+
+    backgroundElements.forEach((element) => {
+      element.inert = true;
+      element.setAttribute('aria-hidden', 'true');
+    });
     document.body.style.overflow = 'hidden';
     const frame = window.requestAnimationFrame(() => {
       closeButtonRef.current?.focus();
@@ -525,6 +401,14 @@ export default function MissionTrajectory({
       window.cancelAnimationFrame(frame);
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
+      backgroundState.forEach(({ element, ariaHidden, inert }) => {
+        element.inert = inert;
+        if (ariaHidden === null) {
+          element.removeAttribute('aria-hidden');
+        } else {
+          element.setAttribute('aria-hidden', ariaHidden);
+        }
+      });
       window.requestAnimationFrame(() => {
         (expandButton ?? previousFocus)?.focus();
         previousFocusRef.current = null;
@@ -532,11 +416,27 @@ export default function MissionTrajectory({
     };
   }, [closeExpanded, expanded]);
 
+  const toolbar = (
+    <MapToolbar
+      canFocus={canFocus}
+      disabled={!launch}
+      expandButtonRef={expandButtonRef}
+      onEnlarge={openExpanded}
+      onReset={resetMap}
+      onViewMode={changeViewMode}
+      onZoomIn={() => setZoomLevel((level) => Math.min(2, level + 1))}
+      onZoomOut={() => setZoomLevel((level) => Math.max(0, level - 1))}
+      viewMode={effectiveViewMode}
+      zoomLevel={zoomLevel}
+    />
+  );
+
   const dialog =
     expanded && typeof document !== 'undefined'
       ? createPortal(
           <div
-            className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+            data-mission-map-dialog
+            className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:p-5"
             onMouseDown={(event) => {
               if (event.currentTarget === event.target) closeExpanded();
             }}
@@ -547,11 +447,11 @@ export default function MissionTrajectory({
               aria-modal="true"
               aria-labelledby={dialogTitleId}
               aria-describedby={dialogDescriptionId}
-              className="flex h-[min(90svh,54rem)] min-h-[18rem] w-full max-w-7xl flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
+              className="flex h-[min(92svh,58rem)] min-h-[20rem] w-full max-w-[90rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
             >
-              <header className="flex items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
+              <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
                 <div className="min-w-0">
-                  <p className="console-label">Enlarged model</p>
+                  <p className="console-label">Enlarged mission map</p>
                   <h2
                     id={dialogTitleId}
                     className="mt-1 truncate text-lg font-bold text-[var(--text-primary)] sm:text-xl"
@@ -562,7 +462,7 @@ export default function MissionTrajectory({
                     id={dialogDescriptionId}
                     className="mt-1 text-xs text-[var(--text-muted)]"
                   >
-                    Inspect the illustrative phase geometry at a larger scale.
+                    Geographic context and provider-reported mission profile.
                   </p>
                 </div>
                 <button
@@ -576,29 +476,57 @@ export default function MissionTrajectory({
                 </button>
               </header>
 
-              <div
-                className="min-h-40 flex-1 p-3 sm:p-5"
-                data-enlarged-map-region
-              >
-                <TrajectoryMapGraphic
-                  launch={launch}
-                  trajectory={trajectory}
-                  expanded
+              <div className="shrink-0 border-b border-[var(--border-subtle)] px-3 py-2 sm:px-5">
+                <MapToolbar
+                  canFocus={canFocus}
+                  disabled={!launch}
+                  onEnlarge={openExpanded}
+                  onReset={resetMap}
+                  onViewMode={changeViewMode}
+                  onZoomIn={() =>
+                    setZoomLevel((level) => Math.min(2, level + 1))
+                  }
+                  onZoomOut={() =>
+                    setZoomLevel((level) => Math.max(0, level - 1))
+                  }
+                  showEnlarge={false}
+                  viewMode={effectiveViewMode}
+                  zoomLevel={zoomLevel}
                 />
               </div>
               <div
-                className="max-h-[min(34svh,15rem)] shrink-0 overflow-y-auto border-t border-[var(--border-subtle)]"
-                data-enlarged-map-support
+                className="aspect-[2/1] min-h-0 shrink-0 p-3 sm:aspect-auto sm:flex-1 sm:shrink sm:p-4"
+                data-enlarged-map-region
               >
-                <p className="flex items-start gap-2 px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
-                  <Info
-                    aria-hidden="true"
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
-                  />
-                  {TRAJECTORY_DISCLOSURE}
-                </p>
-                <MissionFacts launch={launch} />
+                <MissionMapCanvas
+                  activeSelection={effectiveSelection}
+                  expanded
+                  launch={launch}
+                  trajectory={trajectory}
+                  variant="detail"
+                  viewport={viewport}
+                />
               </div>
+              {launch && trajectory ? (
+                <div
+                  className="min-h-0 flex-1 overflow-y-auto border-t border-[var(--border-subtle)] sm:max-h-[min(30svh,14rem)] sm:flex-none"
+                  data-enlarged-map-support
+                >
+                  <MissionPhaseRail
+                    activeSelection={effectiveSelection}
+                    launch={launch}
+                    onSelect={setActiveSelection}
+                    trajectory={trajectory}
+                  />
+                  <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
+                    <Info
+                      aria-hidden="true"
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
+                    />
+                    {TRAJECTORY_DISCLOSURE}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>,
           document.body
@@ -609,9 +537,20 @@ export default function MissionTrajectory({
     <>
       <section
         aria-labelledby={sectionTitleId}
-        className={`surface-card flex min-h-0 flex-col overflow-hidden lg:h-full lg:min-h-[27.5rem] ${className}`}
+        className={`surface-card flex min-h-0 flex-col overflow-hidden ${
+          variant === 'detail'
+            ? 'min-h-[32rem]'
+            : 'lg:h-full lg:min-h-[27.5rem]'
+        } ${className}`}
+        data-mission-map-variant={variant}
       >
-        <header className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
+        <header
+          className={`flex gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 ${
+            variant === 'detail'
+              ? 'flex-col sm:flex-row sm:items-center sm:justify-between'
+              : 'items-center justify-between'
+          }`}
+        >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2
@@ -628,20 +567,40 @@ export default function MissionTrajectory({
               {launch?.name || 'No mission selected'}
             </p>
           </div>
-          <button
-            ref={expandButtonRef}
-            type="button"
-            className="action-button action-button-quiet shrink-0 px-2.5 text-xs"
-            onClick={openExpanded}
-            disabled={!launch}
-            aria-label="Enlarge illustrative trajectory map"
-          >
-            <span className="hidden sm:inline">Enlarge map</span>
-            <Maximize2 aria-hidden="true" className="h-4 w-4" />
-          </button>
+
+          {variant === 'detail' ? (
+            toolbar
+          ) : (
+            <button
+              ref={expandButtonRef}
+              type="button"
+              className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs"
+              onClick={openExpanded}
+              disabled={!launch}
+              aria-label="Enlarge illustrative trajectory map"
+            >
+              <span className="hidden sm:inline">Enlarge map</span>
+              <Maximize2 aria-hidden="true" className="h-4 w-4" />
+            </button>
+          )}
         </header>
 
-        <TrajectoryMapGraphic launch={launch} trajectory={trajectory} />
+        <MissionMapCanvas
+          activeSelection={effectiveSelection}
+          launch={launch}
+          trajectory={trajectory}
+          variant={variant}
+          viewport={viewport}
+        />
+
+        {variant === 'detail' && launch && trajectory ? (
+          <MissionPhaseRail
+            activeSelection={effectiveSelection}
+            launch={launch}
+            onSelect={setActiveSelection}
+            trajectory={trajectory}
+          />
+        ) : null}
 
         <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]">
           <Info
@@ -650,9 +609,22 @@ export default function MissionTrajectory({
           />
           {TRAJECTORY_DISCLOSURE}
         </p>
-        <MissionFacts launch={launch} />
+        {variant === 'compact' ? (
+          <CompactFacts launch={launch} trajectory={trajectory} />
+        ) : null}
       </section>
       {dialog}
     </>
+  );
+}
+
+export default function MissionTrajectory(
+  props: MissionTrajectoryProps
+): React.ReactElement {
+  return (
+    <MissionTrajectoryController
+      key={props.launch?.id || 'no-mission'}
+      {...props}
+    />
   );
 }
