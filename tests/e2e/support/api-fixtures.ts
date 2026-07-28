@@ -69,9 +69,26 @@ export async function installApiFixtures(page: Page): Promise<void> {
       return;
     }
 
+    const detailedLaunch =
+      launch.id === 'll2-demo-orbital-dawn'
+        ? {
+            ...launch,
+            livestream: 'https://x.com/i/broadcasts/demo-orbital-dawn',
+            livestreams: [
+              {
+                url: 'https://x.com/i/broadcasts/demo-orbital-dawn',
+                title: 'Orbital Dawn official webcast',
+                source: 'x.com',
+                type: 'Official Webcast',
+                isLive: false,
+              },
+            ],
+          }
+        : launch;
+
     await json(route, {
-      launch,
-      canonicalId: launch.id,
+      launch: detailedLaunch,
+      canonicalId: detailedLaunch.id,
       meta: FEED_META,
     });
   });

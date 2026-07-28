@@ -26,7 +26,13 @@ import {
 import { getFallbackLaunchSummary } from '@/lib/launch-action';
 import type { Launch } from '@/lib/types';
 
-function WatchStage({ launch }: { launch: Launch }): React.ReactElement {
+function WatchStage({
+  launch,
+  streamLookupError,
+}: {
+  launch: Launch;
+  streamLookupError?: string | null;
+}): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
 
   if (launch.livestream) {
@@ -55,17 +61,28 @@ function WatchStage({ launch }: { launch: Launch }): React.ReactElement {
         className="absolute bottom-[-0.6rem] right-[7%] text-[var(--border-strong)]"
       />
       <div className="relative max-w-xl">
-        <Radio
-          aria-hidden="true"
-          className="mx-auto text-[var(--text-muted)]"
-          size={34}
-        />
+        {streamLookupError ? (
+          <AlertTriangle
+            aria-hidden="true"
+            className="mx-auto text-[var(--console-amber)]"
+            size={34}
+          />
+        ) : (
+          <Radio
+            aria-hidden="true"
+            className="mx-auto text-[var(--text-muted)]"
+            size={34}
+          />
+        )}
         <h2 className="mt-5 text-[clamp(1.65rem,4vw,2.5rem)] font-bold tracking-[-0.035em] text-[var(--text-primary)]">
-          No live stream right now
+          {streamLookupError
+            ? 'Stream status unavailable'
+            : 'No live stream right now'}
         </h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-          We are between launches. Follow the next mission or use the official
-          provider channel while coverage is being scheduled.
+          {streamLookupError
+            ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the provider channel while we retry.'
+            : 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'}
         </p>
         <div className="my-6 h-px bg-[var(--border-subtle)]" />
         <p className="data-label">Next mission</p>
@@ -165,7 +182,6 @@ function WatchContent(): React.ReactElement {
   const requestedId = searchParams.get('id');
   const { launches, loading: feedLoading, error, meta, refresh } = useLaunches();
   const { liveLaunches } = useLiveLaunches();
-  const requested = useLaunchById(requestedId);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
   const queue = useMemo(() => {
@@ -178,15 +194,16 @@ function WatchContent(): React.ReactElement {
   }, [launches, liveLaunches]);
 
   const fallbackLaunch = liveLaunches[0] ?? queue[0] ?? null;
+  const selectedId = requestedId ?? fallbackLaunch?.id ?? null;
+  const selected = useLaunchById(selectedId);
   const requestedUnavailable = Boolean(
     requestedId &&
-      !requested.loading &&
-      !requested.launch &&
-      (requested.notFound || requested.error),
+      !selected.loading &&
+      !selected.launch &&
+      (selected.notFound || selected.error),
   );
-  const selectedLaunch = requestedId
-    ? requested.launch ?? (requestedUnavailable ? fallbackLaunch : null)
-    : fallbackLaunch;
+  const selectedLaunch =
+    selected.launch ?? (requestedUnavailable ? fallbackLaunch : null);
   const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
     selectedLaunch,
     Boolean(selectedLaunch)
@@ -198,7 +215,7 @@ function WatchContent(): React.ReactElement {
 
   const loading =
     (feedLoading && queue.length === 0) ||
-    (Boolean(requestedId) && requested.loading && !requested.launch);
+    (Boolean(requestedId) && selected.loading && !selected.launch);
 
   if (loading) {
     return (
@@ -223,7 +240,7 @@ function WatchContent(): React.ReactElement {
           The watch schedule is unavailable.
         </h1>
         <p className="mt-2 text-[var(--text-secondary)]">
-          {requested.error || error || 'No missions were returned.'}
+          {selected.error || error || 'No missions were returned.'}
         </p>
         <button
           type="button"
@@ -278,7 +295,10 @@ function WatchContent(): React.ReactElement {
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="min-w-0">
-            <WatchStage launch={selectedLaunch} />
+            <WatchStage
+              launch={selectedLaunch}
+              streamLookupError={selected.launch ? selected.error : null}
+            />
 
             <section className="surface-card mt-4 p-5 sm:p-6">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">

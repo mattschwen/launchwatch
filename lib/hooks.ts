@@ -122,33 +122,30 @@ export function useLaunchById(id: string | null | undefined) {
     () => (id ? launches.find((launch) => launch.id === id) ?? null : null),
     [id, launches]
   );
-  const [remoteLaunch, setRemoteLaunch] = useState<Launch | null>(null);
-  const [loading, setLoading] = useState(Boolean(id));
-  const [error, setError] = useState<string | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [remote, setRemote] = useState<{
+    id: string;
+    launch: Launch | null;
+    loading: boolean;
+    error: string | null;
+    notFound: boolean;
+  } | null>(null);
+  const currentRemote = remote?.id === id ? remote : null;
+  const launch = currentRemote?.launch ?? feedLaunch;
 
   useEffect(() => {
     if (!id) {
-      setRemoteLaunch(null);
-      setLoading(false);
-      setNotFound(false);
-      setError(null);
+      setRemote(null);
       return;
     }
-
-    if (feedLaunch) {
-      setRemoteLaunch(null);
-      setLoading(false);
-      setNotFound(false);
-      setError(null);
-      return;
-    }
-
-    if (feedLoading) return;
 
     const controller = new AbortController();
-    setLoading(true);
-    setNotFound(false);
+    setRemote({
+      id,
+      launch: null,
+      loading: true,
+      error: null,
+      notFound: false,
+    });
 
     async function fetchLaunch(): Promise<void> {
       try {
@@ -160,9 +157,14 @@ export function useLaunchById(id: string | null | undefined) {
         const payload: unknown = await response.json().catch(() => null);
 
         if (response.status === 404) {
-          setRemoteLaunch(null);
-          setNotFound(true);
-          setError(null);
+          if (controller.signal.aborted) return;
+          setRemote({
+            id: id!,
+            launch: null,
+            loading: false,
+            error: null,
+            notFound: true,
+          });
           return;
         }
         if (!response.ok) {
@@ -173,30 +175,41 @@ export function useLaunchById(id: string | null | undefined) {
 
         const launch = extractLaunch(payload);
         if (!launch) throw new Error('Mission response was incomplete');
-        setRemoteLaunch(launch);
-        setNotFound(false);
-        setError(null);
+        if (controller.signal.aborted) return;
+        setRemote({
+          id: id!,
+          launch,
+          loading: false,
+          error: null,
+          notFound: false,
+        });
       } catch (requestError) {
         if (controller.signal.aborted) return;
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : 'Unable to load this mission'
-        );
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        setRemote({
+          id: id!,
+          launch: null,
+          loading: false,
+          error:
+            requestError instanceof Error
+              ? requestError.message
+              : 'Unable to load this mission',
+          notFound: false,
+        });
       }
     }
 
     void fetchLaunch();
     return () => controller.abort();
-  }, [feedLaunch, feedLoading, id]);
+  }, [id]);
 
   return {
-    launch: feedLaunch ?? remoteLaunch,
-    loading: Boolean(id) && (feedLoading || loading),
-    error,
-    notFound,
+    launch,
+    loading:
+      Boolean(id) &&
+      !launch &&
+      (feedLoading || !currentRemote || currentRemote.loading),
+    error: currentRemote?.error ?? null,
+    notFound: currentRemote?.notFound ?? false,
   };
 }
 

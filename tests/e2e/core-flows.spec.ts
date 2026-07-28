@@ -71,14 +71,23 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('watch provides a useful standby state and switches the mission queue', async ({
+test('watch enriches the selected mission and switches the mission queue', async ({
   page,
 }) => {
   await page.goto('/watch');
 
   await expect(
-    page.getByRole('heading', { name: 'No live stream right now' })
+    page.getByText('This provider stream opens in a separate window.')
   ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Open provider stream' })
+  ).toHaveAttribute(
+    'href',
+    'https://x.com/i/broadcasts/demo-orbital-dawn'
+  );
+  await expect(
+    page.getByRole('heading', { name: 'No live stream right now' })
+  ).toHaveCount(0);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
   ).toBeVisible();
@@ -90,6 +99,32 @@ test('watch provides a useful standby state and switches the mission queue', asy
   await expect(
     page.getByRole('heading', { level: 1, name: 'Polaris Relay' })
   ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch keeps the schedule usable when detail enrichment fails', async ({
+  page,
+}) => {
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Detailed provider data unavailable' }),
+      })
+  );
+  await page.goto('/watch');
+
+  await expect(
+    page.getByRole('heading', { name: 'Stream status unavailable' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'No live stream right now' })
+  ).toHaveCount(0);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
