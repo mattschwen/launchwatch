@@ -236,19 +236,28 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
 
   if ((page.viewportSize()?.width ?? 0) < 1024) {
     await expect(mapDisclosure).toBeVisible();
-    if ((await mapDisclosure.getAttribute('aria-expanded')) !== 'true') {
-      await mapDisclosure.click();
-    }
+    await expect(mapDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await expect(
+      page.getByRole('region', { name: 'Mission trajectory' })
+    ).toHaveCount(0);
 
-    const mapTop = await page
-      .getByRole('region', { name: 'Mission trajectory' })
-      .boundingBox();
+    const disclosureTop = await mapDisclosure.boundingBox();
     const scheduleTop = await page
       .getByRole('region', { name: 'Upcoming launches' })
       .boundingBox();
-    expect(mapTop).not.toBeNull();
+    expect(disclosureTop).not.toBeNull();
     expect(scheduleTop).not.toBeNull();
-    expect(mapTop!.y).toBeLessThan(scheduleTop!.y);
+    expect(scheduleTop!.y).toBeLessThan(disclosureTop!.y);
+
+    await mapDisclosure.click();
+    await expect(mapDisclosure).toHaveAttribute('aria-expanded', 'true');
+    const expandedDisclosureTop = await mapDisclosure.boundingBox();
+    const mapTop = await page
+      .getByRole('region', { name: 'Mission trajectory' })
+      .boundingBox();
+    expect(expandedDisclosureTop).not.toBeNull();
+    expect(mapTop).not.toBeNull();
+    expect(expandedDisclosureTop!.y).toBeLessThan(mapTop!.y);
     await expect(page.locator('[aria-label$=" UTC"]').first()).toBeVisible();
   }
 

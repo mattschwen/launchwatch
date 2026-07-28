@@ -19,7 +19,7 @@ const MissionTrajectory = dynamic(
 
 function HomeContent(): React.ReactElement {
   const { launches, loading, error, meta, refresh } = useLaunches();
-  const [mobileMapOpen, setMobileMapOpen] = useState(true);
+  const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const featuredLaunch =
     launches.find((launch) => launch.isLive) ??
     launches.find(
@@ -44,6 +44,10 @@ function HomeContent(): React.ReactElement {
           >
             <MissionTrajectory launch={featuredLaunch} />
           </aside>
+        </div>
+
+        <div className="mt-4">
+          <LaunchList />
         </div>
 
         <section className="mt-4 lg:hidden">
@@ -82,10 +86,6 @@ function HomeContent(): React.ReactElement {
             </div>
           ) : null}
         </section>
-
-        <div className="mt-4">
-          <LaunchList />
-        </div>
       </div>
     </>
   );
