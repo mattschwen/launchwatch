@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
   Archive,
   ChevronDown,
   Search,
+  X,
 } from 'lucide-react';
 import type { Launch, LaunchFeedMeta } from '@/lib/types';
 import {
@@ -220,6 +221,7 @@ export default function PastLaunches(): React.ReactElement {
   const [outcome, setOutcome] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
   useEffect(() => {
@@ -299,6 +301,20 @@ export default function PastLaunches(): React.ReactElement {
       return matchesSearch && matchesProvider && matchesYear && matchesOutcome;
     });
   }, [launches, outcome, provider, search, year]);
+  const filtersActive =
+    Boolean(search) ||
+    provider !== 'all' ||
+    year !== 'all' ||
+    outcome !== 'all';
+
+  const clearFilters = (): void => {
+    setSearch('');
+    setProvider('all');
+    setYear('all');
+    setOutcome('all');
+    setVisibleCount(PAGE_SIZE);
+    searchRef.current?.focus();
+  };
 
   if (loading && launches.length === 0) {
     return (
@@ -351,6 +367,7 @@ export default function PastLaunches(): React.ReactElement {
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
             />
             <input
+              ref={searchRef}
               id={`${id}-search`}
               type="search"
               value={search}
@@ -411,9 +428,25 @@ export default function PastLaunches(): React.ReactElement {
             <option value="failure">Failure</option>
           </select>
 
-          <p className="self-center justify-self-start text-sm text-[var(--text-muted)] xl:justify-self-end">
-            {filtered.length} result{filtered.length === 1 ? '' : 's'}
-          </p>
+          <div className="flex min-h-11 items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
+            <p
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="text-sm text-[var(--text-muted)]"
+            >
+              {filtered.length} result{filtered.length === 1 ? '' : 's'}
+            </p>
+            <button
+              type="button"
+              disabled={!filtersActive}
+              onClick={clearFilters}
+              className="icon-button shrink-0 disabled:cursor-not-allowed disabled:opacity-35"
+              aria-label="Clear archive filters"
+            >
+              <X aria-hidden="true" size={17} />
+            </button>
+          </div>
         </div>
       </div>
 

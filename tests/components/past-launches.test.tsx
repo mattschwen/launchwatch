@@ -41,6 +41,33 @@ describe('PastLaunches', () => {
     ).toHaveAttribute('href', '/launch/spacex-demo-return');
   });
 
+  it('announces filtered results and clears all archive filters at once', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    const search = screen.getByRole('searchbox', { name: 'Search missions' });
+    const clear = screen.getByRole('button', {
+      name: 'Clear archive filters',
+    });
+
+    expect(clear).toBeDisabled();
+    await user.type(search, 'no matching mission');
+
+    expect(screen.getByRole('status')).toHaveTextContent('0 results');
+    expect(clear).toBeEnabled();
+
+    clear.focus();
+    await user.keyboard('{Enter}');
+
+    expect(search).toHaveValue('');
+    expect(search).toHaveFocus();
+    expect(screen.getByRole('status')).toHaveTextContent('2 results');
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
+    expect(clear).toBeDisabled();
+  });
+
   it('offers a retry after an upstream archive error', async () => {
     const user = userEvent.setup();
     const fetchMock = vi

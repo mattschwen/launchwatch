@@ -99,12 +99,25 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Launch archive' })
   ).toBeVisible();
-  await page
-    .getByRole('searchbox', { name: 'Search missions' })
-    .fill('Return');
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
+  const clearFilters = page.getByRole('button', {
+    name: 'Clear archive filters',
+  });
+
+  await expect(clearFilters).toBeDisabled();
+  await search.fill('no matching mission');
+  await expect(page.getByRole('status')).toHaveText('0 results');
+  await expect(clearFilters).toBeEnabled();
+  await clearFilters.press('Enter');
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(page.getByRole('status')).toHaveText('2 results');
+  await expect(clearFilters).toBeDisabled();
+
+  await search.fill('Return');
 
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
-  await expect(page.getByText('1 result')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('1 result');
   await page.getByRole('button', { name: /Demo Return Flight/i }).click();
   await expect(
     page.getByText(/completed crew demonstration mission/i)
