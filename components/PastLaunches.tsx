@@ -222,6 +222,7 @@ export default function PastLaunches(): React.ReactElement {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLButtonElement>(null);
   const id = useId();
 
   useEffect(() => {
@@ -306,6 +307,13 @@ export default function PastLaunches(): React.ReactElement {
     provider !== 'all' ||
     year !== 'all' ||
     outcome !== 'all';
+  const visibleLaunches = filtered.slice(0, visibleCount);
+  const allResultsVisible =
+    filtered.length > 0 && visibleLaunches.length === filtered.length;
+  const resultCountLabel =
+    filtered.length > PAGE_SIZE && !allResultsVisible
+      ? `Showing ${visibleLaunches.length} of ${filtered.length} results`
+      : `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
 
   const clearFilters = (): void => {
     setSearch('');
@@ -386,7 +394,10 @@ export default function PastLaunches(): React.ReactElement {
           <select
             id={`${id}-provider`}
             value={provider}
-            onChange={(event) => setProvider(event.target.value)}
+            onChange={(event) => {
+              setProvider(event.target.value);
+              setVisibleCount(PAGE_SIZE);
+            }}
             className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
             <option value="all">All providers</option>
@@ -403,7 +414,10 @@ export default function PastLaunches(): React.ReactElement {
           <select
             id={`${id}-year`}
             value={year}
-            onChange={(event) => setYear(event.target.value)}
+            onChange={(event) => {
+              setYear(event.target.value);
+              setVisibleCount(PAGE_SIZE);
+            }}
             className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
             <option value="all">All years</option>
@@ -420,7 +434,10 @@ export default function PastLaunches(): React.ReactElement {
           <select
             id={`${id}-outcome`}
             value={outcome}
-            onChange={(event) => setOutcome(event.target.value)}
+            onChange={(event) => {
+              setOutcome(event.target.value);
+              setVisibleCount(PAGE_SIZE);
+            }}
             className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
             <option value="all">All outcomes</option>
@@ -435,7 +452,7 @@ export default function PastLaunches(): React.ReactElement {
               aria-atomic="true"
               className="text-sm text-[var(--text-muted)]"
             >
-              {filtered.length} result{filtered.length === 1 ? '' : 's'}
+              {resultCountLabel}
             </p>
             <button
               type="button"
@@ -494,26 +511,45 @@ export default function PastLaunches(): React.ReactElement {
           <h2 id="archive-results-title" className="sr-only">
             Archived launch results
           </h2>
-          {filtered.slice(0, visibleCount).map((launch) => (
-            <HistoryRow
-              key={launch.id}
-              launch={launch}
-              expanded={expandedId === launch.id}
-              onToggle={() =>
-                setExpandedId((current) =>
-                  current === launch.id ? null : launch.id
-                )
-              }
-            />
-          ))}
-          {visibleCount < filtered.length ? (
+          <div id={`${id}-results`}>
+            {visibleLaunches.map((launch) => (
+              <HistoryRow
+                key={launch.id}
+                launch={launch}
+                expanded={expandedId === launch.id}
+                onToggle={() =>
+                  setExpandedId((current) =>
+                    current === launch.id ? null : launch.id
+                  )
+                }
+              />
+            ))}
+          </div>
+          {filtered.length > PAGE_SIZE ? (
             <div className="border-t border-[var(--border-subtle)] p-4 text-center">
               <button
+                ref={loadMoreRef}
                 type="button"
-                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-                className="action-button action-button-secondary"
+                aria-controls={`${id}-results`}
+                aria-disabled={allResultsVisible}
+                onClick={() => {
+                  if (!allResultsVisible) {
+                    setVisibleCount((count) => count + PAGE_SIZE);
+                    requestAnimationFrame(() =>
+                      loadMoreRef.current?.scrollIntoView?.({
+                        block: 'nearest',
+                      })
+                    );
+                  }
+                }}
+                className="action-button action-button-secondary scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-default aria-disabled:opacity-60"
               >
-                Load more
+                {allResultsVisible
+                  ? `All ${filtered.length} missions loaded`
+                  : `Load ${Math.min(
+                      PAGE_SIZE,
+                      filtered.length - visibleLaunches.length
+                    )} more`}
               </button>
             </div>
           ) : null}

@@ -5,6 +5,7 @@ import {
 } from './support/api-fixtures';
 import {
   FEED_META,
+  HISTORICAL_LAUNCHES,
   UPCOMING_LAUNCHES,
 } from '../fixtures/launches';
 
@@ -594,6 +595,70 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Demo Return Flight' })
   ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history pagination reports progress and keeps terminal focus visible', async ({
+  page,
+}) => {
+  const launches = Array.from({ length: 41 }, (_, index) => {
+    const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
+    return {
+      ...launch,
+      id: `${launch.id}-${index}`,
+      sourceId: `${launch.sourceId}-${index}`,
+      name: `Archive Mission ${index + 1}`,
+    };
+  });
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/history');
+
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 20 of 41 results'
+  );
+  const loadMore = page.locator('button[aria-controls$="-results"]');
+  await expect(loadMore).toHaveText('Load 20 more');
+  await loadMore.focus();
+  await loadMore.press('Enter');
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 40 of 41 results'
+  );
+  await expect(loadMore).toBeFocused();
+
+  await loadMore.press('Enter');
+  await expect(page.getByRole('status')).toHaveText('41 results');
+  await expect(loadMore).toHaveText('All 41 missions loaded');
+  await expect(loadMore).toHaveAttribute('aria-disabled', 'true');
+  await expect(loadMore).toBeFocused();
+
+  const placement = await loadMore.evaluate((element) => {
+    const control = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible: control.top >= 0 && control.bottom <= visibleBottom,
+      height: control.height,
+    };
+  });
+
+  expect(placement.fullyVisible).toBe(true);
+  expect(placement.height).toBeGreaterThanOrEqual(44);
+  await loadMore.press('Enter');
+  await expect(page.locator('article')).toHaveCount(41);
+  await expect(loadMore).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

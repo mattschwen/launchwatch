@@ -68,6 +68,51 @@ describe('PastLaunches', () => {
     expect(clear).toBeDisabled();
   });
 
+  it('announces pagination progress and preserves focus after the final batch', async () => {
+    const user = userEvent.setup();
+    const launches = Array.from({ length: 41 }, (_, index) => {
+      const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
+      return {
+        ...launch,
+        id: `${launch.id}-${index}`,
+        sourceId: `${launch.sourceId}-${index}`,
+        name: `Archive Mission ${index + 1}`,
+      };
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ launches, meta: FEED_META }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByText('Showing 20 of 41 results')
+    ).toBeVisible();
+    const loadMore = screen.getByRole('button', { name: 'Load 20 more' });
+
+    loadMore.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Showing 40 of 41 results'
+    );
+    expect(loadMore).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('status')).toHaveTextContent('41 results');
+    expect(loadMore).toHaveAccessibleName('All 41 missions loaded');
+    expect(loadMore).toHaveAttribute('aria-disabled', 'true');
+    expect(loadMore).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+    expect(screen.getAllByRole('article')).toHaveLength(41);
+    expect(loadMore).toHaveFocus();
+  });
+
   it('offers a retry after an upstream archive error', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
