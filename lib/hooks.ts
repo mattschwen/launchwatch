@@ -219,23 +219,39 @@ export function useLaunchIntel(
 ) {
   const launchId = launch?.id ?? null;
   const launchIsLive = Boolean(launch?.isLive);
-  const [intel, setIntel] = useState<LaunchIntel | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [intelState, setIntelState] = useState<{
+    launchId: string | null;
+    intel: LaunchIntel | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    launchId: null,
+    intel: null,
+    loading: false,
+    error: null,
+  });
 
   useEffect(() => {
     if (!launchId || !enabled) {
-      setIntel(null);
-      setLoading(false);
-      setError(null);
+      setIntelState({
+        launchId: null,
+        intel: null,
+        loading: false,
+        error: null,
+      });
       return;
     }
 
     const controller = new AbortController();
+    setIntelState((current) => ({
+      launchId,
+      intel: current.launchId === launchId ? current.intel : null,
+      loading: true,
+      error: null,
+    }));
 
     async function fetchIntel(): Promise<void> {
       try {
-        setLoading(true);
         const response = await fetch(
           `/api/launch-intel?id=${encodeURIComponent(launchId!)}`,
           {
@@ -263,17 +279,24 @@ export function useLaunchIntel(
             ? (record.data as LaunchIntel)
             : (payload as LaunchIntel);
 
-        setIntel(result);
-        setError(null);
+        setIntelState({
+          launchId,
+          intel: result,
+          loading: false,
+          error: null,
+        });
       } catch (requestError) {
         if (controller.signal.aborted) return;
-        setError(
+        const message =
           requestError instanceof Error
             ? requestError.message
-            : 'Unable to load mission intelligence'
-        );
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
+            : 'Unable to load mission intelligence';
+        setIntelState((current) => ({
+          launchId,
+          intel: current.launchId === launchId ? current.intel : null,
+          loading: false,
+          error: message,
+        }));
       }
     }
 
@@ -288,7 +311,16 @@ export function useLaunchIntel(
     };
   }, [enabled, launchId, launchIsLive]);
 
-  return { intel, loading, error };
+  const currentState =
+    enabled && intelState.launchId === launchId ? intelState : null;
+
+  return {
+    intel: currentState?.intel ?? null,
+    loading: Boolean(launchId && enabled) && (
+      !currentState || currentState.loading
+    ),
+    error: currentState?.error ?? null,
+  };
 }
 
 export function useRocketFacts() {

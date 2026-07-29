@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Route } from '@playwright/test';
 import {
   expectNoHorizontalOverflow,
   installApiFixtures,
@@ -6,6 +6,7 @@ import {
 import {
   FEED_META,
   HISTORICAL_LAUNCHES,
+  LAUNCH_INTEL,
   UPCOMING_LAUNCHES,
 } from '../fixtures/launches';
 
@@ -316,6 +317,64 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
   ).toBeVisible();
   await expect(polarisQueueItem).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch does not show intelligence from the previously selected mission', async ({
+  page,
+}) => {
+  let resolvePolarisRequest: ((route: Route) => void) | undefined;
+  const polarisRequest = new Promise<Route>((resolve) => {
+    resolvePolarisRequest = resolve;
+  });
+
+  await page.route('**/api/launch-intel**', async (route) => {
+    const id = new URL(route.request().url()).searchParams.get('id');
+    if (id === 'spacex-demo-polaris') {
+      resolvePolarisRequest?.(route);
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        summary: {
+          ...LAUNCH_INTEL.summary,
+          rationale: 'Signals for Orbital Dawn.',
+        },
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+  await expect(page.getByText('Signals for Orbital Dawn.')).toBeVisible();
+
+  await page.getByRole('button', { name: /Polaris Relay/i }).click();
+  const pendingRoute = await polarisRequest;
+
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Loading mission intelligence' }),
+  ).toBeVisible();
+  await expect(page.getByText('Signals for Orbital Dawn.')).toHaveCount(0);
+
+  await pendingRoute.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      ...LAUNCH_INTEL,
+      summary: {
+        ...LAUNCH_INTEL.summary,
+        rationale: 'Signals for Polaris Relay.',
+      },
+    }),
+  });
+
+  await expect(page.getByText('Signals for Polaris Relay.')).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
