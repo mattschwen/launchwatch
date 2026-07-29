@@ -439,6 +439,16 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
 test('briefing calendar options stay visible and restore trigger focus', async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException('Clipboard permission denied');
+        },
+      },
+    });
+  });
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Open briefing' }).click();
@@ -479,6 +489,31 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   });
 
   await firstOption.press('Escape');
+  await expect(calendarOptions).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(calendarTrigger).toBeFocused();
+
+  await calendarTrigger.press('Enter');
+  const copy = dialog.getByRole('button', {
+    name: 'Copy launch details',
+  });
+  await copy.focus();
+  await copy.press('Enter');
+
+  const failedCopy = dialog.getByRole('button', {
+    name: 'Copy failed — try again',
+  });
+  await expect(failedCopy).toBeFocused();
+  await expect(failedCopy).toHaveAttribute('aria-disabled', 'false');
+  await expect(failedCopy).toHaveAttribute('aria-busy', 'false');
+  await expect(
+    dialog.getByText(
+      'Could not copy launch details. Try again or use a calendar option.'
+    )
+  ).toBeAttached();
+  expect((await failedCopy.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  await failedCopy.press('Escape');
   await expect(calendarOptions).toHaveCount(0);
   await expect(dialog).toBeVisible();
   await expect(calendarTrigger).toBeFocused();

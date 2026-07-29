@@ -150,8 +150,7 @@ export async function copyToClipboard(launch: Launch): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
     return true;
-  } catch (error) {
-    console.error('Failed to copy to clipboard:', error);
+  } catch {
     return false;
   }
 }

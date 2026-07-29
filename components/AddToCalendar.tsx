@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Calendar, Check, Copy } from 'lucide-react';
+import { Calendar, Check, CircleAlert, Copy, LoaderCircle } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
   copyToClipboard,
@@ -16,6 +16,8 @@ interface AddToCalendarProps {
   menuAlign?: 'right' | 'center';
 }
 
+type CopyState = 'idle' | 'copying' | 'success' | 'error';
+
 export default function AddToCalendar({
   launch,
   variant = 'button',
@@ -23,11 +25,21 @@ export default function AddToCalendar({
   menuAlign = 'right',
 }: AddToCalendarProps): React.ReactElement {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>('idle');
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
+  const copyResetTimeoutRef = useRef<number | undefined>(undefined);
+
+  useEffect(
+    () => () => {
+      if (copyResetTimeoutRef.current !== undefined) {
+        window.clearTimeout(copyResetTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -60,9 +72,22 @@ export default function AddToCalendar({
   };
 
   const handleCopy = async (): Promise<void> => {
+    if (copyState === 'copying') return;
+
+    if (copyResetTimeoutRef.current !== undefined) {
+      window.clearTimeout(copyResetTimeoutRef.current);
+    }
+
+    setCopyState('copying');
     const success = await copyToClipboard(launch);
-    setCopied(success);
-    if (success) window.setTimeout(() => setCopied(false), 2000);
+    setCopyState(success ? 'success' : 'error');
+
+    if (success) {
+      copyResetTimeoutRef.current = window.setTimeout(
+        () => setCopyState('idle'),
+        2000
+      );
+    }
   };
 
   return (
@@ -85,7 +110,10 @@ export default function AddToCalendar({
         aria-label={variant === 'icon' ? 'Add launch to calendar' : undefined}
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (!open) setCopyState('idle');
+          setOpen((value) => !value);
+        }}
         className={
           variant === 'button'
             ? 'action-button action-button-secondary'
@@ -139,21 +167,39 @@ export default function AddToCalendar({
           <button
             type="button"
             onClick={() => void handleCopy()}
-            className="menu-item"
+            aria-busy={copyState === 'copying'}
+            aria-disabled={copyState === 'copying'}
+            className={`menu-item ${
+              copyState === 'error' ? 'text-[var(--console-red)]' : ''
+            }`}
           >
-            {copied ? (
+            {copyState === 'copying' ? (
+              <LoaderCircle aria-hidden="true" size={16} className="animate-spin" />
+            ) : copyState === 'success' ? (
               <Check
                 aria-hidden="true"
                 size={16}
                 className="text-[var(--console-green)]"
               />
+            ) : copyState === 'error' ? (
+              <CircleAlert aria-hidden="true" size={16} />
             ) : (
               <Copy aria-hidden="true" size={16} />
             )}
-            {copied ? 'Details copied' : 'Copy launch details'}
+            {copyState === 'copying'
+              ? 'Copying details…'
+              : copyState === 'success'
+                ? 'Details copied'
+                : copyState === 'error'
+                  ? 'Copy failed — try again'
+                  : 'Copy launch details'}
           </button>
           <span className="sr-only" aria-live="polite">
-            {copied ? 'Launch details copied to clipboard' : ''}
+            {copyState === 'success'
+              ? 'Launch details copied to clipboard'
+              : copyState === 'error'
+                ? 'Could not copy launch details. Try again or use a calendar option.'
+                : ''}
           </span>
         </div>
       ) : null}
