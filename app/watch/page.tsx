@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -186,9 +186,18 @@ function WatchContent(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedId = searchParams.get('id');
-  const { launches, loading: feedLoading, error, meta, refresh } = useLaunches();
+  const {
+    launches,
+    loading: feedLoading,
+    refreshing,
+    error,
+    meta,
+    refresh,
+  } = useLaunches();
   const { liveLaunches } = useLiveLaunches();
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const missionLinkRef = useRef<HTMLAnchorElement>(null);
+  const retryFocusPendingRef = useRef(false);
 
   const queue = useMemo(() => {
     const byId = new Map<string, Launch>();
@@ -215,8 +224,24 @@ function WatchContent(): React.ReactElement {
     Boolean(selectedLaunch)
   );
 
+  useEffect(() => {
+    if (!selectedLaunch || !retryFocusPendingRef.current) return;
+
+    retryFocusPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      missionLinkRef.current?.focus(),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedLaunch]);
+
   const selectLaunch = (id: string): void => {
     router.replace(`/watch?id=${encodeURIComponent(id)}`, { scroll: false });
+  };
+
+  const retrySchedule = (): void => {
+    if (refreshing) return;
+    retryFocusPendingRef.current = true;
+    void refresh();
   };
 
   const loading =
@@ -250,10 +275,12 @@ function WatchContent(): React.ReactElement {
         </p>
         <button
           type="button"
-          onClick={() => void refresh()}
-          className="action-button action-button-secondary mt-6"
+          onClick={retrySchedule}
+          aria-disabled={refreshing}
+          aria-busy={refreshing}
+          className="action-button action-button-secondary mt-6 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          Retry
+          {refreshing ? 'Retrying watch schedule' : 'Retry watch schedule'}
         </button>
       </div>
     );
@@ -311,6 +338,7 @@ function WatchContent(): React.ReactElement {
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <Link
+                    ref={missionLinkRef}
                     href={`/launch/${encodeURIComponent(selectedLaunch.id)}`}
                     className="group inline-flex min-h-11 max-w-full items-center"
                   >

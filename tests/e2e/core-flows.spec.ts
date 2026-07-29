@@ -520,6 +520,77 @@ test('watch enriches the selected mission and switches the mission queue', async
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch schedule retry reports progress and restores keyboard focus', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    if (feedRequests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Provider maintenance' }),
+      });
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+  await expect(
+    page.getByRole('heading', {
+      name: 'The watch schedule is unavailable.',
+    })
+  ).toBeVisible();
+
+  const retry = page.getByRole('button', {
+    name: /Retry(?:ing watch schedule)?/,
+  });
+  await retry.focus();
+  await retry.press('Enter');
+
+  await expect(retry).toHaveAccessibleName('Retrying watch schedule');
+  await expect(retry).toHaveAttribute('aria-disabled', 'true');
+  await expect(retry).toHaveAttribute('aria-busy', 'true');
+  await expect(retry).toBeFocused();
+  const placement = await retry.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible: bounds.top >= 0 && bounds.bottom <= visibleBottom,
+      height: bounds.height,
+    };
+  });
+  expect(placement.fullyVisible).toBe(true);
+  expect(placement.height).toBeGreaterThanOrEqual(44);
+
+  await retry.press('Enter');
+  expect(feedRequests).toBe(2);
+
+  const missionLink = page
+    .getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+    .locator('xpath=ancestor::a[1]');
+  await expect(missionLink).toBeFocused();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Watch room' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch archive navigation is touch-safe and keyboard-operable', async ({
   page,
 }) => {

@@ -47,6 +47,7 @@ The optional expanded map remains a modal dialog. It must:
 - The mission queue follows the stage on smaller screens and becomes a side rail on larger screens.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Launch actions wrap into labeled, touch-friendly controls.
+- Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
 
 ## History
 
