@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, MapPin, Rocket, Target } from 'lucide-react';
 import type { Launch } from '@/lib/types';
@@ -16,6 +16,7 @@ import LaunchActions from './LaunchActions';
 interface HeroSectionProps {
   activeLaunch: Launch | null;
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
   partial: boolean;
   refresh: () => Promise<void>;
@@ -40,11 +41,30 @@ function splitSite(site: string): [string, string] {
 export default function HeroSection({
   activeLaunch,
   loading,
+  refreshing,
   error,
   partial,
   refresh,
 }: HeroSectionProps): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const missionLinkRef = useRef<HTMLAnchorElement>(null);
+  const retryFocusPendingRef = useRef(false);
+
+  useEffect(() => {
+    if (!activeLaunch || !retryFocusPendingRef.current) return;
+
+    retryFocusPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      missionLinkRef.current?.focus(),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeLaunch]);
+
+  const retrySchedule = (): void => {
+    if (refreshing) return;
+    retryFocusPendingRef.current = true;
+    void refresh();
+  };
 
   if (loading && !activeLaunch) {
     return (
@@ -77,10 +97,12 @@ export default function HeroSection({
         </p>
         <button
           type="button"
-          onClick={() => void refresh()}
-          className="action-button action-button-secondary mt-6"
+          onClick={retrySchedule}
+          aria-disabled={refreshing}
+          aria-busy={refreshing}
+          className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          Retry schedule
+          {refreshing ? 'Retrying schedule' : 'Retry schedule'}
         </button>
       </section>
     );
@@ -126,6 +148,7 @@ export default function HeroSection({
           </div>
 
           <Link
+            ref={missionLinkRef}
             href={`/launch/${encodeURIComponent(activeLaunch.id)}`}
             className="group inline-flex min-h-11 w-fit max-w-full items-center"
           >

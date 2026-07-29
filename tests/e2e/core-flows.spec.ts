@@ -379,6 +379,107 @@ test('home distinguishes an empty provider schedule and offers recovery', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home schedule retry reports progress and restores keyboard focus', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    if (feedRequests % 2 === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Provider maintenance' }),
+      });
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+
+  const heroError = page
+    .getByRole('heading', { name: 'We could not load the next mission.' })
+    .locator('xpath=ancestor::section[1]');
+  const listError = page
+    .getByRole('heading', {
+      name: 'The schedule is temporarily unavailable.',
+    })
+    .locator('xpath=ancestor::section[1]');
+  const heroRetry = heroError.locator('button');
+  const listRetry = listError.locator('button');
+  await expect(heroRetry).toHaveAccessibleName('Retry schedule');
+  await expect(listRetry).toHaveAccessibleName('Retry schedule');
+  await heroRetry.focus();
+  await heroRetry.press('Enter');
+
+  for (const retry of [heroRetry, listRetry]) {
+    await expect(retry).toHaveAccessibleName('Retrying schedule');
+    await expect(retry).toHaveAttribute('aria-disabled', 'true');
+    await expect(retry).toHaveAttribute('aria-busy', 'true');
+  }
+  await expect(heroRetry).toBeFocused();
+  expect(
+    await heroRetry.evaluate((element) => element.getBoundingClientRect().height)
+  ).toBeGreaterThanOrEqual(44);
+
+  await heroRetry.press('Enter');
+  expect(feedRequests).toBe(2);
+
+  await expect(
+    page.getByRole('heading', { name: 'Upcoming launches' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Orbital Dawn', exact: true }).first()
+  ).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.reload();
+  const restoredListError = page
+    .getByRole('heading', {
+      name: 'The schedule is temporarily unavailable.',
+    })
+    .locator('xpath=ancestor::section[1]');
+  const restoredListRetry = restoredListError.locator('button');
+  await restoredListRetry.focus();
+  await restoredListRetry.press('Enter');
+  await expect(restoredListRetry).toHaveAccessibleName('Retrying schedule');
+  await expect(restoredListRetry).toHaveAttribute('aria-disabled', 'true');
+  await expect(restoredListRetry).toBeFocused();
+  const retryPlacement = await restoredListRetry.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible: bounds.top >= 0 && bounds.bottom <= visibleBottom,
+      height: bounds.height,
+    };
+  });
+  expect(retryPlacement.fullyVisible).toBe(true);
+  expect(retryPlacement.height).toBeGreaterThanOrEqual(44);
+
+  await restoredListRetry.press('Enter');
+  expect(feedRequests).toBe(4);
+
+  await expect(
+    page.getByRole('heading', { name: 'Upcoming launches' })
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filter' })).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch enriches the selected mission and switches the mission queue', async ({
   page,
 }) => {

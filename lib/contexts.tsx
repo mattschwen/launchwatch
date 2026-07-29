@@ -87,12 +87,12 @@ export function LaunchDataProvider({
   const controllerRef = useRef<AbortController | null>(null);
   const requestRef = useRef<Promise<void> | null>(null);
   const lastFetchedAtRef = useRef(0);
+  const initialRequestSettledRef = useRef(false);
 
   const refresh = useCallback(async (): Promise<void> => {
     if (requestRef.current) return requestRef.current;
 
-    const hasData = launchesRef.current.length > 0;
-    if (hasData) setRefreshing(true);
+    if (initialRequestSettledRef.current) setRefreshing(true);
 
     controllerRef.current?.abort();
     const controller = new AbortController();
@@ -130,6 +130,7 @@ export function LaunchDataProvider({
         );
       } finally {
         if (!controller.signal.aborted) {
+          initialRequestSettledRef.current = true;
           setLoading(false);
           setRefreshing(false);
         }

@@ -18,7 +18,7 @@ const MissionTrajectory = dynamic(
 );
 
 function HomeContent(): React.ReactElement {
-  const { launches, loading, error, meta, refresh } = useLaunches();
+  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const featuredLaunch =
     launches.find((launch) => launch.isLive) ??
@@ -34,6 +34,7 @@ function HomeContent(): React.ReactElement {
           <HeroSection
             activeLaunch={featuredLaunch}
             loading={loading}
+            refreshing={refreshing}
             error={error}
             partial={Boolean(meta?.partial)}
             refresh={refresh}

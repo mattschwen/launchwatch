@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LaunchDataProvider } from '@/lib/contexts';
-import { useLaunchById } from '@/lib/hooks';
+import { useLaunchById, useLaunches } from '@/lib/hooks';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 function HookHarness({
@@ -33,6 +33,27 @@ function response(body: unknown): Response {
     status: 200,
     json: async () => body,
   } as Response;
+}
+
+function FeedRetryHarness(): React.ReactElement {
+  const { launches, loading, refreshing, error, refresh } = useLaunches();
+
+  return (
+    <>
+      <button type="button" onClick={() => void refresh()}>
+        Retry
+      </button>
+      <p data-testid="feed-state">
+        {loading
+          ? 'loading'
+          : refreshing
+            ? 'retrying'
+            : error
+              ? error
+              : `${launches.length} launches`}
+      </p>
+    </>
+  );
 }
 
 afterEach(() => {
@@ -123,5 +144,45 @@ describe('useLaunchById', () => {
     await expect(
       screen.findByText(detailedSecond.name)
     ).resolves.toBeVisible();
+  });
+});
+
+describe('LaunchDataProvider retries', () => {
+  it('reports a retry after the initial request fails and suppresses duplicates', async () => {
+    const user = userEvent.setup();
+    let resolveRetry: ((value: Response) => void) | undefined;
+    const retryResponse = new Promise<Response>((resolve) => {
+      resolveRetry = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'Provider maintenance' }),
+      } as Response)
+      .mockImplementationOnce(() => retryResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>
+    );
+
+    await expect(
+      screen.findByText('Provider maintenance')
+    ).resolves.toBeVisible();
+
+    const retry = screen.getByRole('button', { name: 'Retry' });
+    await user.click(retry);
+    expect(screen.getByTestId('feed-state')).toHaveTextContent('retrying');
+    await user.click(retry);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    resolveRetry?.(response({ launches: UPCOMING_LAUNCHES }));
+    await waitFor(() =>
+      expect(screen.getByTestId('feed-state')).toHaveTextContent('2 launches')
+    );
   });
 });

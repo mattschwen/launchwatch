@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import LaunchCard from './LaunchCard';
@@ -12,7 +12,7 @@ import FilterBar, {
 const INITIAL_VISIBLE_COUNT = 5;
 
 export default function LaunchList(): React.ReactElement {
-  const { launches, loading, error, meta, refresh } = useLaunches();
+  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>({
     ...DEFAULT_FILTERS,
   });
@@ -21,6 +21,7 @@ export default function LaunchList(): React.ReactElement {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const retryFocusPendingRef = useRef(false);
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
@@ -34,6 +35,22 @@ export default function LaunchList(): React.ReactElement {
       )].sort((a, b) => a.localeCompare(b)),
     [launches]
   );
+
+  useEffect(() => {
+    if (launches.length === 0 || !retryFocusPendingRef.current) return;
+
+    retryFocusPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      filterToggleRef.current?.focus(),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [launches.length]);
+
+  const retrySchedule = (): void => {
+    if (refreshing) return;
+    retryFocusPendingRef.current = true;
+    void refresh();
+  };
 
   const clearFilters = (): void => {
     const focusTarget = filtersOpen ? searchInputRef : filterToggleRef;
@@ -101,10 +118,12 @@ export default function LaunchList(): React.ReactElement {
         </p>
         <button
           type="button"
-          onClick={() => void refresh()}
-          className="action-button action-button-secondary mt-5"
+          onClick={retrySchedule}
+          aria-disabled={refreshing}
+          aria-busy={refreshing}
+          className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          Retry schedule
+          {refreshing ? 'Retrying schedule' : 'Retry schedule'}
         </button>
       </section>
     );
