@@ -4,6 +4,42 @@ import { describe, expect, it, vi } from 'vitest';
 import FilterBar from '@/components/FilterBar';
 
 describe('FilterBar', () => {
+  it('renders the current providers and emits the selected provider name', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+    render(
+      <FilterBar
+        onFilterChange={onFilterChange}
+        providerOptions={[
+          'China Aerospace Science and Technology Corporation',
+          'SpaceX',
+        ]}
+      />
+    );
+
+    const provider = screen.getByRole('combobox', { name: 'Provider' });
+    expect(
+      screen.getByRole('option', {
+        name: 'China Aerospace Science and Technology Corporation',
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: 'NASA' })
+    ).not.toBeInTheDocument();
+
+    await user.selectOptions(
+      provider,
+      'China Aerospace Science and Technology Corporation'
+    );
+
+    expect(onFilterChange).toHaveBeenLastCalledWith({
+      search: '',
+      provider: 'China Aerospace Science and Technology Corporation',
+      status: 'all',
+      sortBy: 'date-asc',
+    });
+  });
+
   it('restores focus to search after clearing active filters', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();

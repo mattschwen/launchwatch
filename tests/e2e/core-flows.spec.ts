@@ -122,9 +122,45 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Filter' }).click();
-  await page
-    .getByRole('searchbox', { name: 'Search launches' })
-    .fill('Polaris');
+  const provider = page.getByRole('combobox', { name: 'Provider' });
+  await expect(provider.getByRole('option')).toHaveText([
+    'All providers',
+    'Demo Launch Alliance',
+    'SpaceX',
+  ]);
+  const search = page.getByRole('searchbox', { name: 'Search launches' });
+  await search.focus();
+  await page.keyboard.press('Tab');
+  await expect(provider).toBeFocused();
+  const providerPlacement = await provider.evaluate((element) => {
+    const control = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible:
+        control.top >= 0 &&
+        control.bottom <= visibleBottom,
+      height: control.height,
+    };
+  });
+  expect(providerPlacement.fullyVisible).toBe(true);
+  expect(providerPlacement.height).toBeGreaterThanOrEqual(44);
+  await provider.selectOption({ label: 'Demo Launch Alliance' });
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('1 mission');
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn' })
+  ).toHaveCount(2);
+  await expect(
+    page.getByRole('heading', { name: 'Polaris Relay' })
+  ).toHaveCount(0);
+
+  await provider.selectOption('all');
+  await search.fill('Polaris');
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' })
   ).toHaveText('1 mission');
@@ -136,7 +172,6 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     page.getByRole('heading', { name: 'Orbital Dawn' })
   ).toHaveCount(1);
 
-  const search = page.getByRole('searchbox', { name: 'Search launches' });
   const toolbarClear = page.getByRole('button', {
     name: 'Clear launch filters',
   });

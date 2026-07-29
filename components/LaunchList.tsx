@@ -11,29 +11,6 @@ import FilterBar, {
 
 const INITIAL_VISIBLE_COUNT = 5;
 
-function providerMatches(providerFilter: string, provider: string): boolean {
-  const normalized = provider.toLowerCase();
-  switch (providerFilter) {
-    case 'spacex':
-      return normalized.includes('spacex');
-    case 'nasa':
-      return normalized.includes('nasa');
-    case 'ula':
-      return (
-        normalized.includes('ula') ||
-        normalized.includes('united launch alliance')
-      );
-    case 'rocket-lab':
-      return normalized.includes('rocket lab');
-    case 'blue-origin':
-      return normalized.includes('blue origin');
-    case 'arianespace':
-      return normalized.includes('arianespace');
-    default:
-      return true;
-  }
-}
-
 export default function LaunchList(): React.ReactElement {
   const { launches, loading, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>({
@@ -48,6 +25,15 @@ export default function LaunchList(): React.ReactElement {
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
     filters.status !== DEFAULT_FILTERS.status;
+  const providerOptions = useMemo(
+    () =>
+      [...new Set(
+        launches
+          .map((launch) => launch.provider?.trim())
+          .filter((provider): provider is string => Boolean(provider))
+      )].sort((a, b) => a.localeCompare(b)),
+    [launches]
+  );
 
   const clearFilters = (): void => {
     const focusTarget = filtersOpen ? searchInputRef : filterToggleRef;
@@ -68,7 +54,7 @@ export default function LaunchList(): React.ReactElement {
           .includes(search);
       const matchesProvider =
         filters.provider === 'all' ||
-        providerMatches(filters.provider, launch.provider || launch.name);
+        launch.provider?.trim() === filters.provider;
       const matchesStatus =
         filters.status === 'all' || launch.status === filters.status;
       return matchesSearch && matchesProvider && matchesStatus;
@@ -177,6 +163,7 @@ export default function LaunchList(): React.ReactElement {
           <FilterBar
             key={filterResetKey}
             searchInputRef={searchInputRef}
+            providerOptions={providerOptions}
             onFilterChange={(next) => {
               setFilters(next);
               setVisibleCount(INITIAL_VISIBLE_COUNT);
