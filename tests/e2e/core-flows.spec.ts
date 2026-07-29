@@ -88,6 +88,61 @@ test('primary mission title links are touch-safe and keyboard-focusable', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('featured mission telemetry stays legible in the split layout', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          {
+            ...UPCOMING_LAUNCHES[0],
+            rocket: 'Long March 6A',
+            launchSite:
+              "Taiyuan Satellite Launch Center, People's Republic of China",
+            missionType: null,
+            orbit: null,
+          },
+          ...UPCOMING_LAUNCHES.slice(1),
+        ],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const telemetry = page
+    .getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+    .locator('xpath=ancestor::section[1]')
+    .locator('dl');
+  await expect(telemetry).toBeVisible();
+  const layout = await telemetry.evaluate((element) => {
+    const columns = getComputedStyle(element).gridTemplateColumns
+      .split(' ')
+      .filter(Boolean);
+    const cells = Array.from(element.children).map(
+      (child) => child.getBoundingClientRect().width
+    );
+
+    return {
+      columns: columns.length,
+      narrowestCell: Math.min(...cells),
+    };
+  });
+
+  expect(layout.columns).toBe(2);
+  expect(layout.narrowestCell).toBeGreaterThanOrEqual(
+    (page.viewportSize()?.width ?? 0) >= 1024 ? 220 : 120
+  );
+  await expect(
+    telemetry.getByText('Long March 6A', { exact: true })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('footer actions clear mobile navigation and preserve refresh focus', async ({
   page,
 }) => {

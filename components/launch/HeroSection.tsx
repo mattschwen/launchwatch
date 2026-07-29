@@ -55,7 +55,7 @@ export default function HeroSection({
         <div className="skeleton mb-5 h-4 w-28 rounded" />
         <div className="skeleton mb-4 h-12 w-3/4 rounded" />
         <div className="skeleton mb-7 h-16 w-full max-w-xl rounded" />
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <div className="skeleton h-16 rounded" />
           <div className="skeleton h-16 rounded" />
           <div className="skeleton h-16 rounded" />
@@ -153,8 +153,8 @@ export default function HeroSection({
             )}
           </div>
 
-          <dl className="grid grid-cols-2 gap-y-5 sm:grid-cols-4 sm:gap-y-0">
-            <div className="relative min-w-0 pr-3 pl-7 sm:border-r sm:border-[var(--border-subtle)]">
+          <dl className="grid grid-cols-2 gap-y-5 xl:grid-cols-4 xl:gap-y-0">
+            <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <CalendarDays
                 aria-hidden="true"
                 className="absolute left-0 top-0.5 text-[var(--text-muted)]"
@@ -168,7 +168,7 @@ export default function HeroSection({
                 {launchTime(activeLaunch.date)}
               </dd>
             </div>
-            <div className="relative min-w-0 px-3 pl-10 sm:border-r sm:border-[var(--border-subtle)]">
+            <div className="relative min-w-0 px-3 pl-10 xl:border-r xl:border-[var(--border-subtle)]">
               <MapPin
                 aria-hidden="true"
                 className="absolute left-3 top-0.5 text-[var(--text-muted)]"
@@ -182,10 +182,10 @@ export default function HeroSection({
                 {siteLocality || activeLaunch.location?.name || 'Location pending'}
               </dd>
             </div>
-            <div className="relative min-w-0 pr-3 pl-7 sm:border-r sm:border-[var(--border-subtle)] sm:px-3 sm:pl-10">
+            <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7 xl:px-3 xl:pl-10">
               <Rocket
                 aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)] sm:left-3"
+                className="absolute left-0 top-0.5 text-[var(--text-muted)] xl:left-3"
                 size={18}
               />
               <dt className="data-label">Vehicle</dt>
