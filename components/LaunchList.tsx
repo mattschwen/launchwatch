@@ -211,7 +211,7 @@ export default function LaunchList(): React.ReactElement {
                     void refresh();
                   }
             }
-            className="action-button action-button-secondary mt-5"
+            className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
           >
             {hasActiveFilters ? 'Clear all filters' : 'Refresh launch schedule'}
           </button>

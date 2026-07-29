@@ -75,7 +75,27 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     })
   ).toBeVisible();
   const clearFilters = page.getByRole('button', { name: 'Clear all filters' });
-  await clearFilters.focus();
+  await search.focus();
+  for (let index = 0; index < 5; index += 1) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(clearFilters).toBeFocused();
+  const clearPlacement = await clearFilters.evaluate((element) => {
+    const control = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible:
+        control.top >= 0 &&
+        control.bottom <= visibleBottom,
+      height: control.height,
+    };
+  });
+  expect(clearPlacement.fullyVisible).toBe(true);
+  expect(clearPlacement.height).toBeGreaterThanOrEqual(44);
   await clearFilters.press('Enter');
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
