@@ -63,12 +63,20 @@ describe('RegisterServiceWorker', () => {
       await screen.findByRole('button', { name: 'Update now' })
     ).toBeVisible();
 
-    await user.click(screen.getByRole('button', { name: 'Update now' }));
+    const updateButton = screen.getByRole('button', { name: 'Update now' });
+    updateButton.focus();
+    await user.keyboard('{Enter}');
 
     expect(waitingWorker.postMessage).toHaveBeenCalledWith({
       type: 'SKIP_WAITING',
     });
-    expect(screen.getByRole('button', { name: 'Updating…' })).toBeDisabled();
+    const applyingButton = screen.getByRole('button', { name: 'Updating…' });
+    expect(applyingButton).not.toBeDisabled();
+    expect(applyingButton).toHaveAttribute('aria-disabled', 'true');
+    expect(applyingButton).toHaveAttribute('aria-busy', 'true');
+    expect(applyingButton).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(waitingWorker.postMessage).toHaveBeenCalledTimes(1);
     expect(registrationListeners.has('updatefound')).toBe(true);
     expect(workerListeners.has('controllerchange')).toBe(true);
   });

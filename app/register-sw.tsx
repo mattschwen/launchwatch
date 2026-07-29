@@ -50,12 +50,16 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
         setUpdateState('available');
         return;
       }
+      if (applyTimeout !== undefined) {
+        return;
+      }
 
       setUpdateState('applying');
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });
 
       applyTimeout = window.setTimeout(() => {
         if (!disposed) {
+          applyTimeout = undefined;
           setUpdateState('available');
         }
       }, UPDATE_APPLY_TIMEOUT_MS);
@@ -70,6 +74,7 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
 
       if (applyTimeout !== undefined) {
         window.clearTimeout(applyTimeout);
+        applyTimeout = undefined;
       }
       window.location.reload();
     };
@@ -231,10 +236,11 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
       </div>
       <button
         type="button"
-        className="action-button action-button-primary w-full sm:w-fit"
-        disabled={applying}
+        className="action-button action-button-primary w-full aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0 sm:w-fit"
+        aria-disabled={applying}
         aria-busy={applying}
         onClick={() => {
+          if (applying) return;
           window.dispatchEvent(new CustomEvent(APPLY_UPDATE_EVENT));
         }}
       >
