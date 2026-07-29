@@ -771,6 +771,24 @@ test('upcoming and historical details place one trajectory before mission suppor
     await expect(
       page.getByRole('region', { name: 'Mission intelligence' })
     ).toBeVisible();
+    const intelligenceSearches = page
+      .getByLabel('Mission intelligence searches')
+      .getByRole('link');
+    await expect(intelligenceSearches).toHaveCount(3);
+    const searchTargets = await intelligenceSearches.evaluateAll((links) =>
+      links.map((link) => {
+        const bounds = link.getBoundingClientRect();
+        return {
+          height: bounds.height,
+          width: bounds.width,
+        };
+      })
+    );
+    expect(searchTargets.every((target) => target.height >= 44)).toBe(true);
+    expect(searchTargets.every((target) => target.width >= 44)).toBe(true);
+    const finalSearch = intelligenceSearches.last();
+    await finalSearch.focus();
+    await expect(finalSearch).toBeFocused();
     if (hasTimeline) {
       const timeline = page.getByRole('region', { name: 'Launch timeline' });
       const timelineEvents = timeline.getByRole('list');

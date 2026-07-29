@@ -260,12 +260,15 @@ export default function LaunchIntelDeck({
         </div>
       ) : null}
 
-      <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--border-subtle)] px-5 py-4">
+      <footer
+        aria-label="Mission intelligence searches"
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--border-subtle)] px-3 py-2 sm:px-4"
+      >
         <a
           href={intel.quickLinks.youtubeSearch}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-[var(--console-cyan)] hover:underline"
+          className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           YouTube search
         </a>
@@ -273,7 +276,7 @@ export default function LaunchIntelDeck({
           href={intel.quickLinks.redditSearch}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-[var(--console-cyan)] hover:underline"
+          className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           Reddit search
         </a>
@@ -281,7 +284,7 @@ export default function LaunchIntelDeck({
           href={intel.quickLinks.xSearch}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-[var(--console-cyan)] hover:underline"
+          className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           X search
         </a>
