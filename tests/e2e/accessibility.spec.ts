@@ -5,6 +5,11 @@ import { installApiFixtures } from './support/api-fixtures';
 const routes = [
   { path: '/', heading: 'Orbital Dawn', pageHeading: 'Orbital Dawn' },
   { path: '/watch', heading: 'Orbital Dawn', pageHeading: 'Watch room' },
+  {
+    path: '/watch?id=ll2-unavailable-mission',
+    heading: 'Orbital Dawn',
+    pageHeading: 'Watch room',
+  },
   { path: '/history', heading: 'Launch archive', pageHeading: 'Launch archive' },
   {
     path: '/launch/spacex-demo-return',

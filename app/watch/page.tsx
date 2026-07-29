@@ -274,12 +274,13 @@ function WatchContent(): React.ReactElement {
               </span>{' '}
               from the current queue instead.
             </p>
-            <Link
-              href="/watch"
-              className="shrink-0 font-mono text-xs uppercase tracking-[0.12em] text-[var(--console-cyan)] hover:underline"
+            <button
+              type="button"
+              onClick={() => window.location.replace('/watch')}
+              className="action-button action-button-quiet shrink-0 font-mono text-xs uppercase tracking-[0.12em]"
             >
               Clear deep link
-            </Link>
+            </button>
           </div>
         ) : null}
 

@@ -312,6 +312,50 @@ test('watch keeps the schedule usable when detail enrichment fails', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch offers a touch-safe recovery from an unavailable deep link', async ({
+  page,
+}) => {
+  await page.goto('/watch?id=ll2-unavailable-mission');
+
+  const recoveryAlert = page
+    .getByRole('alert')
+    .filter({ hasText: 'The requested mission could not be opened.' });
+  const clearDeepLink = recoveryAlert.getByRole('button', {
+    name: 'Clear deep link',
+  });
+
+  await expect(
+    recoveryAlert.getByText(
+      'The requested mission could not be opened. Showing Orbital Dawn from the current queue instead.'
+    )
+  ).toBeVisible();
+  await clearDeepLink.focus();
+  await expect(clearDeepLink).toBeFocused();
+
+  const recoveryTarget = await clearDeepLink.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      height: bounds.height,
+      visible:
+        bounds.top >= 0 &&
+        bounds.left >= 0 &&
+        bounds.right <= window.innerWidth &&
+        bounds.bottom <= window.innerHeight,
+    };
+  });
+
+  expect(recoveryTarget.height).toBeGreaterThanOrEqual(44);
+  expect(recoveryTarget.visible).toBe(true);
+  await clearDeepLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/watch$/);
+  await expect(recoveryAlert).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch labels stream-search and provider-channel fallbacks truthfully', async ({
   page,
 }) => {
