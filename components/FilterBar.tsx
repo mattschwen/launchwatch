@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, type RefObject } from 'react';
 import { Search, X } from 'lucide-react';
 
 export interface FilterOptions {
@@ -15,9 +15,10 @@ interface FilterBarProps {
   initialFilters?: Partial<FilterOptions>;
   showProvider?: boolean;
   statusOptions?: Array<{ value: string; label: string }>;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
-const defaultFilters: FilterOptions = {
+export const DEFAULT_FILTERS: FilterOptions = {
   search: '',
   provider: 'all',
   status: 'all',
@@ -46,12 +47,14 @@ export default function FilterBar({
   initialFilters,
   showProvider = true,
   statusOptions = statuses,
+  searchInputRef,
 }: FilterBarProps): React.ReactElement {
   const [filters, setFilters] = useState<FilterOptions>({
-    ...defaultFilters,
+    ...DEFAULT_FILTERS,
     ...initialFilters,
   });
   const id = useId();
+  const resetFilters = { ...DEFAULT_FILTERS, ...initialFilters };
 
   const update = <Key extends keyof FilterOptions>(
     key: Key,
@@ -63,9 +66,10 @@ export default function FilterBar({
   };
 
   const active =
-    Boolean(filters.search) ||
-    (showProvider && filters.provider !== 'all') ||
-    filters.status !== 'all';
+    filters.search !== resetFilters.search ||
+    (showProvider && filters.provider !== resetFilters.provider) ||
+    filters.status !== resetFilters.status ||
+    filters.sortBy !== resetFilters.sortBy;
 
   return (
     <div className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(15rem,1fr)_12rem_12rem_12rem_auto]">
@@ -79,6 +83,7 @@ export default function FilterBar({
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
         />
         <input
+          ref={searchInputRef}
           id={`${id}-search`}
           type="search"
           value={filters.search}
@@ -149,7 +154,7 @@ export default function FilterBar({
         type="button"
         disabled={!active}
         onClick={() => {
-          const next = { ...defaultFilters, ...initialFilters };
+          const next = { ...resetFilters };
           setFilters(next);
           onFilterChange(next);
         }}

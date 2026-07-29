@@ -56,6 +56,9 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   await page
     .getByRole('searchbox', { name: 'Search launches' })
     .fill('Polaris');
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('1 mission');
 
   await expect(
     page.getByRole('heading', { name: 'Polaris Relay' })
@@ -64,6 +67,23 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     page.getByRole('heading', { name: 'Orbital Dawn' })
   ).toHaveCount(1);
 
+  const search = page.getByRole('searchbox', { name: 'Search launches' });
+  await search.fill('mission that does not exist');
+  await expect(
+    page.getByRole('heading', {
+      name: 'No missions match these filters.',
+    })
+  ).toBeVisible();
+  const clearFilters = page.getByRole('button', { name: 'Clear all filters' });
+  await clearFilters.focus();
+  await clearFilters.press('Enter');
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('2 missions');
+
+  await search.fill('Polaris');
   await page
     .getByRole('link', { name: /Polaris Relay/i })
     .click();
@@ -72,6 +92,53 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   await expect(
     page.getByRole('heading', { level: 1, name: 'Polaris Relay' })
   ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home distinguishes an empty provider schedule and offers recovery', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: feedRequests === 1 ? [] : UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+
+  await expect(
+    page.getByRole('heading', {
+      name: 'No upcoming missions are scheduled.',
+    })
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'Connected providers returned an empty schedule. Check again soon or refresh the feed.'
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'No missions match these filters.',
+    })
+  ).toHaveCount(0);
+
+  await page
+    .getByRole('button', { name: 'Refresh launch schedule' })
+    .click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn' }).first()
+  ).toBeVisible();
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('2 missions');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

@@ -1,10 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import LaunchCard from './LaunchCard';
-import FilterBar, { type FilterOptions } from './FilterBar';
+import FilterBar, {
+  DEFAULT_FILTERS,
+  type FilterOptions,
+} from './FilterBar';
 
 const INITIAL_VISIBLE_COUNT = 5;
 
@@ -34,13 +37,25 @@ function providerMatches(providerFilter: string, provider: string): boolean {
 export default function LaunchList(): React.ReactElement {
   const { launches, loading, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>({
-    search: '',
-    provider: 'all',
-    status: 'all',
-    sortBy: 'date-asc',
+    ...DEFAULT_FILTERS,
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterResetKey, setFilterResetKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const filterToggleRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const hasActiveFilters =
+    Boolean(filters.search.trim()) ||
+    filters.provider !== DEFAULT_FILTERS.provider ||
+    filters.status !== DEFAULT_FILTERS.status;
+
+  const clearFilters = (): void => {
+    const focusTarget = filtersOpen ? searchInputRef : filterToggleRef;
+    setFilters({ ...DEFAULT_FILTERS });
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+    setFilterResetKey((value) => value + 1);
+    requestAnimationFrame(() => focusTarget.current?.focus());
+  };
 
   const filtered = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
@@ -116,13 +131,20 @@ export default function LaunchList(): React.ReactElement {
           <h2 id="upcoming-launches-title" className="section-title">
             Upcoming launches
           </h2>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
+          <p
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-label="Upcoming launch results"
+            className="mt-1 text-xs text-[var(--text-muted)]"
+          >
             {filtered.length} mission{filtered.length === 1 ? '' : 's'}
             {meta?.partial ? ' · provider data is partial' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
+            ref={filterToggleRef}
             type="button"
             aria-expanded={filtersOpen}
             aria-controls="launch-filters"
@@ -153,6 +175,8 @@ export default function LaunchList(): React.ReactElement {
       {filtersOpen ? (
         <div id="launch-filters" className="border-b border-[var(--border-subtle)] p-3 sm:p-4">
           <FilterBar
+            key={filterResetKey}
+            searchInputRef={searchInputRef}
             onFilterChange={(next) => {
               setFilters(next);
               setVisibleCount(INITIAL_VISIBLE_COUNT);
@@ -169,11 +193,28 @@ export default function LaunchList(): React.ReactElement {
             size={32}
           />
           <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
-            No missions match these filters.
+            {hasActiveFilters
+              ? 'No missions match these filters.'
+              : 'No upcoming missions are scheduled.'}
           </h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Clear or broaden the search to restore the schedule.
+            {hasActiveFilters
+              ? 'Clear or broaden the search to restore the schedule.'
+              : 'Connected providers returned an empty schedule. Check again soon or refresh the feed.'}
           </p>
+          <button
+            type="button"
+            onClick={
+              hasActiveFilters
+                ? clearFilters
+                : () => {
+                    void refresh();
+                  }
+            }
+            className="action-button action-button-secondary mt-5"
+          >
+            {hasActiveFilters ? 'Clear all filters' : 'Refresh launch schedule'}
+          </button>
         </div>
       ) : (
         <>
