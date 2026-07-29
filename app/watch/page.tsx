@@ -374,7 +374,7 @@ function WatchContent(): React.ReactElement {
             ) : null}
             <Link
               href="/history"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--console-cyan)] hover:underline"
+              className="action-button action-button-quiet -ml-4 mt-4 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
             >
               Browse launch archive
               <ArrowRight aria-hidden="true" size={15} />

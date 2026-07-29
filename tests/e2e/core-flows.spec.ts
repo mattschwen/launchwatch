@@ -419,6 +419,44 @@ test('watch enriches the selected mission and switches the mission queue', async
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch archive navigation is touch-safe and keyboard-operable', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const archiveLink = page.getByRole('link', {
+    name: 'Browse launch archive',
+  });
+  await expect(archiveLink).toBeVisible();
+  await archiveLink.focus();
+  await expect(archiveLink).toBeFocused();
+  const placement = await archiveLink.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible:
+        bounds.top >= 0 &&
+        bounds.left >= 0 &&
+        bounds.right <= window.innerWidth &&
+        bounds.bottom <= visibleBottom,
+      height: bounds.height,
+    };
+  });
+  expect(placement.height).toBeGreaterThanOrEqual(44);
+  expect(placement.fullyVisible).toBe(true);
+
+  await archiveLink.press('Enter');
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Launch archive' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch does not show intelligence from the previously selected mission', async ({
   page,
 }) => {
