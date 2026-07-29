@@ -68,6 +68,18 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toHaveCount(1);
 
   const search = page.getByRole('searchbox', { name: 'Search launches' });
+  const toolbarClear = page.getByRole('button', {
+    name: 'Clear launch filters',
+  });
+  await toolbarClear.focus();
+  await toolbarClear.press('Enter');
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(toolbarClear).toBeDisabled();
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('2 missions');
+
   await search.fill('mission that does not exist');
   await expect(
     page.getByRole('heading', {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, type RefObject } from 'react';
+import { useId, useRef, useState, type RefObject } from 'react';
 import { Search, X } from 'lucide-react';
 
 export interface FilterOptions {
@@ -53,6 +53,8 @@ export default function FilterBar({
     ...DEFAULT_FILTERS,
     ...initialFilters,
   });
+  const internalSearchInputRef = useRef<HTMLInputElement>(null);
+  const resolvedSearchInputRef = searchInputRef ?? internalSearchInputRef;
   const id = useId();
   const resetFilters = { ...DEFAULT_FILTERS, ...initialFilters };
 
@@ -83,7 +85,7 @@ export default function FilterBar({
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
         />
         <input
-          ref={searchInputRef}
+          ref={resolvedSearchInputRef}
           id={`${id}-search`}
           type="search"
           value={filters.search}
@@ -157,6 +159,7 @@ export default function FilterBar({
           const next = { ...resetFilters };
           setFilters(next);
           onFilterChange(next);
+          requestAnimationFrame(() => resolvedSearchInputRef.current?.focus());
         }}
         className="icon-button disabled:cursor-not-allowed disabled:opacity-35"
         aria-label="Clear launch filters"
