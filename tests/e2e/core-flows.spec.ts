@@ -794,6 +794,78 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history retry reports progress and restores keyboard focus', async ({
+  page,
+}) => {
+  let historyRequests = 0;
+  await page.route('**/api/launches?type=history&limit=100', async (route) => {
+    historyRequests += 1;
+    if (historyRequests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Provider maintenance' }),
+      });
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: HISTORICAL_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/history');
+  await expect(
+    page.getByRole('heading', {
+      name: 'The archive could not be synchronized.',
+    })
+  ).toBeVisible();
+
+  const retry = page.getByRole('button', {
+    name: /Retry(?:ing)? archive/,
+  });
+  await retry.focus();
+  await retry.press('Enter');
+
+  await expect(retry).toHaveText('Retrying archive');
+  await expect(retry).toHaveAttribute('aria-disabled', 'true');
+  await expect(retry).toHaveAttribute('aria-busy', 'true');
+  await expect(retry).toBeFocused();
+  expect(
+    await retry.evaluate((element) => element.getBoundingClientRect().height)
+  ).toBeGreaterThanOrEqual(44);
+
+  await retry.press('Enter');
+  expect(historyRequests).toBe(2);
+
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
+  await expect(search).toBeFocused();
+  await expect(page.getByText('Demo Return Flight')).toBeVisible();
+  const placement = await search.evaluate((element) => {
+    const control = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const visibleBottom =
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+    return {
+      fullyVisible:
+        control.top >= 0 &&
+        control.bottom <= visibleBottom,
+      height: control.height,
+    };
+  });
+  expect(placement.fullyVisible).toBe(true);
+  expect(placement.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history pagination reports progress and keeps terminal focus visible', async ({
   page,
 }) => {

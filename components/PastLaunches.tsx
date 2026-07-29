@@ -215,6 +215,7 @@ export default function PastLaunches(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<LaunchFeedMeta | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [retrying, setRetrying] = useState(false);
   const [search, setSearch] = useState('');
   const [provider, setProvider] = useState('all');
   const [year, setYear] = useState('all');
@@ -223,6 +224,7 @@ export default function PastLaunches(): React.ReactElement {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
+  const focusSearchAfterRetryRef = useRef(false);
   const id = useId();
 
   useEffect(() => {
@@ -261,13 +263,27 @@ export default function PastLaunches(): React.ReactElement {
             : 'Unable to load the archive'
         );
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setRetrying(false);
+        }
       }
     }
 
     void fetchHistory();
     return () => controller.abort();
   }, [reloadKey]);
+
+  useEffect(() => {
+    if (
+      focusSearchAfterRetryRef.current &&
+      !loading &&
+      !error
+    ) {
+      focusSearchAfterRetryRef.current = false;
+      searchRef.current?.focus();
+    }
+  }, [error, loading]);
 
   const providers = useMemo(
     () =>
@@ -324,7 +340,14 @@ export default function PastLaunches(): React.ReactElement {
     searchRef.current?.focus();
   };
 
-  if (loading && launches.length === 0) {
+  const retryHistory = (): void => {
+    if (loading || retrying) return;
+    focusSearchAfterRetryRef.current = true;
+    setRetrying(true);
+    setReloadKey((key) => key + 1);
+  };
+
+  if (loading && launches.length === 0 && !error) {
     return (
       <section className="surface-card overflow-hidden" aria-label="Loading launch history">
         <div className="skeleton m-4 h-12 rounded" />
@@ -352,10 +375,12 @@ export default function PastLaunches(): React.ReactElement {
         </p>
         <button
           type="button"
-          onClick={() => setReloadKey((key) => key + 1)}
-          className="action-button action-button-secondary mt-5"
+          onClick={retryHistory}
+          aria-disabled={retrying}
+          aria-busy={retrying}
+          className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          Retry archive
+          {retrying ? 'Retrying archive' : 'Retry archive'}
         </button>
       </section>
     );
@@ -474,10 +499,12 @@ export default function PastLaunches(): React.ReactElement {
           </p>
           <button
             type="button"
-            onClick={() => setReloadKey((key) => key + 1)}
-            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--console-cyan)] hover:underline"
+            onClick={retryHistory}
+            aria-disabled={retrying}
+            aria-busy={retrying}
+            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--console-cyan)] hover:underline aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
-            Retry
+            {retrying ? 'Retrying' : 'Retry'}
           </button>
         </div>
       ) : null}

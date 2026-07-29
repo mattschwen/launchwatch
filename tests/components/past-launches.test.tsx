@@ -115,6 +115,7 @@ describe('PastLaunches', () => {
 
   it('offers a retry after an upstream archive error', async () => {
     const user = userEvent.setup();
+    let resolveRetry: ((response: typeof successfulResponse) => void) | undefined;
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -122,7 +123,12 @@ describe('PastLaunches', () => {
         status: 503,
         json: async () => ({ error: 'Provider maintenance' }),
       })
-      .mockResolvedValueOnce(successfulResponse);
+      .mockImplementationOnce(
+        () =>
+          new Promise<typeof successfulResponse>((resolve) => {
+            resolveRetry = resolve;
+          })
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     render(<PastLaunches />);
@@ -132,9 +138,22 @@ describe('PastLaunches', () => {
     ).toBeVisible();
     expect(screen.getByText('Provider maintenance')).toBeVisible();
 
-    await user.click(screen.getByRole('button', { name: 'Retry archive' }));
+    const retry = screen.getByRole('button', { name: 'Retry archive' });
+    retry.focus();
+    await user.keyboard('{Enter}');
 
+    expect(retry).toHaveAccessibleName('Retrying archive');
+    expect(retry).toHaveAttribute('aria-disabled', 'true');
+    expect(retry).toHaveAttribute('aria-busy', 'true');
+    expect(retry).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    resolveRetry?.(successfulResponse);
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    expect(
+      screen.getByRole('searchbox', { name: 'Search missions' })
+    ).toHaveFocus();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
