@@ -3,16 +3,18 @@ import { expect, test } from '@playwright/test';
 import { installApiFixtures } from './support/api-fixtures';
 
 const routes = [
-  { path: '/', heading: 'Orbital Dawn' },
-  { path: '/watch', heading: 'Orbital Dawn' },
-  { path: '/history', heading: 'Launch archive' },
+  { path: '/', heading: 'Orbital Dawn', pageHeading: 'Orbital Dawn' },
+  { path: '/watch', heading: 'Orbital Dawn', pageHeading: 'Watch room' },
+  { path: '/history', heading: 'Launch archive', pageHeading: 'Launch archive' },
   {
     path: '/launch/spacex-demo-return',
     heading: 'Demo Return Flight',
+    pageHeading: 'Demo Return Flight',
   },
   {
     path: '/launch/ll2-demo-orbital-dawn',
     heading: 'Orbital Dawn',
+    pageHeading: 'Orbital Dawn',
   },
 ];
 
@@ -28,6 +30,15 @@ for (const route of routes) {
     await expect(
       page.getByRole('heading', { name: route.heading }).first()
     ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: route.pageHeading })
+    ).toHaveCount(1);
+    expect(
+      await page
+        .locator('h1, h2, h3, h4, h5, h6')
+        .first()
+        .evaluate((element) => element.tagName)
+    ).toBe('H1');
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -285,7 +285,7 @@ function WatchContent(): React.ReactElement {
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="data-label">Watch room</p>
+            <h1 className="data-label">Watch room</h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               {liveLaunches.length > 0
                 ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
@@ -313,9 +313,9 @@ function WatchContent(): React.ReactElement {
                     href={`/launch/${encodeURIComponent(selectedLaunch.id)}`}
                     className="group"
                   >
-                    <h1 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+                    <h2 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
                       {selectedLaunch.name}
-                    </h1>
+                    </h2>
                   </Link>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {selectedLaunch.rocket} ·{' '}

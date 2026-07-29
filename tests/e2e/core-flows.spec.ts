@@ -93,16 +93,25 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.getByRole('heading', { name: 'No live stream right now' })
   ).toHaveCount(0);
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+    page.getByRole('heading', { level: 1, name: 'Watch room' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
-  await page.getByRole('button', { name: /Polaris Relay/i }).click();
+  const polarisQueueItem = page
+    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('button', { name: /Polaris Relay/i });
+  await polarisQueueItem.focus();
+  await expect(polarisQueueItem).toBeFocused();
+  await polarisQueueItem.press('Enter');
 
   await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Polaris Relay' })
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
   ).toBeVisible();
+  await expect(polarisQueueItem).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -124,7 +133,10 @@ test('watch keeps the schedule usable when detail enrichment fails', async ({
     page.getByRole('heading', { name: 'Stream status unavailable' })
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+    page.getByRole('heading', { level: 1, name: 'Watch room' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'No live stream right now' })
