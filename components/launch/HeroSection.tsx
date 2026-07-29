@@ -127,7 +127,7 @@ export default function HeroSection({
 
           <Link
             href={`/launch/${encodeURIComponent(activeLaunch.id)}`}
-            className="group block w-fit max-w-full"
+            className="group inline-flex min-h-11 w-fit max-w-full items-center"
           >
             <h1
               id="featured-launch-title"

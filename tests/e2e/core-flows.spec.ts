@@ -44,6 +44,50 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('primary mission title links are touch-safe and keyboard-focusable', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const heroMission = page
+    .getByRole('link', { name: 'Orbital Dawn', exact: true })
+    .first();
+  await heroMission.focus();
+  await expect(heroMission).toBeFocused();
+  expect(
+    await heroMission.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
+
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Detailed provider data unavailable' }),
+      })
+  );
+  await page.goto('/watch');
+
+  const watchMissionLinks = page.getByRole('link', {
+    name: 'Orbital Dawn',
+    exact: true,
+  });
+  await expect(watchMissionLinks).toHaveCount(2);
+
+  for (const link of await watchMissionLinks.all()) {
+    await link.focus();
+    await expect(link).toBeFocused();
+    expect(
+      await link.evaluate((element) => element.getBoundingClientRect().height)
+    ).toBeGreaterThanOrEqual(44);
+  }
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('footer actions clear mobile navigation and preserve refresh focus', async ({
   page,
 }) => {

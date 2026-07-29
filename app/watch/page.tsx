@@ -94,7 +94,7 @@ function WatchStage({
         <p className="data-label">Next mission</p>
         <Link
           href={`/launch/${encodeURIComponent(launch.id)}`}
-          className="mt-2 block text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
+          className="mt-1 inline-flex min-h-11 max-w-full items-center justify-center text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
         >
           {launch.name}
         </Link>
@@ -312,7 +312,7 @@ function WatchContent(): React.ReactElement {
                 <div className="min-w-0">
                   <Link
                     href={`/launch/${encodeURIComponent(selectedLaunch.id)}`}
-                    className="group"
+                    className="group inline-flex min-h-11 max-w-full items-center"
                   >
                     <h2 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
                       {selectedLaunch.name}
