@@ -19,7 +19,7 @@ export default function Footer(): React.ReactElement {
   const now = useCurrentTime();
 
   return (
-    <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)]">
+    <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pb-0">
       <div className="page-container flex min-h-14 flex-col gap-3 py-3 text-xs text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p>
           All times UTC. Sources:{' '}
@@ -52,9 +52,12 @@ export default function Footer(): React.ReactElement {
           />
           <button
             type="button"
-            onClick={() => void refresh()}
-            disabled={refreshing}
-            className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)] disabled:cursor-wait disabled:opacity-60"
+            onClick={() => {
+              if (!refreshing) void refresh();
+            }}
+            aria-disabled={refreshing}
+            aria-busy={refreshing}
+            className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)] aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
             <RefreshCw
               aria-hidden="true"

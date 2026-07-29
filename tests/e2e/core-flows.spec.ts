@@ -42,6 +42,75 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('footer actions clear mobile navigation and preserve refresh focus', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    if (feedRequests > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn' }).first()
+  ).toBeVisible();
+  await expect.poll(() => feedRequests).toBe(1);
+  await page.waitForTimeout(100);
+
+  const refresh = page.locator('footer button');
+  const source = page.getByRole('link', { name: 'Source' });
+  await expect(refresh).toHaveText('Refresh now');
+  await refresh.focus();
+
+  const placement = await Promise.all(
+    [refresh, source].map((control) =>
+      control.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const mobileNav = document.querySelector('nav.fixed.bottom-0');
+        const navBounds = mobileNav?.getBoundingClientRect();
+        const visibleBottom =
+          navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+
+        return {
+          fullyVisible:
+            bounds.top >= 0 &&
+            bounds.bottom <= visibleBottom,
+          height: bounds.height,
+        };
+      })
+    )
+  );
+
+  expect(placement.every((control) => control.fullyVisible)).toBe(true);
+  expect(placement.every((control) => control.height >= 44)).toBe(true);
+
+  await refresh.press('Enter');
+  await expect(refresh).toHaveText('Refreshing');
+  await expect(refresh).toHaveAttribute('aria-disabled', 'true');
+  await expect(refresh).toHaveAttribute('aria-busy', 'true');
+  await expect(refresh).toBeFocused();
+  await expect.poll(() => feedRequests).toBe(2);
+  await refresh.press('Enter');
+  expect(feedRequests).toBe(2);
+
+  await expect(refresh).toHaveText('Refresh now');
+  await expect(refresh).toHaveAttribute('aria-disabled', 'false');
+  await expect(refresh).toHaveAttribute('aria-busy', 'false');
+  await expect(refresh).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule filters missions and opens a detail route', async ({ page }) => {
   await page.goto('/');
 
