@@ -189,6 +189,9 @@ function MapToolbar({
   zoomLevel,
   showEnlarge = true,
 }: MapToolbarProps): React.ReactElement {
+  const zoomOutUnavailable = disabled || zoomLevel === 0;
+  const zoomInUnavailable = disabled || zoomLevel === 2;
+
   return (
     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
       <div
@@ -229,8 +232,11 @@ function MapToolbar({
       <button
         type="button"
         className="icon-button h-11 w-11"
-        onClick={onZoomOut}
-        disabled={disabled || zoomLevel === 0}
+        onClick={() => {
+          if (!zoomOutUnavailable) onZoomOut();
+        }}
+        disabled={disabled}
+        aria-disabled={zoomOutUnavailable}
         aria-label="Zoom map out"
       >
         <Minus aria-hidden="true" size={16} />
@@ -238,12 +244,23 @@ function MapToolbar({
       <button
         type="button"
         className="icon-button h-11 w-11"
-        onClick={onZoomIn}
-        disabled={disabled || zoomLevel === 2}
+        onClick={() => {
+          if (!zoomInUnavailable) onZoomIn();
+        }}
+        disabled={disabled}
+        aria-disabled={zoomInUnavailable}
         aria-label="Zoom map in"
       >
         <Plus aria-hidden="true" size={16} />
       </button>
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        Map zoom level {zoomLevel + 1} of 3.
+      </span>
       <button
         type="button"
         className="icon-button h-11 w-11"

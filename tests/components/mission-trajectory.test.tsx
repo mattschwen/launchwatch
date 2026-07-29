@@ -149,6 +149,45 @@ describe('MissionTrajectory', () => {
     expect(map).toHaveAttribute('data-map-view', focusView);
   });
 
+  it('keeps keyboard focus when map zoom reaches either limit', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MissionTrajectory launch={makeLaunch()} variant="detail" />
+    );
+    const zoomOut = screen.getByRole('button', { name: 'Zoom map out' });
+    const zoomIn = screen.getByRole('button', { name: 'Zoom map in' });
+    const map = container.querySelector('[data-trajectory-map]');
+
+    expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomOut).not.toBeDisabled();
+    expect(zoomIn).toHaveAttribute('aria-disabled', 'false');
+
+    zoomIn.focus();
+    await user.keyboard('{Enter}{Enter}');
+
+    expect(zoomIn).toHaveFocus();
+    expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomIn).not.toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Map zoom level 3 of 3.'
+    );
+    const maximumZoomView = map?.getAttribute('data-map-view');
+
+    await user.keyboard('{Enter}');
+    expect(map).toHaveAttribute('data-map-view', maximumZoomView);
+    expect(zoomIn).toHaveFocus();
+
+    zoomOut.focus();
+    await user.keyboard('{Enter}{Enter}');
+
+    expect(zoomOut).toHaveFocus();
+    expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomOut).not.toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Map zoom level 1 of 3.'
+    );
+  });
+
   it('keeps a reported site visible at the antimeridian in global view', async () => {
     const user = userEvent.setup();
     const { container } = render(

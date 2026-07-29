@@ -898,6 +898,20 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await expect(dialog).toBeVisible();
   await expect(closeButton).toBeFocused();
   await expect(closeButton).toHaveCSS('width', '44px');
+
+  const zoomIn = dialog.getByRole('button', { name: 'Zoom map in' });
+  await zoomIn.focus();
+  await zoomIn.press('Enter');
+  await zoomIn.press('Enter');
+  await expect(zoomIn).toBeFocused();
+  await expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
+  await expect(zoomIn).not.toHaveAttribute('disabled', '');
+  await expect(dialog.getByRole('status')).toHaveText(
+    'Map zoom level 3 of 3.'
+  );
+  await zoomIn.press('Enter');
+  await expect(zoomIn).toBeFocused();
+
   await closeButton.click();
   await expect(expandButton).toBeFocused();
 });
