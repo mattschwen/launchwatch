@@ -400,7 +400,7 @@ test('home reports visual-detail failures as degraded data', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('footer actions clear mobile navigation and preserve refresh focus', async ({
+test('footer controls keep source provenance touch-safe and preserve refresh focus', async ({
   page,
 }) => {
   let feedRequests = 0;
@@ -428,17 +428,39 @@ test('footer actions clear mobile navigation and preserve refresh focus', async 
 
   const refresh = page.locator('footer button');
   const source = page.getByRole('link', { name: 'Source', exact: true });
+  const sourceFeeds = page.getByRole('navigation', {
+    name: 'Launch data sources',
+  });
+  const spacexSource = sourceFeeds.getByRole('link', {
+    name: 'SpaceX',
+    exact: true,
+  });
+  const launchLibrarySource = sourceFeeds.getByRole('link', {
+    name: 'Launch Library 2',
+    exact: true,
+  });
   await expect(refresh).toHaveText('Refresh now');
   await refresh.focus();
 
   const placement = await Promise.all(
-    [refresh, source].map((control) =>
+    [spacexSource, launchLibrarySource, refresh, source].map((control) =>
       control.evaluate((element) => {
         const bounds = element.getBoundingClientRect();
         const mobileNav = document.querySelector('nav.fixed.bottom-0');
         const navBounds = mobileNav?.getBoundingClientRect();
-        const visibleBottom =
-          navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+        const statusRail = document.querySelector(
+          'aside[aria-label="Mission status"]'
+        );
+        const statusBounds = statusRail?.getBoundingClientRect();
+        const visibleBottom = Math.min(
+          window.innerHeight,
+          navBounds && navBounds.height > 0
+            ? navBounds.top
+            : window.innerHeight,
+          statusBounds && statusBounds.height > 0
+            ? statusBounds.top
+            : window.innerHeight
+        );
 
         return {
           fullyVisible:
@@ -452,6 +474,10 @@ test('footer actions clear mobile navigation and preserve refresh focus', async 
 
   expect(placement.every((control) => control.fullyVisible)).toBe(true);
   expect(placement.every((control) => control.height >= 44)).toBe(true);
+  await spacexSource.focus();
+  await expect(spacexSource).toBeFocused();
+  await launchLibrarySource.focus();
+  await expect(launchLibrarySource).toBeFocused();
 
   await refresh.press('Enter');
   await expect(refresh).toHaveText('Refreshing');

@@ -18,6 +18,42 @@ afterEach(() => {
 });
 
 describe('Footer', () => {
+  it('exposes launch data provenance as dedicated external links', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({ launches: UPCOMING_LAUNCHES, meta: FEED_META })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    const sources = await screen.findByRole('navigation', {
+      name: 'Launch data sources',
+    });
+    const spacex = screen.getByRole('link', { name: 'SpaceX' });
+    const launchLibrary = screen.getByRole('link', {
+      name: 'Launch Library 2',
+    });
+
+    expect(sources).toContainElement(spacex);
+    expect(sources).toContainElement(launchLibrary);
+    expect(spacex).toHaveAttribute(
+      'href',
+      'https://github.com/r-spacex/SpaceX-API'
+    );
+    expect(launchLibrary).toHaveAttribute(
+      'href',
+      'https://thespacedevs.com/llapi'
+    );
+    expect(spacex).toHaveAttribute('target', '_blank');
+    expect(launchLibrary).toHaveAttribute('target', '_blank');
+  });
+
   it('keeps refresh focus and prevents duplicate requests while busy', async () => {
     const user = userEvent.setup();
     let resolveRefresh: ((value: Response) => void) | undefined;

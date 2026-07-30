@@ -21,27 +21,33 @@ export default function Footer(): React.ReactElement {
   return (
     <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pb-0">
       <div className="page-container flex min-h-14 flex-col gap-3 py-3 text-xs text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
-        <p>
-          All times UTC. Sources:{' '}
-          <a
-            href="https://github.com/r-spacex/SpaceX-API"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)]"
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="leading-5">All times UTC. Schedule times can change.</p>
+          <nav
+            aria-label="Launch data sources"
+            className="flex flex-wrap items-center gap-2"
           >
-            SpaceX
-          </a>{' '}
-          and{' '}
-          <a
-            href="https://thespacedevs.com/llapi"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)]"
-          >
-            Launch Library 2
-          </a>
-          . Times can change.
-        </p>
+            <span className="data-label mr-0.5">Source feeds</span>
+            <a
+              href="https://github.com/r-spacex/SpaceX-API"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
+            >
+              SpaceX
+              <ExternalLink aria-hidden="true" size={12} />
+            </a>
+            <a
+              href="https://thespacedevs.com/llapi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
+            >
+              Launch Library 2
+              <ExternalLink aria-hidden="true" size={12} />
+            </a>
+          </nav>
+        </div>
         <div className="flex flex-wrap items-center gap-3 sm:justify-end">
           <span aria-live="polite" className="font-mono">
             {error ? 'Feed degraded' : `Data refresh: ${refreshAge(meta?.generatedAt, now)}`}
