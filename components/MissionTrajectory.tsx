@@ -25,7 +25,10 @@ import MissionMapCanvas, {
 import MissionPhaseRail, {
   formatLaunchCoordinates,
 } from '@/components/mission-map/MissionPhaseRail';
-import { isMeaningfulLaunchValue } from '@/lib/format';
+import {
+  isCriticalLaunchStatusName,
+  isMeaningfulLaunchValue,
+} from '@/lib/format';
 import {
   clamp,
   MAP_HEIGHT,
@@ -76,11 +79,15 @@ function zoomViewport(
   };
 }
 
-function statusTone(status: Launch['status']): string {
-  if (status === 'live' || status === 'failure') {
+function statusTone(launch: Launch): string {
+  if (launch.status === 'live') return 'text-[var(--console-magenta)]';
+  if (
+    launch.status === 'failure' ||
+    isCriticalLaunchStatusName(launch.statusName)
+  ) {
     return 'text-[var(--console-red)]';
   }
-  if (status === 'tbd') return 'text-[var(--console-amber)]';
+  if (launch.status === 'tbd') return 'text-[var(--console-amber)]';
   return 'text-[var(--console-green)]';
 }
 
@@ -106,7 +113,7 @@ function CompactFacts({
                   : launch.status === 'tbd'
                     ? 'To be determined'
                     : 'Upcoming',
-          className: statusTone(launch.status),
+          className: statusTone(launch),
         },
         {
           label: 'Target orbit',
@@ -464,7 +471,7 @@ function MissionTrajectoryController({
               aria-modal="true"
               aria-labelledby={dialogTitleId}
               aria-describedby={dialogDescriptionId}
-              className="flex h-[min(92svh,58rem)] min-h-[20rem] w-full max-w-[90rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
+              className="surface-card holo-card signal-cold flex h-[min(92svh,58rem)] min-h-[20rem] w-full max-w-[90rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
             >
               <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
                 <div className="min-w-0">
@@ -554,7 +561,7 @@ function MissionTrajectoryController({
     <>
       <section
         aria-labelledby={sectionTitleId}
-        className={`surface-card flex min-h-0 flex-col overflow-hidden ${
+        className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden ${
           variant === 'detail'
             ? 'min-h-[32rem]'
             : 'lg:h-full lg:min-h-[27.5rem]'

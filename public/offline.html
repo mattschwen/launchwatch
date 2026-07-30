@@ -3,18 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#080b10">
+    <meta name="theme-color" content="#05060a">
     <title>Signal Lost — LaunchWatch</title>
     <style>
       :root {
         color-scheme: dark;
-        --graphite: #080b10;
-        --panel: #0b0f15;
-        --line: rgba(185, 197, 216, 0.18);
-        --green: #5ee6a8;
-        --cyan: #58c8e8;
-        --text: #f3f6fa;
-        --muted: #9aa4b2;
+        --graphite: #05060a;
+        --panel: #080b12;
+        --line: rgba(181, 204, 231, 0.2);
+        --green: #63f6b2;
+        --magenta: #ff4fd8;
+        --red: #ff5c6c;
+        --cyan: #58e6ff;
+        --text: #f5f7ff;
+        --muted: #9ca8ba;
       }
 
       * {
@@ -32,8 +34,8 @@
         overflow-y: auto;
         color: var(--text);
         background:
-          radial-gradient(circle at 50% 8%, rgba(0, 212, 255, 0.12), transparent 34%),
-          radial-gradient(circle at 12% 20%, rgba(0, 255, 136, 0.1), transparent 28%),
+          radial-gradient(circle at 80% 2%, rgba(255, 79, 216, 0.14), transparent 34%),
+          radial-gradient(circle at 10% 18%, rgba(88, 230, 255, 0.12), transparent 28%),
           var(--graphite);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -45,9 +47,10 @@
         pointer-events: none;
         opacity: 0.55;
         background-image:
-          linear-gradient(rgba(0, 255, 136, 0.035) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0, 255, 136, 0.035) 1px, transparent 1px);
-        background-size: 40px 40px;
+          radial-gradient(circle, rgba(245, 247, 255, 0.15) 0.6px, transparent 0.8px),
+          linear-gradient(rgba(88, 230, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 79, 216, 0.03) 1px, transparent 1px);
+        background-size: 13px 17px, 40px 40px, 40px 40px;
       }
 
       main {
@@ -55,8 +58,12 @@
         width: min(100%, 620px);
         border: 1px solid var(--line);
         padding: clamp(28px, 7vw, 56px);
-        background: rgba(9, 16, 14, 0.92);
-        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
+        background:
+          linear-gradient(145deg, rgba(88, 230, 255, 0.05), transparent 30%),
+          rgba(8, 11, 18, 0.94);
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.58),
+          0 0 48px rgba(255, 79, 216, 0.06);
       }
 
       main::before,
@@ -70,8 +77,8 @@
 
       main::before {
         inset: -1px auto auto -1px;
-        border-top: 2px solid var(--green);
-        border-left: 2px solid var(--green);
+        border-top: 2px solid var(--magenta);
+        border-left: 2px solid var(--magenta);
       }
 
       main::after {
@@ -121,6 +128,9 @@
         line-height: 0.95;
         letter-spacing: -0.055em;
         text-wrap: balance;
+        color: transparent;
+        background: linear-gradient(105deg, var(--red), var(--magenta), var(--cyan));
+        background-clip: text;
       }
 
       .status {
@@ -160,7 +170,7 @@
       }
 
       a {
-        border: 1px solid rgba(0, 212, 255, 0.42);
+        border: 1px solid rgba(88, 230, 255, 0.42);
         color: var(--cyan);
         background: transparent;
       }
@@ -171,7 +181,7 @@
 
       a:hover {
         border-color: var(--cyan);
-        background: rgba(0, 212, 255, 0.08);
+        background: rgba(88, 230, 255, 0.08);
       }
 
       :focus-visible {
@@ -251,11 +261,11 @@
       <div class="brand">
         <span class="mark" aria-hidden="true">
           <svg viewBox="0 0 48 48" fill="none">
-            <path d="M8.5 27.5A16 16 0 0 1 31.5 8.7" stroke="#58C8E8" stroke-width="3.5" stroke-linecap="round"/>
-            <path d="M39.5 20.5A16 16 0 0 1 17.2 39.4" stroke="#5EE6A8" stroke-width="3.5" stroke-linecap="round"/>
-            <path d="M16 35 36 15" stroke="#F3F6FA" stroke-width="4" stroke-linecap="round"/>
-            <path d="m29.5 13.5 9-2.2-2.2 9" stroke="#5EE6A8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="8.7" cy="27.6" r="2.6" fill="#58C8E8"/>
+            <path d="M8.5 27.5A16 16 0 0 1 31.5 8.7" stroke="#58E6FF" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M39.5 20.5A16 16 0 0 1 17.2 39.4" stroke="#FF4FD8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M16 35 36 15" stroke="#F5F7FF" stroke-width="4" stroke-linecap="round"/>
+            <path d="m29.5 13.5 9-2.2-2.2 9" stroke="#63F6B2" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.7" cy="27.6" r="2.6" fill="#58E6FF"/>
           </svg>
         </span>
         LaunchWatch Mission Control

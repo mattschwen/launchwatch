@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -16,7 +17,11 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
-import { formatLaunchDate, shortenLaunchSite } from '@/lib/format';
+import {
+  formatLaunchDate,
+  isCriticalLaunchStatusName,
+  shortenLaunchSite,
+} from '@/lib/format';
 import {
   useLaunchById,
   useLaunchIntel,
@@ -25,6 +30,16 @@ import {
 } from '@/lib/hooks';
 import { getFallbackLaunchSummary } from '@/lib/launch-action';
 import type { Launch } from '@/lib/types';
+
+const MissionTrajectory = dynamic(
+  () => import('@/components/MissionTrajectory'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="skeleton min-h-[27.5rem] rounded-[var(--radius-md)]" />
+    ),
+  },
+);
 
 function WatchStage({
   launch,
@@ -45,7 +60,7 @@ function WatchStage({
 
   if (launch.livestream) {
     return (
-      <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-black">
+      <div className="video-signal-frame holo-card signal-live relative overflow-hidden rounded-[var(--radius-md)] border bg-black">
         <VideoPlayer
           url={launch.livestream}
           title={launch.name}
@@ -57,10 +72,10 @@ function WatchStage({
   }
 
   return (
-    <section className="relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] px-5 text-center sm:aspect-video">
+    <section className="stream-surface holo-card signal-warm relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-5 text-center sm:aspect-video">
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(rgba(94,230,168,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(94,230,168,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
+        className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,79,216,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
       />
       <Rocket
         aria-hidden="true"
@@ -78,7 +93,7 @@ function WatchStage({
         ) : (
           <Radio
             aria-hidden="true"
-            className="mx-auto text-[var(--text-muted)]"
+            className="mx-auto text-[var(--console-magenta)]"
             size={34}
           />
         )}
@@ -127,7 +142,10 @@ function MissionQueue({
   onSelect: (id: string) => void;
 }): React.ReactElement {
   return (
-    <aside aria-labelledby="next-up-title" className="surface-card overflow-hidden">
+    <aside
+      aria-labelledby="next-up-title"
+      className="surface-card holo-card signal-cold overflow-hidden"
+    >
       <div className="border-b border-[var(--border-subtle)] p-4">
         <h2 id="next-up-title" className="section-title text-[1.2rem]">
           Next up
@@ -144,7 +162,9 @@ function MissionQueue({
               onClick={() => onSelect(launch.id)}
               className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
                 selected
-                  ? 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-green)]'
+                  ? launch.isLive
+                    ? 'bg-[var(--surface-live)] shadow-[inset_3px_0_0_var(--console-magenta)]'
+                    : 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-cyan)]'
                   : 'hover:bg-[var(--surface-subtle)]'
               }`}
             >
@@ -152,8 +172,11 @@ function MissionQueue({
                 aria-hidden="true"
                 className={`h-2 w-2 shrink-0 rounded-full ${
                   launch.isLive
-                    ? 'bg-[var(--console-red)]'
-                    : launch.status === 'tbd'
+                    ? 'status-dot-live bg-[var(--console-magenta)]'
+                    : launch.status === 'failure' ||
+                        isCriticalLaunchStatusName(launch.statusName)
+                      ? 'bg-[var(--console-red)]'
+                      : launch.status === 'tbd'
                       ? 'bg-[var(--console-amber)]'
                       : 'bg-[var(--console-green)]'
                 }`}
@@ -311,9 +334,14 @@ function WatchContent(): React.ReactElement {
           </div>
         ) : null}
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="route-masthead signal-live mb-6 flex flex-wrap items-center justify-between gap-3 pb-2">
           <div>
-            <h1 className="data-label">Watch room</h1>
+            <p className="data-label text-[var(--console-magenta)]">
+              Launch network / active console
+            </p>
+            <h1 className="section-title mt-1 text-[clamp(1.55rem,4vw,2.4rem)]">
+              Watch room
+            </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               {liveLaunches.length > 0
                 ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
@@ -334,7 +362,13 @@ function WatchContent(): React.ReactElement {
               streamLookupError={selected.launch ? selected.error : null}
             />
 
-            <section className="surface-card mt-4 p-5 sm:p-6">
+            <section
+              className={`surface-card holo-card mt-4 p-5 sm:p-6 ${
+                selectedLaunch.isLive || selectedLaunch.livestream
+                  ? 'signal-live'
+                  : 'signal-cold'
+              }`}
+            >
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <Link
@@ -376,18 +410,35 @@ function WatchContent(): React.ReactElement {
           />
         </div>
 
+        <MissionTrajectory
+          launch={selectedLaunch}
+          variant="detail"
+          className="mt-5"
+        />
+
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <LaunchIntelDeck
             launch={selectedLaunch}
             intel={intel}
             loading={intelLoading}
+            error={intelError}
           />
-          <aside className="surface-card p-5">
+          <aside className="surface-card holo-card signal-warm p-5">
             <h2 className="section-title text-[1.15rem]">Source & status</h2>
-            <div className="mt-4 flex items-center gap-2 text-sm text-[var(--console-green)]">
+            <div
+              className={`mt-4 flex items-center gap-2 text-sm ${
+                meta?.partial
+                  ? 'text-[var(--console-amber)]'
+                  : 'text-[var(--console-green)]'
+              }`}
+            >
               <span
                 aria-hidden="true"
-                className="h-2 w-2 rounded-full bg-[var(--console-green)]"
+                className={`h-2 w-2 rounded-full ${
+                  meta?.partial
+                    ? 'bg-[var(--console-amber)]'
+                    : 'bg-[var(--console-green)]'
+                }`}
               />
               {meta?.partial ? 'Schedule partially available' : 'Schedule online'}
             </div>
@@ -395,11 +446,6 @@ function WatchContent(): React.ReactElement {
               Schedules and stream links are aggregated from official providers.
               Launch times can change.
             </p>
-            {intelError ? (
-              <p className="mt-4 text-sm text-[var(--console-amber)]">
-                Intelligence feed: {intelError}
-              </p>
-            ) : null}
             <Link
               href="/history"
               className="action-button action-button-quiet -ml-4 mt-4 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"

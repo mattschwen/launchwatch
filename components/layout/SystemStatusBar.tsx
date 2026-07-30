@@ -44,8 +44,8 @@ export default function SystemStatusBar(): React.ReactElement {
 
       <div className="flex flex-shrink-0 items-center gap-3">
         {liveCount > 0 && (
-          <span className="flex items-center gap-1.5 font-semibold text-[var(--console-red)]">
-            <span className="status-dot status-dot-critical" aria-hidden="true" />
+          <span className="flex items-center gap-1.5 font-semibold text-[var(--console-magenta)]">
+            <span className="status-dot status-dot-live" aria-hidden="true" />
             {liveCount} LIVE
           </span>
         )}

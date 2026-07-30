@@ -14,14 +14,20 @@
 
 LaunchWatch is a responsive Next.js application for following a mission from schedule to replay. It combines SpaceX and Launch Library 2 data behind internal server routes, normalizes provider records into one launch model, and gives every launch a stable provider-qualified ID.
 
-The interface keeps its green-and-black mission-control identity while prioritizing clear navigation, readable data, and useful degraded states. Home, Watch, History, and mission details share one client launch feed, so a launch selected in one surface remains consistent everywhere else.
+The interface evolves its green-and-black mission-control identity into a
+cyberpunk signal system while prioritizing clear navigation, readable data,
+and useful degraded states. Green means nominal, magenta marks live coverage,
+red is reserved for critical states, cyan identifies trajectory and cold data,
+and amber communicates caution or incomplete signals. Home, Watch, History,
+and mission details share one client launch feed, so a launch selected in one
+surface remains consistent everywhere else.
 
 ## Product Surfaces
 
 - **Home** highlights the live or next launch, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
-- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, queue, countdown, and intelligence.
+- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, queue, countdown, selected-mission trajectory, and truthful coverage signal.
 - **History** loads completed SpaceX missions through the internal server API and supports search, provider, year, outcome, expandable summaries, replay links, and mission details.
-- **Mission detail** resolves both upcoming and historical launches by canonical ID and combines status, timeline, actions, video, and ID-scoped intelligence.
+- **Mission detail** resolves both upcoming and historical launches by canonical ID and combines status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence.
 
 The desktop and mobile navigation both expose Home, Watch, and History. The first-visit synchronization message is a short, dismissible status toast; it never blocks the application.
 
@@ -35,7 +41,12 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Searchable and filterable launch schedule and archive
 - Mission briefings, coverage, community links, and replay surfaces
 - Calendar export and local browser launch reminders
-- Responsive launch-site map with a collapsed mobile presentation
+- Responsive selected-mission trajectory map on Watch and every detail route,
+  with a collapsed Home mobile presentation
+- Discrete stream, news, and community coverage signals based on available
+  records rather than synthetic strength percentages
+- Reduced-motion-safe trajectory drawing, hardware LEDs, holographic surfaces,
+  grid texture, and scanlines
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
 

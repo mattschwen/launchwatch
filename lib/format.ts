@@ -20,12 +20,20 @@ const UTC_DATE = new Intl.DateTimeFormat('en-US', {
 
 const PLACEHOLDER_VALUE =
   /^(?:unknown(?:\s+(?:orbit|mission|profile|vehicle|rocket|site|pad))?|tbd|tbc|to be (?:determined|confirmed)|not (?:available|applicable|provided|supplied)|n\/?a|none|null|-|—)$/i;
+const CRITICAL_STATUS_NAME =
+  /\b(?:abort(?:ed)?|cancel(?:led|ed)?|failure|failed|hold|scrub(?:bed)?|warning|anomaly)\b/i;
 
 export function isMeaningfulLaunchValue(
   value: string | null | undefined
 ): value is string {
   const normalized = value?.trim();
   return Boolean(normalized && !PLACEHOLDER_VALUE.test(normalized));
+}
+
+export function isCriticalLaunchStatusName(
+  value: string | null | undefined
+): boolean {
+  return Boolean(value && CRITICAL_STATUS_NAME.test(value));
 }
 
 export function formatLaunchValue(

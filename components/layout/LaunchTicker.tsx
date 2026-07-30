@@ -12,14 +12,14 @@ function NextLaunchStatus({ launch }: { launch: Launch }): React.ReactElement {
       href={launch.isLive ? `/watch?id=${launch.id}` : `/launch/${launch.id}`}
       className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
     >
-      <span className={launch.isLive ? 'text-[var(--console-red)]' : 'text-[var(--console-cyan)]'}>
+      <span className={launch.isLive ? 'text-[var(--console-magenta)]' : 'text-[var(--console-cyan)]'}>
         {launch.isLive ? 'LIVE' : 'NEXT'}
       </span>
       <span aria-hidden="true" className="text-[var(--border-strong)]">/</span>
       <span className="max-w-[48vw] truncate font-medium text-[var(--text-secondary)]">{launch.name}</span>
       <span
         suppressHydrationWarning
-        className={launch.isLive ? 'font-semibold text-[var(--console-red)]' : 'text-[var(--console-green)]'}
+        className={launch.isLive ? 'font-semibold text-[var(--console-magenta)]' : 'text-[var(--console-green)]'}
       >
         {countdown}
       </span>

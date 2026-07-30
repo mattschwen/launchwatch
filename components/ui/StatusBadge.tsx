@@ -1,4 +1,5 @@
 import { Launch } from '@/lib/types';
+import { isCriticalLaunchStatusName } from '@/lib/format';
 import WarningLight from './WarningLight';
 
 interface StatusBadgeProps {
@@ -7,22 +8,22 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green' | 'red' | 'amber'; textClass: string; bgClass: string; borderClass: string; spinning: boolean }> = {
+const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green' | 'magenta' | 'red' | 'amber'; textClass: string; bgClass: string; borderClass: string; spinning: boolean }> = {
   live: {
     label: 'LIVE',
-    lightColor: 'red',
-    textClass: 'text-[var(--console-red)]',
-    bgClass: 'bg-[var(--console-red)]/15',
-    borderClass: 'border-[var(--console-red)]/30',
+    lightColor: 'magenta',
+    textClass: 'text-[var(--console-magenta)]',
+    bgClass: 'bg-[var(--console-magenta)]/15',
+    borderClass: 'border-[var(--console-magenta)]/30',
     spinning: true,
   },
   upcoming: {
-    label: 'GO FOR LAUNCH',
+    label: 'SCHEDULED',
     lightColor: 'green',
     textClass: 'text-[var(--console-green)]',
     bgClass: 'bg-[var(--console-green)]/10',
     borderClass: 'border-[var(--console-green)]/25',
-    spinning: true,
+    spinning: false,
   },
   success: {
     label: 'NOMINAL',
@@ -51,7 +52,11 @@ const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green
 };
 
 export default function StatusBadge({ status, statusName, className = '' }: StatusBadgeProps): React.ReactElement {
-  const config = statusConfig[status];
+  const criticalOverride =
+    status !== 'live' && isCriticalLaunchStatusName(statusName);
+  const config = criticalOverride
+    ? statusConfig.failure
+    : statusConfig[status];
   const displayLabel = statusName && status !== 'live' ? statusName.toUpperCase() : config.label;
 
   return (

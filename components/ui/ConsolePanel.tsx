@@ -19,7 +19,7 @@ const variantStyles: Record<string, string> = {
 
 const bracketVariant: Record<string, string> = {
   default: 'corner-brackets',
-  live: 'corner-brackets corner-brackets-red',
+  live: 'corner-brackets corner-brackets-magenta',
   interactive: 'corner-brackets',
 };
 

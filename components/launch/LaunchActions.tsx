@@ -57,7 +57,7 @@ export default function LaunchActions({
       {launch.livestream ? (
         <Link
           href={`/watch?id=${encodeURIComponent(launch.id)}`}
-          className="action-button action-button-primary"
+          className="action-button action-button-stream"
         >
           <Play aria-hidden="true" size={17} fill="currentColor" />
           {primaryLabel}
@@ -67,7 +67,7 @@ export default function LaunchActions({
           href={fallback.recommendedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="action-button action-button-primary"
+          className="action-button action-button-secondary"
         >
           <ExternalLink aria-hidden="true" size={17} />
           {primaryLabel}

@@ -7,6 +7,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDay,
+  isCriticalLaunchStatusName,
   shortenLaunchSite,
 } from '@/lib/format';
 import Countdown from '@/components/Countdown';
@@ -51,14 +52,19 @@ export default function HeroSection({
   const retryFocusPendingRef = useRef(false);
 
   useEffect(() => {
-    if (!activeLaunch || !retryFocusPendingRef.current) return;
+    if (!retryFocusPendingRef.current || refreshing) return;
+
+    if (!activeLaunch) {
+      retryFocusPendingRef.current = false;
+      return;
+    }
 
     retryFocusPendingRef.current = false;
     const frame = window.requestAnimationFrame(() =>
       missionLinkRef.current?.focus(),
     );
     return () => window.cancelAnimationFrame(frame);
-  }, [activeLaunch]);
+  }, [activeLaunch, refreshing]);
 
   const retrySchedule = (): void => {
     if (refreshing) return;
@@ -70,7 +76,7 @@ export default function HeroSection({
     return (
       <section
         aria-label="Loading next launch"
-        className="surface-card min-h-[27.5rem] p-5 sm:p-7"
+        className="surface-card holo-card signal-cold min-h-[27.5rem] p-5 sm:p-7"
       >
         <div className="skeleton mb-5 h-4 w-28 rounded" />
         <div className="skeleton mb-4 h-12 w-3/4 rounded" />
@@ -85,15 +91,15 @@ export default function HeroSection({
     );
   }
 
-  if (!activeLaunch) {
+  if (!activeLaunch && error) {
     return (
-      <section className="surface-card min-h-[27.5rem] p-6 sm:p-8">
-        <p className="data-label text-[var(--console-amber)]">Schedule unavailable</p>
+      <section className="surface-card holo-card signal-critical min-h-[27.5rem] p-6 sm:p-8">
+        <p className="data-label text-[var(--console-red)]">Schedule unavailable</p>
         <h1 className="mt-3 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]">
           We could not load the next mission.
         </h1>
         <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
-          {error || 'No upcoming launches were returned by the connected providers.'}
+          {error}
         </p>
         <button
           type="button"
@@ -108,7 +114,42 @@ export default function HeroSection({
     );
   }
 
+  if (!activeLaunch) {
+    return (
+      <section className="surface-card holo-card signal-nominal min-h-[27.5rem] overflow-hidden p-6 sm:p-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[var(--console-cyan)]/[0.055] blur-3xl"
+        />
+        <div className="relative">
+          <p className="data-label text-[var(--console-green)]">
+            Schedule synchronized
+          </p>
+          <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]">
+            Launch queue is clear.
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+            Connected providers returned a healthy schedule with no upcoming
+            missions. Keep the feed armed for the next assignment.
+          </p>
+          <button
+            type="button"
+            onClick={retrySchedule}
+            aria-disabled={refreshing}
+            aria-busy={refreshing}
+            className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
+          >
+            {refreshing ? 'Refreshing mission queue' : 'Refresh mission queue'}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   const live = activeLaunch.isLive;
+  const critical =
+    activeLaunch.status === 'failure' ||
+    isCriticalLaunchStatusName(activeLaunch.statusName);
   const [siteName, siteLocality] = splitSite(activeLaunch.launchSite);
   const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
     .filter(Boolean)
@@ -126,18 +167,34 @@ export default function HeroSection({
     <>
       <section
         aria-labelledby="featured-launch-title"
-        className={`surface-card relative flex min-h-[27.5rem] overflow-hidden p-5 sm:p-7 lg:p-8 ${
-          live ? 'border-[var(--console-red)]/40' : ''
-        }`}
+        className={`surface-card holo-card ${
+          live
+            ? 'signal-live'
+            : critical
+              ? 'signal-critical'
+              : partial
+                ? 'signal-warm'
+                : 'signal-nominal'
+        } relative flex min-h-[27.5rem] overflow-hidden p-5 sm:p-7 lg:p-8`}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[var(--console-green)]/[0.035] blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[var(--console-magenta)]/[0.06] blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-32 left-1/4 h-64 w-64 rounded-full bg-[var(--console-cyan)]/[0.045] blur-3xl"
         />
 
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div className="mb-4 flex min-h-5 flex-wrap items-center justify-between gap-3">
-            <p className="data-label text-[var(--console-green)]">
+            <p
+              className={`data-label ${
+                live
+                  ? 'text-[var(--console-magenta)]'
+                  : 'text-[var(--console-green)]'
+              }`}
+            >
               {live ? 'Live mission' : 'Next launch'}
             </p>
             {partial ? (
@@ -165,9 +222,9 @@ export default function HeroSection({
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden="true"
-                  className="h-3 w-3 rounded-full bg-[var(--console-red)] shadow-[0_0_18px_rgba(255,107,118,0.7)]"
+                  className="status-dot-live h-3 w-3 rounded-full bg-[var(--console-magenta)] text-[var(--console-magenta)]"
                 />
-                <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-red)]">
+                <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-magenta)]">
                   LIVE NOW
                 </p>
               </div>

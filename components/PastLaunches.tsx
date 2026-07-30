@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -61,7 +68,17 @@ function HistoryRow({
   const outcome = launchOutcomeLabel(launch);
 
   return (
-    <article className="border-b border-[var(--border-subtle)] last:border-b-0">
+    <article
+      className="mission-row border-b border-[var(--border-subtle)] last:border-b-0"
+      style={{
+        '--row-signal':
+          launch.status === 'failure'
+            ? 'var(--console-red)'
+            : launch.status === 'success'
+              ? 'var(--console-green)'
+              : 'var(--console-amber)',
+      } as CSSProperties}
+    >
       <div className="grid items-center gap-3 px-3 py-3 sm:px-4 xl:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
         <button
           type="button"
@@ -197,7 +214,7 @@ function HistoryRow({
             {launch.livestream ? (
               <Link
                 href={`/watch?id=${encodeURIComponent(launch.id)}`}
-                className="action-button action-button-primary"
+                className="action-button action-button-stream"
               >
                 Watch replay
               </Link>
@@ -275,14 +292,10 @@ export default function PastLaunches(): React.ReactElement {
   }, [reloadKey]);
 
   useEffect(() => {
-    if (
-      focusSearchAfterRetryRef.current &&
-      !loading &&
-      !error
-    ) {
-      focusSearchAfterRetryRef.current = false;
-      searchRef.current?.focus();
-    }
+    if (!focusSearchAfterRetryRef.current || loading) return;
+
+    focusSearchAfterRetryRef.current = false;
+    if (!error) searchRef.current?.focus();
   }, [error, loading]);
 
   const providers = useMemo(
@@ -319,7 +332,7 @@ export default function PastLaunches(): React.ReactElement {
     });
   }, [launches, outcome, provider, search, year]);
   const filtersActive =
-    Boolean(search) ||
+    Boolean(search.trim()) ||
     provider !== 'all' ||
     year !== 'all' ||
     outcome !== 'all';
@@ -349,7 +362,10 @@ export default function PastLaunches(): React.ReactElement {
 
   if (loading && launches.length === 0 && !error) {
     return (
-      <section className="surface-card overflow-hidden" aria-label="Loading launch history">
+      <section
+        className="surface-card holo-card signal-cold overflow-hidden"
+        aria-label="Loading launch history"
+      >
         <div className="skeleton m-4 h-12 rounded" />
         {Array.from({ length: 8 }).map((_, index) => (
           <div
@@ -363,10 +379,10 @@ export default function PastLaunches(): React.ReactElement {
 
   if (error && launches.length === 0) {
     return (
-      <section className="surface-card p-8 text-center">
+      <section className="surface-card holo-card signal-critical p-8 text-center">
         <AlertTriangle
           aria-hidden="true"
-          className="mx-auto text-[var(--console-amber)]"
+          className="mx-auto text-[var(--console-red)]"
           size={36}
         />
         <h2 className="section-title mt-4">The archive could not be synchronized.</h2>
@@ -387,7 +403,10 @@ export default function PastLaunches(): React.ReactElement {
   }
 
   return (
-    <section aria-labelledby="archive-results-title" className="surface-card overflow-hidden">
+    <section
+      aria-labelledby="archive-results-title"
+      className="surface-card holo-card signal-warm overflow-hidden"
+    >
       <div className="border-b border-[var(--border-subtle)] p-4">
         <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
           <div className="relative min-w-0">
@@ -527,11 +546,31 @@ export default function PastLaunches(): React.ReactElement {
             size={34}
           />
           <h2 id="archive-results-title" className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
-            No archived missions match these filters.
+            {filtersActive
+              ? 'No archived missions match these filters.'
+              : 'No archived missions are available.'}
           </h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Clear the search, provider, year, or outcome selection.
+            {filtersActive
+              ? 'Clear the search, provider, year, or outcome selection.'
+              : 'Connected providers returned an empty archive. Refresh the feed to check for recovered mission records.'}
           </p>
+          <button
+            type="button"
+            onClick={filtersActive ? clearFilters : retryHistory}
+            aria-label={
+              filtersActive ? 'Clear empty-result filters' : undefined
+            }
+            aria-disabled={!filtersActive && retrying}
+            aria-busy={!filtersActive && retrying}
+            className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
+          >
+            {filtersActive
+              ? 'Clear archive filters'
+              : retrying
+                ? 'Refreshing launch archive'
+                : 'Refresh launch archive'}
+          </button>
         </div>
       ) : (
         <>

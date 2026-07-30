@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'launchwatch-';
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `${CACHE_PREFIX}static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';

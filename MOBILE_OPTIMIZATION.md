@@ -45,6 +45,10 @@ The optional expanded map remains a modal dialog. It must:
 - Video preserves its aspect ratio without forcing horizontal overflow.
 - When no verified stream is available, the route presents the next mission, countdown, and provider fallback instead of an empty stage.
 - The mission queue follows the stage on smaller screens and becomes a side rail on larger screens.
+- The selected mission trajectory follows the stage and queue, and uses the same
+  disclosed illustrative model as mission detail.
+- Coverage signal bars represent the presence of verified stream, news, and
+  community records; they do not imply measured radio strength.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Launch actions wrap into labeled, touch-friendly controls.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
@@ -65,6 +69,8 @@ The optional expanded map remains a modal dialog. It must:
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
   their own region when necessary.
 - Video and intelligence sections become a single column.
+- Every canonical detail renders exactly one selected-mission trajectory before
+  timeline and intelligence support.
 - Completed missions return to History and omit future-only calendar actions.
 
 ## Touch and Keyboard Requirements
@@ -80,7 +86,12 @@ The optional expanded map remains a modal dialog. It must:
 ## Motion and Readability
 
 - Respect `prefers-reduced-motion`.
+- Trajectory drawing, telemetry flow, beacon pulses, and holographic sheen stop
+  under reduced motion while their final visual state remains legible.
 - Avoid using animation as the only live-status cue.
+- Pair every semantic signal with text: green for nominal, magenta for live
+  coverage, red for critical/hold states, cyan for trajectory data, and amber
+  for caution or incomplete data.
 - Keep body text at a readable size and WCAG AA contrast.
 - Avoid dense all-uppercase labels for primary reading content.
 - The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.

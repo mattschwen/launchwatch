@@ -6,12 +6,29 @@ describe('StatusBadge', () => {
   it('renders a clear live label', () => {
     render(<StatusBadge status="live" />);
 
-    expect(screen.getByText('LIVE')).toBeVisible();
+    expect(screen.getByText('LIVE')).toHaveClass(
+      'text-[var(--console-magenta)]'
+    );
+  });
+
+  it('does not claim a generic scheduled mission is go for launch', () => {
+    render(<StatusBadge status="upcoming" />);
+
+    expect(screen.getByText('SCHEDULED')).toBeVisible();
+    expect(screen.queryByText('GO FOR LAUNCH')).not.toBeInTheDocument();
   });
 
   it('uses provider status text for a scheduled mission', () => {
     render(<StatusBadge status="upcoming" statusName="Window confirmed" />);
 
     expect(screen.getByText('WINDOW CONFIRMED')).toBeVisible();
+  });
+
+  it('reserves the critical signal for provider-reported holds', () => {
+    render(<StatusBadge status="tbd" statusName="Hold" />);
+
+    expect(screen.getByText('HOLD')).toHaveClass(
+      'text-[var(--console-red)]'
+    );
   });
 });

@@ -50,35 +50,51 @@ export default function Countdown({
     );
   }
 
+  const units = [
+    { label: 'days', value: values[0] },
+    { label: 'hrs', value: values[1] },
+    { label: 'min', value: values[2] },
+    { label: 'sec', value: values[3] },
+  ];
+
   return (
     <time
       dateTime={targetDate}
       className={`block font-mono ${className}`}
       suppressHydrationWarning
-      aria-label={`${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds until launch`}
     >
-      <span
-        suppressHydrationWarning
-        className={`block font-medium leading-none tracking-[-0.055em] tabular-nums text-[var(--console-green)] ${
-          featured
-            ? 'text-[clamp(1.85rem,3.6vw,3.25rem)]'
-            : 'text-[clamp(2.1rem,5vw,4.25rem)]'
-        }`}
-      >
-        T− {values.join(':')}
+      <span className="sr-only" suppressHydrationWarning>
+        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until
+        launch
       </span>
       <span
         aria-hidden="true"
-        className={`mt-2 grid grid-cols-4 font-medium uppercase tracking-[0.14em] text-[var(--text-muted)] ${
+        suppressHydrationWarning
+        className={`countdown-display grid w-full grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))] items-stretch gap-1 font-medium leading-none tabular-nums sm:gap-2 ${
           featured
-            ? 'max-w-[28rem] pl-[2.1rem] text-[0.64rem]'
-            : 'max-w-[32rem] pl-[2.4rem] text-[0.7rem]'
+            ? 'max-w-[30rem] text-[clamp(1.6rem,3.6vw,3.25rem)]'
+            : 'max-w-[36rem] text-[clamp(1.7rem,5vw,4.25rem)]'
         }`}
       >
-        <span>days</span>
-        <span>hrs</span>
-        <span>min</span>
-        <span>sec</span>
+        <span className="countdown-prefix flex items-center pr-1 text-[0.68em] tracking-[-0.04em] text-[var(--console-green)] sm:pr-2">
+          T−
+        </span>
+        {units.map((unit) => (
+          <span
+            key={unit.label}
+            className="countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))] px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] sm:px-2 sm:py-2.5"
+          >
+            <span
+              className="countdown-digits block text-center tracking-[-0.055em] text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]"
+              suppressHydrationWarning
+            >
+              {unit.value}
+            </span>
+            <span className="countdown-unit-label mt-1 block text-center text-[0.32em] font-semibold uppercase leading-none tracking-[0.14em] text-[var(--text-muted)]">
+              {unit.label}
+            </span>
+          </span>
+        ))}
       </span>
     </time>
   );

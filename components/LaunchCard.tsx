@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
   formatLaunchDay,
+  isCriticalLaunchStatusName,
   launchOutcomeLabel,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -28,21 +29,24 @@ export default function LaunchCard({
       : launch.status === 'tbd'
         ? 'TBC'
         : launch.statusName || 'Go for launch';
+  const critical =
+    launch.status === 'failure' ||
+    isCriticalLaunchStatusName(launch.statusName);
   const statusClass =
-    launch.status === 'failure'
+    critical
       ? 'text-[var(--console-red)]'
-      : launch.status === 'tbd'
-        ? 'text-[var(--console-amber)]'
-        : launch.isLive
-          ? 'text-[var(--console-red)]'
+      : launch.isLive
+        ? 'text-[var(--console-magenta)]'
+        : launch.status === 'tbd'
+          ? 'text-[var(--console-amber)]'
           : 'text-[var(--console-green)]';
   const statusDotClass =
-    launch.status === 'failure'
+    critical
       ? 'bg-[var(--console-red)]'
-      : launch.status === 'tbd'
-        ? 'bg-[var(--console-amber)]'
-        : launch.isLive
-          ? 'bg-[var(--console-red)]'
+      : launch.isLive
+        ? 'status-dot-live bg-[var(--console-magenta)]'
+        : launch.status === 'tbd'
+          ? 'bg-[var(--console-amber)]'
           : 'bg-[var(--console-green)]';
   const launchTime = new Date(launch.date).toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -81,7 +85,7 @@ export default function LaunchCard({
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold tracking-[-0.015em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+          <h3 className="line-clamp-2 text-base font-semibold tracking-[-0.015em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)] sm:line-clamp-1">
             {launch.name}
           </h3>
           <p className="mt-0.5 truncate text-sm text-[var(--text-muted)]">

@@ -22,9 +22,13 @@ export default function VideoPlayer({
   if (!url) {
     return (
       <div
-        className={`flex aspect-video w-full flex-col items-center justify-center gap-3 bg-[var(--surface-base)] ${className}`}
+        className={`stream-surface flex aspect-video w-full flex-col items-center justify-center gap-3 ${className}`}
       >
-        <Tv aria-hidden="true" size={32} className="text-[var(--text-muted)]" />
+        <Tv
+          aria-hidden="true"
+          size={32}
+          className="text-[var(--console-amber)]"
+        />
         <p className="text-sm text-[var(--text-muted)]">
           Stream availability has not been confirmed.
         </p>
@@ -36,9 +40,13 @@ export default function VideoPlayer({
   if (!videoId) {
     return (
       <div
-        className={`flex aspect-video w-full flex-col items-center justify-center gap-4 bg-[var(--surface-base)] px-5 text-center ${className}`}
+        className={`stream-surface flex aspect-video w-full flex-col items-center justify-center gap-4 px-5 text-center ${className}`}
       >
-        <Tv aria-hidden="true" size={32} className="text-[var(--text-muted)]" />
+        <Tv
+          aria-hidden="true"
+          size={32}
+          className="text-[var(--console-magenta)]"
+        />
         <p className="text-sm text-[var(--text-secondary)]">
           This provider stream opens in a separate window.
         </p>
@@ -46,7 +54,7 @@ export default function VideoPlayer({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="action-button action-button-secondary"
+          className="action-button action-button-stream"
         >
           <ExternalLink aria-hidden="true" size={16} />
           Open provider stream
@@ -63,16 +71,16 @@ export default function VideoPlayer({
   if (!loaded) {
     return (
       <div
-        className={`relative flex aspect-video w-full items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,rgba(94,230,168,0.09),transparent_36%),var(--surface-base)] ${className}`}
+        className={`stream-surface relative flex aspect-video w-full items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,rgba(255,79,216,0.1),transparent_34%),var(--surface-base)] ${className}`}
       >
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(rgba(94,230,168,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(94,230,168,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
+          className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,79,216,0.03)_1px,transparent_1px)] bg-[size:34px_34px]"
         />
         <button
           type="button"
           onClick={() => setLoadedUrl(url)}
-          className="action-button action-button-primary relative"
+          className="action-button action-button-stream relative"
           aria-label={`Load video for ${title || 'this launch'}`}
         >
           <Play aria-hidden="true" size={17} fill="currentColor" />

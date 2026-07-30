@@ -21,6 +21,7 @@ import {
   firstLaunchValue,
   formatLaunchDate,
   formatTimelineOffset,
+  isCriticalLaunchStatusName,
   isCompletedLaunch,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -54,6 +55,16 @@ export default function LaunchDetailClient({
   const hasPlayableVideo = Boolean(
     launch.livestream && extractYouTubeId(launch.livestream)
   );
+  const missionTone = launch.isLive
+    ? 'signal-live'
+    : launch.status === 'failure' ||
+        isCriticalLaunchStatusName(launch.statusName)
+      ? 'signal-critical'
+      : launch.status === 'tbd'
+        ? 'signal-warm'
+        : completed
+          ? 'signal-nominal'
+          : 'signal-cold';
 
   return (
     <>
@@ -66,7 +77,9 @@ export default function LaunchDetailClient({
           {completed ? 'Back to history' : 'Back to launches'}
         </Link>
 
-        <section className="surface-card grid min-w-0 gap-7 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10">
+        <section
+          className={`surface-card holo-card ${missionTone} grid min-w-0 gap-7 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
+        >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge
@@ -88,7 +101,7 @@ export default function LaunchDetailClient({
               <CalendarDays
                 aria-hidden="true"
                 size={17}
-                className="text-[var(--console-green)]"
+                className="text-[var(--console-amber)]"
               />
               {formatLaunchDate(launch.date)}
             </p>
@@ -107,7 +120,7 @@ export default function LaunchDetailClient({
             />
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-5">
+          <div className="surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5">
             {!completed && !launch.isLive ? (
               <div className="border-b border-[var(--border-subtle)] pb-5">
                 <p className="data-label">T-minus</p>
@@ -119,7 +132,7 @@ export default function LaunchDetailClient({
             ) : launch.isLive ? (
               <div className="border-b border-[var(--border-subtle)] pb-5">
                 <p className="data-label">Mission state</p>
-                <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-red)]">
+                <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-magenta)]">
                   LIVE NOW
                 </p>
               </div>
@@ -172,7 +185,7 @@ export default function LaunchDetailClient({
         {launch.timeline?.length ? (
           <section
             aria-labelledby="launch-timeline-title"
-            className="surface-card mt-5 overflow-hidden p-5 sm:p-6"
+            className="surface-card holo-card signal-warm mt-5 overflow-hidden p-5 sm:p-6"
           >
             <div className="flex items-center justify-between gap-3">
               <h2 id="launch-timeline-title" className="section-title">
@@ -225,9 +238,15 @@ export default function LaunchDetailClient({
             launch={launch}
             intel={intel}
             loading={intelLoading}
+            error={intelError}
           />
 
-          <section aria-labelledby="watch-replay-title" className="surface-card p-5">
+          <section
+            aria-labelledby="watch-replay-title"
+            className={`surface-card holo-card ${
+              launch.livestream ? 'signal-live' : 'signal-warm'
+            } p-5`}
+          >
             <h2 id="watch-replay-title" className="section-title text-[1.2rem]">
               {completed
                 ? hasPlayableVideo
@@ -237,7 +256,13 @@ export default function LaunchDetailClient({
                   ? 'Watch mission'
                   : 'Mission coverage'}
             </h2>
-            <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border-subtle)]">
+            <div
+              className={`mt-4 overflow-hidden rounded-[var(--radius-sm)] border ${
+                launch.livestream
+                  ? 'video-signal-frame border-[var(--console-magenta)]'
+                  : 'border-[var(--border-subtle)]'
+              }`}
+            >
               <VideoPlayer
                 url={launch.livestream}
                 title={launch.name}
@@ -250,7 +275,7 @@ export default function LaunchDetailClient({
                 href={launch.livestream}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--console-cyan)] hover:underline"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--console-magenta)] hover:underline"
               >
                 {hasPlayableVideo
                   ? 'Open official provider video'
@@ -262,11 +287,6 @@ export default function LaunchDetailClient({
                 The provider has not attached a verified stream or replay yet.
               </p>
             )}
-            {intelError ? (
-              <p className="mt-3 text-sm text-[var(--console-amber)]">
-                Intelligence feed: {intelError}
-              </p>
-            ) : null}
           </section>
         </div>
       </div>

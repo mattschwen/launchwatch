@@ -68,6 +68,75 @@ describe('PastLaunches', () => {
     expect(clear).toBeDisabled();
   });
 
+  it('treats whitespace-only search input as an inactive filter', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    const search = screen.getByRole('searchbox', { name: 'Search missions' });
+    const clear = screen.getByRole('button', {
+      name: 'Clear archive filters',
+    });
+
+    await user.type(search, '   ');
+
+    expect(screen.getByRole('status')).toHaveTextContent('2 results');
+    expect(clear).toBeDisabled();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
+  });
+
+  it('distinguishes an empty provider archive and offers recovery', async () => {
+    const user = userEvent.setup();
+    const emptyResponse = {
+      ok: true,
+      status: 200,
+      json: async () => ({ launches: [], meta: FEED_META }),
+    };
+    let resolveRetry: ((response: typeof emptyResponse) => void) | undefined;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(emptyResponse)
+      .mockImplementationOnce(
+        () =>
+          new Promise<typeof emptyResponse>((resolve) => {
+            resolveRetry = resolve;
+          })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'No archived missions are available.',
+      })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', {
+        name: 'No archived missions match these filters.',
+      })
+    ).not.toBeInTheDocument();
+
+    const refresh = screen.getByRole('button', {
+      name: 'Refresh launch archive',
+    });
+    await user.click(refresh);
+
+    expect(refresh).toHaveAccessibleName('Refreshing launch archive');
+    expect(refresh).toHaveAttribute('aria-disabled', 'true');
+    expect(refresh).toHaveAttribute('aria-busy', 'true');
+    resolveRetry?.(emptyResponse);
+
+    expect(
+      await screen.findByRole('button', { name: 'Refresh launch archive' })
+    ).toBeVisible();
+    expect(
+      screen.getByRole('searchbox', { name: 'Search missions' })
+    ).toHaveFocus();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('announces pagination progress and preserves focus after the final batch', async () => {
     const user = userEvent.setup();
     const launches = Array.from({ length: 41 }, (_, index) => {

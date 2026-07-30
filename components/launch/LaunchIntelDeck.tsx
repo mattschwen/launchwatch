@@ -1,9 +1,11 @@
 import {
+  AlertTriangle,
   ExternalLink,
   MessageCircle,
   Newspaper,
   Radio,
 } from 'lucide-react';
+import CoverageSignal from './CoverageSignal';
 import type {
   Launch,
   LaunchIntel,
@@ -16,6 +18,7 @@ interface LaunchIntelDeckProps {
   launch: Launch;
   intel: LaunchIntel | null;
   loading?: boolean;
+  error?: string | null;
   className?: string;
 }
 
@@ -47,7 +50,7 @@ function StreamRow({
         aria-hidden="true"
         className={`h-2.5 w-2.5 shrink-0 rounded-full ${
           candidate.liveStatus === 'live'
-            ? 'bg-[var(--console-red)]'
+            ? 'status-dot-live bg-[var(--console-magenta)]'
             : candidate.confidence === 'high'
               ? 'bg-[var(--console-green)]'
               : 'bg-[var(--console-amber)]'
@@ -113,13 +116,14 @@ export default function LaunchIntelDeck({
   launch,
   intel,
   loading = false,
+  error = null,
   className = '',
 }: LaunchIntelDeckProps): React.ReactElement {
   if (loading && !intel) {
     return (
       <section
         aria-label="Loading mission intelligence"
-        className={`surface-card p-5 ${className}`}
+        className={`surface-card holo-card signal-cold p-5 ${className}`}
       >
         <div className="skeleton h-7 w-56 rounded" />
         <div className="skeleton mt-5 h-16 rounded" />
@@ -133,15 +137,48 @@ export default function LaunchIntelDeck({
     return (
       <section
         aria-labelledby="mission-intelligence-title"
-        className={`surface-card p-5 sm:p-6 ${className}`}
+        className={`surface-card holo-card ${
+          error ? 'signal-warm' : 'signal-cold'
+        } p-5 sm:p-6 ${className}`}
       >
-        <h2 id="mission-intelligence-title" className="section-title">
-          Mission intelligence
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
-          No verified stream, coverage, or community signal is available for
-          this mission yet. Official provider links remain the source of truth.
-        </p>
+        <div className="flex items-start gap-3">
+          {error ? (
+            <AlertTriangle
+              aria-hidden="true"
+              size={20}
+              className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+            />
+          ) : (
+            <Radio
+              aria-hidden="true"
+              size={20}
+              className="mt-0.5 shrink-0 text-[var(--console-cyan)]"
+            />
+          )}
+          <div>
+            <h2 id="mission-intelligence-title" className="section-title">
+              Mission intelligence
+            </h2>
+            {error ? (
+              <p
+                role="alert"
+                className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]"
+              >
+                Coverage signals could not be checked. Official provider links
+                remain available while the intelligence feed recovers.
+                <span className="mt-2 block font-mono text-xs text-[var(--console-amber)]">
+                  {error}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
+                No verified stream, coverage, or community signal is available
+                for this mission yet. Official provider links remain the source
+                of truth.
+              </p>
+            )}
+          </div>
+        </div>
       </section>
     );
   }
@@ -153,7 +190,7 @@ export default function LaunchIntelDeck({
   return (
     <section
       aria-labelledby="mission-intelligence-title"
-      className={`surface-card overflow-hidden ${className}`}
+      className={`surface-card holo-card signal-cold overflow-hidden ${className}`}
     >
       <header className="border-b border-[var(--border-subtle)] p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -179,12 +216,18 @@ export default function LaunchIntelDeck({
             href={intel.summary.recommendedUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="action-button action-button-secondary mt-4"
+            className={
+              intel.summary.streamState === 'live'
+                ? 'action-button action-button-stream mt-4'
+                : 'action-button action-button-secondary mt-4'
+            }
           >
             <Radio aria-hidden="true" size={16} />
             {intel.summary.recommendedLabel}
           </a>
         ) : null}
+
+        <CoverageSignal intel={intel} className="mt-5" />
       </header>
 
       <div className="grid lg:grid-cols-2">
@@ -193,7 +236,7 @@ export default function LaunchIntelDeck({
             <Radio
               aria-hidden="true"
               size={16}
-              className="text-[var(--console-green)]"
+              className="text-[var(--console-magenta)]"
             />
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               Stream leads

@@ -21,6 +21,7 @@ import {
   MAP_WIDTH,
   type MapViewport,
 } from '@/lib/map-geometry';
+import { isCriticalLaunchStatusName } from '@/lib/format';
 import type {
   IllustrativeTrajectory,
   TrajectoryPhaseId,
@@ -67,6 +68,18 @@ function selectionOpacity(
   selection: Exclude<MissionMapSelection, null>
 ): number {
   return !activeSelection || activeSelection === selection ? 1 : 0.25;
+}
+
+function missionSignalColor(launch: Launch | null): string {
+  if (launch?.status === 'live') return '#ff4fd8';
+  if (
+    launch?.status === 'failure' ||
+    isCriticalLaunchStatusName(launch?.statusName)
+  ) {
+    return '#ff5c6c';
+  }
+  if (launch?.status === 'tbd') return '#ffc45c';
+  return '#63f6b2';
 }
 
 function pointInViewport(
@@ -155,6 +168,8 @@ export default function MissionMapCanvas({
   const glowId = `${id}-glow`;
   const greenArrowId = `${id}-green-arrow`;
   const cyanArrowId = `${id}-cyan-arrow`;
+  const gridId = `${id}-wire-grid`;
+  const signalColor = missionSignalColor(launch);
   const frame = useMemo(() => getMapFrame(viewport, 34), [viewport]);
   const viewBox = `${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`;
   const launchPoint = trajectory?.launchPoint;
@@ -194,7 +209,7 @@ export default function MissionMapCanvas({
 
   return (
     <div
-      className={`relative min-h-0 overflow-hidden bg-[#070b12] ${mapSizeClass}`}
+      className={`mission-map-display relative min-h-0 overflow-hidden bg-[#050811] ${mapSizeClass}`}
       data-map-availability={trajectory?.availability || 'none'}
     >
       <svg
@@ -236,7 +251,7 @@ export default function MissionMapCanvas({
             markerHeight="7"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#5ee6a8" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#63f6b2" />
           </marker>
           <marker
             id={cyanArrowId}
@@ -247,8 +262,22 @@ export default function MissionMapCanvas({
             markerHeight="7"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#58c8e8" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#58e6ff" />
           </marker>
+          <pattern
+            id={gridId}
+            width="36"
+            height="36"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 36 0 L 0 0 0 36"
+              fill="none"
+              stroke="rgba(88,230,255,0.065)"
+              strokeWidth="0.7"
+              vectorEffect="non-scaling-stroke"
+            />
+          </pattern>
         </defs>
 
         <rect
@@ -256,7 +285,15 @@ export default function MissionMapCanvas({
           y={viewport.y}
           width={viewport.width}
           height={viewport.height}
-          fill="#070b12"
+          fill="#050811"
+        />
+        <rect
+          x={viewport.x}
+          y={viewport.y}
+          width={viewport.width}
+          height={viewport.height}
+          fill={`url(#${gridId})`}
+          pointerEvents="none"
         />
         <g fill="#16202c" fillRule="evenodd">
           {WORLD_COPIES.map((copy) => (
@@ -286,7 +323,7 @@ export default function MissionMapCanvas({
           x2={viewport.x + viewport.width}
           y1={MAP_HEIGHT / 2}
           y2={MAP_HEIGHT / 2}
-          stroke="rgba(88,200,232,0.14)"
+          stroke="rgba(88,230,255,0.16)"
           strokeWidth="1"
           vectorEffect="non-scaling-stroke"
         />
@@ -306,7 +343,7 @@ export default function MissionMapCanvas({
         </g>
         <g
           fill="none"
-          stroke="rgba(94,230,168,0.14)"
+          stroke="rgba(99,246,178,0.14)"
           strokeWidth={0.65}
           vectorEffect="non-scaling-stroke"
         >
@@ -341,9 +378,16 @@ export default function MissionMapCanvas({
                 d={phase.path}
                 data-trajectory-phase={phase.id}
                 fill="none"
-                stroke={ascent ? '#5ee6a8' : '#58c8e8'}
+                className={
+                  ascent
+                    ? 'trajectory-path-ascent'
+                    : 'trajectory-path-orbit'
+                }
+                pathLength={ascent ? 1 : undefined}
+                stroke={ascent ? '#63f6b2' : '#58e6ff'}
                 strokeWidth={activeSelection === phase.id ? 4.5 : 3.25}
-                strokeDasharray={ascent ? undefined : '9 9'}
+                strokeDasharray={ascent ? '1' : '9 9'}
+                strokeDashoffset={ascent ? '1' : undefined}
                 strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
                 markerEnd={`url(#${ascent ? greenArrowId : cyanArrowId})`}
@@ -368,7 +412,8 @@ export default function MissionMapCanvas({
               x2={siteLabel.leaderX}
               y2={siteLabel.leaderY}
               className="max-sm:hidden"
-              stroke="rgba(94,230,168,0.6)"
+              stroke={signalColor}
+              opacity="0.7"
               strokeWidth="1.25"
               vectorEffect="non-scaling-stroke"
             />
@@ -379,7 +424,8 @@ export default function MissionMapCanvas({
               height={siteLabel.height}
               rx={5 / viewport.zoom}
               fill="rgba(7,11,18,0.94)"
-              stroke="rgba(94,230,168,0.36)"
+              stroke={signalColor}
+              opacity="0.92"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
               data-trajectory-label="reported-launch-site"
@@ -389,7 +435,7 @@ export default function MissionMapCanvas({
               x={siteLabel.x + 10 / viewport.zoom}
               y={siteLabel.y + 13 / viewport.zoom}
               className="max-sm:hidden"
-              fill="#72edb7"
+              fill={signalColor}
               fontFamily="var(--font-mono)"
               fontSize={7.5 / viewport.zoom}
               fontWeight="700"
@@ -401,7 +447,7 @@ export default function MissionMapCanvas({
               x={siteLabel.x + 10 / viewport.zoom}
               y={siteLabel.y + 26 / viewport.zoom}
               className="max-sm:hidden"
-              fill="#f3f6fa"
+              fill="#f5f7ff"
               fontFamily="var(--font-sans)"
               fontSize={10.5 / viewport.zoom}
               fontWeight="700"
@@ -412,16 +458,19 @@ export default function MissionMapCanvas({
               cx={visibleLaunchPoint.x}
               cy={visibleLaunchPoint.y}
               r={17 / viewport.zoom}
-              fill="rgba(94,230,168,0.07)"
-              stroke="rgba(94,230,168,0.36)"
+              fill={signalColor}
+              fillOpacity="0.07"
+              stroke={signalColor}
+              strokeOpacity="0.38"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
+              className="trajectory-site-beacon"
             />
             <circle
               cx={visibleLaunchPoint.x}
               cy={visibleLaunchPoint.y}
               r={7 / viewport.zoom}
-              fill="#5ee6a8"
+              fill={signalColor}
               stroke="#ecfff6"
               strokeWidth="2"
               vectorEffect="non-scaling-stroke"
@@ -441,7 +490,7 @@ export default function MissionMapCanvas({
               cy={trajectory.transitionPoint.y}
               r={13 / viewport.zoom}
               fill="#07110e"
-              stroke="#5ee6a8"
+              stroke="#63f6b2"
               strokeWidth="2"
               vectorEffect="non-scaling-stroke"
             />
@@ -449,7 +498,7 @@ export default function MissionMapCanvas({
               x={trajectory.transitionPoint.x}
               y={trajectory.transitionPoint.y + 3.2 / viewport.zoom}
               className="max-sm:hidden"
-              fill="#f3f6fa"
+              fill="#f5f7ff"
               fontFamily="var(--font-mono)"
               fontSize={8.5 / viewport.zoom}
               fontWeight="700"
@@ -471,7 +520,7 @@ export default function MissionMapCanvas({
               cy={trajectory.targetPoint.y}
               r={13 / viewport.zoom}
               fill="#071019"
-              stroke="#58c8e8"
+              stroke="#58e6ff"
               strokeWidth="2"
               vectorEffect="non-scaling-stroke"
             />
@@ -479,7 +528,7 @@ export default function MissionMapCanvas({
               x={trajectory.targetPoint.x}
               y={trajectory.targetPoint.y + 3.2 / viewport.zoom}
               className="max-sm:hidden"
-              fill="#f3f6fa"
+              fill="#f5f7ff"
               fontFamily="var(--font-mono)"
               fontSize={8.5 / viewport.zoom}
               fontWeight="700"
@@ -501,7 +550,7 @@ export default function MissionMapCanvas({
               r={10 / viewport.zoom}
               fill="#070b12"
               stroke={
-                phase.id === 'ascent-model' ? '#5ee6a8' : '#58c8e8'
+                phase.id === 'ascent-model' ? '#63f6b2' : '#58e6ff'
               }
               strokeWidth="1.5"
               vectorEffect="non-scaling-stroke"
@@ -512,7 +561,7 @@ export default function MissionMapCanvas({
               } 0 L ${-3 / viewport.zoom} ${4 / viewport.zoom}`}
               fill="none"
               stroke={
-                phase.id === 'ascent-model' ? '#5ee6a8' : '#58c8e8'
+                phase.id === 'ascent-model' ? '#63f6b2' : '#58e6ff'
               }
               strokeWidth="1.5"
               vectorEffect="non-scaling-stroke"

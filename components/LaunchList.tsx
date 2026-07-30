@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
+import { isCriticalLaunchStatusName } from '@/lib/format';
 import LaunchCard from './LaunchCard';
 import FilterBar, {
   DEFAULT_FILTERS,
@@ -37,14 +38,19 @@ export default function LaunchList(): React.ReactElement {
   );
 
   useEffect(() => {
-    if (launches.length === 0 || !retryFocusPendingRef.current) return;
+    if (!retryFocusPendingRef.current || refreshing) return;
+
+    if (launches.length === 0) {
+      retryFocusPendingRef.current = false;
+      return;
+    }
 
     retryFocusPendingRef.current = false;
     const frame = window.requestAnimationFrame(() =>
       filterToggleRef.current?.focus(),
     );
     return () => window.cancelAnimationFrame(frame);
-  }, [launches.length]);
+  }, [launches.length, refreshing]);
 
   const retrySchedule = (): void => {
     if (refreshing) return;
@@ -87,7 +93,10 @@ export default function LaunchList(): React.ReactElement {
 
   if (loading && launches.length === 0) {
     return (
-      <section aria-label="Loading upcoming launches" className="surface-card">
+      <section
+        aria-label="Loading upcoming launches"
+        className="surface-card holo-card signal-cold"
+      >
         <div className="border-b border-[var(--border-subtle)] p-5">
           <div className="skeleton h-8 w-52 rounded" />
         </div>
@@ -106,10 +115,10 @@ export default function LaunchList(): React.ReactElement {
 
   if (error && launches.length === 0) {
     return (
-      <section className="surface-card p-8 text-center">
+      <section className="surface-card holo-card signal-critical p-8 text-center">
         <AlertTriangle
           aria-hidden="true"
-          className="mx-auto text-[var(--console-amber)]"
+          className="mx-auto text-[var(--console-red)]"
           size={34}
         />
         <h2 className="section-title mt-4">The schedule is temporarily unavailable.</h2>
@@ -130,7 +139,12 @@ export default function LaunchList(): React.ReactElement {
   }
 
   return (
-    <section aria-labelledby="upcoming-launches-title" className="surface-card overflow-hidden">
+    <section
+      aria-labelledby="upcoming-launches-title"
+      className={`surface-card holo-card ${
+        meta?.partial ? 'signal-warm' : 'signal-nominal'
+      } overflow-hidden`}
+    >
       <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <h2 id="upcoming-launches-title" className="section-title">
@@ -210,16 +224,16 @@ export default function LaunchList(): React.ReactElement {
           </p>
           <button
             type="button"
-            onClick={
-              hasActiveFilters
-                ? clearFilters
-                : () => {
-                    void refresh();
-                  }
-            }
-            className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
+            onClick={hasActiveFilters ? clearFilters : retrySchedule}
+            aria-disabled={!hasActiveFilters && refreshing}
+            aria-busy={!hasActiveFilters && refreshing}
+            className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
-            {hasActiveFilters ? 'Clear all filters' : 'Refresh launch schedule'}
+            {hasActiveFilters
+              ? 'Clear all filters'
+              : refreshing
+                ? 'Refreshing launch schedule'
+                : 'Refresh launch schedule'}
           </button>
         </div>
       ) : (
@@ -236,7 +250,22 @@ export default function LaunchList(): React.ReactElement {
           </div>
           <div>
             {filtered.slice(0, visibleCount).map((launch) => (
-              <LaunchCard key={launch.id} launch={launch} />
+              <div
+                key={launch.id}
+                className="mission-row"
+                style={{
+                  '--row-signal': launch.isLive
+                    ? 'var(--console-magenta)'
+                    : launch.status === 'failure' ||
+                        isCriticalLaunchStatusName(launch.statusName)
+                      ? 'var(--console-red)'
+                      : launch.status === 'tbd'
+                        ? 'var(--console-amber)'
+                        : 'var(--console-green)',
+                } as React.CSSProperties}
+              >
+                <LaunchCard launch={launch} />
+              </div>
             ))}
           </div>
         </>

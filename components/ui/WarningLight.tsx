@@ -1,5 +1,5 @@
 interface WarningLightProps {
-  color: 'green' | 'red' | 'amber';
+  color: 'green' | 'magenta' | 'red' | 'amber';
   size?: 'sm' | 'md' | 'lg';
   spinning?: boolean;
   className?: string;
@@ -7,25 +7,32 @@ interface WarningLightProps {
 
 const colorMap = {
   green: {
-    bg: '#00ff88',
-    glow: 'rgba(0, 255, 136, 0.6)',
-    glowWide: 'rgba(0, 255, 136, 0.25)',
-    beam: 'rgba(0, 255, 136, 0.5)',
-    ring: 'rgba(0, 255, 136, 0.3)',
+    bg: '#63f6b2',
+    glow: 'rgba(99, 246, 178, 0.62)',
+    glowWide: 'rgba(99, 246, 178, 0.25)',
+    beam: 'rgba(99, 246, 178, 0.5)',
+    ring: 'rgba(99, 246, 178, 0.34)',
+  },
+  magenta: {
+    bg: '#ff4fd8',
+    glow: 'rgba(255, 79, 216, 0.65)',
+    glowWide: 'rgba(255, 79, 216, 0.28)',
+    beam: 'rgba(255, 79, 216, 0.52)',
+    ring: 'rgba(255, 79, 216, 0.36)',
   },
   red: {
-    bg: '#ff3333',
-    glow: 'rgba(255, 51, 51, 0.6)',
-    glowWide: 'rgba(255, 51, 51, 0.25)',
-    beam: 'rgba(255, 51, 51, 0.5)',
-    ring: 'rgba(255, 51, 51, 0.3)',
+    bg: '#ff5c6c',
+    glow: 'rgba(255, 92, 108, 0.62)',
+    glowWide: 'rgba(255, 92, 108, 0.25)',
+    beam: 'rgba(255, 92, 108, 0.5)',
+    ring: 'rgba(255, 92, 108, 0.34)',
   },
   amber: {
-    bg: '#ffaa00',
-    glow: 'rgba(255, 170, 0, 0.6)',
-    glowWide: 'rgba(255, 170, 0, 0.25)',
-    beam: 'rgba(255, 170, 0, 0.5)',
-    ring: 'rgba(255, 170, 0, 0.3)',
+    bg: '#ffc45c',
+    glow: 'rgba(255, 196, 92, 0.62)',
+    glowWide: 'rgba(255, 196, 92, 0.25)',
+    beam: 'rgba(255, 196, 92, 0.5)',
+    ring: 'rgba(255, 196, 92, 0.34)',
   },
 };
 

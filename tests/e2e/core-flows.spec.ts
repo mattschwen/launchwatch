@@ -503,6 +503,14 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
+  const watchTrajectory = page.getByRole('region', {
+    name: 'Mission trajectory',
+  });
+  await expect(watchTrajectory).toHaveCount(1);
+  await expect(watchTrajectory).toContainText('Orbital Dawn');
+  await expect(
+    page.getByRole('group', { name: 'Coverage signal' })
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   const polarisQueueItem = page
@@ -516,8 +524,35 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
   ).toBeVisible();
+  await expect(watchTrajectory).toContainText('Polaris Relay');
   await expect(polarisQueueItem).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('trajectory and signal motion settles for reduced-motion users', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+  await expect(page.locator('.trajectory-path-ascent')).toHaveCount(1);
+
+  const motion = await page.evaluate(() => {
+    const animationName = (selector: string): string | null => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).animationName : null;
+    };
+
+    return {
+      ascent: animationName('.trajectory-path-ascent'),
+      orbit: animationName('.trajectory-path-orbit'),
+      beacon: animationName('.trajectory-site-beacon'),
+    };
+  });
+
+  expect(motion).toEqual({
+    ascent: 'none',
+    orbit: 'none',
+    beacon: 'none',
+  });
 });
 
 test('watch schedule retry reports progress and restores keyboard focus', async ({

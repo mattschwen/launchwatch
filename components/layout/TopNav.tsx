@@ -64,30 +64,33 @@ export default function TopNav(): React.ReactElement {
               aria-hidden="true"
               className={`h-2 w-2 rounded-full ${
                 hasLiveLaunches
-                  ? 'bg-[var(--console-red)] shadow-[0_0_10px_rgba(255,107,118,.5)]'
+                  ? 'bg-[var(--console-magenta)] shadow-[0_0_10px_rgba(255,79,216,.52)]'
                   : 'bg-[var(--console-green)]'
               }`}
             />
             {hasLiveLaunches ? `${liveCount} Live` : 'Live feed'}
           </span>
-          <div className="flex items-center">
-            <UTCClock showLabel />
-          </div>
+          <UTCClock showLabel className="hardware-clock px-2 py-1" />
         </div>
 
-        <div className="ml-auto flex items-center gap-1 md:hidden">
+        <div className="ml-auto flex min-w-0 items-center gap-1 md:hidden">
           {hasLiveLaunches && (
             <Link
               href="/watch"
-              className="flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--console-red)] font-[family-name:var(--font-geist-mono)]"
+              aria-label={`${liveCount} live launches`}
+              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--live)]" />
               </span>
-              LIVE ({liveCount})
+              <span className="hidden min-[360px]:inline">LIVE ({liveCount})</span>
             </Link>
           )}
+          <UTCClock
+            showLabel={false}
+            className="hardware-clock h-10 px-2 text-[var(--console-cyan)]"
+          />
         </div>
       </div>
     </header>
