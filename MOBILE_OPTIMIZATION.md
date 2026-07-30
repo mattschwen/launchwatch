@@ -62,7 +62,8 @@ The optional expanded map remains a modal dialog. It must:
 - Long names wrap as phrases within the available width.
 - The status, title, description, actions, and telemetry summary stack on narrow screens.
 - Primary and secondary actions remain labeled; icon-only controls require accessible names.
-- Timeline events scroll within their own region when necessary.
+- Timeline events use compact `T−`/`T+` mission offsets and scroll within
+  their own region when necessary.
 - Video and intelligence sections become a single column.
 - Completed missions return to History and omit future-only calendar actions.
 

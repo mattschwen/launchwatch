@@ -1189,6 +1189,21 @@ test('upcoming and historical details place one trajectory before mission suppor
           timelineEvents.evaluate((element) => element.scrollLeft)
         )
         .toBeGreaterThan(0);
+      await expect(
+        timeline.getByText('T−02:35:00', { exact: true })
+      ).toBeVisible();
+      await expect(timeline).not.toContainText('-P0D');
+
+      await page.getByRole('button', { name: 'Open briefing' }).click();
+      const briefing = page.getByRole('dialog', { name: mission });
+      await expect(
+        briefing.getByText('T−02:35:00', { exact: true })
+      ).toBeVisible();
+      await expect(briefing).not.toContainText('-P0D');
+      await briefing
+        .getByRole('button', { name: 'Close mission briefing' })
+        .click();
+      await expect(briefing).toHaveCount(0);
     }
 
     const order = await page.evaluate(() => {

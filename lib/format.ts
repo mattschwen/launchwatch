@@ -64,6 +64,31 @@ export function formatRelativeDate(date: string): string {
   return formatLaunchDay(date);
 }
 
+export function formatTimelineOffset(offset: string): string {
+  const normalized = offset.trim();
+  const match =
+    /^([+-])?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i.exec(
+      normalized
+    );
+
+  if (!match || match.slice(2).every((value) => value === undefined)) {
+    return normalized;
+  }
+
+  const [, sign, days = '0', hours = '0', minutes = '0', seconds = '0'] =
+    match;
+  const [wholeSeconds, fractionalSeconds] = seconds.split('.');
+  const dayLabel = Number(days) > 0 ? `${Number(days)}d ` : '';
+  const secondLabel = `${wholeSeconds.padStart(2, '0')}${
+    fractionalSeconds ? `.${fractionalSeconds}` : ''
+  }`;
+
+  return `T${sign === '-' ? '−' : '+'}${dayLabel}${hours.padStart(
+    2,
+    '0'
+  )}:${minutes.padStart(2, '0')}:${secondLabel}`;
+}
+
 export function shortenLaunchSite(site: string): string {
   return site
     .replace(/Space Launch Complex/gi, 'SLC')

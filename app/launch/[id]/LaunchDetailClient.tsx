@@ -20,6 +20,7 @@ import VideoPlayer from '@/components/video/VideoPlayer';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatTimelineOffset,
   isCompletedLaunch,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -204,8 +205,8 @@ export default function LaunchDetailClient({
                         : 'bg-[var(--text-muted)]'
                     } first:left-0`}
                   />
-                  <p className="font-mono text-xs text-[var(--console-cyan)]">
-                    {event.relativeTime}
+                  <p className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
+                    {formatTimelineOffset(event.relativeTime)}
                   </p>
                   <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                     {event.type}

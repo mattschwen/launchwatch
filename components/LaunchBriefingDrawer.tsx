@@ -14,6 +14,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatTimelineOffset,
   shortenLaunchSite,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
@@ -205,10 +206,10 @@ export default function LaunchBriefingDrawer({
                 {launch.timeline.slice(0, 8).map((event) => (
                   <li
                     key={`${event.relativeTime}-${event.type}`}
-                    className="grid grid-cols-[5rem_1fr] gap-3 py-3"
+                    className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 py-3"
                   >
-                    <span className="font-mono text-xs text-[var(--console-cyan)]">
-                      {event.relativeTime}
+                    <span className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
+                      {formatTimelineOffset(event.relativeTime)}
                     </span>
                     <span>
                       <span className="block text-sm font-semibold text-[var(--text-primary)]">

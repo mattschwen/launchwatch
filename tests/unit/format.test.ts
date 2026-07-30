@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatTimelineOffset,
   formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
@@ -30,6 +31,15 @@ describe('launch formatting', () => {
     expect(formatRelativeDate('2035-07-26T18:00:00.000Z')).toBe('Today');
     expect(formatRelativeDate('2035-07-27T18:00:00.000Z')).toBe('Tomorrow');
     expect(formatRelativeDate('2035-07-25T06:00:00.000Z')).toBe('Yesterday');
+  });
+
+  it('formats provider timeline durations as scannable mission offsets', () => {
+    expect(formatTimelineOffset('-P0DT2H35M')).toBe('T−02:35:00');
+    expect(formatTimelineOffset('P0DT0H54M12S')).toBe('T+00:54:12');
+    expect(formatTimelineOffset('P0D')).toBe('T+00:00:00');
+    expect(formatTimelineOffset('-P1DT2H3M4.5S')).toBe('T−1d 02:03:04.5');
+    expect(formatTimelineOffset('T−00:35:00')).toBe('T−00:35:00');
+    expect(formatTimelineOffset(' pending ')).toBe('pending');
   });
 
   it('shortens long launch-site names without losing identity', () => {
