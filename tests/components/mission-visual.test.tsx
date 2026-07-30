@@ -1,5 +1,10 @@
 import type { ImgHTMLAttributes } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import MissionVisual from '@/components/launch/MissionVisual';
 import {
@@ -316,7 +321,7 @@ describe('MissionVisual', () => {
     ).toHaveAttribute('data-visual-status', 'missing');
   });
 
-  it('replaces a broken image with an amber status while preserving attribution actions', () => {
+  it('retries a broken image, preserves focus while busy, and hands focus to the recovered image action', async () => {
     const { container } = render(
       <MissionVisual
         launch={launchWithVisuals({
@@ -344,6 +349,36 @@ describe('MissionVisual', () => {
         name: 'Open CC BY 4.0 license in a new tab',
       })
     ).toBeVisible();
+
+    const retry = screen.getByRole('button', { name: 'Retry image' });
+    retry.focus();
+    fireEvent.click(retry);
+
+    expect(retry).toHaveFocus();
+    expect(retry).toHaveAttribute('aria-disabled', 'true');
+    expect(retry).toHaveAttribute('aria-busy', 'true');
+    expect(retry).toHaveTextContent('Retrying image');
+    expect(container.querySelector('figure')).toHaveAttribute(
+      'data-visual-status',
+      'retrying'
+    );
+
+    fireEvent.load(screen.getByRole('img'));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('link', {
+          name: 'Open full image in a new tab',
+        })
+      ).toHaveFocus()
+    );
+    expect(container.querySelector('figure')).toHaveAttribute(
+      'data-visual-status',
+      'loaded'
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Retry image' })
+    ).not.toBeInTheDocument();
   });
 
   it('resets loading and error state when the selected URL changes', () => {

@@ -870,6 +870,7 @@ body::before {
 
 .mission-visual-license,
 .mission-visual-source,
+.mission-visual-retry,
 .mission-visual-placeholder-action,
 .mission-visual-open {
   position: relative;
@@ -894,19 +895,31 @@ body::before {
 }
 
 .mission-visual-license,
-.mission-visual-source {
+.mission-visual-source,
+.mission-visual-retry {
   border: 1px solid var(--border-strong);
   color: var(--text-secondary);
 }
 
 .mission-visual-license:hover,
-.mission-visual-source:hover {
+.mission-visual-source:hover,
+.mission-visual-retry:hover {
   border-color: color-mix(
     in srgb,
     var(--console-cyan) 42%,
     var(--border-strong)
   );
   color: var(--console-cyan);
+}
+
+.mission-visual-retry[aria-disabled='true'] {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.mission-visual-retry[aria-disabled='true']:hover {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
 }
 
 .mission-visual-open {
@@ -1005,6 +1018,7 @@ body::before {
   }
 
   .mission-visual-actions > a,
+  .mission-visual-actions > button,
   .mission-visual-actions > .mission-visual-placeholder-action {
     flex: 1 1 9rem;
   }

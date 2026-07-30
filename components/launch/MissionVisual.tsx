@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ExternalLink, ImageOff, ScanLine } from 'lucide-react';
+import {
+  ExternalLink,
+  ImageOff,
+  RefreshCw,
+  ScanLine,
+} from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
   launchVisualAlt,
@@ -143,20 +148,65 @@ function AvailableMissionVisual({
 }: AvailableMissionVisualProps): React.ReactElement {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const fullImageRef = useRef<HTMLAnchorElement>(null);
+  const retryFocusPendingRef = useRef(false);
+  const focusFrameRef = useRef<number | null>(null);
   const label = visualLabel(visual);
   const subject = launchVisualSubject(launch, visual);
   const source = visual.sourceLabel
     ? ` · via ${visual.sourceLabel}`
     : '';
 
+  useEffect(
+    () => () => {
+      if (focusFrameRef.current !== null) {
+        window.cancelAnimationFrame(focusFrameRef.current);
+      }
+    },
+    []
+  );
+
+  const retryImage = (): void => {
+    if (retrying) return;
+    retryFocusPendingRef.current = true;
+    setLoaded(false);
+    setFailed(false);
+    setRetrying(true);
+    setAttempt((value) => value + 1);
+  };
+
+  const imageLoaded = (): void => {
+    setLoaded(true);
+    setFailed(false);
+    setRetrying(false);
+
+    if (retryFocusPendingRef.current) {
+      retryFocusPendingRef.current = false;
+      focusFrameRef.current = window.requestAnimationFrame(() => {
+        fullImageRef.current?.focus();
+        focusFrameRef.current = null;
+      });
+    }
+  };
+
+  const imageFailed = (): void => {
+    setLoaded(false);
+    setFailed(true);
+    setRetrying(false);
+  };
+
   return (
     <figure
-      aria-busy={!loaded && !failed}
+      aria-busy={retrying || (!loaded && !failed)}
       className={`mission-visual surface-card holo-card signal-cold ${
         compact ? 'mission-visual-compact' : ''
       } ${className}`}
       data-visual-kind={visual.kind}
-      data-visual-status={failed ? 'error' : loaded ? 'loaded' : 'loading'}
+      data-visual-status={
+        retrying ? 'retrying' : failed ? 'error' : loaded ? 'loaded' : 'loading'
+      }
     >
       <div className="mission-visual-viewport">
         {failed ? (
@@ -184,6 +234,7 @@ function AvailableMissionVisual({
               />
             ) : null}
             <Image
+              key={attempt}
               src={visual.url}
               alt={launchVisualAlt(launch, visual)}
               fill
@@ -193,8 +244,8 @@ function AvailableMissionVisual({
                   ? '(max-width: 639px) calc(100vw - 2.5rem), 36rem'
                   : '(max-width: 1023px) calc(100vw - 2rem), 32rem'
               }
-              onLoad={() => setLoaded(true)}
-              onError={() => setFailed(true)}
+              onLoad={imageLoaded}
+              onError={imageFailed}
               className={`mission-visual-image mission-visual-image-${visual.kind} ${
                 loaded ? 'mission-visual-image-loaded' : ''
               }`}
@@ -213,6 +264,22 @@ function AvailableMissionVisual({
           </p>
         </div>
         <div className="mission-visual-actions">
+          {failed || retrying ? (
+            <button
+              type="button"
+              onClick={retryImage}
+              aria-disabled={retrying}
+              aria-busy={retrying}
+              className="mission-visual-retry"
+            >
+              <RefreshCw
+                aria-hidden="true"
+                size={14}
+                className={retrying ? 'animate-spin' : ''}
+              />
+              {retrying ? 'Retrying image' : 'Retry image'}
+            </button>
+          ) : null}
           <a
             href={visual.licenseUrl}
             target="_blank"
@@ -237,6 +304,7 @@ function AvailableMissionVisual({
             </a>
           ) : null}
           <a
+            ref={fullImageRef}
             href={visual.url}
             target="_blank"
             rel="noopener noreferrer"

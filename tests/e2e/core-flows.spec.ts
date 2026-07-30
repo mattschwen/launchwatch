@@ -220,6 +220,77 @@ test('home shows one truthful licensed visual with touch-safe attribution action
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission imagery recovers from a transient load failure without losing keyboard focus', async ({
+  page,
+}) => {
+  let imageRequests = 0;
+  let allowImageRecovery = false;
+  let releaseRetry: () => void = () => undefined;
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+
+  await page.route('**/_next/image?**', async (route) => {
+    const source = new URL(route.request().url()).searchParams.get('url');
+    if (source !== '/icon-512.png') {
+      await route.continue();
+      return;
+    }
+
+    imageRequests += 1;
+    if (!allowImageRecovery) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'text/plain',
+        body: 'Temporary image optimizer failure',
+      });
+      return;
+    }
+
+    await retryGate;
+    await route.continue();
+  });
+
+  await page.goto('/');
+
+  const visual = page.locator('figure[data-visual-kind="vehicle"]');
+  await expect(visual).toHaveAttribute('data-visual-status', 'error');
+  await expect(
+    visual.getByText('Visual signal unavailable', { exact: true })
+  ).toBeVisible();
+
+  const retry = visual.locator('.mission-visual-retry');
+  await expect(retry).toBeVisible();
+  await expect(retry).toHaveRole('button');
+  await expect(retry).toHaveAccessibleName('Retry image');
+  const retryTarget = await retry.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { height: bounds.height, width: bounds.width };
+  });
+  expect(retryTarget.height).toBeGreaterThanOrEqual(44);
+  expect(retryTarget.width).toBeGreaterThanOrEqual(44);
+
+  allowImageRecovery = true;
+  await retry.focus();
+  await retry.press('Enter');
+  await expect(retry).toBeFocused();
+  await expect(retry).toHaveAttribute('aria-disabled', 'true');
+  await expect(retry).toHaveAttribute('aria-busy', 'true');
+  await expect(retry).toHaveText('Retrying image');
+  await expect(visual).toHaveAttribute('data-visual-status', 'retrying');
+
+  releaseRetry();
+
+  await expect(visual).toHaveAttribute('data-visual-status', 'loaded');
+  const fullImage = visual.getByRole('link', {
+    name: 'Open full image in a new tab',
+  });
+  await expect(fullImage).toBeFocused();
+  await expect(retry).toHaveCount(0);
+  expect(imageRequests).toBeGreaterThanOrEqual(2);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home visual enrichment keeps a stable footprint', async ({ page }) => {
   let releaseDetail: () => void = () => undefined;
   const detailGate = new Promise<void>((resolve) => {
