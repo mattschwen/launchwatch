@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ChevronDown, Globe2 } from 'lucide-react';
 import HeroSection from '@/components/launch/HeroSection';
@@ -18,9 +18,22 @@ const MissionTrajectory = dynamic(
   },
 );
 
+const DESKTOP_MAP_QUERY = '(min-width: 64rem)';
+
 function HomeContent(): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia(DESKTOP_MAP_QUERY);
+    const update = (): void => setDesktopMapEnabled(query.matches);
+
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+
   const featuredLaunch =
     launches.find((launch) => launch.isLive) ??
     launches.find(
@@ -56,7 +69,14 @@ function HomeContent(): React.ReactElement {
             aria-label="Mission trajectory"
             className="hidden min-w-0 lg:block"
           >
-            <MissionTrajectory launch={featuredMission} />
+            {desktopMapEnabled ? (
+              <MissionTrajectory launch={featuredMission} />
+            ) : (
+              <div
+                aria-hidden="true"
+                className="skeleton min-h-[27.5rem] rounded-[var(--radius-md)]"
+              />
+            )}
           </aside>
         </div>
 
@@ -91,7 +111,7 @@ function HomeContent(): React.ReactElement {
               }`}
             />
           </button>
-          {mobileMapOpen ? (
+          {mobileMapOpen && !desktopMapEnabled ? (
             <div
               id="mobile-mission-map"
               className="mt-2"

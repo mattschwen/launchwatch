@@ -1760,6 +1760,7 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   if ((page.viewportSize()?.width ?? 0) < 1024) {
     await expect(mapDisclosure).toBeVisible();
     await expect(mapDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
     await expect(
       page.getByRole('region', { name: 'Mission trajectory' })
     ).toHaveCount(0);
@@ -1774,6 +1775,7 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
 
     await mapDisclosure.click();
     await expect(mapDisclosure).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
     const expandedDisclosureTop = await mapDisclosure.boundingBox();
     const mapTop = await page
       .getByRole('region', { name: 'Mission trajectory' })
@@ -1782,6 +1784,8 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
     expect(mapTop).not.toBeNull();
     expect(expandedDisclosureTop!.y).toBeLessThan(mapTop!.y);
     await expect(page.locator('[aria-label$=" UTC"]').first()).toBeVisible();
+  } else {
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
   }
 
   await expect(expandButton).toBeVisible();
