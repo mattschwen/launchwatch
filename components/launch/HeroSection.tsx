@@ -297,23 +297,24 @@ export default function HeroSection({
             </div>
           </dl>
 
-          <MissionVisual
-            launch={activeLaunch}
-            priority
-            compact
-            loading={visualLoading}
-            error={visualError}
-            showUnavailableState
-            className="mt-5 max-w-md"
-          />
-
           <LaunchActions
             launch={activeLaunch}
             onOpenBriefing={() => setBriefingOpen(true)}
             showCalendar={false}
             featured
-            className="mt-auto pt-6"
+            className="mt-6"
           />
+
+          <div className="mt-5 max-w-md">
+            <MissionVisual
+              launch={activeLaunch}
+              priority
+              compact
+              loading={visualLoading}
+              error={visualError}
+              showUnavailableState
+            />
+          </div>
         </div>
       </section>
 

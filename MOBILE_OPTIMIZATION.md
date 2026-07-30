@@ -26,7 +26,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 ## Home
 
-- The featured mission uses fluid type and a single-column action hierarchy on narrow screens.
+- The featured mission uses fluid type and keeps its primary mission actions
+  ahead of secondary imagery in a single-column hierarchy on narrow screens.
 - Countdown values wrap without horizontal overflow.
 - Mission metadata adapts from multiple columns to stacked groups.
 - Upcoming missions render as compact responsive rows.

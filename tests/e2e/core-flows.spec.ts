@@ -263,10 +263,48 @@ test('home shows one truthful licensed visual with touch-safe attribution action
 }) => {
   await page.goto('/');
 
+  const primaryAction = page.getByRole('link', {
+    name: 'Find stream',
+    exact: true,
+  });
+  const briefingAction = page.getByRole('button', {
+    name: 'Open briefing',
+    exact: true,
+  });
   const visuals = page.locator('figure[data-visual-kind]');
   await expect(visuals).toHaveCount(1);
 
   const visual = visuals.first();
+  const hierarchy = await primaryAction.evaluate((element) => {
+    const visual = element
+      .closest('section')
+      ?.querySelector('figure[data-visual-kind]');
+    const actionBounds = element.getBoundingClientRect();
+    const visualBounds = visual?.getBoundingClientRect();
+
+    return {
+      actionBottom: actionBounds.bottom,
+      actionTop: actionBounds.top,
+      visualTop: visualBounds?.top ?? 0,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  expect(hierarchy.actionTop).toBeLessThan(hierarchy.visualTop);
+  expect(hierarchy.actionBottom).toBeLessThanOrEqual(
+    hierarchy.viewportHeight
+  );
+  await expect(briefingAction).toBeInViewport();
+  expect(
+    await briefingAction.evaluate((element) => {
+      const visual = element
+        .closest('section')
+        ?.querySelector('figure[data-visual-kind]');
+      return (
+        (visual?.getBoundingClientRect().top ?? 0) -
+        element.getBoundingClientRect().bottom
+      );
+    })
+  ).toBeGreaterThanOrEqual(16);
   await expect(visual).toHaveAttribute('data-visual-kind', 'vehicle');
   await expect(
     visual.getByRole('img', {
