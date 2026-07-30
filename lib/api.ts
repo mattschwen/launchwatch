@@ -10,17 +10,21 @@ import {
   LaunchFeedResult,
   LaunchProviderMeta,
   LaunchSource,
+  LaunchVisual,
   RocketFact,
 } from './types';
 import { firstLaunchValue, isMeaningfulLaunchValue } from './format';
+import { isEligibleLaunchVisual } from './launch-visual';
 
 // API Configuration
+const SPACEX_PUBLIC_API = 'https://api.spacexdata.com/v4';
 const SPACEX_API = (
-  process.env.SPACEX_API_BASE_URL || 'https://api.spacexdata.com/v4'
+  process.env.SPACEX_API_BASE_URL || SPACEX_PUBLIC_API
 ).replace(/\/+$/, '');
 const LL2_API_KEY = process.env.LL2_API_KEY || '';
+const LL2_PUBLIC_API = 'https://ll.thespacedevs.com/2.3.0';
 const LL2_API = (
-  process.env.LL2_API_BASE_URL || 'https://ll.thespacedevs.com/2.3.0'
+  process.env.LL2_API_BASE_URL || LL2_PUBLIC_API
 ).replace(/\/+$/, '');
 const NASA_API = 'https://api.nasa.gov';
 const NASA_API_KEY = process.env.NASA_API_KEY || 'DEMO_KEY';
@@ -528,6 +532,63 @@ function mediaUrl(media: LL2Media | string | null | undefined): string | null {
   return typeof media?.image_url === 'string' ? media.image_url || null : null;
 }
 
+function optionalText(value: string | null | undefined): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
+
+function ll2Visual(
+  kind: LaunchVisual['kind'],
+  media: LL2Media | string | null | undefined,
+  fallbackUrl: string | null | undefined,
+  launchId: string,
+): LaunchVisual | null {
+  const url = optionalText(mediaUrl(media)) || optionalText(fallbackUrl);
+  if (!url) {
+    return null;
+  }
+
+  const metadata = typeof media === 'object' && media ? media : null;
+  const thumbnailUrl = optionalText(metadata?.thumbnail_url);
+  const name = optionalText(metadata?.name);
+  const credit = optionalText(metadata?.credit);
+  const licenseName = optionalText(metadata?.license?.name);
+  const licenseUrl = optionalText(metadata?.license?.link);
+
+  return {
+    kind,
+    url,
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    ...(name ? { name } : {}),
+    ...(credit ? { credit } : {}),
+    ...(licenseName ? { licenseName } : {}),
+    ...(licenseUrl ? { licenseUrl } : {}),
+    ...(typeof metadata?.single_use === 'boolean'
+      ? { singleUse: metadata.single_use }
+      : {}),
+    sourceLabel: 'Launch Library 2',
+    sourceUrl: `${LL2_PUBLIC_API}/launches/${encodeURIComponent(launchId)}/`,
+  };
+}
+
+function preferredLaunchVisual(
+  candidates: Array<LaunchVisual | null>
+): LaunchVisual | null {
+  const supplied = candidates.filter(
+    (candidate): candidate is LaunchVisual => candidate !== null
+  );
+
+  return (
+    supplied.find((candidate) => isEligibleLaunchVisual(candidate)) ??
+    supplied[0] ??
+    null
+  );
+}
+
 function ll2RocketFamily(launch: LL2Launch): string | null {
   const configuration = launch.rocket.configuration;
   if (typeof configuration.family === 'string' && configuration.family) {
@@ -693,9 +754,14 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
       : launch.success === false
         ? 'Failure'
         : 'Outcome pending';
-  const rocket = typeof launch.rocket === 'object'
-    ? launch.rocket.name || 'Unknown Rocket'
-    : launch.rocket || 'Unknown Rocket';
+  const populatedRocket = typeof launch.rocket === 'object' && launch.rocket
+    ? launch.rocket
+    : null;
+  const rocket: string = populatedRocket
+    ? populatedRocket.name || 'Unknown Rocket'
+    : typeof launch.rocket === 'string'
+      ? launch.rocket || 'Unknown Rocket'
+      : 'Unknown Rocket';
   const populatedLaunchpad = typeof launch.launchpad === 'object' && launch.launchpad
     ? launch.launchpad
     : null;
@@ -726,6 +792,29 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
   ], launchSite);
   const webcast = launch.links.webcast || null;
   const image = launch.links.flickr?.original?.[0] || null;
+  const rocketImage = (Array.isArray(populatedRocket?.flickr_images)
+    ? populatedRocket.flickr_images
+    : [])
+    .map(optionalText)
+    .find((candidate): candidate is string => Boolean(candidate)) || null;
+  const vehicleVisual: LaunchVisual | null = rocketImage && populatedRocket
+    ? {
+        kind: 'vehicle',
+        url: rocketImage,
+        credit: 'SpaceX',
+        sourceLabel: 'SpaceX API',
+        sourceUrl: `${SPACEX_PUBLIC_API}/rockets/${encodeURIComponent(populatedRocket.id)}`,
+      }
+    : null;
+  const missionVisual: LaunchVisual | null = image
+    ? {
+        kind: 'mission',
+        url: image,
+        credit: 'SpaceX',
+        sourceLabel: 'SpaceX API',
+        sourceUrl: `${SPACEX_PUBLIC_API}/launches/${encodeURIComponent(launch.id)}`,
+      }
+    : null;
 
   return {
     id: toCanonicalLaunchId('spacex', launch.id),
@@ -750,8 +839,10 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     webcastLive: false,
     image,
     missionPatch: launch.links.patch?.small || null,
-    rocketImageUrl: null,
+    rocketImageUrl: rocketImage,
     launchImageUrl: image,
+    vehicleVisual,
+    missionVisual,
     padMapImage: null,
     location: latitude !== null && longitude !== null ? {
       lat: latitude,
@@ -796,6 +887,16 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
   const rocketImage = mediaUrl(configuration.image) || mediaUrl(configuration.image_url);
   const launchImage = mediaUrl(launch.image);
   const missionImage = mediaUrl(launch.mission?.image);
+  const vehicleVisual = ll2Visual(
+    'vehicle',
+    configuration.image,
+    configuration.image_url,
+    launch.id,
+  );
+  const missionVisual = preferredLaunchVisual([
+    ll2Visual('mission', launch.image, null, launch.id),
+    ll2Visual('mission', launch.mission?.image, null, launch.id),
+  ]);
   const family = ll2RocketFamily(launch);
   const missionPatch = (Array.isArray(launch.mission_patches) ? launch.mission_patches : [])
     .find((patch) => typeof patch?.image_url === 'string' && patch.image_url.length > 0)
@@ -833,6 +934,8 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     missionPatch,
     rocketImageUrl: rocketImage,
     launchImageUrl: launchImage || missionImage,
+    vehicleVisual,
+    missionVisual,
     padMapImage: mediaUrl(launch.pad.map_image) || mediaUrl(launch.pad.image),
     location: Number.isFinite(latitude) && Number.isFinite(longitude) ? {
       lat: latitude,

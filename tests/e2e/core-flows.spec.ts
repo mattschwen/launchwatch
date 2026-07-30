@@ -143,6 +143,192 @@ test('featured mission telemetry stays legible in the split layout', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home shows one truthful licensed visual with touch-safe attribution actions', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const visuals = page.locator('figure[data-visual-kind]');
+  await expect(visuals).toHaveCount(1);
+
+  const visual = visuals.first();
+  await expect(visual).toHaveAttribute('data-visual-kind', 'vehicle');
+  await expect(
+    visual.getByRole('img', {
+      name: 'Vehicle reference image of Astra Nova launch vehicle',
+    })
+  ).toBeVisible();
+  await expect(
+    visual.getByText('Vehicle reference', { exact: true })
+  ).toBeVisible();
+  await expect(
+    visual.getByText('Astra Nova launch vehicle', { exact: true })
+  ).toBeVisible();
+  await expect(
+    visual.getByText(
+      'Credit: LaunchWatch fixture · via LaunchWatch fixture',
+      { exact: true }
+    )
+  ).toBeVisible();
+  await expect(
+    visual.getByRole('link', {
+      name: 'Open CC BY 4.0 license in a new tab',
+    })
+  ).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by/4.0/'
+  );
+  await expect(
+    visual.getByRole('link', {
+      name: 'Open LaunchWatch fixture source record in a new tab',
+    })
+  ).toHaveAttribute('href', 'https://example.test/source');
+
+  const fullImage = visual.getByRole('link', {
+    name: 'Open full image in a new tab',
+  });
+  await expect(fullImage).toHaveAttribute('href', '/icon-512.png');
+  await fullImage.focus();
+  await expect(fullImage).toBeFocused();
+  const fullImageTarget = await fullImage.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      height: bounds.height,
+      width: bounds.width,
+    };
+  });
+  expect(fullImageTarget.height).toBeGreaterThanOrEqual(44);
+  expect(fullImageTarget.width).toBeGreaterThanOrEqual(44);
+
+  const visualFrame = await visual.evaluate((element) => {
+    const viewport = element.querySelector('.mission-visual-viewport');
+    const image = element.querySelector('img');
+    const viewportStyle = viewport ? getComputedStyle(viewport) : null;
+    const imageStyle = image ? getComputedStyle(image) : null;
+
+    return {
+      height: viewport?.getBoundingClientRect().height ?? 0,
+      overflow: viewportStyle?.overflow,
+      position: viewportStyle?.position,
+      objectFit: imageStyle?.objectFit,
+    };
+  });
+  expect(visualFrame.height).toBeGreaterThanOrEqual(160);
+  expect(visualFrame.overflow).toBe('hidden');
+  expect(visualFrame.position).toBe('relative');
+  expect(visualFrame.objectFit).toBe('contain');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home visual enrichment keeps a stable footprint', async ({ page }) => {
+  let releaseDetail: () => void = () => undefined;
+  const detailGate = new Promise<void>((resolve) => {
+    releaseDetail = resolve;
+  });
+  const feedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    vehicleVisual: null,
+    missionVisual: null,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [feedLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    async (route) => {
+      await detailGate;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: UPCOMING_LAUNCHES[0],
+          canonicalId: UPCOMING_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      });
+    }
+  );
+
+  await page.goto('/');
+
+  const loadingVisual = page.getByRole('status', {
+    name: 'Loading mission visual',
+  });
+  await expect(loadingVisual).toBeVisible();
+  const loadingHeight = await loadingVisual.evaluate(
+    (element) => element.getBoundingClientRect().height
+  );
+  releaseDetail();
+
+  const availableVisual = page.locator('figure[data-visual-kind="vehicle"]');
+  await expect(availableVisual).toBeVisible();
+  const availableHeight = await availableVisual.evaluate(
+    (element) => element.getBoundingClientRect().height
+  );
+
+  expect(Math.abs(availableHeight - loadingHeight)).toBeLessThanOrEqual(2);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home reports visual-detail failures as degraded data', async ({
+  page,
+}) => {
+  const feedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    vehicleVisual: null,
+    missionVisual: null,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [feedLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: 'Detailed provider data unavailable',
+        }),
+      });
+    }
+  );
+
+  await page.goto('/');
+
+  const degradedVisual = page.getByRole('status', {
+    name: 'Mission visual unavailable',
+  });
+  await expect(degradedVisual).toHaveAttribute(
+    'data-visual-status',
+    'degraded'
+  );
+  await expect(
+    degradedVisual.getByText('Visual metadata temporarily unavailable')
+  ).toBeVisible();
+  await expect(
+    degradedVisual.getByText('Provider image not supplied')
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('footer actions clear mobile navigation and preserve refresh focus', async ({
   page,
 }) => {
@@ -170,7 +356,7 @@ test('footer actions clear mobile navigation and preserve refresh focus', async 
   await page.waitForTimeout(100);
 
   const refresh = page.locator('footer button');
-  const source = page.getByRole('link', { name: 'Source' });
+  const source = page.getByRole('link', { name: 'Source', exact: true });
   await expect(refresh).toHaveText('Refresh now');
   await refresh.focus();
 
@@ -383,6 +569,7 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   page,
 }) => {
   let feedRequests = 0;
+  const releaseSuccessfulFeeds: Array<() => void> = [];
   await page.route('**/api/launches?type=all', async (route) => {
     feedRequests += 1;
     if (feedRequests % 2 === 1) {
@@ -394,7 +581,9 @@ test('home schedule retry reports progress and restores keyboard focus', async (
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await new Promise<void>((resolve) => {
+      releaseSuccessfulFeeds.push(resolve);
+    });
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -428,12 +617,14 @@ test('home schedule retry reports progress and restores keyboard focus', async (
     await expect(retry).toHaveAttribute('aria-busy', 'true');
   }
   await expect(heroRetry).toBeFocused();
+  await expect.poll(() => feedRequests).toBe(2);
   expect(
     await heroRetry.evaluate((element) => element.getBoundingClientRect().height)
   ).toBeGreaterThanOrEqual(44);
 
   await heroRetry.press('Enter');
   expect(feedRequests).toBe(2);
+  releaseSuccessfulFeeds.shift()?.();
 
   await expect(
     page.getByRole('heading', { name: 'Upcoming launches' })
@@ -452,6 +643,7 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   const restoredListRetry = restoredListError.locator('button');
   await restoredListRetry.focus();
   await restoredListRetry.press('Enter');
+  await expect.poll(() => feedRequests).toBe(4);
   await expect(restoredListRetry).toHaveAccessibleName('Retrying schedule');
   await expect(restoredListRetry).toHaveAttribute('aria-disabled', 'true');
   await expect(restoredListRetry).toBeFocused();
@@ -472,6 +664,7 @@ test('home schedule retry reports progress and restores keyboard focus', async (
 
   await restoredListRetry.press('Enter');
   expect(feedRequests).toBe(4);
+  releaseSuccessfulFeeds.shift()?.();
 
   await expect(
     page.getByRole('heading', { name: 'Upcoming launches' })
@@ -526,6 +719,74 @@ test('watch enriches the selected mission and switches the mission queue', async
   ).toBeVisible();
   await expect(watchTrajectory).toContainText('Polaris Relay');
   await expect(polarisQueueItem).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch keeps verified streams primary and offers a rocket visual on demand', async ({
+  page,
+}) => {
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  await expect(
+    page.getByRole('link', { name: 'Open provider stream' })
+  ).toBeVisible();
+  await expect(page.locator('figure[data-visual-kind]')).toHaveCount(0);
+  const showVisual = page.getByRole('button', {
+    name: 'Show rocket reference for Orbital Dawn',
+  });
+  await expect(showVisual).toHaveAttribute('aria-expanded', 'false');
+  await showVisual.focus();
+  await showVisual.press('Enter');
+  const hideVisual = page.getByRole('button', {
+    name: 'Hide rocket reference for Orbital Dawn',
+  });
+  await expect(hideVisual).toBeFocused();
+  await expect(hideVisual).toHaveAttribute('aria-expanded', 'true');
+  expect(
+    await hideVisual.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
+  await expect(
+    page.locator('figure[data-visual-kind="vehicle"]')
+  ).toHaveCount(1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: {
+            ...UPCOMING_LAUNCHES[0],
+            livestream: null,
+            livestreams: null,
+          },
+          canonicalId: UPCOMING_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      })
+  );
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  await expect(
+    page.getByRole('link', { name: 'Open provider stream' })
+  ).toHaveCount(0);
+  const visual = page.locator('figure[data-visual-kind="vehicle"]');
+  await expect(visual).toHaveCount(1);
+  await expect(
+    visual.getByRole('img', {
+      name: 'Vehicle reference image of Astra Nova launch vehicle',
+    })
+  ).toBeVisible();
+  await expect(
+    visual.getByText(
+      'Credit: LaunchWatch fixture · via LaunchWatch fixture',
+      { exact: true }
+    )
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -1026,11 +1287,81 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history loads licensed mission imagery only after archive expansion', async ({
+  page,
+}) => {
+  await page.goto('/history');
+
+  const visuals = page.locator('figure[data-visual-kind]');
+  await expect(visuals).toHaveCount(0);
+  await expect(
+    page.getByRole('img', {
+      name: 'Mission image for Demo Return Flight mission',
+    })
+  ).toHaveCount(0);
+
+  const returnMission = page
+    .locator('article')
+    .filter({ hasText: 'Demo Return Flight' });
+  const disclosure = returnMission.getByRole('button', {
+    name: /Demo Return Flight/i,
+  });
+  await disclosure.focus();
+  await disclosure.press('Enter');
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+
+  const visual = returnMission.locator(
+    'figure[data-visual-kind="mission"]'
+  );
+  await expect(visual).toHaveCount(1);
+  await expect(
+    visual.getByRole('img', {
+      name: 'Mission image for Demo Return Flight mission',
+    })
+  ).toBeVisible();
+  await expect(
+    visual.getByText('Mission imagery', { exact: true })
+  ).toBeVisible();
+  await expect(
+    visual.getByText(
+      'Credit: LaunchWatch fixture · via LaunchWatch fixture',
+      { exact: true }
+    )
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history retry reports progress and restores keyboard focus', async ({
   page,
 }) => {
   let historyRequests = 0;
-  await page.route('**/api/launches?type=history&limit=100', async (route) => {
+  let releaseHistory: () => void = () => undefined;
+  const historyGate = new Promise<void>((resolve) => {
+    releaseHistory = resolve;
+  });
+  await page.unroute('**/api/launches**');
+  await page.route('**/api/launches**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname !== '/api/launches') {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Launch not found' }),
+      });
+      return;
+    }
+    if (url.searchParams.get('type') !== 'history') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launches: UPCOMING_LAUNCHES,
+          meta: FEED_META,
+        }),
+      });
+      return;
+    }
+
     historyRequests += 1;
     if (historyRequests === 1) {
       await route.fulfill({
@@ -1041,7 +1372,7 @@ test('history retry reports progress and restores keyboard focus', async ({
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await historyGate;
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -1064,6 +1395,7 @@ test('history retry reports progress and restores keyboard focus', async ({
   });
   await retry.focus();
   await retry.press('Enter');
+  await expect.poll(() => historyRequests).toBe(2);
 
   await expect(retry).toHaveText('Retrying archive');
   await expect(retry).toHaveAttribute('aria-disabled', 'true');
@@ -1075,6 +1407,7 @@ test('history retry reports progress and restores keyboard focus', async ({
 
   await retry.press('Enter');
   expect(historyRequests).toBe(2);
+  releaseHistory();
 
   const search = page.getByRole('searchbox', { name: 'Search missions' });
   await expect(search).toBeFocused();
@@ -1190,10 +1523,12 @@ test('upcoming and historical details place one trajectory before mission suppor
     path,
     mission,
     hasTimeline,
+    visualAlt,
   }: {
     path: string;
     mission: string;
     hasTimeline: boolean;
+    visualAlt?: string;
   }): Promise<void> => {
     await page.goto(path);
 
@@ -1206,6 +1541,29 @@ test('upcoming and historical details place one trajectory before mission suppor
     });
     await expect(trajectory).toHaveCount(1);
     await expect(trajectory).toBeVisible();
+    const visual = page.locator('figure[data-visual-kind]');
+    const unavailableVisual = page.getByLabel('Mission visual unavailable');
+    const expectedVisual = visualAlt
+      ? visual.getByRole('img', { name: visualAlt })
+      : unavailableVisual;
+
+    if (visualAlt) {
+      await expect(visual).toHaveCount(1);
+      await expect(expectedVisual).toBeVisible();
+      await expect(unavailableVisual).toHaveCount(0);
+    } else {
+      await expect(visual).toHaveCount(0);
+      await expect(unavailableVisual).toHaveCount(1);
+      await expect(unavailableVisual).toHaveAttribute(
+        'data-visual-status',
+        'missing'
+      );
+      await expect(
+        unavailableVisual.getByText('Provider image not supplied', {
+          exact: true,
+        })
+      ).toBeVisible();
+    }
     await expect(
       trajectory.locator('[data-trajectory-map]')
     ).toHaveCount(1);
@@ -1276,6 +1634,9 @@ test('upcoming and historical details place one trajectory before mission suppor
       const intelSection = document.querySelector(
         'section[aria-labelledby="mission-intelligence-title"]'
       );
+      const visualElement = document.querySelector(
+        'figure[data-visual-kind], [aria-label="Mission visual unavailable"]'
+      );
       const appearsBefore = (
         first: Element | null,
         second: Element | null
@@ -1288,11 +1649,13 @@ test('upcoming and historical details place one trajectory before mission suppor
           : null;
 
       return {
+        visualBeforeMap: appearsBefore(visualElement, mapSection),
         mapBeforeTimeline: appearsBefore(mapSection, timelineSection),
         mapBeforeIntel: appearsBefore(mapSection, intelSection),
       };
     });
 
+    expect(order.visualBeforeMap).toBe(true);
     expect(order.mapBeforeIntel).toBe(true);
     expect(order.mapBeforeTimeline).toBe(hasTimeline ? true : null);
     expect(await expectNoHorizontalOverflow(page)).toBe(true);
@@ -1302,6 +1665,7 @@ test('upcoming and historical details place one trajectory before mission suppor
     path: '/launch/ll2-demo-orbital-dawn',
     mission: 'Orbital Dawn',
     hasTimeline: true,
+    visualAlt: 'Vehicle reference image of Astra Nova launch vehicle',
   });
   await assertDetailTrajectory({
     path: '/launch/spacex-demo-return',

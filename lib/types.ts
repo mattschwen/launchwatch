@@ -4,7 +4,11 @@ export interface SpaceXLaunch {
   name: string;
   date_utc: string;
   date_unix: number;
-  rocket: string | { id: string; name: string };
+  rocket: string | {
+    id: string;
+    name: string;
+    flickr_images?: string[];
+  };
   success: boolean | null;
   details: string | null;
   links: {
@@ -56,13 +60,34 @@ export interface SpaceXRocket {
     kg: number;
     lb: number;
   };
+  flickr_images?: string[];
   description: string;
 }
 
 // Launch Library 2 Types
+export interface LL2MediaVariant {
+  id?: number;
+  type?: {
+    id?: number;
+    name?: string | null;
+  } | null;
+  image_url?: string | null;
+}
+
 export interface LL2Media {
+  id?: number;
+  name?: string | null;
   image_url: string;
   thumbnail_url?: string | null;
+  credit?: string | null;
+  license?: {
+    id?: number;
+    name?: string | null;
+    priority?: number;
+    link?: string | null;
+  } | null;
+  single_use?: boolean | null;
+  variants?: LL2MediaVariant[] | null;
 }
 
 export interface LL2NamedReference {
@@ -204,6 +229,21 @@ export interface LaunchTimelineEvent {
 
 export type LaunchSource = 'spacex' | 'll2';
 
+export type LaunchVisualKind = 'vehicle' | 'mission';
+
+export interface LaunchVisual {
+  kind: LaunchVisualKind;
+  url: string;
+  thumbnailUrl?: string;
+  name?: string;
+  credit?: string;
+  licenseName?: string;
+  licenseUrl?: string;
+  singleUse?: boolean;
+  sourceLabel: string;
+  sourceUrl?: string;
+}
+
 export interface Launch {
   id: string;
   /**
@@ -232,6 +272,8 @@ export interface Launch {
   missionPatch?: string | null;
   rocketImageUrl?: string | null;
   launchImageUrl?: string | null;
+  vehicleVisual?: LaunchVisual | null;
+  missionVisual?: LaunchVisual | null;
   padMapImage?: string | null;
   location?: LaunchLocation | null;
   provider?: string | null;

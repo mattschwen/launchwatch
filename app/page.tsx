@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic';
 import { ChevronDown, Globe2 } from 'lucide-react';
 import HeroSection from '@/components/launch/HeroSection';
 import LaunchList from '@/components/LaunchList';
-import { useLaunches } from '@/lib/hooks';
+import { useLaunchById, useLaunches } from '@/lib/hooks';
+import { selectLaunchVisual } from '@/lib/launch-visual';
 
 const MissionTrajectory = dynamic(
   () => import('@/components/MissionTrajectory'),
@@ -26,24 +27,36 @@ function HomeContent(): React.ReactElement {
       (launch) => launch.status === 'upcoming' || launch.status === 'tbd',
     ) ??
     null;
+  const featuredVisual = selectLaunchVisual(featuredLaunch);
+  const featuredDetail = useLaunchById(
+    featuredVisual.status === 'available' ? null : featuredLaunch?.id
+  );
+  const featuredMission = featuredDetail.launch ?? featuredLaunch;
 
   return (
     <>
       <div className="page-container py-4 sm:py-5 lg:py-6">
         <div className="grid items-stretch gap-4 lg:grid-cols-2">
           <HeroSection
-            activeLaunch={featuredLaunch}
+            activeLaunch={featuredMission}
             loading={loading}
             refreshing={refreshing}
             error={error}
             partial={Boolean(meta?.partial)}
+            visualLoading={featuredDetail.enriching}
+            visualError={
+              featuredDetail.error ??
+              (featuredDetail.notFound
+                ? 'Mission detail was not found.'
+                : null)
+            }
             refresh={refresh}
           />
           <aside
             aria-label="Mission trajectory"
             className="hidden min-w-0 lg:block"
           >
-            <MissionTrajectory launch={featuredLaunch} />
+            <MissionTrajectory launch={featuredMission} />
           </aside>
         </div>
 
@@ -83,7 +96,7 @@ function HomeContent(): React.ReactElement {
               id="mobile-mission-map"
               className="mt-2"
             >
-              <MissionTrajectory launch={featuredLaunch} />
+              <MissionTrajectory launch={featuredMission} />
             </div>
           ) : null}
         </section>

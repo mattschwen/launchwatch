@@ -23,6 +23,9 @@ function HookHarness({
       <p data-testid="selected-stream">
         {result.launch?.livestream ?? 'No stream'}
       </p>
+      <p data-testid="enrichment-state">
+        {result.enriching ? 'Acquiring detail' : 'Detail settled'}
+      </p>
     </>
   );
 }
@@ -92,6 +95,9 @@ describe('useLaunchById', () => {
       screen.findByText(UPCOMING_LAUNCHES[0].name)
     ).resolves.toBeVisible();
     expect(screen.getByTestId('selected-stream')).toHaveTextContent('No stream');
+    expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+      'Acquiring detail'
+    );
 
     resolveDetail?.(response({ launch: detailedLaunch }));
 
@@ -99,6 +105,9 @@ describe('useLaunchById', () => {
       expect(screen.getByTestId('selected-stream')).toHaveTextContent(
         detailedLaunch.livestream
       )
+    );
+    expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+      'Detail settled'
     );
   });
 

@@ -46,7 +46,11 @@ describe('SpaceX normalization', () => {
       name: 'Demo Return Flight',
       date_utc: '2025-04-14T18:00:00.000Z',
       date_unix: 1744653600,
-      rocket: { id: 'f9', name: 'Falcon 9' },
+      rocket: {
+        id: 'f9',
+        name: 'Falcon 9',
+        flickr_images: ['https://example.test/falcon-9.jpg'],
+      },
       success: true,
       details: 'Nominal mission.',
       links: {
@@ -54,6 +58,9 @@ describe('SpaceX normalization', () => {
         youtube_id: 'aqz-KE-bpKQ',
         article: null,
         wikipedia: null,
+        flickr: {
+          original: ['https://example.test/demo-return.jpg'],
+        },
         patch: { small: 'https://example.test/patch.png' },
       },
       launchpad: {
@@ -84,7 +91,25 @@ describe('SpaceX normalization', () => {
         name: 'Cape Canaveral, Florida',
       },
       livestream: launch.links.webcast,
+      rocketImageUrl: 'https://example.test/falcon-9.jpg',
+      launchImageUrl: 'https://example.test/demo-return.jpg',
+      vehicleVisual: {
+        kind: 'vehicle',
+        url: 'https://example.test/falcon-9.jpg',
+        credit: 'SpaceX',
+        sourceLabel: 'SpaceX API',
+        sourceUrl: 'https://api.spacexdata.com/v4/rockets/f9',
+      },
+      missionVisual: {
+        kind: 'mission',
+        url: 'https://example.test/demo-return.jpg',
+        credit: 'SpaceX',
+        sourceLabel: 'SpaceX API',
+        sourceUrl: 'https://api.spacexdata.com/v4/launches/demo-return',
+      },
     });
+    expect(normalized.vehicleVisual).not.toHaveProperty('licenseName');
+    expect(normalized.missionVisual).not.toHaveProperty('licenseUrl');
   });
 
   it('accepts numeric coordinate strings and meaningful launchpad fallbacks', () => {

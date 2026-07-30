@@ -252,9 +252,22 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `livestream`, `livestreams` | Verified provider video candidates |
 | `description`, `missionType`, `orbit`, `program` | Mission context |
 | `image`, `missionPatch`, `videoThumbnail` | Optional media |
+| `rocketImageUrl`, `launchImageUrl`, `padMapImage`, `providerLogo` | Backward-compatible optional media URLs |
+| `vehicleVisual`, `missionVisual` | Optional structured visuals with provider provenance |
 | `timeline` | Optional provider timeline events |
 
 Fields absent from an upstream provider are represented as `null`, omitted optional fields, or a documented fallback string.
+
+Structured visuals identify their `kind` (`vehicle` or `mission`), `url`, provider
+`sourceLabel`, and optional `sourceUrl`. When a provider supplies them, LaunchWatch
+also preserves the visual name, thumbnail, credit, license name/link, and single-use
+flag. Missing attribution or licensing fields remain absent; LaunchWatch does not
+infer a license from an image host or provider.
+
+The display boundary requires the upstream record to state `singleUse: false`
+alongside a supported reusable license and meaningful creator credit. This keeps
+absent clearance, placeholder attribution, unknown rights, and one-time media
+out of both rendered figures and social metadata.
 
 ## External Providers
 

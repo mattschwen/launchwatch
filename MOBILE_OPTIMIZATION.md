@@ -29,6 +29,11 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Mission metadata adapts from multiple columns to stacked groups.
 - Upcoming missions render as compact responsive rows.
 - Filters are collapsed until requested.
+- The featured mission may show one fixed-aspect licensed vehicle or mission
+  visual. It must preserve its caption and full-image action without widening
+  the page.
+- While richer detail metadata is requested, the same fixed visual footprint
+  reports acquisition progress so content below it does not jump.
 - The map appears beside the hero only at wide desktop widths.
 - On smaller widths, the map is behind an explicit disclosure after the schedule.
 
@@ -43,7 +48,9 @@ The optional expanded map remains a modal dialog. It must:
 ## Watch
 
 - Video preserves its aspect ratio without forcing horizontal overflow.
-- When no verified stream is available, the route presents the next mission, countdown, and provider fallback instead of an empty stage.
+- When no verified stream is available, the route presents the next mission,
+  countdown, provider fallback, and one eligible mission visual instead of an
+  empty stage. A verified stream remains the primary visual.
 - The mission queue follows the stage on smaller screens and becomes a side rail on larger screens.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail.
@@ -58,6 +65,8 @@ The optional expanded map remains a modal dialog. It must:
 - Search and provider/year/outcome filters stack on narrow screens.
 - Each archive row keeps the mission and View Mission action readable before exposing secondary metadata.
 - Expanded summaries remain in normal document flow.
+- Licensed imagery loads only inside an expanded row so the collapsed archive
+  remains compact and scan-efficient.
 - Replay and detail links use canonical `spacex-*` IDs.
 - Empty, error, stale, and retry states must fit without overflow.
 
@@ -65,6 +74,9 @@ The optional expanded map remains a modal dialog. It must:
 
 - Long names wrap as phrases within the available width.
 - The status, title, description, actions, and telemetry summary stack on narrow screens.
+- One licensed vehicle or mission visual appears before the telemetry card and
+  trajectory; when rights cannot be verified, the layout presents a compact,
+  honest unavailable state in the same stable visual footprint.
 - Primary and secondary actions remain labeled; icon-only controls require accessible names.
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
   their own region when necessary.
@@ -88,6 +100,10 @@ The optional expanded map remains a modal dialog. It must:
 - Respect `prefers-reduced-motion`.
 - Trajectory drawing, telemetry flow, beacon pulses, and holographic sheen stop
   under reduced motion while their final visual state remains legible.
+- Visual figures reserve the same viewport and caption footprint while rights
+  metadata loads, then use a fixed image aspect ratio to avoid layout shifts.
+  Their scanline/sheen treatment is decorative, low contrast, and disabled with
+  reduced motion; image failures resolve to a readable amber state.
 - Avoid using animation as the only live-status cue.
 - Pair every semantic signal with text: green for nominal, magenta for live
   coverage, red for critical/hold states, cyan for trajectory data, and amber

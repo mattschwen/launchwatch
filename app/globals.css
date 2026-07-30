@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../components/launch/MissionVisual.tsx";
 
 /* ═══════════════════════════════════════════════════
    MISSION CONTROL THEME — CYBERPUNK BUNKER
@@ -732,6 +733,283 @@ body::before {
   pointer-events: none;
 }
 
+.mission-visual {
+  overflow: hidden;
+  margin: 0;
+  border-color: color-mix(
+    in srgb,
+    var(--console-cyan) 25%,
+    var(--border-subtle)
+  );
+}
+
+.mission-visual-viewport,
+.mission-visual-placeholder-viewport {
+  position: relative;
+  isolation: isolate;
+  min-height: 10rem;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(88, 230, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 79, 216, 0.02) 1px, transparent 1px),
+    radial-gradient(circle at 50% 45%, rgba(88, 230, 255, 0.075), transparent 56%),
+    var(--surface-canvas);
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+.mission-visual-viewport::after,
+.mission-visual-placeholder-viewport::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 6, 10, 0.08),
+      transparent 42%,
+      rgba(5, 6, 10, 0.35)
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgba(88, 230, 255, 0.026) 3px 4px
+    );
+  box-shadow:
+    inset 0 0 56px rgba(5, 6, 10, 0.52),
+    inset 0 -30px 42px rgba(5, 6, 10, 0.22);
+  pointer-events: none;
+}
+
+.mission-visual-compact .mission-visual-viewport,
+.mission-visual-compact .mission-visual-placeholder-viewport {
+  aspect-ratio: 4 / 3;
+}
+
+.mission-visual-image {
+  z-index: 0;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transform: scale(1.012);
+  transition:
+    opacity 240ms var(--ease-out-quart),
+    transform 700ms var(--ease-out-expo);
+}
+
+.mission-visual-image-vehicle {
+  object-fit: contain;
+  padding: 0.45rem;
+}
+
+.mission-visual-image-loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mission-visual-skeleton {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(88, 230, 255, 0.045), transparent 48%),
+    var(--surface-raised);
+}
+
+.mission-visual-error {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  color: var(--console-amber);
+  text-align: left;
+}
+
+.mission-visual-caption {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  min-height: 8.5rem;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border-top: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(100deg, rgba(88, 230, 255, 0.045), transparent 38%),
+    rgba(5, 8, 14, 0.94);
+}
+
+.mission-visual-name {
+  margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mission-visual-credit {
+  margin-top: 0.3rem;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.mission-visual-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mission-visual-license,
+.mission-visual-source,
+.mission-visual-placeholder-action,
+.mission-visual-open {
+  position: relative;
+  z-index: 4;
+  display: inline-flex;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    border-color 160ms var(--ease-out-quick),
+    background-color 160ms var(--ease-out-quick),
+    color 160ms var(--ease-out-quick);
+}
+
+.mission-visual-license,
+.mission-visual-source {
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.mission-visual-license:hover,
+.mission-visual-source:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--console-cyan) 42%,
+    var(--border-strong)
+  );
+  color: var(--console-cyan);
+}
+
+.mission-visual-open {
+  border: 1px solid color-mix(
+    in srgb,
+    var(--console-cyan) 38%,
+    var(--border-subtle)
+  );
+  background: rgba(88, 230, 255, 0.07);
+  color: var(--console-cyan);
+}
+
+.mission-visual-open:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--console-cyan) 64%,
+    var(--border-strong)
+  );
+  background: rgba(88, 230, 255, 0.11);
+}
+
+.mission-visual-placeholder-viewport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  color: var(--console-amber);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgba(255, 196, 92, 0.018) 3px 4px
+    ),
+    linear-gradient(135deg, rgba(255, 196, 92, 0.06), transparent 46%),
+    var(--surface-base);
+}
+
+.mission-visual-placeholder-viewport > * {
+  position: relative;
+  z-index: 3;
+}
+
+.mission-visual-loading .mission-visual-placeholder-viewport {
+  color: var(--console-cyan);
+  background:
+    linear-gradient(90deg, transparent, rgba(88, 230, 255, 0.055), transparent),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 3px,
+      rgba(88, 230, 255, 0.018) 3px 4px
+    ),
+    linear-gradient(135deg, rgba(88, 230, 255, 0.06), transparent 46%),
+    var(--surface-base);
+  background-size: 180% 100%, auto, auto, auto;
+  animation: mission-visual-acquire 1.8s linear infinite;
+}
+
+.mission-visual-placeholder-caption {
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.mission-visual-placeholder-action {
+  flex: 1 1 5.5rem;
+  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(100deg, rgba(88, 230, 255, 0.028), transparent 65%),
+    rgba(88, 230, 255, 0.025);
+}
+
+@keyframes mission-visual-acquire {
+  from {
+    background-position: 180% 0, 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: -180% 0, 0 0, 0 0, 0 0;
+  }
+}
+
+@media (min-width: 640px) {
+  .mission-visual-caption {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding-inline: 0.9rem;
+  }
+
+  .mission-visual-compact .mission-visual-caption {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .mission-visual-caption {
+    min-height: 14.5rem;
+  }
+
+  .mission-visual-actions > a,
+  .mission-visual-actions > .mission-visual-placeholder-action {
+    flex: 1 1 9rem;
+  }
+}
+
 .stream-surface {
   position: relative;
   overflow: hidden;
@@ -1147,6 +1425,15 @@ select:focus {
 
   .trajectory-path-ascent {
     stroke-dashoffset: 0;
+  }
+
+  .mission-visual-image {
+    transform: none;
+    transition: none;
+  }
+
+  .mission-visual-loading .mission-visual-placeholder-viewport {
+    animation: none;
   }
 
   .status-dot-live {

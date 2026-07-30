@@ -1,12 +1,20 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowRight,
+  ChevronDown,
   ExternalLink,
   Radio,
   Rocket,
@@ -15,6 +23,7 @@ import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
+import MissionVisual from '@/components/launch/MissionVisual';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
@@ -128,6 +137,80 @@ function WatchStage({
           </a>
         ) : null}
       </div>
+    </section>
+  );
+}
+
+function WatchMissionVisual({
+  launch,
+  loading,
+  error,
+  collapsible,
+}: {
+  launch: Launch;
+  loading: boolean;
+  error: string | null;
+  collapsible: boolean;
+}): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const regionId = useId();
+
+  if (!collapsible) {
+    return (
+      <MissionVisual
+        launch={launch}
+        compact
+        loading={loading}
+        error={error}
+        showUnavailableState
+        className="mt-4 max-w-xl"
+      />
+    );
+  }
+
+  return (
+    <section className="surface-card holo-card signal-cold mt-4 max-w-xl overflow-hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={regionId}
+        aria-label={`${open ? 'Hide' : 'Show'} rocket reference for ${
+          launch.name
+        }`}
+        onClick={() => setOpen((value) => !value)}
+        className="flex min-h-14 w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+      >
+        <span className="min-w-0">
+          <span className="data-label block text-[var(--console-cyan)]">
+            Vehicle archive
+          </span>
+          <span className="mt-1 block truncate text-sm font-semibold text-[var(--text-primary)]">
+            Rocket reference image
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2 font-mono text-xs uppercase tracking-[0.08em] text-[var(--console-cyan)]">
+          {open ? 'Hide' : 'Show'}
+          <ChevronDown
+            aria-hidden="true"
+            size={16}
+            className={`transition-transform ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </span>
+      </button>
+      {open ? (
+        <div id={regionId}>
+          <MissionVisual
+            launch={launch}
+            compact
+            loading={loading}
+            error={error}
+            showUnavailableState
+            className="max-w-none rounded-none border-x-0 border-b-0"
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -401,6 +484,14 @@ function WatchContent(): React.ReactElement {
                 </p>
               ) : null}
             </section>
+
+            <WatchMissionVisual
+              key={selectedLaunch.id}
+              launch={selectedLaunch}
+              loading={selected.enriching}
+              error={selected.error}
+              collapsible={Boolean(selectedLaunch.livestream)}
+            />
           </div>
 
           <MissionQueue

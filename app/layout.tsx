@@ -19,6 +19,7 @@ const geistMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.launchwatch.io"),
   title: "LaunchWatch",
   description: "Track upcoming rocket launches, watch live streams, and explore space mission data. Real-time updates from NASA, SpaceX, and more.",
   keywords: ["rocket launches", "SpaceX", "NASA", "space", "livestream", "mission control", "launch watch"],

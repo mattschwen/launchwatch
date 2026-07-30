@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import LaunchDetailClient from './LaunchDetailClient';
 import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
+import { getLaunchVisualMetadata } from '@/lib/launch-visual';
 
 interface LaunchDetailPageProps {
   params: Promise<{ id: string }>;
@@ -37,7 +38,7 @@ export async function generateMetadata({
   const description =
     launch.description?.trim().slice(0, 180) ||
     `${launch.name} launch details, schedule, provider coverage, and mission intelligence.`;
-  const image = launch.launchImageUrl || launch.image || null;
+  const image = getLaunchVisualMetadata(launch);
 
   return {
     title: `${launch.name} | LaunchWatch`,
@@ -49,7 +50,7 @@ export async function generateMetadata({
       title: launch.name,
       description,
       type: 'article',
-      ...(image ? { images: [{ url: image, alt: launch.name }] } : {}),
+      ...(image ? { images: [image] } : {}),
     },
   };
 }

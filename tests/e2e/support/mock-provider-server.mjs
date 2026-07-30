@@ -221,6 +221,21 @@ const ll2Upcoming = ll2Launch({
     'A communications payload mission opening a new low-Earth-orbit relay corridor.',
 });
 
+ll2Upcoming.rocket.configuration.image = {
+  id: 9001,
+  name: 'Astra Nova launch vehicle',
+  image_url: '/icon-512.png',
+  thumbnail_url: '/icon-192.png',
+  credit: 'LaunchWatch fixture',
+  license: {
+    id: 1,
+    name: 'CC BY 4.0',
+    link: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  single_use: false,
+  variants: [],
+};
+
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
   name: 'Pathfinder Qualification',
@@ -236,6 +251,21 @@ const ll2Previous = ll2Launch({
   description:
     'A qualification flight retained for archive filtering and failure-state coverage.',
 });
+
+ll2Previous.image = {
+  id: 9002,
+  name: 'Pathfinder Qualification mission',
+  image_url: '/icon-512.png',
+  thumbnail_url: '/icon-192.png',
+  credit: 'LaunchWatch fixture',
+  license: {
+    id: 1,
+    name: 'CC BY 4.0',
+    link: 'https://creativecommons.org/licenses/by/4.0/',
+  },
+  single_use: false,
+  variants: [],
+};
 
 function sendJson(response, status, body) {
   response.writeHead(status, {

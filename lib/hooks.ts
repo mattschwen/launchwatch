@@ -204,6 +204,10 @@ export function useLaunchById(id: string | null | undefined) {
 
   return {
     launch,
+    enriching:
+      Boolean(id) &&
+      Boolean(feedLaunch) &&
+      (!currentRemote || currentRemote.loading),
     loading:
       Boolean(id) &&
       !launch &&

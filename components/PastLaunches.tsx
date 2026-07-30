@@ -23,6 +23,7 @@ import {
   launchOutcomeLabel,
   shortenLaunchSite,
 } from '@/lib/format';
+import MissionVisual from '@/components/launch/MissionVisual';
 
 const PAGE_SIZE = 20;
 
@@ -210,15 +211,18 @@ function HistoryRow({
               </div>
             </dl>
           </div>
-          <div className="flex flex-wrap content-start gap-2 lg:justify-end">
-            {launch.livestream ? (
-              <Link
-                href={`/watch?id=${encodeURIComponent(launch.id)}`}
-                className="action-button action-button-stream"
-              >
-                Watch replay
-              </Link>
-            ) : null}
+          <div className="min-w-0 space-y-3">
+            <MissionVisual launch={launch} compact />
+            <div className="flex flex-wrap content-start gap-2 lg:justify-end">
+              {launch.livestream ? (
+                <Link
+                  href={`/watch?id=${encodeURIComponent(launch.id)}`}
+                  className="action-button action-button-stream"
+                >
+                  Watch replay
+                </Link>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

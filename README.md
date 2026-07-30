@@ -24,10 +24,10 @@ surface remains consistent everywhere else.
 
 ## Product Surfaces
 
-- **Home** highlights the live or next launch, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
-- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, queue, countdown, selected-mission trajectory, and truthful coverage signal.
-- **History** loads completed SpaceX missions through the internal server API and supports search, provider, year, outcome, expandable summaries, replay links, and mission details.
-- **Mission detail** resolves both upcoming and historical launches by canonical ID and combines status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence.
+- **Home** highlights the live or next launch with a licensed vehicle reference when one is available, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
+- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, licensed imagery when video is unavailable, queue, countdown, selected-mission trajectory, and truthful coverage signal.
+- **History** loads completed SpaceX missions through the internal server API and supports search, provider, year, outcome, expandable visual summaries, replay links, and mission details.
+- **Mission detail** resolves both upcoming and historical launches by canonical ID and combines a licensed vehicle or mission visual, status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence.
 
 The desktop and mobile navigation both expose Home, Watch, and History. The first-visit synchronization message is a short, dismissible status toast; it never blocks the application.
 
@@ -40,6 +40,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Useful Watch fallback when no verified stream is live
 - Searchable and filterable launch schedule and archive
 - Mission briefings, coverage, community links, and replay surfaces
+- Provider-sourced vehicle and mission imagery with visible creator and license
+  attribution, a full-resolution action, and truthful unavailable states
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
@@ -128,7 +130,18 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
 
 - Provider calls happen on the server; browser components do not contact SpaceX or Launch Library 2 directly.
 - Home, Watch, the header, and launch selectors share one deduplicated client request to `type=all`, refreshed every two minutes and when a stale visible tab reconnects.
+- If the featured feed record lacks a reusable visual, Home requests that one
+  canonical launch detail record to acquire richer vehicle-image provenance;
+  the server caches the result under the existing detail policy.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
+- Visual metadata is normalized with its provider record. The UI displays only
+  supported image origins with explicit, meaningful attribution, an explicit reusable
+  license, and an explicit `singleUse: false` clearance. Unknown-rights images
+  remain hidden rather than being silently hotlinked; mission imagery is never
+  labeled as a vehicle reference. The same selector protects social metadata.
+- LaunchWatch currently operates as an informational, noncommercial experience,
+  so explicitly licensed CC BY-NC media can be eligible. Any monetization or
+  commercial reuse requires a visual-license policy audit before deployment.
 - The service worker never caches `/api/*`, Next.js flight responses, navigations, or arbitrary query-string requests.
 - Only the offline document, explicit shell icons, and content-hashed Next.js static assets are cached. Production clients check for a newer worker and apply updates explicitly.
 

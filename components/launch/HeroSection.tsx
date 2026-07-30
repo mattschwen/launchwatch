@@ -13,6 +13,7 @@ import {
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchActions from './LaunchActions';
+import MissionVisual from './MissionVisual';
 
 interface HeroSectionProps {
   activeLaunch: Launch | null;
@@ -20,6 +21,8 @@ interface HeroSectionProps {
   refreshing: boolean;
   error: string | null;
   partial: boolean;
+  visualLoading?: boolean;
+  visualError?: string | null;
   refresh: () => Promise<void>;
 }
 
@@ -45,6 +48,8 @@ export default function HeroSection({
   refreshing,
   error,
   partial,
+  visualLoading = false,
+  visualError = null,
   refresh,
 }: HeroSectionProps): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
@@ -291,6 +296,16 @@ export default function HeroSection({
               </dd>
             </div>
           </dl>
+
+          <MissionVisual
+            launch={activeLaunch}
+            priority
+            compact
+            loading={visualLoading}
+            error={visualError}
+            showUnavailableState
+            className="mt-5 max-w-md"
+          />
 
           <LaunchActions
             launch={activeLaunch}

@@ -65,8 +65,19 @@ const NORMAL_LIST_LAUNCH = {
   vid_urls: null,
   timeline: null,
   image: {
+    id: 2794,
+    name: 'Falcon 9 on the pad',
     image_url: 'https://example.test/launch.jpg',
     thumbnail_url: 'https://example.test/launch-thumb.jpg',
+    credit: 'SpaceX',
+    license: {
+      id: 1,
+      name: 'Unknown',
+      priority: 9,
+      link: null,
+    },
+    single_use: true,
+    variants: [],
   },
   program: [{ name: 'Fixture Program' }],
 } satisfies LL2Launch;
@@ -86,8 +97,28 @@ const DETAILED_LAUNCH = {
     configuration: {
       ...NORMAL_LIST_LAUNCH.rocket.configuration,
       image: {
+        id: 1736,
+        name: 'Falcon 9 liftoff',
         image_url: 'https://example.test/falcon-9.jpg',
         thumbnail_url: 'https://example.test/falcon-9-thumb.jpg',
+        credit: 'SpaceX',
+        license: {
+          id: 5,
+          name: 'CC BY-NC 2.0',
+          priority: 1,
+          link: 'https://creativecommons.org/licenses/by-nc/2.0/',
+        },
+        single_use: false,
+        variants: [
+          {
+            id: 1,
+            type: {
+              id: 1,
+              name: 'portrait',
+            },
+            image_url: 'https://example.test/falcon-9-portrait.jpg',
+          },
+        ],
       },
     },
   },
@@ -177,6 +208,31 @@ describe('Launch Library 2.3 adapter', () => {
       image: 'https://example.test/launch.jpg',
       launchImageUrl: 'https://example.test/launch.jpg',
       rocketImageUrl: 'https://example.test/falcon-9.jpg',
+      vehicleVisual: {
+        kind: 'vehicle',
+        url: 'https://example.test/falcon-9.jpg',
+        thumbnailUrl: 'https://example.test/falcon-9-thumb.jpg',
+        name: 'Falcon 9 liftoff',
+        credit: 'SpaceX',
+        licenseName: 'CC BY-NC 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-nc/2.0/',
+        singleUse: false,
+        sourceLabel: 'Launch Library 2',
+        sourceUrl:
+          `https://ll.thespacedevs.com/2.3.0/launches/${DETAILED_LAUNCH.id}/`,
+      },
+      missionVisual: {
+        kind: 'mission',
+        url: 'https://example.test/launch.jpg',
+        thumbnailUrl: 'https://example.test/launch-thumb.jpg',
+        name: 'Falcon 9 on the pad',
+        credit: 'SpaceX',
+        licenseName: 'Unknown',
+        singleUse: true,
+        sourceLabel: 'Launch Library 2',
+        sourceUrl:
+          `https://ll.thespacedevs.com/2.3.0/launches/${DETAILED_LAUNCH.id}/`,
+      },
       padMapImage: 'https://example.test/pad-map.jpg',
       missionPatch: 'https://example.test/mission-patch.png',
       livestream: 'https://www.youtube.com/watch?v=fixture123',
@@ -261,17 +317,110 @@ describe('Launch Library 2.3 adapter', () => {
       image: 'https://example.test/legacy-launch.jpg',
     };
 
-    expect(normalizeLL2Launch(legacyLaunch)).toMatchObject({
+    const normalized = normalizeLL2Launch(legacyLaunch);
+
+    expect(normalized).toMatchObject({
       provider: 'Rocket Lab',
       providerLogo: 'https://example.test/rocket-lab-logo.png',
       rocketFamily: 'Electron',
       livestream: 'https://www.youtube.com/watch?v=legacy123',
+      rocketImageUrl: 'https://example.test/electron.jpg',
       launchImageUrl: 'https://example.test/legacy-launch.jpg',
+      vehicleVisual: {
+        kind: 'vehicle',
+        url: 'https://example.test/electron.jpg',
+        sourceLabel: 'Launch Library 2',
+        sourceUrl: 'https://ll.thespacedevs.com/2.3.0/launches/legacy-fixture/',
+      },
+      missionVisual: {
+        kind: 'mission',
+        url: 'https://example.test/legacy-launch.jpg',
+        sourceLabel: 'Launch Library 2',
+        sourceUrl: 'https://ll.thespacedevs.com/2.3.0/launches/legacy-fixture/',
+      },
       location: {
         lat: -39.260881,
         lng: 177.864876,
         countryCode: 'NZ',
       },
+    });
+    expect(normalized.vehicleVisual).not.toHaveProperty('credit');
+    expect(normalized.vehicleVisual).not.toHaveProperty('licenseName');
+    expect(normalized.missionVisual).not.toHaveProperty('name');
+  });
+
+  it('uses mission media provenance when a launch image is unavailable', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      image: null,
+      mission: {
+        ...NORMAL_LIST_LAUNCH.mission,
+        image: {
+          id: 401,
+          name: 'Fixture payload in orbit',
+          image_url: 'https://example.test/mission.jpg',
+          thumbnail_url: 'https://example.test/mission-thumb.jpg',
+          credit: 'Fixture Agency',
+          license: {
+            id: 4,
+            name: 'NASA Image and Media Guidelines',
+            priority: 0,
+            link: 'https://www.nasa.gov/nasa-brand-center/images-and-media/',
+          },
+          single_use: false,
+          variants: [],
+        },
+      },
+    });
+
+    expect(normalized.launchImageUrl).toBe('https://example.test/mission.jpg');
+    expect(normalized.missionVisual).toEqual({
+      kind: 'mission',
+      url: 'https://example.test/mission.jpg',
+      thumbnailUrl: 'https://example.test/mission-thumb.jpg',
+      name: 'Fixture payload in orbit',
+      credit: 'Fixture Agency',
+      licenseName: 'NASA Image and Media Guidelines',
+      licenseUrl: 'https://www.nasa.gov/nasa-brand-center/images-and-media/',
+      singleUse: false,
+      sourceLabel: 'Launch Library 2',
+      sourceUrl:
+        `https://ll.thespacedevs.com/2.3.0/launches/${NORMAL_LIST_LAUNCH.id}/`,
+    });
+  });
+
+  it('prefers reusable mission media over an ineligible launch image', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      mission: {
+        ...NORMAL_LIST_LAUNCH.mission,
+        image: {
+          id: 402,
+          name: 'Fixture spacecraft integration',
+          image_url:
+            'https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/mission.jpg',
+          thumbnail_url:
+            'https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/mission-thumb.jpg',
+          credit: 'Fixture Agency',
+          license: {
+            id: 5,
+            name: 'CC BY 4.0',
+            priority: 1,
+            link: 'https://creativecommons.org/licenses/by/4.0/',
+          },
+          single_use: false,
+          variants: [],
+        },
+      },
+    });
+
+    expect(normalized.missionVisual).toMatchObject({
+      kind: 'mission',
+      url:
+        'https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/mission.jpg',
+      credit: 'Fixture Agency',
+      licenseName: 'CC BY 4.0',
+      singleUse: false,
     });
   });
 

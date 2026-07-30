@@ -80,6 +80,8 @@ ll2-<Launch Library 2 source ID>
 - attaches provider-level `ok`, `stale`, `error`, or `not-requested` metadata;
 - combines SpaceX and Launch Library 2 upcoming missions;
 - de-duplicates equivalent cross-provider missions, preferring richer LL2 metadata;
+- preserves provider image provenance, attribution, license, and single-use
+  metadata without inferring rights from a URL;
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 
@@ -124,18 +126,51 @@ See [`API.md`](API.md) for request and response examples.
 - exposes `loading`, `refreshing`, `error`, `meta`, and `refresh`;
 - feeds notification checks from the same normalized launch set.
 
-`useLaunches`, `useLiveLaunches`, and `useNextLaunch` are selectors over this shared state. `useLaunchById` first checks the shared feed and then calls `/api/launches/[id]`, allowing completed missions and launches outside the current window to resolve. `useLaunchIntel` sends only the selected canonical ID.
+`useLaunches`, `useLiveLaunches`, and `useNextLaunch` are selectors over this
+shared state. `useLaunchById` preserves the shared feed record while it calls
+`/api/launches/[id]`, exposes the in-progress enrichment state, and then replaces
+the record with canonical detail. This lets Watch resolve streams, Home acquire
+richer visual provenance only when the feed has no eligible image, and completed
+missions or launches outside the current window resolve. `useLaunchIntel` sends
+only the selected canonical ID.
 
 History has a separate server endpoint because its retention window and provider scope differ from the upcoming feed.
 
 ## UX Responsibilities
 
 - **Home** establishes one visual priority: live mission first, otherwise next launch. Upcoming missions use readable rows and progressive loading. The map appears beside the hero on wide screens and behind an explicit disclosure on narrower screens.
-- **Watch** uses the first live mission or next scheduled mission. Without a verified stream, it presents mission context, a countdown, and a provider-channel fallback instead of an empty player.
-- **History** provides search, provider/year/outcome filters, expandable summaries, and stable links to details and available replays.
-- **Detail** resolves current and completed missions with the same layout and actions, then adapts countdown, timeline, video, and return navigation to mission state.
+- **Watch** uses the first live mission or next scheduled mission. Without a verified stream, it presents mission context, a countdown, a provider-channel fallback, and eligible mission imagery instead of an empty player.
+- **History** provides search, provider/year/outcome filters, expandable visual summaries, and stable links to details and available replays.
+- **Detail** resolves current and completed missions with the same layout and actions, presents one eligible vehicle or mission visual before telemetry and trajectory, then adapts countdown, timeline, video, and return navigation to mission state.
 
 All routes provide loading, empty, unavailable, and retry states. Primary controls meet a minimum 44-pixel touch target and remain keyboard accessible.
+
+## Visual Provenance Boundary
+
+Provider media URLs are data, not permission. Normalization stores structured
+`vehicleVisual` and `missionVisual` records beside the backward-compatible flat
+URLs. The client selector prefers a vehicle reference, validates the image
+origin, and requires a meaningful creator credit, explicit reusable license with
+an HTTPS license link, and `singleUse === false`. When LL2 supplies both launch
+and mission media, normalization preserves the first candidate that passes this
+boundary instead of allowing an ineligible launch photo to mask a reusable
+mission image. Unsupported or incomplete records
+produce a missing or rights-unverified state instead of an image request.
+That same policy gate supplies launch-detail social metadata, preventing hidden
+or single-use imagery from bypassing the visible UI rules.
+
+CC BY-NC assets are eligible only while LaunchWatch remains an informational,
+noncommercial experience. A commercial or monetized release must audit and
+revise the accepted-license policy before deployment.
+
+This policy adds no client-side provider calls or bulk media joins. Home and
+Watch begin with the shared feed; when a selected feed record lacks eligible
+rights metadata, the existing cached canonical-detail route can enrich that one
+mission. History uses its existing archive response, and detail already uses the
+canonical launch response. Figures keep a stable aspect ratio, report detail
+acquisition in that same footprint, load lazily except for route-leading
+imagery, expose source, license, and full-resolution links, and retain visible
+attribution.
 
 ## Cache Layers
 
