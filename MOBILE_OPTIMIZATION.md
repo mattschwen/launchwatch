@@ -19,7 +19,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Desktop uses the sticky top navigation for Home, Watch, and History.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
 - The external source-code link remains secondary and is not a primary mobile destination.
-- The app shell includes a keyboard skip link.
+- The app shell includes a keyboard skip link that reveals above the sticky
+  header, meets the 44-pixel target minimum, and lands main content below the
+  header edge.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home

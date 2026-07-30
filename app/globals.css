@@ -1407,6 +1407,16 @@ select:focus {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.skip-link {
+  transform: translateY(-5rem);
+  transition: transform 180ms var(--ease-out-quart);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;

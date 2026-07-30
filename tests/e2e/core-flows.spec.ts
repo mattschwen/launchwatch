@@ -14,6 +14,57 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('keyboard skip link is visible, touch-safe, and clears the sticky header', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page.keyboard.press('Tab');
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+  await expect(skipLink).toBeInViewport();
+
+  const skipLinkBounds = await skipLink.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: bounds.bottom,
+      height: bounds.height,
+      left: bounds.left,
+      right: bounds.right,
+      top: bounds.top,
+      width: bounds.width,
+    };
+  });
+  expect(skipLinkBounds.height).toBeGreaterThanOrEqual(44);
+  expect(skipLinkBounds.width).toBeGreaterThanOrEqual(44);
+  expect(skipLinkBounds.top).toBeGreaterThanOrEqual(0);
+  expect(skipLinkBounds.left).toBeGreaterThanOrEqual(0);
+  expect(skipLinkBounds.right).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0
+  );
+  expect(skipLinkBounds.bottom).toBeLessThanOrEqual(
+    page.viewportSize()?.height ?? 0
+  );
+
+  await skipLink.press('Enter');
+  const main = page.locator('#main-content');
+  await expect(main).toBeFocused();
+
+  const landing = await main.evaluate((element) => {
+    const mainBounds = element.getBoundingClientRect();
+    const headerBounds = document
+      .querySelector('header')
+      ?.getBoundingClientRect();
+    return {
+      headerBottom: headerBounds?.bottom ?? 0,
+      mainTop: mainBounds.top,
+    };
+  });
+  expect(landing.mainTop).toBeGreaterThanOrEqual(landing.headerBottom - 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('brand wordmark stays legible and tappable in the header', async ({ page }) => {
   await page.goto('/');
 
