@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Calendar, Check, CircleAlert, Copy, LoaderCircle } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Check,
+  CircleAlert,
+  Copy,
+  LoaderCircle,
+} from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
   copyToClipboard,
@@ -17,6 +24,11 @@ interface AddToCalendarProps {
 }
 
 type CopyState = 'idle' | 'copying' | 'success' | 'error';
+type AlertState =
+  | NotificationPermission
+  | 'requesting'
+  | 'unsupported'
+  | 'error';
 
 export default function AddToCalendar({
   launch,
@@ -26,6 +38,7 @@ export default function AddToCalendar({
 }: AddToCalendarProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>('idle');
+  const [alertState, setAlertState] = useState<AlertState>('unsupported');
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -90,6 +103,35 @@ export default function AddToCalendar({
     }
   };
 
+  const handleEnableAlerts = async (): Promise<void> => {
+    if (alertState !== 'default' && alertState !== 'error') return;
+
+    setAlertState('requesting');
+    try {
+      setAlertState(await window.Notification.requestPermission());
+    } catch {
+      setAlertState('error');
+    }
+  };
+
+  const alertBusy = alertState === 'requesting';
+  const alertUnavailable =
+    alertState === 'granted' ||
+    alertState === 'denied' ||
+    alertState === 'unsupported';
+  const alertLabel =
+    alertState === 'requesting'
+      ? 'Enabling browser alerts…'
+      : alertState === 'granted'
+        ? 'Alerts enabled while app is open'
+        : alertState === 'denied'
+          ? 'Alerts blocked in browser settings'
+          : alertState === 'unsupported'
+            ? 'Browser alerts unavailable'
+            : alertState === 'error'
+              ? 'Could not enable alerts — retry'
+              : 'Enable browser launch alerts';
+
   return (
     <div
       ref={rootRef}
@@ -111,7 +153,14 @@ export default function AddToCalendar({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => {
-          if (!open) setCopyState('idle');
+          if (!open) {
+            setCopyState('idle');
+            setAlertState(
+              typeof window.Notification === 'undefined'
+                ? 'unsupported'
+                : window.Notification.permission
+            );
+          }
           setOpen((value) => !value);
         }}
         className={
@@ -166,6 +215,38 @@ export default function AddToCalendar({
           </button>
           <button
             type="button"
+            onClick={() => void handleEnableAlerts()}
+            aria-busy={alertBusy}
+            aria-disabled={alertBusy || alertUnavailable}
+            className={`menu-item aria-disabled:cursor-default aria-disabled:opacity-60 ${
+              alertState === 'error' || alertState === 'denied'
+                ? 'text-[var(--console-amber)]'
+                : ''
+            }`}
+          >
+            {alertBusy ? (
+              <LoaderCircle
+                aria-hidden="true"
+                size={16}
+                className="shrink-0 animate-spin"
+              />
+            ) : alertState === 'granted' ? (
+              <Check
+                aria-hidden="true"
+                size={16}
+                className="shrink-0 text-[var(--console-green)]"
+              />
+            ) : alertState === 'error' ||
+              alertState === 'denied' ||
+              alertState === 'unsupported' ? (
+              <CircleAlert aria-hidden="true" size={16} className="shrink-0" />
+            ) : (
+              <Bell aria-hidden="true" size={16} className="shrink-0" />
+            )}
+            {alertLabel}
+          </button>
+          <button
+            type="button"
             onClick={() => void handleCopy()}
             aria-busy={copyState === 'copying'}
             aria-disabled={copyState === 'copying'}
@@ -199,7 +280,13 @@ export default function AddToCalendar({
               ? 'Launch details copied to clipboard'
               : copyState === 'error'
                 ? 'Could not copy launch details. Try again or use a calendar option.'
-                : ''}
+                : alertState === 'granted'
+                  ? 'Browser launch alerts enabled while LaunchWatch is open.'
+                  : alertState === 'denied'
+                    ? 'Browser launch alerts are blocked. Change notification permission in your browser settings to enable them.'
+                    : alertState === 'error'
+                      ? 'Could not request browser launch alerts. Try again.'
+                      : ''}
           </span>
         </div>
       ) : null}

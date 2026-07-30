@@ -40,7 +40,7 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Useful Watch fallback when no verified stream is live
 - Searchable and filterable launch schedule and archive
 - Mission briefings, coverage, community links, and replay surfaces
-- Calendar export and local browser launch reminders
+- Calendar export and opt-in browser launch alerts while LaunchWatch is open
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available

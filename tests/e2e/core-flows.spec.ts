@@ -879,6 +879,18 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   page,
 }) => {
   await page.addInitScript(() => {
+    class MockNotification {
+      static permission: NotificationPermission = 'default';
+
+      static async requestPermission(): Promise<NotificationPermission> {
+        MockNotification.permission = 'granted';
+        return 'granted';
+      }
+    }
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: MockNotification,
+    });
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -906,6 +918,19 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   await expect(calendarOptions).toBeVisible();
   await expect(firstOption).toBeFocused();
 
+  const alerts = calendarOptions.getByRole('button', {
+    name: 'Enable browser launch alerts',
+  });
+  await alerts.focus();
+  await alerts.press('Enter');
+  const enabledAlerts = calendarOptions.getByRole('button', {
+    name: 'Alerts enabled while app is open',
+  });
+  await expect(enabledAlerts).toBeFocused();
+  await expect(enabledAlerts).toHaveAttribute('aria-disabled', 'true');
+  await expect(enabledAlerts).not.toHaveAttribute('disabled', '');
+  expect((await enabledAlerts.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
   const placement = await calendarOptions.evaluate((element) => {
     const options = element.getBoundingClientRect();
     const trigger = element.parentElement
@@ -927,7 +952,7 @@ test('briefing calendar options stay visible and restore trigger focus', async (
     aboveTrigger: true,
   });
 
-  await firstOption.press('Escape');
+  await enabledAlerts.press('Escape');
   await expect(calendarOptions).toHaveCount(0);
   await expect(dialog).toBeVisible();
   await expect(calendarTrigger).toBeFocused();
@@ -1291,7 +1316,7 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await page.goto('/');
 
   const mapDisclosure = page.locator(
-    'button[aria-controls="mobile-mission-map"]'
+    'button[aria-controls="mobile-mission-map"]:visible'
   );
   const expandButton = page.getByRole('button', {
     name: /illustrative trajectory map/i,

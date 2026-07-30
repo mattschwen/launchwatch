@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PastLaunches from '@/components/PastLaunches';
@@ -131,9 +131,11 @@ describe('PastLaunches', () => {
     expect(
       await screen.findByRole('button', { name: 'Refresh launch archive' })
     ).toBeVisible();
-    expect(
-      screen.getByRole('searchbox', { name: 'Search missions' })
-    ).toHaveFocus();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('searchbox', { name: 'Search missions' })
+      ).toHaveFocus();
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -220,9 +222,11 @@ describe('PastLaunches', () => {
 
     resolveRetry?.(successfulResponse);
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
-    expect(
-      screen.getByRole('searchbox', { name: 'Search missions' })
-    ).toHaveFocus();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('searchbox', { name: 'Search missions' })
+      ).toHaveFocus();
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
