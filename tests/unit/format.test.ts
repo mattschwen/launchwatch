@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatLaunchWindow,
   formatTimelineOffset,
   formatLaunchValue,
   formatRelativeDate,
@@ -31,6 +32,34 @@ describe('launch formatting', () => {
     expect(formatRelativeDate('2035-07-26T18:00:00.000Z')).toBe('Today');
     expect(formatRelativeDate('2035-07-27T18:00:00.000Z')).toBe('Tomorrow');
     expect(formatRelativeDate('2035-07-25T06:00:00.000Z')).toBe('Yesterday');
+  });
+
+  it('formats only validated provider launch windows', () => {
+    expect(formatLaunchWindow(UPCOMING_LAUNCHES[0])).toBe(
+      'Jul 28, 2035, 14:30–16:30 UTC'
+    );
+    expect(
+      formatLaunchWindow({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T23:30:00.000Z',
+        date: '2035-07-29T00:00:00.000Z',
+        windowEnd: '2035-07-29T00:30:00.000Z',
+      })
+    ).toBe('Jul 28, 2035, 23:30 UTC – Jul 29, 2035, 00:30 UTC');
+    expect(
+      formatLaunchWindow({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T16:30:00.000Z',
+        windowEnd: '2035-07-28T14:30:00.000Z',
+      })
+    ).toBeNull();
+    expect(
+      formatLaunchWindow({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T15:30:00.000Z',
+        windowEnd: '2035-07-28T16:30:00.000Z',
+      })
+    ).toBeNull();
   });
 
   it('formats provider timeline durations as scannable mission offsets', () => {

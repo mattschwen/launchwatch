@@ -1262,6 +1262,14 @@ test('briefing calendar options stay visible and restore trigger focus', async (
 
   await page.getByRole('button', { name: 'Open briefing' }).click();
   const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  await expect(dialog.getByText('Target time', { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByText('Jul 28, 2035, 14:30 UTC', { exact: true })
+  ).toBeVisible();
+  await expect(dialog.getByText('Launch window', { exact: true })).toBeVisible();
+  await expect(
+    dialog.getByText('Jul 28, 2035, 14:30–16:30 UTC', { exact: true })
+  ).toBeVisible();
   const calendarTrigger = dialog.getByRole('button', {
     name: 'Add launch to calendar',
   });

@@ -18,6 +18,13 @@ const UTC_DATE = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 });
 
+const UTC_TIME = new Intl.DateTimeFormat('en-US', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'UTC',
+});
+
 const PLACEHOLDER_VALUE =
   /^(?:unknown(?:\s+(?:orbit|mission|profile|vehicle|rocket|site|pad))?|tbd|tbc|to be (?:determined|confirmed)|not (?:available|applicable|provided|supplied)|n\/?a|none|null|-|—)$/i;
 const CRITICAL_STATUS_NAME =
@@ -58,6 +65,52 @@ export function formatLaunchDate(date: string): string {
 export function formatLaunchDay(date: string): string {
   const parsed = new Date(date);
   return Number.isNaN(parsed.getTime()) ? 'Date unavailable' : UTC_DATE.format(parsed);
+}
+
+export function getLaunchWindowBounds(
+  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>
+): { start: Date; end: Date } | null {
+  const target = new Date(launch.date);
+  const start = new Date(launch.windowStart || '');
+  const end = new Date(launch.windowEnd || '');
+  const targetTime = target.getTime();
+  const startTime = start.getTime();
+  const endTime = end.getTime();
+
+  if (
+    !Number.isFinite(targetTime) ||
+    !Number.isFinite(startTime) ||
+    !Number.isFinite(endTime) ||
+    endTime <= startTime ||
+    targetTime < startTime ||
+    targetTime > endTime
+  ) {
+    return null;
+  }
+
+  return { start, end };
+}
+
+export function formatLaunchWindow(
+  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>
+): string | null {
+  const bounds = getLaunchWindowBounds(launch);
+  if (!bounds) return null;
+
+  const sameUtcDay =
+    bounds.start.getUTCFullYear() === bounds.end.getUTCFullYear() &&
+    bounds.start.getUTCMonth() === bounds.end.getUTCMonth() &&
+    bounds.start.getUTCDate() === bounds.end.getUTCDate();
+
+  if (sameUtcDay) {
+    return `${UTC_DATE.format(bounds.start)}, ${UTC_TIME.format(
+      bounds.start
+    )}–${UTC_TIME.format(bounds.end)} UTC`;
+  }
+
+  return `${UTC_DATE_TIME.format(bounds.start)} – ${UTC_DATE_TIME.format(
+    bounds.end
+  )}`;
 }
 
 export function formatRelativeDate(date: string): string {

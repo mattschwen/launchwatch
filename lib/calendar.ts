@@ -1,4 +1,22 @@
 import { Launch } from './types';
+import {
+  formatLaunchDate,
+  formatLaunchWindow,
+  getLaunchWindowBounds,
+} from './format';
+
+const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
+
+function getCalendarBounds(launch: Launch): { start: Date; end: Date } {
+  const providerWindow = getLaunchWindowBounds(launch);
+  if (providerWindow) return providerWindow;
+
+  const start = new Date(launch.date);
+  return {
+    start,
+    end: new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS),
+  };
+}
 
 function escapeICSText(text: string): string {
   return text
@@ -44,8 +62,8 @@ function foldICSLine(line: string): string {
  * Generate .ics file content for calendar apps
  */
 export function generateICS(launch: Launch): string {
-  const startDate = new Date(launch.date);
-  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
+  const { start: startDate, end: endDate } = getCalendarBounds(launch);
+  const launchWindow = formatLaunchWindow(launch);
 
   const formatDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -67,13 +85,15 @@ export function generateICS(launch: Launch): string {
     `DTEND:${formatDate(endDate)}`,
     `SUMMARY:${escapeICSText(launch.name)}`,
     `DESCRIPTION:${escapeICSText([
+      `Target Time: ${formatLaunchDate(launch.date)}`,
+      launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launch.launchSite}`,
       launch.description || '',
       livestream ? `Watch Live: ${livestream}` : '',
     ].filter(Boolean).join('\n'))}`,
     `LOCATION:${escapeICSText(launch.launchSite)}`,
-    `STATUS:CONFIRMED`,
+    `STATUS:${launch.status === 'tbd' ? 'TENTATIVE' : 'CONFIRMED'}`,
     `SEQUENCE:0`,
     livestream ? `URL:${livestream}` : '',
     'BEGIN:VALARM',
@@ -110,8 +130,8 @@ export function downloadICS(launch: Launch): void {
  * Generate Google Calendar URL
  */
 export function getGoogleCalendarUrl(launch: Launch): string {
-  const startDate = new Date(launch.date);
-  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+  const { start: startDate, end: endDate } = getCalendarBounds(launch);
+  const launchWindow = formatLaunchWindow(launch);
 
   const formatGoogleDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -122,6 +142,8 @@ export function getGoogleCalendarUrl(launch: Launch): string {
     text: launch.name,
     dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
     details: [
+      `Target Time: ${formatLaunchDate(launch.date)}`,
+      launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launch.launchSite}`,
       launch.description || '',
@@ -137,10 +159,12 @@ export function getGoogleCalendarUrl(launch: Launch): string {
  * Copy launch details to clipboard
  */
 export async function copyToClipboard(launch: Launch): Promise<boolean> {
+  const launchWindow = formatLaunchWindow(launch);
   const text = [
     `🚀 ${launch.name}`,
     ``,
-    `📅 ${new Date(launch.date).toLocaleString()}`,
+    `📅 Target: ${formatLaunchDate(launch.date)}`,
+    launchWindow ? `🛰️ Window: ${launchWindow}` : '',
     `🚀 Rocket: ${launch.rocket}`,
     `📍 Launch Site: ${launch.launchSite}`,
     launch.description ? `\n${launch.description}` : '',

@@ -14,6 +14,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatLaunchWindow,
   formatTimelineOffset,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -86,6 +87,8 @@ export default function LaunchBriefingDrawer({
 
   if (!open || !launch) return null;
 
+  const launchWindow = formatLaunchWindow(launch);
+
   return (
     <div className="fixed inset-0 z-[80]">
       <button
@@ -147,12 +150,27 @@ export default function LaunchBriefingDrawer({
                   size={18}
                   className="shrink-0 text-[var(--text-muted)]"
                 />
-                <span className="data-label">Launch window</span>
+                <span className="data-label">Target time</span>
               </dt>
               <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
                 {formatLaunchDate(launch.date)}
               </dd>
             </div>
+            {launchWindow ? (
+              <div className="py-4">
+                <dt className="flex items-center gap-3">
+                  <CalendarDays
+                    aria-hidden="true"
+                    size={18}
+                    className="shrink-0 text-[var(--console-cyan)]"
+                  />
+                  <span className="data-label">Launch window</span>
+                </dt>
+                <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
+                  {launchWindow}
+                </dd>
+              </div>
+            ) : null}
             <div className="py-4">
               <dt className="flex items-center gap-3">
                 <Rocket
