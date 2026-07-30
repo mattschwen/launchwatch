@@ -25,6 +25,7 @@ interface LaunchBriefingDrawerProps {
   launch: Launch | null;
   open: boolean;
   onClose: () => void;
+  detailHref?: string;
 }
 
 const FOCUSABLE =
@@ -34,6 +35,7 @@ export default function LaunchBriefingDrawer({
   launch,
   open,
   onClose,
+  detailHref,
 }: LaunchBriefingDrawerProps): React.ReactElement | null {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -246,7 +248,7 @@ export default function LaunchBriefingDrawer({
 
         <footer className="flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 px-5 py-4 sm:px-6">
           <Link
-            href={`/launch/${encodeURIComponent(launch.id)}`}
+            href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
             onClick={onClose}
             className="action-button action-button-primary"
           >

@@ -7,6 +7,7 @@ import { getLaunchVisualMetadata } from '@/lib/launch-visual';
 
 interface LaunchDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
 }
 
 const resolveLaunch = cache(async (id: string) => getLaunchByIdResult(id));
@@ -57,13 +58,19 @@ export async function generateMetadata({
 
 export default async function LaunchDetailPage({
   params,
+  searchParams,
 }: LaunchDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
+  const returnToWatch = (await searchParams).from === 'watch';
   const parsed = parseLaunchId(id);
   if (!parsed) notFound();
 
   if (parsed.legacy) {
-    permanentRedirect(`/launch/${encodeURIComponent(parsed.canonicalId)}`);
+    permanentRedirect(
+      `/launch/${encodeURIComponent(parsed.canonicalId)}${
+        returnToWatch ? '?from=watch' : ''
+      }`
+    );
   }
 
   const result = await resolveLaunch(parsed.canonicalId);
@@ -72,5 +79,10 @@ export default async function LaunchDetailPage({
     throw new Error('Launch provider is unavailable for this mission.');
   }
 
-  return <LaunchDetailClient launch={result.data} />;
+  return (
+    <LaunchDetailClient
+      launch={result.data}
+      returnToWatch={returnToWatch}
+    />
+  );
 }

@@ -11,6 +11,7 @@ import AddToCalendar from '@/components/AddToCalendar';
 interface LaunchActionsProps {
   launch: Launch;
   onOpenBriefing?: () => void;
+  detailHref?: string;
   showCalendar?: boolean;
   compact?: boolean;
   featured?: boolean;
@@ -20,6 +21,7 @@ interface LaunchActionsProps {
 export default function LaunchActions({
   launch,
   onOpenBriefing,
+  detailHref,
   showCalendar = true,
   compact = false,
   featured = false,
@@ -74,7 +76,7 @@ export default function LaunchActions({
         </a>
       ) : (
         <Link
-          href={`/launch/${encodeURIComponent(launch.id)}`}
+          href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
           className="action-button action-button-primary"
         >
           View mission

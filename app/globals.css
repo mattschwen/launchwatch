@@ -734,6 +734,7 @@ body::before {
 }
 
 .mission-visual {
+  container: mission-visual / inline-size;
   overflow: hidden;
   margin: 0;
   border-color: color-mix(
@@ -1009,6 +1010,13 @@ body::before {
 
   .mission-visual-compact .mission-visual-caption {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container mission-visual (max-width: 34rem) {
+  .mission-visual-caption {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
   }
 }
 

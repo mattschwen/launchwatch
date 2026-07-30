@@ -43,8 +43,10 @@ function handleTimelineKeyDown(
 
 export default function LaunchDetailClient({
   launch,
+  returnToWatch = false,
 }: {
   launch: Launch;
+  returnToWatch?: boolean;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
@@ -71,11 +73,21 @@ export default function LaunchDetailClient({
     <>
       <div className="page-container py-4 sm:py-6 lg:py-8">
         <Link
-          href={completed ? '/history' : '/'}
+          href={
+            returnToWatch
+              ? `/watch?id=${encodeURIComponent(launch.id)}`
+              : completed
+                ? '/history'
+                : '/'
+          }
           className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
         >
           <ArrowLeft aria-hidden="true" size={16} />
-          {completed ? 'Back to history' : 'Back to launches'}
+          {returnToWatch
+            ? 'Back to watch room'
+            : completed
+              ? 'Back to history'
+              : 'Back to launches'}
         </Link>
 
         <section

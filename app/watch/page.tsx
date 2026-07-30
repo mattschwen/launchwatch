@@ -52,9 +52,11 @@ const MissionTrajectory = dynamic(
 
 function WatchStage({
   launch,
+  detailHref,
   streamLookupError,
 }: {
   launch: Launch;
+  detailHref: string;
   streamLookupError?: string | null;
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
@@ -117,7 +119,7 @@ function WatchStage({
         <div className="my-6 h-px bg-[var(--border-subtle)]" />
         <p className="data-label">Next mission</p>
         <Link
-          href={`/launch/${encodeURIComponent(launch.id)}`}
+          href={detailHref}
           className="mt-1 inline-flex min-h-11 max-w-full items-center justify-center text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
         >
           {launch.name}
@@ -325,6 +327,9 @@ function WatchContent(): React.ReactElement {
   );
   const selectedLaunch =
     selected.launch ?? (requestedUnavailable ? fallbackLaunch : null);
+  const selectedDetailHref = selectedLaunch
+    ? `/launch/${encodeURIComponent(selectedLaunch.id)}?from=watch`
+    : '';
   const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
     selectedLaunch,
     Boolean(selectedLaunch)
@@ -442,6 +447,7 @@ function WatchContent(): React.ReactElement {
           <div className="min-w-0">
             <WatchStage
               launch={selectedLaunch}
+              detailHref={selectedDetailHref}
               streamLookupError={selected.launch ? selected.error : null}
             />
 
@@ -456,7 +462,7 @@ function WatchContent(): React.ReactElement {
                 <div className="min-w-0">
                   <Link
                     ref={missionLinkRef}
-                    href={`/launch/${encodeURIComponent(selectedLaunch.id)}`}
+                    href={selectedDetailHref}
                     className="group inline-flex min-h-11 max-w-full items-center"
                   >
                     <h2 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
@@ -473,6 +479,7 @@ function WatchContent(): React.ReactElement {
                 </div>
                 <LaunchActions
                   launch={selectedLaunch}
+                  detailHref={selectedDetailHref}
                   onOpenBriefing={() => setBriefingOpen(true)}
                   compact
                   className="shrink-0"
@@ -552,6 +559,7 @@ function WatchContent(): React.ReactElement {
         launch={selectedLaunch}
         open={briefingOpen}
         onClose={() => setBriefingOpen(false)}
+        detailHref={selectedDetailHref}
       />
     </>
   );

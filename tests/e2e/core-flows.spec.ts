@@ -129,6 +129,10 @@ test('primary mission title links are touch-safe and keyboard-focusable', async 
   await expect(watchMissionLinks).toHaveCount(2);
 
   for (const link of await watchMissionLinks.all()) {
+    await expect(link).toHaveAttribute(
+      'href',
+      '/launch/ll2-demo-orbital-dawn?from=watch'
+    );
     await link.focus();
     await expect(link).toBeFocused();
     expect(
@@ -136,6 +140,66 @@ test('primary mission title links are touch-safe and keyboard-focusable', async 
     ).toBeGreaterThanOrEqual(44);
   }
 
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch mission details return to the same selected mission', async ({
+  page,
+}) => {
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  await page.getByRole('button', { name: 'Briefing', exact: true }).click();
+  const briefing = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  await expect(briefing.getByRole('link', { name: 'View full mission' }))
+    .toHaveAttribute(
+      'href',
+      '/launch/ll2-demo-orbital-dawn?from=watch'
+    );
+  await briefing
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+
+  const selectedMissionLink = page
+    .getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+    .locator('xpath=ancestor::a[1]');
+  await selectedMissionLink.focus();
+  await selectedMissionLink.press('Enter');
+
+  await expect(page).toHaveURL(
+    /\/launch\/ll2-demo-orbital-dawn\?from=watch$/
+  );
+  const returnLink = page.getByRole('link', {
+    name: 'Back to watch room',
+  });
+  await expect(returnLink).toHaveAttribute(
+    'href',
+    '/watch?id=ll2-demo-orbital-dawn'
+  );
+  const visualName = page.getByText('Astra Nova launch vehicle', {
+    exact: true,
+  });
+  const visualNameMetrics = await visualName.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const lineHeight = Number.parseFloat(getComputedStyle(element).lineHeight);
+    return {
+      height: bounds.height,
+      lineHeight,
+      width: bounds.width,
+    };
+  });
+  expect(visualNameMetrics.width).toBeGreaterThan(120);
+  expect(visualNameMetrics.height).toBeLessThanOrEqual(
+    visualNameMetrics.lineHeight * 2.1
+  );
+  await returnLink.focus();
+  await expect(returnLink).toBeFocused();
+  expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await returnLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-orbital-dawn$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
