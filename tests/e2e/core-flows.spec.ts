@@ -1712,20 +1712,37 @@ test('history search reaches a completed mission detail', async ({ page }) => {
 
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
   await expect(archiveResults).toHaveText('1 result');
+  const missionDetail = page.getByRole('link', { name: 'View mission' });
+  await expect(missionDetail).toHaveCount(1);
+  await expect(missionDetail).toHaveAttribute(
+    'href',
+    '/launch/spacex-demo-return?from=history&history=q%3DReturn'
+  );
   await page.getByRole('button', { name: /Demo Return Flight/i }).click();
   await expect(
     page.getByText(/completed crew demonstration mission/i)
   ).toBeVisible();
 
-  await page
-    .getByRole('link', { name: 'View mission' })
-    .first()
-    .click();
+  await missionDetail.click();
 
-  await expect(page).toHaveURL(/\/launch\/spacex-demo-return$/);
+  await expect(page).toHaveURL(
+    /\/launch\/spacex-demo-return\?from=history&history=q%3DReturn$/
+  );
   await expect(
     page.getByRole('heading', { level: 1, name: 'Demo Return Flight' })
   ).toBeVisible();
+  const returnLink = page.getByRole('link', {
+    name: 'Back to filtered archive',
+  });
+  await expect(returnLink).toHaveAttribute('href', '/history?q=Return');
+  await returnLink.focus();
+  await returnLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/history\?q=Return$/);
+  await expect(
+    page.getByRole('searchbox', { name: 'Search missions' })
+  ).toHaveValue('Return');
+  await expect(archiveResults).toHaveText('1 result');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

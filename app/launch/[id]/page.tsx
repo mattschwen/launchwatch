@@ -3,11 +3,18 @@ import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import LaunchDetailClient from './LaunchDetailClient';
 import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
+import {
+  buildHistoryReturnHref,
+  readHistoryReturnQuery,
+} from '@/lib/history-return';
 import { getLaunchVisualMetadata } from '@/lib/launch-visual';
 
 interface LaunchDetailPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string | string[] }>;
+  searchParams: Promise<{
+    from?: string | string[];
+    history?: string | string[];
+  }>;
 }
 
 const resolveLaunch = cache(async (id: string) => getLaunchByIdResult(id));
@@ -61,14 +68,29 @@ export default async function LaunchDetailPage({
   searchParams,
 }: LaunchDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
-  const returnToWatch = (await searchParams).from === 'watch';
+  const resolvedSearchParams = await searchParams;
+  const returnToWatch = resolvedSearchParams.from === 'watch';
+  const historyReturnQuery =
+    !returnToWatch && resolvedSearchParams.from === 'history'
+      ? readHistoryReturnQuery(resolvedSearchParams.history)
+      : null;
+  const historyReturnHref = historyReturnQuery
+    ? buildHistoryReturnHref(historyReturnQuery)
+    : null;
   const parsed = parseLaunchId(id);
   if (!parsed) notFound();
 
   if (parsed.legacy) {
     permanentRedirect(
       `/launch/${encodeURIComponent(parsed.canonicalId)}${
-        returnToWatch ? '?from=watch' : ''
+        returnToWatch
+          ? '?from=watch'
+          : historyReturnQuery
+            ? `?${new URLSearchParams({
+                from: 'history',
+                history: historyReturnQuery,
+              }).toString()}`
+            : ''
       }`
     );
   }
@@ -83,6 +105,7 @@ export default async function LaunchDetailPage({
     <LaunchDetailClient
       launch={result.data}
       returnToWatch={returnToWatch}
+      historyReturnHref={historyReturnHref}
     />
   );
 }

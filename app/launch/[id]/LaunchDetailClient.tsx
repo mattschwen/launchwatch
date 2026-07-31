@@ -44,9 +44,11 @@ function handleTimelineKeyDown(
 export default function LaunchDetailClient({
   launch,
   returnToWatch = false,
+  historyReturnHref = null,
 }: {
   launch: Launch;
   returnToWatch?: boolean;
+  historyReturnHref?: string | null;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
@@ -76,6 +78,8 @@ export default function LaunchDetailClient({
           href={
             returnToWatch
               ? `/watch?id=${encodeURIComponent(launch.id)}`
+              : historyReturnHref
+                ? historyReturnHref
               : completed
                 ? '/history'
                 : '/'
@@ -85,6 +89,8 @@ export default function LaunchDetailClient({
           <ArrowLeft aria-hidden="true" size={16} />
           {returnToWatch
             ? 'Back to watch room'
+            : historyReturnHref
+              ? 'Back to filtered archive'
             : completed
               ? 'Back to history'
               : 'Back to launches'}

@@ -38,7 +38,38 @@ describe('PastLaunches', () => {
     ).toBeVisible();
     expect(
       screen.getAllByRole('link', { name: /View mission/i })[0]
-    ).toHaveAttribute('href', '/launch/spacex-demo-return');
+    ).toHaveAttribute(
+      'href',
+      '/launch/spacex-demo-return?from=history&history=q%3DReturn',
+    );
+  });
+
+  it('preserves active archive filters in mission detail links', async () => {
+    render(
+      <PastLaunches
+        initialFilters={{
+          search: 'Return',
+          provider: 'SpaceX',
+          year: '2025',
+          outcome: 'success',
+        }}
+      />,
+    );
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    expect(
+      screen.queryByText('Pathfinder Qualification'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('searchbox', { name: 'Search missions' }),
+    ).toHaveValue('Return');
+    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
+      'SpaceX',
+    );
+    expect(screen.getByRole('link', { name: 'View mission' })).toHaveAttribute(
+      'href',
+      '/launch/spacex-demo-return?from=history&history=q%3DReturn%26provider%3DSpaceX%26year%3D2025%26outcome%3Dsuccess',
+    );
   });
 
   it('announces filtered results and clears all archive filters at once', async () => {

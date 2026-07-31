@@ -83,6 +83,9 @@ The optional expanded map remains a modal dialog. It must:
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.
 - Replay and detail links use canonical `spacex-*` IDs.
+- Detail links carry only bounded active archive filters, so the explicit
+  return action restores the same filtered result set without accepting an
+  arbitrary destination.
 - Empty, error, stale, and retry states must fit without overflow.
 
 ## Mission Detail
@@ -98,7 +101,8 @@ The optional expanded map remains a modal dialog. It must:
 - Video and intelligence sections become a single column.
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support.
-- Completed missions return to History and omit future-only calendar actions.
+- Completed missions return to History—or the filtered archive that opened
+  them—and omit future-only calendar actions.
 
 ## Touch and Keyboard Requirements
 

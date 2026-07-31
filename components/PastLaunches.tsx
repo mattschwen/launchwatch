@@ -23,6 +23,11 @@ import {
   launchOutcomeLabel,
   shortenLaunchSite,
 } from '@/lib/format';
+import {
+  buildHistoryDetailHref,
+  DEFAULT_HISTORY_FILTERS,
+  type HistoryFilters,
+} from '@/lib/history-return';
 import MissionVisual from '@/components/launch/MissionVisual';
 
 const PAGE_SIZE = 20;
@@ -60,10 +65,12 @@ function HistoryRow({
   launch,
   expanded,
   onToggle,
+  detailHref,
 }: {
   launch: Launch;
   expanded: boolean;
   onToggle: () => void;
+  detailHref: string;
 }): React.ReactElement {
   const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const outcome = launchOutcomeLabel(launch);
@@ -174,7 +181,7 @@ function HistoryRow({
         </button>
 
         <Link
-          href={`/launch/${encodeURIComponent(launch.id)}`}
+          href={detailHref}
           className="action-button action-button-quiet justify-self-start xl:justify-self-end"
         >
           View mission
@@ -230,17 +237,21 @@ function HistoryRow({
   );
 }
 
-export default function PastLaunches(): React.ReactElement {
+export default function PastLaunches({
+  initialFilters = DEFAULT_HISTORY_FILTERS,
+}: {
+  initialFilters?: HistoryFilters;
+}): React.ReactElement {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<LaunchFeedMeta | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [retrying, setRetrying] = useState(false);
-  const [search, setSearch] = useState('');
-  const [provider, setProvider] = useState('all');
-  const [year, setYear] = useState('all');
-  const [outcome, setOutcome] = useState('all');
+  const [search, setSearch] = useState(initialFilters.search);
+  const [provider, setProvider] = useState(initialFilters.provider);
+  const [year, setYear] = useState(initialFilters.year);
+  const [outcome, setOutcome] = useState(initialFilters.outcome);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -426,6 +437,7 @@ export default function PastLaunches(): React.ReactElement {
               ref={searchRef}
               id={`${id}-search`}
               type="search"
+              maxLength={120}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -588,6 +600,12 @@ export default function PastLaunches(): React.ReactElement {
                 key={launch.id}
                 launch={launch}
                 expanded={expandedId === launch.id}
+                detailHref={buildHistoryDetailHref(launch.id, {
+                  search,
+                  provider,
+                  year,
+                  outcome,
+                })}
                 onToggle={() =>
                   setExpandedId((current) =>
                     current === launch.id ? null : launch.id
