@@ -18,6 +18,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 - Desktop uses the sticky top navigation for Home, Watch, and History.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
+- Server route transitions retain a visible route-level heading, truthful
+  synchronization copy, and named mission-control status while application and
+  provider data resolve; decorative loading geometry stays hidden from
+  assistive technology.
 - The external source-code link remains secondary and is not a primary mobile destination.
 - The app shell includes a keyboard skip link that reveals above the sticky
   header, meets the 44-pixel target minimum, and lands main content below the
