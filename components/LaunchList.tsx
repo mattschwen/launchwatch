@@ -164,7 +164,7 @@ export default function LaunchList({
           onClick={retrySchedule}
           aria-disabled={refreshing}
           aria-busy={refreshing}
-          className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
+          className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
           {refreshing ? 'Retrying schedule' : 'Retry schedule'}
         </button>
@@ -262,7 +262,7 @@ export default function LaunchList({
             onClick={hasActiveFilters ? clearFilters : retrySchedule}
             aria-disabled={!hasActiveFilters && refreshing}
             aria-busy={!hasActiveFilters && refreshing}
-            className="action-button action-button-secondary mt-5 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
+            className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
             {hasActiveFilters
               ? 'Clear all filters'

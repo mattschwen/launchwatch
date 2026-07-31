@@ -1,4 +1,4 @@
-import { expect, test, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Route } from '@playwright/test';
 import {
   expectNoHorizontalOverflow,
   installApiFixtures,
@@ -90,6 +90,43 @@ test('keyboard skip link is visible, touch-safe, and clears the sticky header', 
     };
   });
   expect(landing.mainTop).toBeGreaterThanOrEqual(landing.headerBottom - 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('persistent bottom chrome keeps focused mission rows visible', async ({
+  page,
+}) => {
+  const bottomChrome = test.info().project.name.startsWith('mobile')
+    ? page.locator('nav[aria-label="Primary navigation"]:visible')
+    : page.getByRole('complementary', { name: 'Mission status' });
+  const expectFocusAboveChrome = async (target: Locator): Promise<void> => {
+    await target.evaluate((element) => {
+      if (!(element instanceof HTMLElement)) return;
+      element.focus({ preventScroll: true });
+      element.scrollIntoView({ block: 'nearest' });
+    });
+    await expect(target).toBeFocused();
+    const [targetBox, chromeBox] = await Promise.all([
+      target.boundingBox(),
+      bottomChrome.boundingBox(),
+    ]);
+
+    expect(targetBox).not.toBeNull();
+    expect(chromeBox).not.toBeNull();
+    expect(targetBox!.y + targetBox!.height + 5).toBeLessThanOrEqual(
+      chromeBox!.y
+    );
+  };
+
+  await page.goto('/');
+  await expectFocusAboveChrome(
+    page.getByRole('link', { name: /Polaris Relay/ })
+  );
+
+  await page.goto('/history');
+  await expectFocusAboveChrome(
+    page.getByRole('button', { name: /Pathfinder Qualification/ })
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

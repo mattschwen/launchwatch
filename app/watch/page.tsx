@@ -646,7 +646,7 @@ function WatchContent(): React.ReactElement {
           onClick={retrySchedule}
           aria-disabled={refreshing}
           aria-busy={refreshing}
-          className="action-button action-button-secondary mt-6 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-wait aria-disabled:opacity-60"
+          className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
           {refreshing ? 'Retrying watch schedule' : 'Retry watch schedule'}
         </button>
@@ -802,7 +802,7 @@ function WatchContent(): React.ReactElement {
             </p>
             <Link
               href="/history"
-              className="action-button action-button-quiet -ml-4 mt-4 scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]"
+              className="action-button action-button-quiet -ml-4 mt-4"
             >
               Browse launch archive
               <ArrowRight aria-hidden="true" size={15} />

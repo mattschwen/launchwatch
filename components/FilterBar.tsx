@@ -80,7 +80,7 @@ export default function FilterBar({
           value={filters.search}
           onChange={(event) => update('search', event.target.value)}
           placeholder="Search missions"
-          className="min-h-11 w-full scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
         />
       </div>
 
@@ -93,7 +93,7 @@ export default function FilterBar({
             id={`${id}-provider`}
             value={filters.provider}
             onChange={(event) => update('provider', event.target.value)}
-            className="min-h-11 w-full scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
             <option value="all">All providers</option>
             {providerOptions.map((provider) => (
@@ -115,7 +115,7 @@ export default function FilterBar({
           onChange={(event) =>
             update('status', event.target.value as FilterOptions['status'])
           }
-          className="min-h-11 w-full scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
         >
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -135,7 +135,7 @@ export default function FilterBar({
           onChange={(event) =>
             update('sortBy', event.target.value as FilterOptions['sortBy'])
           }
-          className="min-h-11 w-full scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
         >
           <option value="date-asc">Soonest first</option>
           <option value="date-desc">Latest first</option>
@@ -153,7 +153,7 @@ export default function FilterBar({
           onFilterChange(next);
           requestAnimationFrame(() => resolvedSearchInputRef.current?.focus());
         }}
-        className="icon-button scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] disabled:cursor-not-allowed disabled:opacity-35"
+        className="icon-button disabled:cursor-not-allowed disabled:opacity-35"
         aria-label="Clear launch filters"
       >
         <X aria-hidden="true" size={17} />

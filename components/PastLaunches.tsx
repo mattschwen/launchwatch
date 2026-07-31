@@ -631,7 +631,7 @@ export default function PastLaunches({
                     );
                   }
                 }}
-                className="action-button action-button-secondary scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] aria-disabled:cursor-default aria-disabled:opacity-60"
+                className="action-button action-button-secondary aria-disabled:cursor-default aria-disabled:opacity-60"
               >
                 {allResultsVisible
                   ? `All ${filtered.length} missions loaded`

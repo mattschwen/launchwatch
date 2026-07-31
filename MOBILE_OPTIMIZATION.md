@@ -132,6 +132,9 @@ The optional expanded map remains a modal dialog. It must:
 
 - Minimum interactive target: 44 by 44 CSS pixels.
 - Keep fixed navigation clear of `env(safe-area-inset-bottom)`.
+- Keep focused main-content controls above persistent bottom chrome when the
+  browser scrolls them into view; this applies to the mobile navigation and
+  desktop mission status bar.
 - Do not hide focus outlines.
 - Keep the active navigation item available through `aria-current`.
 - Connect disclosures to controlled regions with `aria-expanded` and `aria-controls`.
