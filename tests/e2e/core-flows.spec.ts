@@ -123,6 +123,53 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home keeps meaningful hierarchy while the launch feed is synchronizing', async ({
+  page,
+}) => {
+  let pendingFeed: Route | null = null;
+  await page.route('**/api/launches?type=all', async (route) => {
+    pendingFeed = route;
+  });
+
+  await page.goto('/');
+
+  const acquisitionHeading = page.getByRole('heading', {
+    level: 1,
+    name: 'Acquiring next mission',
+  });
+  await expect(acquisitionHeading).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      level: 2,
+      name: 'Upcoming launches',
+    })
+  ).toBeVisible();
+  await expect(page.getByText('Synchronizing mission queue')).toBeVisible();
+
+  const busyRegions = page.locator('[aria-busy="true"]:visible');
+  await expect(busyRegions).toHaveCount(
+    test.info().project.name.startsWith('mobile') ? 2 : 3
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  expect(pendingFeed).not.toBeNull();
+  await pendingFeed!.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      launches: UPCOMING_LAUNCHES,
+      meta: FEED_META,
+    }),
+  });
+
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: UPCOMING_LAUNCHES[0].name,
+    })
+  ).toBeVisible();
+});
+
 test('shared chrome reports partial feed health on every route', async ({
   page,
 }) => {

@@ -11,14 +11,43 @@ import { selectLaunchVisual } from '@/lib/launch-visual';
 const MissionTrajectory = dynamic(
   () => import('@/components/MissionTrajectory'),
   {
-  ssr: false,
+    ssr: false,
     loading: () => (
-      <div className="skeleton min-h-[27.5rem] rounded-[var(--radius-md)]" />
+      <TrajectoryLoadingState />
     ),
   },
 );
 
 const DESKTOP_MAP_QUERY = '(min-width: 64rem)';
+
+function TrajectoryLoadingState(): React.ReactElement {
+  return (
+    <div
+      aria-label="Loading mission trajectory"
+      aria-busy="true"
+      className="surface-card holo-card signal-cold flex min-h-[27.5rem] flex-col overflow-hidden"
+    >
+      <div className="border-b border-[var(--border-subtle)] px-5 py-4">
+        <p className="data-label text-[var(--console-cyan)]">
+          Trajectory standby
+        </p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          Awaiting mission coordinates
+        </p>
+      </div>
+      <div
+        aria-hidden="true"
+        className="grid flex-1 place-items-center p-5"
+      >
+        <div className="w-full max-w-sm">
+          <div className="skeleton mx-auto h-16 w-16 rounded-full" />
+          <div className="skeleton mx-auto mt-5 h-3 w-40 rounded" />
+          <div className="skeleton mx-auto mt-3 h-3 w-56 max-w-full rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function HomeContent(): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
@@ -69,13 +98,12 @@ function HomeContent(): React.ReactElement {
             aria-label="Mission trajectory"
             className="hidden min-w-0 lg:block"
           >
-            {desktopMapEnabled ? (
+            {loading && !featuredMission ? (
+              <TrajectoryLoadingState />
+            ) : desktopMapEnabled ? (
               <MissionTrajectory launch={featuredMission} />
             ) : (
-              <div
-                aria-hidden="true"
-                className="skeleton min-h-[27.5rem] rounded-[var(--radius-md)]"
-              />
+              <TrajectoryLoadingState />
             )}
           </aside>
         </div>

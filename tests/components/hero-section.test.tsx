@@ -14,6 +14,25 @@ const defaultProps = {
 };
 
 describe('HeroSection', () => {
+  it('keeps the page hierarchy and mission-acquisition state visible while loading', () => {
+    render(<HeroSection {...defaultProps} loading />);
+
+    const heading = screen.getByRole('heading', {
+      level: 1,
+      name: 'Acquiring next mission',
+    });
+    const section = heading.closest('section');
+
+    expect(heading).toBeVisible();
+    expect(
+      screen.getByText(
+        'Verifying launch windows and mission details across connected providers.'
+      )
+    ).toBeVisible();
+    expect(section).toHaveAttribute('aria-busy', 'true');
+    expect(section).toHaveClass('signal-cold');
+  });
+
   it('reports a healthy empty schedule without presenting it as a failure', async () => {
     const user = userEvent.setup();
     const refresh = vi.fn().mockResolvedValue(undefined);

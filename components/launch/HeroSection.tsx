@@ -80,17 +80,43 @@ export default function HeroSection({
   if (loading && !activeLaunch) {
     return (
       <section
-        aria-label="Loading next launch"
+        aria-labelledby="next-launch-loading-title"
+        aria-busy="true"
         className="surface-card holo-card signal-cold min-h-[27.5rem] p-5 sm:p-7"
       >
-        <div className="skeleton mb-5 h-4 w-28 rounded" />
-        <div className="skeleton mb-4 h-12 w-3/4 rounded" />
-        <div className="skeleton mb-7 h-16 w-full max-w-xl rounded" />
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <div className="skeleton h-16 rounded" />
-          <div className="skeleton h-16 rounded" />
-          <div className="skeleton h-16 rounded" />
-          <div className="skeleton h-16 rounded" />
+        <div className="mb-5 flex min-h-5 flex-wrap items-center justify-between gap-3">
+          <p className="data-label text-[var(--console-cyan)]">
+            Mission sync // provider handshake
+          </p>
+          <span className="inline-flex items-center gap-2 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-[var(--console-cyan)]">
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-[var(--console-cyan)]"
+            />
+            Acquiring
+          </span>
+        </div>
+        <h1
+          id="next-launch-loading-title"
+          className="max-w-2xl text-[clamp(2.15rem,4vw,3.65rem)] font-bold leading-[1.02] tracking-[-0.05em] text-[var(--text-primary)]"
+        >
+          Acquiring next mission
+        </h1>
+        <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+          Verifying launch windows and mission details across connected
+          providers.
+        </p>
+        <div
+          aria-hidden="true"
+          className="mt-7 border-t border-[var(--border-subtle)] pt-5"
+        >
+          <div className="skeleton mb-5 h-14 w-full max-w-xl rounded" />
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div className="skeleton h-16 rounded" />
+            <div className="skeleton h-16 rounded" />
+            <div className="skeleton h-16 rounded" />
+            <div className="skeleton h-16 rounded" />
+          </div>
         </div>
       </section>
     );
