@@ -173,6 +173,7 @@ test('home keeps meaningful hierarchy while the launch feed is synchronizing', a
 test('shared chrome reports partial feed health on every route', async ({
   page,
 }) => {
+  const generatedAt = new Date(Date.now() - 5_000).toISOString();
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({
       status: 200,
@@ -181,6 +182,7 @@ test('shared chrome reports partial feed health on every route', async ({
         launches: UPCOMING_LAUNCHES,
         meta: {
           ...FEED_META,
+          generatedAt,
           partial: true,
           providers: {
             ...FEED_META.providers,
@@ -205,8 +207,16 @@ test('shared chrome reports partial feed health on every route', async ({
   await expect(headerStatus).toContainText(
     test.info().project.name.startsWith('mobile') ? 'Partial' : 'Partial feed'
   );
-  await expect(page.locator('footer').getByRole('status')).toContainText(
-    'Partial feed · refreshed'
+  const footerStatus = page
+    .locator('footer')
+    .getByRole('status', { name: 'Launch feed is partial' });
+  await expect(footerStatus).toContainText('Partial feed · refreshed');
+  const visualAge = footerStatus.locator('[aria-hidden="true"]');
+  const initialVisualAge = await visualAge.innerText();
+  await expect.poll(() => visualAge.innerText()).not.toBe(initialVisualAge);
+  await expect(footerStatus).toHaveAttribute(
+    'aria-label',
+    'Launch feed is partial'
   );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

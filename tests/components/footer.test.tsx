@@ -71,10 +71,38 @@ describe('Footer', () => {
       </LaunchDataProvider>
     );
 
-    const status = await screen.findByRole('status');
+    const status = await screen.findByRole('status', {
+      name: 'Launch feed is partial',
+    });
     expect(status).toHaveTextContent('Partial feed · refreshed');
     expect(status).toHaveClass('text-[var(--console-amber)]');
     expect(status).not.toHaveTextContent('pending');
+    expect(status.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('keeps the ticking refresh age out of the polite live region', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({ launches: UPCOMING_LAUNCHES, meta: FEED_META })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    const status = await screen.findByRole('status', {
+      name: 'Launch feed is current',
+    });
+    const visualAge = status.firstElementChild;
+
+    expect(visualAge).toHaveAttribute('aria-hidden', 'true');
+    expect(visualAge).toHaveTextContent('Data refresh:');
+    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).toHaveAttribute('aria-atomic', 'true');
   });
 
   it('keeps refresh focus and prevents duplicate requests while busy', async () => {

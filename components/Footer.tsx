@@ -41,6 +41,18 @@ export default function Footer(): React.ReactElement {
             : feedHealth === 'partial'
               ? `Partial feed · refreshed ${age}`
               : `Data refresh: ${age}`;
+  const statusAnnouncement =
+    feedHealth === 'offline'
+      ? 'Launch feed is offline'
+      : feedHealth === 'syncing'
+        ? 'Synchronizing launch feed'
+        : feedHealth === 'refreshing'
+          ? 'Refreshing launch feed'
+          : feedHealth === 'stale'
+            ? 'Launch feed is stale'
+            : feedHealth === 'partial'
+              ? 'Launch feed is partial'
+              : 'Launch feed is current';
   const statusClass =
     feedHealth === 'offline'
       ? 'text-[var(--console-red)]'
@@ -85,9 +97,10 @@ export default function Footer(): React.ReactElement {
             role="status"
             aria-live="polite"
             aria-atomic="true"
+            aria-label={statusAnnouncement}
             className={`font-mono ${statusClass}`}
           >
-            {statusLabel}
+            <span aria-hidden="true">{statusLabel}</span>
           </span>
           <span
             aria-hidden="true"

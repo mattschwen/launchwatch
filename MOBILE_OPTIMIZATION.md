@@ -140,7 +140,9 @@ The optional expanded map remains a modal dialog. It must:
   for caution or incomplete data.
 - Keep body text at a readable size and WCAG AA contrast.
 - Repeat non-nominal feed health in the footer with the last successful refresh
-  age so degraded data is never presented as a healthy live feed.
+  age so degraded data is never presented as a healthy live feed. Keep the
+  ticking visual age outside the footer's polite announcement; assistive
+  technology should hear feed-state transitions, not a new age every second.
 - Avoid dense all-uppercase labels for primary reading content.
 - The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
 
