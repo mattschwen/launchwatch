@@ -148,11 +148,13 @@ function WatchMissionVisual({
   loading,
   error,
   collapsible,
+  className = '',
 }: {
   launch: Launch;
   loading: boolean;
   error: string | null;
   collapsible: boolean;
+  className?: string;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const regionId = useId();
@@ -165,13 +167,15 @@ function WatchMissionVisual({
         loading={loading}
         error={error}
         showUnavailableState
-        className="mt-4 max-w-xl"
+        className={`max-w-xl ${className}`}
       />
     );
   }
 
   return (
-    <section className="surface-card holo-card signal-cold mt-4 max-w-xl overflow-hidden">
+    <section
+      className={`surface-card holo-card signal-cold max-w-xl overflow-hidden ${className}`}
+    >
       <button
         type="button"
         aria-expanded={open}
@@ -491,20 +495,21 @@ function WatchContent(): React.ReactElement {
                 </p>
               ) : null}
             </section>
-
-            <WatchMissionVisual
-              key={selectedLaunch.id}
-              launch={selectedLaunch}
-              loading={selected.enriching}
-              error={selected.error}
-              collapsible={Boolean(selectedLaunch.livestream)}
-            />
           </div>
 
           <MissionQueue
             launches={queue}
             selectedId={selectedLaunch.id}
             onSelect={selectLaunch}
+          />
+
+          <WatchMissionVisual
+            key={selectedLaunch.id}
+            launch={selectedLaunch}
+            loading={selected.enriching}
+            error={selected.error}
+            collapsible={Boolean(selectedLaunch.livestream)}
+            className="lg:col-start-1"
           />
         </div>
 

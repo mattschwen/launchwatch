@@ -54,7 +54,9 @@ The optional expanded map remains a modal dialog. It must:
 - When no verified stream is available, the route presents the next mission,
   countdown, provider fallback, and one eligible mission visual instead of an
   empty stage. A verified stream remains the primary visual.
-- The mission queue follows the stage on smaller screens and becomes a side rail on larger screens.
+- The mission queue follows the selected mission summary and actions on smaller
+  screens, ahead of secondary vehicle imagery, and becomes a side rail on larger
+  screens.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail.
 - Coverage signal bars represent the presence of verified stream, news, and

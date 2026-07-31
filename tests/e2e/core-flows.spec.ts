@@ -1037,6 +1037,30 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
       { exact: true }
     )
   ).toBeVisible();
+
+  const queue = page.getByRole('complementary', { name: 'Next up' });
+  const hierarchy = await queue.evaluate((element, visualElement) => {
+    const queueBounds = element.getBoundingClientRect();
+    const visualBounds = visualElement?.getBoundingClientRect();
+
+    return {
+      queueBottom: queueBounds.bottom,
+      queueLeft: queueBounds.left,
+      queueTop: queueBounds.top,
+      visualLeft: visualBounds?.left ?? 0,
+      visualRight: visualBounds?.right ?? 0,
+      visualTop: visualBounds?.top ?? 0,
+      viewportWidth: window.innerWidth,
+    };
+  }, await visual.elementHandle());
+
+  if (hierarchy.viewportWidth >= 1024) {
+    expect(hierarchy.queueLeft).toBeGreaterThanOrEqual(hierarchy.visualRight);
+    expect(hierarchy.queueTop).toBeLessThan(hierarchy.visualTop);
+  } else {
+    expect(hierarchy.queueBottom).toBeLessThanOrEqual(hierarchy.visualTop);
+  }
+
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
