@@ -513,12 +513,6 @@ function WatchContent(): React.ReactElement {
           />
         </div>
 
-        <MissionTrajectory
-          launch={selectedLaunch}
-          variant="detail"
-          className="mt-5"
-        />
-
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <LaunchIntelDeck
             launch={selectedLaunch}
@@ -558,6 +552,12 @@ function WatchContent(): React.ReactElement {
             </Link>
           </aside>
         </div>
+
+        <MissionTrajectory
+          launch={selectedLaunch}
+          variant="detail"
+          className="mt-5"
+        />
       </div>
 
       <LaunchBriefingDrawer

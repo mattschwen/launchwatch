@@ -58,7 +58,9 @@ The optional expanded map remains a modal dialog. It must:
   screens, ahead of secondary vehicle imagery, and becomes a side rail on larger
   screens.
 - The selected mission trajectory follows the stage and queue, and uses the same
-  disclosed illustrative model as mission detail.
+  disclosed illustrative model as mission detail. Stream and coverage
+  intelligence appears before that illustrative telemetry so Watch keeps its
+  primary coverage task ahead of secondary mission context.
 - Coverage signal bars represent the presence of verified stream, news, and
   community records; they do not imply measured radio strength.
 - Mission selection updates the canonical `?id=` URL without a full navigation.

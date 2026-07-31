@@ -1064,6 +1064,42 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch prioritizes coverage intelligence before trajectory telemetry', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('heading', {
+    level: 2,
+    name: 'Mission intelligence',
+  });
+  const trajectory = page.getByRole('heading', {
+    level: 2,
+    name: 'Mission trajectory',
+  });
+  await expect(intelligence).toBeVisible();
+  await expect(trajectory).toBeVisible();
+
+  const order = await Promise.all(
+    [intelligence, trajectory].map((heading) =>
+      heading.evaluate(
+        (element) =>
+          element.closest('section')?.getBoundingClientRect().top ??
+          element.getBoundingClientRect().top
+      )
+    )
+  );
+  expect(order[0]).toBeLessThan(order[1]);
+
+  const streamLead = page.getByRole('link', {
+    name: 'Search official coverage',
+  });
+  await streamLead.focus();
+  await expect(streamLead).toBeFocused();
+  expect((await streamLead.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('trajectory and signal motion settles for reduced-motion users', async ({
   page,
 }) => {
