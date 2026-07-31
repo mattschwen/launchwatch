@@ -94,12 +94,9 @@ export default function Footer(): React.ReactElement {
         </div>
         <div className="flex flex-wrap items-center gap-3 sm:justify-end">
           <span
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            aria-label={statusAnnouncement}
             className={`font-mono ${statusClass}`}
           >
+            <span className="sr-only">{statusAnnouncement}. </span>
             <span aria-hidden="true">{statusLabel}</span>
           </span>
           <span

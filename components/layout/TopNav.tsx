@@ -70,6 +70,15 @@ export default function TopNav(): React.ReactElement {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
+      <span
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label={`Launch feed status: ${feedStatus.label}`}
+        className="sr-only"
+      >
+        {feedStatus.label}
+      </span>
       <div className="page-container flex h-14 items-center sm:h-[4.375rem]">
         <Link
           href="/"
@@ -118,10 +127,6 @@ export default function TopNav(): React.ReactElement {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
           <span
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            aria-label={`Launch feed status: ${feedStatus.label}`}
             className={`flex items-center gap-2 px-2 font-mono text-xs font-medium ${feedStatus.textClass}`}
           >
             <span
@@ -149,10 +154,6 @@ export default function TopNav(): React.ReactElement {
           )}
           {feedHealth !== 'nominal' ? (
             <span
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label={`Launch feed status: ${feedStatus.label}`}
               className={`flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${feedStatus.textClass}`}
             >
               <span

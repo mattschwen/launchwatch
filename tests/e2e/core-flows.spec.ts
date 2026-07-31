@@ -311,21 +311,19 @@ test('shared chrome reports partial feed health on every route', async ({
   const headerStatus = page
     .locator('header')
     .getByRole('status', { name: 'Launch feed status: Partial feed' });
-  await expect(headerStatus).toBeVisible();
-  await expect(headerStatus).toContainText(
-    test.info().project.name.startsWith('mobile') ? 'Partial' : 'Partial feed'
-  );
-  const footerStatus = page
-    .locator('footer')
-    .getByRole('status', { name: 'Launch feed is partial' });
+  await expect(headerStatus).toHaveCount(1);
+  await expect(headerStatus).toContainText('Partial feed');
+  const feedAnnouncements = page.getByRole('status', {
+    name: /^Launch feed status:/,
+  });
+  await expect(feedAnnouncements).toHaveCount(1);
+  const footerStatus = page.locator('footer').getByText('Launch feed is partial.').locator('..');
   await expect(footerStatus).toContainText('Partial feed · refreshed');
   const visualAge = footerStatus.locator('[aria-hidden="true"]');
   const initialVisualAge = await visualAge.innerText();
   await expect.poll(() => visualAge.innerText()).not.toBe(initialVisualAge);
-  await expect(footerStatus).toHaveAttribute(
-    'aria-label',
-    'Launch feed is partial'
-  );
+  await expect(footerStatus).not.toHaveAttribute('aria-live');
+  await expect(page.locator('footer [aria-live]')).toHaveCount(0);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

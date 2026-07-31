@@ -71,16 +71,17 @@ describe('Footer', () => {
       </LaunchDataProvider>
     );
 
-    const status = await screen.findByRole('status', {
-      name: 'Launch feed is partial',
-    });
+    const statusText = await screen.findByText('Launch feed is partial.');
+    const status = statusText.parentElement;
+    expect(status).not.toBeNull();
     expect(status).toHaveTextContent('Partial feed · refreshed');
     expect(status).toHaveClass('text-[var(--console-amber)]');
     expect(status).not.toHaveTextContent('pending');
-    expect(status.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(status?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('keeps the ticking refresh age out of the polite live region', async () => {
+  it('keeps the ticking refresh age visual and non-live', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -94,15 +95,15 @@ describe('Footer', () => {
       </LaunchDataProvider>
     );
 
-    const status = await screen.findByRole('status', {
-      name: 'Launch feed is current',
-    });
-    const visualAge = status.firstElementChild;
+    const statusText = await screen.findByText('Launch feed is current.');
+    const status = statusText.parentElement;
+    const visualAge = status?.lastElementChild;
 
     expect(visualAge).toHaveAttribute('aria-hidden', 'true');
     expect(visualAge).toHaveTextContent('Data refresh:');
-    expect(status).toHaveAttribute('aria-live', 'polite');
-    expect(status).toHaveAttribute('aria-atomic', 'true');
+    expect(status).not.toHaveAttribute('aria-live');
+    expect(status).not.toHaveAttribute('role');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('keeps refresh focus and prevents duplicate requests while busy', async () => {

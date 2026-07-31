@@ -30,7 +30,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   header edge.
 - Shared chrome reports synchronization, refresh, partial, stale, offline, and
   nominal feed health truthfully on every route. Narrow headers show a compact
-  non-nominal status without displacing primary navigation.
+  non-nominal status without displacing primary navigation. One persistent
+  header live region announces feed-state transitions; repeated visual status
+  readouts must not create duplicate assistive-technology announcements.
 - The desktop mission ticker preserves provider date precision: coarse targets
   use a stable amber estimate instead of a false second-by-second countdown.
 - Live state may add an indicator to Watch but must not change the navigation order.
@@ -163,8 +165,9 @@ The optional expanded map remains a modal dialog. It must:
 - Keep body text at a readable size and WCAG AA contrast.
 - Repeat non-nominal feed health in the footer with the last successful refresh
   age so degraded data is never presented as a healthy live feed. Keep the
-  ticking visual age outside the footer's polite announcement; assistive
-  technology should hear feed-state transitions, not a new age every second.
+  footer status non-live and its ticking visual age out of the accessibility
+  tree; assistive technology should hear each feed-state transition once, not
+  a duplicate announcement or a new age every second.
 - Avoid dense all-uppercase labels for primary reading content.
 - The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
 
