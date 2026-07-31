@@ -268,7 +268,7 @@ export default function LaunchBriefingDrawer({
               launch={launch}
               variant="icon"
               menuPlacement="top"
-              menuAlign="center"
+              menuAlign="right"
             />
           ) : null}
           {launch.livestream ? (

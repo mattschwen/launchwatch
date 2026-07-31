@@ -55,6 +55,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - The featured mission may show one fixed-aspect licensed vehicle or mission
   visual. It must preserve its caption and full-image action without widening
   the page.
+- When the feed does not yet include official coverage, the featured mission
+  holds the generic search fallback while canonical detail is checked. The
+  loading action keeps its 44px footprint; a failed check labels the fallback
+  as degraded instead of implying that coverage was verified.
 - While richer detail metadata is requested, the same fixed visual footprint
   reports acquisition progress so content below it does not jump.
 - The map appears beside the hero only at wide desktop widths.

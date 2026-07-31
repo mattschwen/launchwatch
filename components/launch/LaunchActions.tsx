@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, FileText, Play } from 'lucide-react';
+import { ExternalLink, FileText, LoaderCircle, Play } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import { getFallbackLaunchSummary } from '@/lib/launch-action';
 import { isCompletedLaunch } from '@/lib/format';
@@ -15,6 +15,8 @@ interface LaunchActionsProps {
   showCalendar?: boolean;
   compact?: boolean;
   featured?: boolean;
+  coverageLoading?: boolean;
+  coverageUnavailable?: boolean;
   className?: string;
 }
 
@@ -25,6 +27,8 @@ export default function LaunchActions({
   showCalendar = true,
   compact = false,
   featured = false,
+  coverageLoading = false,
+  coverageUnavailable = false,
   className = '',
 }: LaunchActionsProps): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
@@ -56,7 +60,20 @@ export default function LaunchActions({
           : 'flex flex-wrap items-center gap-2'
       } ${className}`}
     >
-      {launch.livestream ? (
+      {coverageLoading && !launch.livestream ? (
+        <div
+          role="status"
+          aria-label="Checking official coverage"
+          className="action-button action-button-secondary cursor-wait opacity-70"
+        >
+          <LoaderCircle
+            aria-hidden="true"
+            size={17}
+            className="animate-spin"
+          />
+          Checking coverage
+        </div>
+      ) : launch.livestream ? (
         <Link
           href={`/watch?id=${encodeURIComponent(launch.id)}`}
           className="action-button action-button-stream"
@@ -96,6 +113,15 @@ export default function LaunchActions({
 
       {showCalendar && !completed ? (
         <AddToCalendar launch={launch} variant={compact ? 'icon' : 'button'} />
+      ) : null}
+
+      {coverageUnavailable && !launch.livestream ? (
+        <p
+          role="status"
+          className="col-span-full text-xs leading-5 text-[var(--console-amber)]"
+        >
+          Official coverage status unavailable; search fallback shown.
+        </p>
       ) : null}
     </div>
   );

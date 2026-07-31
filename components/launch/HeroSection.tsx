@@ -22,6 +22,8 @@ interface HeroSectionProps {
   refreshing: boolean;
   error: string | null;
   partial: boolean;
+  coverageLoading?: boolean;
+  coverageUnavailable?: boolean;
   visualLoading?: boolean;
   visualError?: string | null;
   refresh: () => Promise<void>;
@@ -38,6 +40,8 @@ export default function HeroSection({
   refreshing,
   error,
   partial,
+  coverageLoading = false,
+  coverageUnavailable = false,
   visualLoading = false,
   visualError = null,
   refresh,
@@ -328,6 +332,8 @@ export default function HeroSection({
             onOpenBriefing={() => setBriefingOpen(true)}
             showCalendar={false}
             featured
+            coverageLoading={coverageLoading}
+            coverageUnavailable={coverageUnavailable}
             className="mt-6"
           />
 

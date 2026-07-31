@@ -120,6 +120,19 @@ test('@a11y coarse launch estimate has no serious WCAG A/AA violations', async (
       }),
     })
   );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: estimatedLaunch,
+          canonicalId: estimatedLaunch.id,
+          meta: FEED_META,
+        }),
+      })
+  );
 
   await page.goto('/');
   await expect(page.getByText('Target estimate')).toBeVisible();

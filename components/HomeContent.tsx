@@ -82,8 +82,14 @@ export default function HomeContent(): React.ReactElement {
     ) ??
     null;
   const featuredVisual = selectLaunchVisual(featuredLaunch);
+  const needsVisualEnrichment = featuredVisual.status !== 'available';
+  const needsCoverageEnrichment = Boolean(
+    featuredLaunch && !featuredLaunch.livestream,
+  );
   const featuredDetail = useLaunchById(
-    featuredVisual.status === 'available' ? null : featuredLaunch?.id,
+    needsVisualEnrichment || needsCoverageEnrichment
+      ? featuredLaunch?.id
+      : null,
   );
   const featuredMission = featuredDetail.launch ?? featuredLaunch;
 
@@ -96,10 +102,23 @@ export default function HomeContent(): React.ReactElement {
           refreshing={refreshing}
           error={error}
           partial={Boolean(meta?.partial)}
-          visualLoading={featuredDetail.enriching}
+          coverageLoading={
+            needsCoverageEnrichment && featuredDetail.enriching
+          }
+          coverageUnavailable={
+            needsCoverageEnrichment &&
+            Boolean(featuredDetail.error || featuredDetail.notFound)
+          }
+          visualLoading={
+            needsVisualEnrichment && featuredDetail.enriching
+          }
           visualError={
-            featuredDetail.error ??
-            (featuredDetail.notFound ? 'Mission detail was not found.' : null)
+            needsVisualEnrichment
+              ? featuredDetail.error ??
+                (featuredDetail.notFound
+                  ? 'Mission detail was not found.'
+                  : null)
+              : null
           }
           refresh={refresh}
         />

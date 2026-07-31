@@ -235,6 +235,19 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
       }),
     })
   );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: estimatedLaunch,
+          canonicalId: estimatedLaunch.id,
+          meta: FEED_META,
+        }),
+      })
+  );
 
   await page.goto('/');
 
@@ -438,25 +451,39 @@ test('watch mission details return to the same selected mission', async ({
 test('featured mission telemetry stays legible in the split layout', async ({
   page,
 }) => {
+  const telemetryLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    rocket: 'Long March 6A',
+    launchSite:
+      "Taiyuan Satellite Launch Center, People's Republic of China",
+    missionType: null,
+    orbit: null,
+  };
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         launches: [
-          {
-            ...UPCOMING_LAUNCHES[0],
-            rocket: 'Long March 6A',
-            launchSite:
-              "Taiyuan Satellite Launch Center, People's Republic of China",
-            missionType: null,
-            orbit: null,
-          },
+          telemetryLaunch,
           ...UPCOMING_LAUNCHES.slice(1),
         ],
         meta: FEED_META,
       }),
     })
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: telemetryLaunch,
+          canonicalId: telemetryLaunch.id,
+          meta: FEED_META,
+        }),
+      })
   );
 
   await page.goto('/');
@@ -496,7 +523,7 @@ test('home shows one truthful licensed visual with touch-safe attribution action
   await page.goto('/');
 
   const primaryAction = page.getByRole('link', {
-    name: 'Find stream',
+    name: 'Open coverage',
     exact: true,
   });
   const briefingAction = page.getByRole('button', {
@@ -602,6 +629,68 @@ test('home shows one truthful licensed visual with touch-safe attribution action
   expect(visualFrame.overflow).toBe('hidden');
   expect(visualFrame.position).toBe('relative');
   expect(visualFrame.objectFit).toBe('contain');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home waits for canonical coverage before offering a stream fallback', async ({
+  page,
+}) => {
+  let releaseDetail: () => void = () => undefined;
+  const detailGate = new Promise<void>((resolve) => {
+    releaseDetail = resolve;
+  });
+
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    async (route) => {
+      await detailGate;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: {
+            ...UPCOMING_LAUNCHES[0],
+            livestream: 'https://www.youtube.com/watch?v=official-stream',
+          },
+          canonicalId: UPCOMING_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      });
+    }
+  );
+
+  await page.goto('/');
+
+  const checkingCoverage = page.getByRole('status', {
+    name: 'Checking official coverage',
+  });
+  await expect(checkingCoverage).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Find stream' })
+  ).toHaveCount(0);
+  expect(
+    await checkingCoverage.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
+
+  releaseDetail();
+
+  const officialCoverage = page.getByRole('link', {
+    name: 'Watch mission',
+  });
+  await expect(officialCoverage).toHaveAttribute(
+    'href',
+    '/watch?id=ll2-demo-orbital-dawn'
+  );
+  await expect(checkingCoverage).toHaveCount(0);
+  await officialCoverage.focus();
+  await expect(officialCoverage).toBeFocused();
+  expect(
+    await officialCoverage.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -782,6 +871,15 @@ test('home reports visual-detail failures as degraded data', async ({
   await expect(
     degradedVisual.getByText('Provider image not supplied')
   ).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Find stream' })
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'Official coverage status unavailable; search fallback shown.',
+      { exact: true }
+    )
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
