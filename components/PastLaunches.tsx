@@ -97,10 +97,10 @@ function HistoryRow({
               }`}
             />
             <span className="min-w-0">
-              <span className="block truncate font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+              <span className="block break-words font-semibold leading-5 text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
                 {launch.name}
               </span>
-              <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)]">
+              <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--text-muted)]">
                 {launch.provider || 'Launch provider'}
               </span>
             </span>

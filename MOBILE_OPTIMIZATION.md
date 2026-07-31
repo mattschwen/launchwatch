@@ -73,7 +73,9 @@ The optional expanded map remains a modal dialog. It must:
 ## History
 
 - Search and provider/year/outcome filters stack on narrow screens.
-- Each archive row keeps the mission and View Mission action readable before exposing secondary metadata.
+- Each archive row keeps the complete mission and provider identity readable,
+  wrapping long provider-supplied names instead of hiding them behind
+  ellipses, before exposing secondary metadata and the View Mission action.
 - Expanded summaries remain in normal document flow.
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.

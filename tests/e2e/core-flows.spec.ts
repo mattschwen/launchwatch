@@ -1652,6 +1652,69 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history keeps long mission and provider names readable', async ({
+  page,
+}) => {
+  const longMissionName =
+    'Vega-C | Solar wind Magnetosphere Ionosphere Link Explorer (SMILE)';
+  const longProviderName =
+    'China Aerospace Science and Technology Corporation';
+
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          {
+            ...HISTORICAL_LAUNCHES[0],
+            name: longMissionName,
+            provider: longProviderName,
+          },
+        ],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/history');
+
+  const archiveRow = page.locator('article').filter({ hasText: longMissionName });
+  const missionName = archiveRow.getByText(longMissionName, { exact: true });
+  const providerName = archiveRow.getByText(longProviderName, { exact: true });
+  await expect(missionName).toBeVisible();
+  await expect(providerName).toBeVisible();
+
+  for (const identity of [missionName, providerName]) {
+    const layout = await identity.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        clientWidth: element.clientWidth,
+        height: bounds.height,
+        lineHeight: Number.parseFloat(style.lineHeight),
+        scrollWidth: element.scrollWidth,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+      };
+    });
+
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+    expect(layout.textOverflow).not.toBe('ellipsis');
+    expect(layout.whiteSpace).toBe('normal');
+  }
+
+  const disclosure = archiveRow.getByRole('button');
+  await disclosure.focus();
+  await expect(disclosure).toBeFocused();
+  expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history loads licensed mission imagery only after archive expansion', async ({
   page,
 }) => {
