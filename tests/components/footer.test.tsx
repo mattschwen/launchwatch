@@ -54,6 +54,29 @@ describe('Footer', () => {
     expect(launchLibrary).toHaveAttribute('target', '_blank');
   });
 
+  it('reports partial provider data instead of a nominal refresh state', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          launches: UPCOMING_LAUNCHES,
+          meta: { ...FEED_META, partial: true },
+        })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('Partial feed · refreshed');
+    expect(status).toHaveClass('text-[var(--console-amber)]');
+    expect(status).not.toHaveTextContent('pending');
+  });
+
   it('keeps refresh focus and prevents duplicate requests while busy', async () => {
     const user = userEvent.setup();
     let resolveRefresh: ((value: Response) => void) | undefined;

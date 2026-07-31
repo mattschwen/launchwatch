@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import { isCriticalLaunchStatusName } from '@/lib/format';
@@ -52,8 +58,9 @@ export default function LaunchList(): React.ReactElement {
     return () => window.cancelAnimationFrame(frame);
   }, [launches.length, refreshing]);
 
-  const retrySchedule = (): void => {
+  const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (refreshing) return;
+    event.currentTarget.scrollIntoView({ block: 'nearest' });
     retryFocusPendingRef.current = true;
     void refresh();
   };

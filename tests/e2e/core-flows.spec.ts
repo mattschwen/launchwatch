@@ -123,6 +123,47 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('shared chrome reports partial feed health on every route', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: {
+          ...FEED_META,
+          partial: true,
+          providers: {
+            ...FEED_META.providers,
+            spacex: {
+              state: 'error',
+              cached: false,
+              updatedAt: null,
+              error: 'Provider request failed',
+            },
+          },
+        },
+      }),
+    })
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const headerStatus = page
+    .locator('header')
+    .getByRole('status', { name: 'Launch feed status: Partial feed' });
+  await expect(headerStatus).toBeVisible();
+  await expect(headerStatus).toContainText(
+    test.info().project.name.startsWith('mobile') ? 'Partial' : 'Partial feed'
+  );
+  await expect(page.locator('footer').getByRole('status')).toContainText(
+    'Partial feed · refreshed'
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('primary mission title links are touch-safe and keyboard-focusable', async ({
   page,
 }) => {
@@ -1656,18 +1697,21 @@ test('history search reaches a completed mission detail', async ({ page }) => {
 
   await expect(clearFilters).toBeDisabled();
   await search.fill('no matching mission');
-  await expect(page.getByRole('status')).toHaveText('0 results');
+  const archiveResults = page.getByRole('status', {
+    name: 'Archive results',
+  });
+  await expect(archiveResults).toHaveText('0 results');
   await expect(clearFilters).toBeEnabled();
   await clearFilters.press('Enter');
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
-  await expect(page.getByRole('status')).toHaveText('2 results');
+  await expect(archiveResults).toHaveText('2 results');
   await expect(clearFilters).toBeDisabled();
 
   await search.fill('Return');
 
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('1 result');
+  await expect(archiveResults).toHaveText('1 result');
   await page.getByRole('button', { name: /Demo Return Flight/i }).click();
   await expect(
     page.getByText(/completed crew demonstration mission/i)
@@ -1917,20 +1961,23 @@ test('history pagination reports progress and keeps terminal focus visible', asy
 
   await page.goto('/history');
 
-  await expect(page.getByRole('status')).toHaveText(
+  const archiveResults = page.getByRole('status', {
+    name: 'Archive results',
+  });
+  await expect(archiveResults).toHaveText(
     'Showing 20 of 41 results'
   );
   const loadMore = page.locator('button[aria-controls$="-results"]');
   await expect(loadMore).toHaveText('Load 20 more');
   await loadMore.focus();
   await loadMore.press('Enter');
-  await expect(page.getByRole('status')).toHaveText(
+  await expect(archiveResults).toHaveText(
     'Showing 40 of 41 results'
   );
   await expect(loadMore).toBeFocused();
 
   await loadMore.press('Enter');
-  await expect(page.getByRole('status')).toHaveText('41 results');
+  await expect(archiveResults).toHaveText('41 results');
   await expect(loadMore).toHaveText('All 41 missions loaded');
   await expect(loadMore).toHaveAttribute('aria-disabled', 'true');
   await expect(loadMore).toBeFocused();

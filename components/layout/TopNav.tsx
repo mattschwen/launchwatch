@@ -3,12 +3,70 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
-import { useLiveContext } from '@/lib/contexts';
+import { useLaunchData, useLiveContext } from '@/lib/contexts';
+import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
 import { isNavItemActive, PRIMARY_NAV_ITEMS } from './navigation';
+
+const FEED_STATUS: Record<
+  FeedHealth,
+  {
+    label: string;
+    compactLabel: string;
+    textClass: string;
+    dotClass: string;
+  }
+> = {
+  offline: {
+    label: 'Feed offline',
+    compactLabel: 'Offline',
+    textClass: 'text-[var(--console-red)]',
+    dotClass: 'bg-[var(--console-red)]',
+  },
+  syncing: {
+    label: 'Syncing feed',
+    compactLabel: 'Syncing',
+    textClass: 'text-[var(--console-cyan)]',
+    dotClass: 'bg-[var(--console-cyan)]',
+  },
+  refreshing: {
+    label: 'Refreshing feed',
+    compactLabel: 'Refresh',
+    textClass: 'text-[var(--console-cyan)]',
+    dotClass: 'bg-[var(--console-cyan)]',
+  },
+  stale: {
+    label: 'Stale cache',
+    compactLabel: 'Stale',
+    textClass: 'text-[var(--console-amber)]',
+    dotClass: 'bg-[var(--console-amber)]',
+  },
+  partial: {
+    label: 'Partial feed',
+    compactLabel: 'Partial',
+    textClass: 'text-[var(--console-amber)]',
+    dotClass: 'bg-[var(--console-amber)]',
+  },
+  nominal: {
+    label: 'Live feed',
+    compactLabel: 'Online',
+    textClass: 'text-[var(--console-green)]',
+    dotClass: 'bg-[var(--console-green)]',
+  },
+};
 
 export default function TopNav(): React.ReactElement {
   const pathname = usePathname();
   const { hasLiveLaunches, liveCount } = useLiveContext();
+  const { launches, loading, refreshing, error, meta } = useLaunchData();
+  const feedHealth = getFeedHealth({
+    hasLaunches: launches.length > 0,
+    loading,
+    refreshing,
+    error,
+    partial: Boolean(meta?.partial),
+    stale: Boolean(meta?.stale),
+  });
+  const feedStatus = FEED_STATUS[feedHealth];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
@@ -59,16 +117,18 @@ export default function TopNav(): React.ReactElement {
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
-          <span className="flex items-center gap-2 px-2 font-mono text-xs font-medium text-[var(--console-green)]">
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-label={`Launch feed status: ${feedStatus.label}`}
+            className={`flex items-center gap-2 px-2 font-mono text-xs font-medium ${feedStatus.textClass}`}
+          >
             <span
               aria-hidden="true"
-              className={`h-2 w-2 rounded-full ${
-                hasLiveLaunches
-                  ? 'bg-[var(--console-magenta)] shadow-[0_0_10px_rgba(255,79,216,.52)]'
-                  : 'bg-[var(--console-green)]'
-              }`}
+              className={`h-2 w-2 rounded-full ${feedStatus.dotClass}`}
             />
-            {hasLiveLaunches ? `${liveCount} Live` : 'Live feed'}
+            {feedStatus.label}
           </span>
           <UTCClock showLabel className="hardware-clock px-2 py-1" />
         </div>
@@ -87,6 +147,23 @@ export default function TopNav(): React.ReactElement {
               <span className="hidden min-[360px]:inline">LIVE ({liveCount})</span>
             </Link>
           )}
+          {feedHealth !== 'nominal' ? (
+            <span
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label={`Launch feed status: ${feedStatus.label}`}
+              className={`flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${feedStatus.textClass}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 shrink-0 rounded-full ${feedStatus.dotClass}`}
+              />
+              <span className="hidden min-[370px]:inline">
+                {feedStatus.compactLabel}
+              </span>
+            </span>
+          ) : null}
           <UTCClock
             showLabel={false}
             className="hardware-clock h-10 px-2 text-[var(--console-cyan)]"

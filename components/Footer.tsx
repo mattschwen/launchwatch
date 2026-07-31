@@ -2,6 +2,7 @@
 
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { useCurrentTime, useLaunches } from '@/lib/hooks';
+import { getFeedHealth } from '@/lib/feed-health';
 
 function refreshAge(generatedAt: string | undefined, now: number): string {
   if (!generatedAt) return 'pending';
@@ -15,8 +16,39 @@ function refreshAge(generatedAt: string | undefined, now: number): string {
 }
 
 export default function Footer(): React.ReactElement {
-  const { refreshing, error, meta, refresh } = useLaunches();
+  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const now = useCurrentTime();
+  const feedHealth = getFeedHealth({
+    hasLaunches: launches.length > 0,
+    loading,
+    refreshing,
+    error,
+    partial: Boolean(meta?.partial),
+    stale: Boolean(meta?.stale),
+  });
+  const age = refreshAge(meta?.generatedAt, now);
+  const statusLabel =
+    feedHealth === 'offline'
+      ? 'Feed offline'
+      : feedHealth === 'syncing'
+        ? 'Syncing feed'
+        : feedHealth === 'refreshing'
+          ? age === 'pending'
+            ? 'Refreshing feed'
+            : `Refreshing feed · last update ${age}`
+          : feedHealth === 'stale'
+            ? `Stale feed · refreshed ${age}`
+            : feedHealth === 'partial'
+              ? `Partial feed · refreshed ${age}`
+              : `Data refresh: ${age}`;
+  const statusClass =
+    feedHealth === 'offline'
+      ? 'text-[var(--console-red)]'
+      : feedHealth === 'stale' || feedHealth === 'partial'
+        ? 'text-[var(--console-amber)]'
+        : feedHealth === 'syncing' || feedHealth === 'refreshing'
+          ? 'text-[var(--console-cyan)]'
+          : '';
 
   return (
     <footer className="mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pb-0">
@@ -49,8 +81,13 @@ export default function Footer(): React.ReactElement {
           </nav>
         </div>
         <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-          <span aria-live="polite" className="font-mono">
-            {error ? 'Feed degraded' : `Data refresh: ${refreshAge(meta?.generatedAt, now)}`}
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className={`font-mono ${statusClass}`}
+          >
+            {statusLabel}
           </span>
           <span
             aria-hidden="true"

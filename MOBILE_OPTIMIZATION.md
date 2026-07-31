@@ -22,6 +22,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - The app shell includes a keyboard skip link that reveals above the sticky
   header, meets the 44-pixel target minimum, and lands main content below the
   header edge.
+- Shared chrome reports synchronization, refresh, partial, stale, offline, and
+  nominal feed health truthfully on every route. Narrow headers show a compact
+  non-nominal status without displacing primary navigation.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home
@@ -124,6 +127,8 @@ The optional expanded map remains a modal dialog. It must:
   coverage, red for critical/hold states, cyan for trajectory data, and amber
   for caution or incomplete data.
 - Keep body text at a readable size and WCAG AA contrast.
+- Repeat non-nominal feed health in the footer with the last successful refresh
+  age so degraded data is never presented as a healthy live feed.
 - Avoid dense all-uppercase labels for primary reading content.
 - The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
 

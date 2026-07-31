@@ -498,6 +498,7 @@ export default function PastLaunches(): React.ReactElement {
               role="status"
               aria-live="polite"
               aria-atomic="true"
+              aria-label="Archive results"
               className="text-sm text-[var(--text-muted)]"
             >
               {resultCountLabel}
