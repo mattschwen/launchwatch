@@ -44,7 +44,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   false second-by-second countdowns. Calendar export and launch alerts remain
   visibly pending until the provider confirms a minute-level target.
 - Mission metadata adapts from multiple columns to stacked groups.
-- Upcoming missions render as compact responsive rows.
+- Upcoming missions render as compact responsive rows while keeping complete
+  mission and provider identities readable instead of clipping provider-supplied
+  names.
 - Filters are collapsed until requested.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.

@@ -79,10 +79,10 @@ export default function LaunchCard({
         </div>
 
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-base font-semibold tracking-[-0.015em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)] sm:line-clamp-1">
+          <h3 className="break-words text-base font-semibold leading-5 tracking-[-0.015em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
             {launch.name}
           </h3>
-          <p className="mt-0.5 truncate text-sm text-[var(--text-muted)]">
+          <p className="mt-0.5 break-words text-sm leading-5 text-[var(--text-muted)]">
             {launch.provider || 'Launch provider'}
           </p>
         </div>

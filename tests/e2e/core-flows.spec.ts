@@ -1004,6 +1004,66 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home schedule keeps long mission and provider identities readable', async ({
+  page,
+}) => {
+  const longMissionName =
+    'Falcon 9 Block 5 | Transporter 18 (Dedicated SSO Rideshare)';
+  const longProviderName =
+    'China Aerospace Science and Technology Corporation';
+
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          {
+            ...UPCOMING_LAUNCHES[0],
+            name: longMissionName,
+            provider: longProviderName,
+          },
+        ],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const missionName = schedule.getByText(longMissionName, { exact: true });
+  const providerName = schedule.getByText(longProviderName, { exact: true });
+  await expect(missionName).toBeVisible();
+  await expect(providerName).toBeVisible();
+
+  for (const identity of [missionName, providerName]) {
+    const layout = await identity.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+      };
+    });
+
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+    expect(layout.textOverflow).not.toBe('ellipsis');
+    expect(layout.whiteSpace).toBe('normal');
+  }
+
+  const missionLink = schedule.getByRole('link', { name: longMissionName });
+  await missionLink.focus();
+  await expect(missionLink).toBeFocused();
+  expect((await missionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home distinguishes an empty provider schedule and offers recovery', async ({
   page,
 }) => {
