@@ -24,6 +24,17 @@ describe('RegisterServiceWorker', () => {
 
   it('announces and applies a waiting service-worker update', async () => {
     const user = userEvent.setup();
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 12,
+      y: 613,
+      width: 369,
+      height: 158,
+      top: 613,
+      right: 381,
+      bottom: 771,
+      left: 12,
+      toJSON: () => ({}),
+    });
     const waitingWorker = { postMessage: vi.fn() };
     const registrationListeners = new Map<string, EventListener>();
     const registration = {
@@ -50,7 +61,7 @@ describe('RegisterServiceWorker', () => {
     });
 
     const { default: RegisterServiceWorker } = await import('@/app/register-sw');
-    render(<RegisterServiceWorker />);
+    const { unmount } = render(<RegisterServiceWorker />);
     window.dispatchEvent(new Event('load'));
 
     await waitFor(() => {
@@ -62,6 +73,15 @@ describe('RegisterServiceWorker', () => {
     expect(
       await screen.findByRole('button', { name: 'Update now' })
     ).toBeVisible();
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute(
+        'data-pwa-update-visible',
+        'true'
+      );
+    });
+    expect(
+      document.documentElement.style.getPropertyValue('--pwa-update-clearance')
+    ).toBe(`${window.innerHeight - 613 + 16}px`);
 
     const updateButton = screen.getByRole('button', { name: 'Update now' });
     updateButton.focus();
@@ -79,5 +99,13 @@ describe('RegisterServiceWorker', () => {
     expect(waitingWorker.postMessage).toHaveBeenCalledTimes(1);
     expect(registrationListeners.has('updatefound')).toBe(true);
     expect(workerListeners.has('controllerchange')).toBe(true);
+
+    unmount();
+    expect(document.documentElement).not.toHaveAttribute(
+      'data-pwa-update-visible'
+    );
+    expect(
+      document.documentElement.style.getPropertyValue('--pwa-update-clearance')
+    ).toBe('');
   });
 });

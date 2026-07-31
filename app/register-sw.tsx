@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 const UPDATE_APPLY_TIMEOUT_MS = 15 * 1000;
+const UPDATE_FOCUS_GUTTER_PX = 16;
 const UPDATE_AVAILABLE_EVENT = 'launchwatch:service-worker-update';
 const APPLY_UPDATE_EVENT = 'launchwatch:apply-service-worker-update';
 
@@ -21,6 +22,8 @@ function isUnmodifiedPrimaryClick(event: MouseEvent): boolean {
 
 export default function RegisterServiceWorker(): React.ReactElement | null {
   const [updateState, setUpdateState] = useState<UpdateState>('idle');
+  const updateCardRef = useRef<HTMLElement>(null);
+  const updateVisible = updateState !== 'idle';
 
   useEffect(() => {
     if (
@@ -206,6 +209,37 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
     };
   }, []);
 
+  useEffect(() => {
+    const updateCard = updateCardRef.current;
+    if (!updateVisible || !updateCard) return;
+
+    const root = document.documentElement;
+    const updateClearance = (): void => {
+      const cardTop = updateCard.getBoundingClientRect().top;
+      const clearance = Math.max(
+        0,
+        window.innerHeight - cardTop + UPDATE_FOCUS_GUTTER_PX
+      );
+      root.style.setProperty(
+        '--pwa-update-clearance',
+        `${Math.ceil(clearance)}px`
+      );
+    };
+
+    root.dataset.pwaUpdateVisible = 'true';
+    updateClearance();
+    const resizeObserver = new ResizeObserver(updateClearance);
+    resizeObserver.observe(updateCard);
+    window.addEventListener('resize', updateClearance);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateClearance);
+      delete root.dataset.pwaUpdateVisible;
+      root.style.removeProperty('--pwa-update-clearance');
+    };
+  }, [updateVisible]);
+
   if (updateState === 'idle') {
     return null;
   }
@@ -214,6 +248,7 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
 
   return (
     <aside
+      ref={updateCardRef}
       aria-labelledby="pwa-update-title"
       className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-[70] mx-auto flex max-w-xl flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--border-accent)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-elevated)] sm:left-auto sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))] md:bottom-12"
     >

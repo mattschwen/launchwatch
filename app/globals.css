@@ -110,6 +110,20 @@ html {
   scroll-padding-block-end: var(--persistent-bottom-clearance);
 }
 
+html[data-pwa-update-visible='true'] {
+  scroll-padding-block-end: max(
+    var(--persistent-bottom-clearance),
+    var(--pwa-update-clearance)
+  );
+}
+
+html[data-pwa-update-visible='true'] body {
+  padding-bottom: max(
+    0px,
+    calc(var(--pwa-update-clearance) - var(--persistent-bottom-clearance))
+  );
+}
+
 body {
   background:
     radial-gradient(ellipse at 78% -10%, rgba(255, 79, 216, 0.13), transparent 35%),
