@@ -63,6 +63,9 @@ The optional expanded map remains a modal dialog. It must:
   primary coverage task ahead of secondary mission context.
 - Coverage signal bars represent the presence of verified stream, news, and
   community records; they do not imply measured radio strength.
+- The secondary trajectory is deferred until it approaches the viewport. Its
+  reserved surface preserves layout stability and exposes a keyboard-operable
+  load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Launch actions wrap into labeled, touch-friendly controls.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.

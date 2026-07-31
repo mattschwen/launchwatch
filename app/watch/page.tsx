@@ -45,10 +45,130 @@ const MissionTrajectory = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="skeleton min-h-[27.5rem] rounded-[var(--radius-md)]" />
+      <div
+        aria-label="Loading mission trajectory"
+        aria-busy="true"
+        className="skeleton min-h-[55rem] rounded-[var(--radius-md)] sm:min-h-[52rem]"
+      />
     ),
   },
 );
+
+function DeferredWatchTrajectory({
+  launch,
+}: {
+  launch: Launch;
+}): React.ReactElement {
+  const [enabled, setEnabled] = useState(false);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const keyboardEncounteredRef = useRef(false);
+  const manualLoadRef = useRef(false);
+
+  useEffect(() => {
+    if (enabled) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      const timeout = window.setTimeout(() => setEnabled(true), 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    const host = hostRef.current;
+    if (!host) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !keyboardEncounteredRef.current) {
+          setEnabled(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' },
+    );
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled || !manualLoadRef.current) return;
+
+    const focusFirstMapControl = (): boolean => {
+      const control =
+        hostRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)');
+      if (!control) return false;
+      control.focus();
+      return true;
+    };
+
+    if (focusFirstMapControl()) return;
+
+    const observer = new MutationObserver(() => {
+      if (focusFirstMapControl()) observer.disconnect();
+    });
+    if (hostRef.current) {
+      observer.observe(hostRef.current, { childList: true, subtree: true });
+    }
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  const loadTrajectory = (): void => {
+    manualLoadRef.current = true;
+    setEnabled(true);
+  };
+
+  return (
+    <div ref={hostRef} className="mt-5">
+      {enabled ? (
+        <MissionTrajectory launch={launch} variant="detail" />
+      ) : (
+        <section
+          aria-labelledby="watch-trajectory-pending-title"
+          data-trajectory-pending="true"
+          className="surface-card holo-card signal-cold flex min-h-[55rem] flex-col overflow-hidden p-5 sm:min-h-[52rem] sm:p-6"
+        >
+          <div className="max-w-xl">
+            <p className="data-label text-[var(--console-cyan)]">
+              Secondary telemetry
+            </p>
+            <h2
+              id="watch-trajectory-pending-title"
+              className="section-title mt-2"
+            >
+              Mission trajectory
+            </h2>
+            <p className="mt-2 text-base font-semibold text-[var(--text-primary)]">
+              {launch.name}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+              The illustrative path loads as it approaches the viewport. Load
+              it now to inspect the reported site and modeled mission phases.
+            </p>
+            <button
+              type="button"
+              onFocus={() => {
+                keyboardEncounteredRef.current = true;
+              }}
+              onClick={loadTrajectory}
+              className="action-button action-button-secondary mt-5"
+            >
+              Load mission trajectory
+            </button>
+          </div>
+          <div aria-hidden="true" className="mt-8 w-full">
+            <div className="skeleton h-[20rem] rounded-[var(--radius-sm)] sm:h-[22rem]" />
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {Array.from({ length: 4 }, (_, index) => (
+                <div
+                  key={index}
+                  className="skeleton h-[4.5rem] rounded-[var(--radius-sm)]"
+                />
+              ))}
+            </div>
+            <div className="skeleton mt-3 h-[5.5rem] rounded-[var(--radius-sm)]" />
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
 
 function WatchStage({
   launch,
@@ -553,10 +673,9 @@ function WatchContent(): React.ReactElement {
           </aside>
         </div>
 
-        <MissionTrajectory
+        <DeferredWatchTrajectory
+          key={selectedLaunch.id}
           launch={selectedLaunch}
-          variant="detail"
-          className="mt-5"
         />
       </div>
 

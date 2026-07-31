@@ -1100,10 +1100,57 @@ test('watch prioritizes coverage intelligence before trajectory telemetry', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch defers offscreen trajectory with a keyboard load path', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const pendingTrajectory = page.locator('[data-trajectory-pending="true"]');
+  await expect(pendingTrajectory).toBeVisible();
+  await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+
+  const initialPlacement = await pendingTrajectory.evaluate((element) => ({
+    top: element.getBoundingClientRect().top,
+    viewportHeight: window.innerHeight,
+  }));
+  expect(initialPlacement.top).toBeGreaterThan(
+    initialPlacement.viewportHeight + 600
+  );
+
+  await pendingTrajectory.scrollIntoViewIfNeeded();
+  await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(pendingTrajectory).toBeVisible();
+  await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+
+  const loadButton = page.getByRole('button', {
+    name: 'Load mission trajectory',
+  });
+  await loadButton.focus();
+  await expect(loadButton).toBeFocused();
+  await expect(pendingTrajectory).toBeVisible();
+
+  await loadButton.press('Enter');
+  await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
+  await expect(
+    page.getByRole('region', { name: 'Mission trajectory' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /^(Mission focus|Focus)$/ })
+  ).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('trajectory and signal motion settles for reduced-motion users', async ({
   page,
 }) => {
   await page.goto('/watch');
+  const loadButton = page.getByRole('button', {
+    name: 'Load mission trajectory',
+  });
+  await loadButton.focus();
+  await loadButton.press('Enter');
   await expect(page.locator('.trajectory-path-ascent')).toHaveCount(1);
 
   const motion = await page.evaluate(() => {
