@@ -365,15 +365,3 @@ export function useCountdown(targetDate: string) {
     total: difference,
   };
 }
-
-export function useCompactCountdown(targetDate: string): string {
-  const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
-
-  if (total <= 0) return 'Complete';
-  if (days > 0) return `T−${days}d ${hours}h`;
-
-  return `T−${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-    2,
-    '0'
-  )}:${String(seconds).padStart(2, '0')}`;
-}

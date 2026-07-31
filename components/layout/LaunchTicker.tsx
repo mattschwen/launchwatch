@@ -1,28 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { useLaunches, useCompactCountdown } from '@/lib/hooks';
+import Countdown from '@/components/Countdown';
+import { useLaunches } from '@/lib/hooks';
 import { Launch } from '@/lib/types';
 
 function NextLaunchStatus({ launch }: { launch: Launch }): React.ReactElement {
-  const countdown = useCompactCountdown(launch.date);
-
   return (
     <Link
       href={launch.isLive ? `/watch?id=${launch.id}` : `/launch/${launch.id}`}
-      className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+      className="flex min-h-11 min-w-0 max-w-full items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
     >
       <span className={launch.isLive ? 'text-[var(--console-magenta)]' : 'text-[var(--console-cyan)]'}>
         {launch.isLive ? 'LIVE' : 'NEXT'}
       </span>
       <span aria-hidden="true" className="text-[var(--border-strong)]">/</span>
-      <span className="max-w-[48vw] truncate font-medium text-[var(--text-secondary)]">{launch.name}</span>
-      <span
-        suppressHydrationWarning
-        className={launch.isLive ? 'font-semibold text-[var(--console-magenta)]' : 'text-[var(--console-green)]'}
-      >
-        {countdown}
+      <span className="min-w-0 max-w-[48vw] truncate font-medium text-[var(--text-secondary)]">
+        {launch.name}
       </span>
+      <Countdown
+        targetDate={launch.date}
+        precision={launch.datePrecision}
+        compact
+        completedLabel={launch.isLive ? 'In progress' : 'Window open'}
+        className={launch.isLive ? 'shrink-0 !text-[var(--console-magenta)]' : 'shrink-0'}
+      />
     </Link>
   );
 }

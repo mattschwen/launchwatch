@@ -33,7 +33,7 @@ export default function SystemStatusBar(): React.ReactElement {
   return (
     <aside
       aria-label="Mission status"
-      className="fixed bottom-0 left-0 right-0 z-40 hidden h-9 items-center border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] px-4 text-[11px] tracking-[0.1em] backdrop-blur-xl font-[family-name:var(--font-geist-mono)] md:flex"
+      className="fixed bottom-0 left-0 right-0 z-40 hidden h-11 items-center border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] px-4 text-[11px] tracking-[0.1em] backdrop-blur-xl font-[family-name:var(--font-geist-mono)] md:flex"
     >
       <div className="flex flex-shrink-0 items-center gap-2">
         <span className={`status-dot ${statusClass}`} aria-hidden="true" />

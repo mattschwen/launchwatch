@@ -17,6 +17,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 ## Navigation
 
 - Desktop uses the sticky top navigation for Home, Watch, and History.
+- Desktop keeps a 44-pixel system bar below page content with the current feed
+  condition and a persistent link to the live or next mission.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
 - Server route transitions retain a visible route-level heading, truthful
   synchronization copy, and named mission-control status while application and
@@ -29,6 +31,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Shared chrome reports synchronization, refresh, partial, stale, offline, and
   nominal feed health truthfully on every route. Narrow headers show a compact
   non-nominal status without displacing primary navigation.
+- The desktop mission ticker preserves provider date precision: coarse targets
+  use a stable amber estimate instead of a false second-by-second countdown.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home

@@ -209,6 +209,23 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
   await expect(hero.getByText(/Month estimate · countdown begins/)).toBeVisible();
   await expect(hero.locator('.countdown-display')).toHaveCount(0);
 
+  if (!test.info().project.name.startsWith('mobile')) {
+    const ticker = page
+      .getByRole('complementary', { name: 'Mission status' })
+      .getByRole('link', { name: /Orbital Dawn/ });
+    await expect(ticker).toContainText('August 2035 · Month estimate');
+    await expect(ticker).not.toContainText('T−');
+    await expect(ticker.locator('time')).toHaveAttribute(
+      'datetime',
+      estimatedLaunch.date
+    );
+    expect(
+      await ticker.evaluate((element) =>
+        Math.round(element.getBoundingClientRect().height)
+      )
+    ).toBeGreaterThanOrEqual(44);
+  }
+
   await page.getByRole('button', { name: 'Open briefing' }).click();
   const calendar = page.getByRole('button', {
     name: 'Calendar export pending a confirmed launch time',
