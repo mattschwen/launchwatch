@@ -58,10 +58,12 @@ export default function LaunchDetailClient({
   launch,
   returnToWatch = false,
   historyReturnHref = null,
+  scheduleReturnHref = null,
 }: {
   launch: Launch;
   returnToWatch?: boolean;
   historyReturnHref?: string | null;
+  scheduleReturnHref?: string | null;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const [timelineScroll, setTimelineScroll] = useState({
@@ -90,6 +92,18 @@ export default function LaunchDetailClient({
         : completed
           ? 'signal-nominal'
           : 'signal-cold';
+  const returnHref = returnToWatch
+    ? `/watch?id=${encodeURIComponent(launch.id)}`
+    : historyReturnHref ?? scheduleReturnHref ?? (completed ? '/history' : '/');
+  const returnLabel = returnToWatch
+    ? 'Back to watch room'
+    : historyReturnHref
+      ? 'Back to filtered archive'
+      : scheduleReturnHref
+        ? 'Back to filtered schedule'
+        : completed
+          ? 'Back to history'
+          : 'Back to launches';
 
   const updateTimelineControls = useCallback((): void => {
     const timeline = timelineRef.current;
@@ -144,25 +158,11 @@ export default function LaunchDetailClient({
     <>
       <div className="page-container py-4 sm:py-6 lg:py-8">
         <Link
-          href={
-            returnToWatch
-              ? `/watch?id=${encodeURIComponent(launch.id)}`
-              : historyReturnHref
-                ? historyReturnHref
-              : completed
-                ? '/history'
-                : '/'
-          }
+          href={returnHref}
           className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
         >
           <ArrowLeft aria-hidden="true" size={16} />
-          {returnToWatch
-            ? 'Back to watch room'
-            : historyReturnHref
-              ? 'Back to filtered archive'
-            : completed
-              ? 'Back to history'
-              : 'Back to launches'}
+          {returnLabel}
         </Link>
 
         <section

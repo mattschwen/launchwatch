@@ -35,6 +35,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Mission metadata adapts from multiple columns to stacked groups.
 - Upcoming missions render as compact responsive rows.
 - Filters are collapsed until requested.
+- Active schedule filters travel through mission details as bounded return
+  context, then reopen with the same visible result set.
 - The featured mission may show one fixed-aspect licensed vehicle or mission
   visual. It must preserve its caption and full-image action without widening
   the page.

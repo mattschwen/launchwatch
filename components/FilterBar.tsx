@@ -2,31 +2,28 @@
 
 import { useId, useRef, useState, type RefObject } from 'react';
 import { Search, X } from 'lucide-react';
+import {
+  DEFAULT_SCHEDULE_FILTERS,
+  type ScheduleFilters,
+} from '@/lib/schedule-return';
 
-export interface FilterOptions {
-  search: string;
-  provider: string;
-  status: string;
-  sortBy: 'date-asc' | 'date-desc' | 'name-asc' | 'name-desc';
-}
+export type FilterOptions = ScheduleFilters;
 
 interface FilterBarProps {
   onFilterChange: (filters: FilterOptions) => void;
   initialFilters?: Partial<FilterOptions>;
   showProvider?: boolean;
   providerOptions?: string[];
-  statusOptions?: Array<{ value: string; label: string }>;
+  statusOptions?: Array<{ value: FilterOptions['status']; label: string }>;
   searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
-export const DEFAULT_FILTERS: FilterOptions = {
-  search: '',
-  provider: 'all',
-  status: 'all',
-  sortBy: 'date-asc',
-};
+export const DEFAULT_FILTERS = DEFAULT_SCHEDULE_FILTERS;
 
-const statuses = [
+const statuses: Array<{
+  value: FilterOptions['status'];
+  label: string;
+}> = [
   { value: 'all', label: 'All statuses' },
   { value: 'upcoming', label: 'Scheduled' },
   { value: 'live', label: 'Live' },
@@ -48,7 +45,7 @@ export default function FilterBar({
   const internalSearchInputRef = useRef<HTMLInputElement>(null);
   const resolvedSearchInputRef = searchInputRef ?? internalSearchInputRef;
   const id = useId();
-  const resetFilters = { ...DEFAULT_FILTERS, ...initialFilters };
+  const resetFilters = { ...DEFAULT_FILTERS };
 
   const update = <Key extends keyof FilterOptions>(
     key: Key,
@@ -115,7 +112,9 @@ export default function FilterBar({
         <select
           id={`${id}-status`}
           value={filters.status}
-          onChange={(event) => update('status', event.target.value)}
+          onChange={(event) =>
+            update('status', event.target.value as FilterOptions['status'])
+          }
           className="min-h-11 w-full scroll-mb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
         >
           {statusOptions.map((option) => (

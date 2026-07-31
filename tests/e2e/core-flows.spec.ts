@@ -887,7 +887,9 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     .getByRole('link', { name: /Polaris Relay/i })
     .click();
 
-  await expect(page).toHaveURL(/\/launch\/spacex-demo-polaris$/);
+  await expect(page).toHaveURL(
+    /\/launch\/spacex-demo-polaris\?from=home&schedule=q%3DPolaris$/,
+  );
   await expect(
     page.getByRole('heading', { level: 1, name: 'Polaris Relay' })
   ).toBeVisible();
@@ -2007,6 +2009,49 @@ test('history search reaches a completed mission detail', async ({ page }) => {
     page.getByRole('searchbox', { name: 'Search missions' })
   ).toHaveValue('Return');
   await expect(archiveResults).toHaveText('1 result');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home schedule filters survive mission detail navigation', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Filter' }).click();
+  const search = page.getByRole('searchbox', { name: 'Search launches' });
+  await search.fill('Polaris');
+
+  const scheduleResults = page.getByRole('status', {
+    name: 'Upcoming launch results',
+  });
+  await expect(scheduleResults).toHaveText('1 mission');
+  const missionDetail = page
+    .getByRole('link')
+    .filter({ hasText: 'Polaris Relay' });
+  await expect(missionDetail).toHaveAttribute(
+    'href',
+    '/launch/spacex-demo-polaris?from=home&schedule=q%3DPolaris',
+  );
+
+  await missionDetail.focus();
+  await missionDetail.press('Enter');
+  await expect(page).toHaveURL(
+    /\/launch\/spacex-demo-polaris\?from=home&schedule=q%3DPolaris$/,
+  );
+  const returnLink = page.getByRole('link', {
+    name: 'Back to filtered schedule',
+  });
+  await expect(returnLink).toHaveAttribute('href', '/?q=Polaris');
+  expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  await returnLink.focus();
+  await returnLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/?q=Polaris$/);
+  await expect(search).toHaveValue('Polaris');
+  await expect(scheduleResults).toHaveText('1 mission');
+  await expect(page.getByRole('button', { name: 'Hide filters' })).toBeVisible();
+  await expect(missionDetail).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

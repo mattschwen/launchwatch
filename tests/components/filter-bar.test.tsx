@@ -68,4 +68,39 @@ describe('FilterBar', () => {
     });
     await waitFor(() => expect(search).toHaveFocus());
   });
+
+  it('clears filters restored from navigation back to product defaults', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+    render(
+      <FilterBar
+        initialFilters={{ search: 'Polaris', provider: 'SpaceX' }}
+        providerOptions={['SpaceX']}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    const search = screen.getByRole('searchbox', {
+      name: 'Search launches',
+    });
+    const clear = screen.getByRole('button', {
+      name: 'Clear launch filters',
+    });
+
+    expect(search).toHaveValue('Polaris');
+    expect(clear).toBeEnabled();
+    await user.click(clear);
+
+    expect(search).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
+      'all'
+    );
+    expect(onFilterChange).toHaveBeenLastCalledWith({
+      search: '',
+      provider: 'all',
+      status: 'all',
+      sortBy: 'date-asc',
+    });
+    await waitFor(() => expect(search).toHaveFocus());
+  });
 });

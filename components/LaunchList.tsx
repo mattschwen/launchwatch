@@ -15,15 +15,24 @@ import FilterBar, {
   DEFAULT_FILTERS,
   type FilterOptions,
 } from './FilterBar';
+import {
+  buildScheduleDetailHref,
+  serializeScheduleFilters,
+} from '@/lib/schedule-return';
 
 const INITIAL_VISIBLE_COUNT = 5;
 
-export default function LaunchList(): React.ReactElement {
+export default function LaunchList({
+  initialFilters = DEFAULT_FILTERS,
+}: {
+  initialFilters?: FilterOptions;
+}): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
-  const [filters, setFilters] = useState<FilterOptions>({
-    ...DEFAULT_FILTERS,
-  });
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterOptions>(initialFilters);
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => Boolean(serializeScheduleFilters(initialFilters))
+  );
+  const [filterSeed, setFilterSeed] = useState<FilterOptions>(initialFilters);
   const [filterResetKey, setFilterResetKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
@@ -71,6 +80,7 @@ export default function LaunchList(): React.ReactElement {
   const clearFilters = (): void => {
     const focusTarget = filtersOpen ? searchInputRef : filterToggleRef;
     setFilters({ ...DEFAULT_FILTERS });
+    setFilterSeed({ ...DEFAULT_FILTERS });
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setFilterResetKey((value) => value + 1);
     requestAnimationFrame(() => focusTarget.current?.focus());
@@ -219,6 +229,7 @@ export default function LaunchList(): React.ReactElement {
         <div id="launch-filters" className="border-b border-[var(--border-subtle)] p-3 sm:p-4">
           <FilterBar
             key={filterResetKey}
+            initialFilters={filterSeed}
             searchInputRef={searchInputRef}
             providerOptions={providerOptions}
             onFilterChange={(next) => {
@@ -288,7 +299,10 @@ export default function LaunchList(): React.ReactElement {
                         : 'var(--console-green)',
                 } as React.CSSProperties}
               >
-                <LaunchCard launch={launch} />
+                <LaunchCard
+                  launch={launch}
+                  detailHref={buildScheduleDetailHref(launch.id, filters)}
+                />
               </div>
             ))}
           </div>

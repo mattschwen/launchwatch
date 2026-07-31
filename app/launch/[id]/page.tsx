@@ -7,6 +7,10 @@ import {
   buildHistoryReturnHref,
   readHistoryReturnQuery,
 } from '@/lib/history-return';
+import {
+  buildScheduleReturnHref,
+  readScheduleReturnQuery,
+} from '@/lib/schedule-return';
 import { getLaunchVisualMetadata } from '@/lib/launch-visual';
 
 interface LaunchDetailPageProps {
@@ -14,6 +18,7 @@ interface LaunchDetailPageProps {
   searchParams: Promise<{
     from?: string | string[];
     history?: string | string[];
+    schedule?: string | string[];
   }>;
 }
 
@@ -77,6 +82,15 @@ export default async function LaunchDetailPage({
   const historyReturnHref = historyReturnQuery
     ? buildHistoryReturnHref(historyReturnQuery)
     : null;
+  const scheduleReturnQuery =
+    !returnToWatch &&
+    !historyReturnQuery &&
+    resolvedSearchParams.from === 'home'
+      ? readScheduleReturnQuery(resolvedSearchParams.schedule)
+      : null;
+  const scheduleReturnHref = scheduleReturnQuery
+    ? buildScheduleReturnHref(scheduleReturnQuery)
+    : null;
   const parsed = parseLaunchId(id);
   if (!parsed) notFound();
 
@@ -90,6 +104,11 @@ export default async function LaunchDetailPage({
                 from: 'history',
                 history: historyReturnQuery,
               }).toString()}`
+            : scheduleReturnQuery
+              ? `?${new URLSearchParams({
+                  from: 'home',
+                  schedule: scheduleReturnQuery,
+                }).toString()}`
             : ''
       }`
     );
@@ -106,6 +125,7 @@ export default async function LaunchDetailPage({
       launch={result.data}
       returnToWatch={returnToWatch}
       historyReturnHref={historyReturnHref}
+      scheduleReturnHref={scheduleReturnHref}
     />
   );
 }
