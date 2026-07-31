@@ -105,7 +105,8 @@ The optional expanded map remains a modal dialog. It must:
   honest unavailable state in the same stable visual footprint.
 - Primary and secondary actions remain labeled; icon-only controls require accessible names.
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
-  their own region when necessary.
+  their own region when necessary. Touch-safe previous/next controls expose
+  one-event movement without replacing direct scrolling or arrow-key access.
 - Video and intelligence sections become a single column.
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support.

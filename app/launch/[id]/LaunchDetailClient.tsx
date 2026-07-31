@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   MapPin,
   Orbit,
@@ -30,6 +38,8 @@ import { useLaunchIntel } from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
 
+const TIMELINE_EVENT_WIDTH_PX = 176;
+
 function handleTimelineKeyDown(
   event: KeyboardEvent<HTMLOListElement>
 ): void {
@@ -38,7 +48,10 @@ function handleTimelineKeyDown(
   }
 
   event.preventDefault();
-  event.currentTarget.scrollLeft += event.key === 'ArrowLeft' ? -176 : 176;
+  event.currentTarget.scrollLeft +=
+    event.key === 'ArrowLeft'
+      ? -TIMELINE_EVENT_WIDTH_PX
+      : TIMELINE_EVENT_WIDTH_PX;
 }
 
 export default function LaunchDetailClient({
@@ -51,6 +64,11 @@ export default function LaunchDetailClient({
   historyReturnHref?: string | null;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [timelineScroll, setTimelineScroll] = useState({
+    canMoveBackward: false,
+    canMoveForward: false,
+  });
+  const timelineRef = useRef<HTMLOListElement>(null);
   const {
     intel,
     loading: intelLoading,
@@ -72,6 +90,55 @@ export default function LaunchDetailClient({
         : completed
           ? 'signal-nominal'
           : 'signal-cold';
+
+  const updateTimelineControls = useCallback((): void => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    const maxScrollLeft = Math.max(
+      0,
+      timeline.scrollWidth - timeline.clientWidth
+    );
+    const canMoveBackward = timeline.scrollLeft > 1;
+    const canMoveForward = timeline.scrollLeft < maxScrollLeft - 1;
+    setTimelineScroll((current) =>
+      current.canMoveBackward === canMoveBackward &&
+      current.canMoveForward === canMoveForward
+        ? current
+        : { canMoveBackward, canMoveForward }
+    );
+  }, []);
+
+  useEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    timeline.scrollLeft = 0;
+    updateTimelineControls();
+    const resizeObserver = new ResizeObserver(updateTimelineControls);
+    resizeObserver.observe(timeline);
+
+    return () => resizeObserver.disconnect();
+  }, [launch.id, launch.timeline?.length, updateTimelineControls]);
+
+  const moveTimeline = (direction: -1 | 1): void => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    const currentEvent = Math.round(
+      timeline.scrollLeft / TIMELINE_EVENT_WIDTH_PX
+    );
+    const nextLeft = Math.max(
+      0,
+      (currentEvent + direction) * TIMELINE_EVENT_WIDTH_PX
+    );
+    timeline.scrollTo({
+      left: nextLeft,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  };
 
   return (
     <>
@@ -216,28 +283,59 @@ export default function LaunchDetailClient({
             aria-labelledby="launch-timeline-title"
             className="surface-card holo-card signal-warm mt-5 overflow-hidden p-5 sm:p-6"
           >
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id="launch-timeline-title" className="section-title">
                 Launch timeline
               </h2>
-              <span className="data-label">
-                {launch.timeline.length} events
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="data-label mr-1">
+                  {launch.timeline.length} events
+                </span>
+                <div
+                  role="group"
+                  aria-label="Timeline navigation"
+                  className="flex items-center gap-1.5"
+                >
+                  <button
+                    type="button"
+                    aria-label="Previous timeline event"
+                    aria-controls="launch-timeline-events"
+                    disabled={!timelineScroll.canMoveBackward}
+                    onClick={() => moveTimeline(-1)}
+                    className="icon-button h-11 w-11 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <ChevronLeft aria-hidden="true" size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next timeline event"
+                    aria-controls="launch-timeline-events"
+                    disabled={!timelineScroll.canMoveForward}
+                    onClick={() => moveTimeline(1)}
+                    className="icon-button h-11 w-11 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <ChevronRight aria-hidden="true" size={17} />
+                  </button>
+                </div>
+              </div>
             </div>
             <p id="launch-timeline-instructions" className="sr-only">
-              Use horizontal scrolling or the left and right arrow keys to
-              explore all timeline events.
+              Use the previous and next event buttons, horizontal scrolling,
+              or the left and right arrow keys to explore all timeline events.
             </p>
             <ol
+              ref={timelineRef}
+              id="launch-timeline-events"
               aria-describedby="launch-timeline-instructions"
               tabIndex={0}
               onKeyDown={handleTimelineKeyDown}
-              className="mt-6 flex gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+              onScroll={updateTimelineControls}
+              className="mt-6 flex snap-x snap-proximity gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
             >
               {launch.timeline.map((event, index) => (
                 <li
                   key={`${event.relativeTime}-${event.type}`}
-                  className="relative min-w-[11rem] flex-1 border-t border-[var(--border-strong)] px-3 pt-5 first:pl-0"
+                  className="relative min-w-[11rem] flex-1 snap-start border-t border-[var(--border-strong)] px-3 pt-5 first:pl-0"
                 >
                   <span
                     aria-hidden="true"

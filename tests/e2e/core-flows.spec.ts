@@ -2405,6 +2405,29 @@ test('upcoming and historical details place one trajectory before mission suppor
         'launch-timeline-instructions'
       );
 
+      const previousEvent = timeline.getByRole('button', {
+        name: 'Previous timeline event',
+      });
+      const nextEvent = timeline.getByRole('button', {
+        name: 'Next timeline event',
+      });
+      await expect(previousEvent).toBeDisabled();
+      await expect(nextEvent).toBeEnabled();
+      for (const control of [previousEvent, nextEvent]) {
+        const bounds = await control.boundingBox();
+        expect(bounds).not.toBeNull();
+        expect(bounds!.height).toBeGreaterThanOrEqual(44);
+        expect(bounds!.width).toBeGreaterThanOrEqual(44);
+      }
+
+      await nextEvent.focus();
+      await nextEvent.press('Enter');
+      await expect
+        .poll(() => timelineEvents.evaluate((element) => element.scrollLeft))
+        .toBeGreaterThan(0);
+      await expect(previousEvent).toBeEnabled();
+      await expect(nextEvent).toBeFocused();
+
       await timelineEvents.focus();
       await expect(timelineEvents).toBeFocused();
       await timelineEvents.press('ArrowRight');
