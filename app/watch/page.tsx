@@ -465,10 +465,12 @@ function WatchContent(): React.ReactElement {
   const selectedDetailHref = selectedLaunch
     ? `/launch/${encodeURIComponent(selectedLaunch.id)}?from=watch`
     : '';
-  const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
-    selectedLaunch,
-    Boolean(selectedLaunch)
-  );
+  const {
+    intel,
+    loading: intelLoading,
+    error: intelError,
+    retry: retryIntel,
+  } = useLaunchIntel(selectedLaunch, Boolean(selectedLaunch));
 
   useEffect(() => {
     if (!selectedLaunch || !retryFocusPendingRef.current) return;
@@ -650,6 +652,7 @@ function WatchContent(): React.ReactElement {
             intel={intel}
             loading={intelLoading}
             error={intelError}
+            onRetry={retryIntel}
           />
           <aside className="surface-card holo-card signal-warm p-5">
             <h2 className="section-title text-[1.15rem]">Source & status</h2>

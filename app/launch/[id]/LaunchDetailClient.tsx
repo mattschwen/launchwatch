@@ -51,10 +51,12 @@ export default function LaunchDetailClient({
   historyReturnHref?: string | null;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
-  const { intel, loading: intelLoading, error: intelError } = useLaunchIntel(
-    launch,
-    true
-  );
+  const {
+    intel,
+    loading: intelLoading,
+    error: intelError,
+    retry: retryIntel,
+  } = useLaunchIntel(launch, true);
 
   const completed = isCompletedLaunch(launch);
   const hasPlayableVideo = Boolean(
@@ -266,6 +268,7 @@ export default function LaunchDetailClient({
             intel={intel}
             loading={intelLoading}
             error={intelError}
+            onRetry={retryIntel}
           />
 
           <section

@@ -68,6 +68,9 @@ The optional expanded map remains a modal dialog. It must:
   primary coverage task ahead of secondary mission context.
 - Coverage signal bars represent the presence of verified stream, news, and
   community records; they do not imply measured radio strength.
+- Failed mission-intelligence requests keep a stable, touch-safe recovery
+  action, suppress duplicate retries, and move keyboard focus to the restored
+  intelligence region after recovery.
 - The secondary trajectory is deferred until it approaches the viewport. Its
   reserved surface preserves layout stability and exposes a keyboard-operable
   load action before the interactive map controls.

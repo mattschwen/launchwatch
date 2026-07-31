@@ -1544,6 +1544,71 @@ test('watch does not show intelligence from the previously selected mission', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence recovers without losing keyboard context', async ({
+  page,
+}) => {
+  let requestCount = 0;
+  let resolveRetry: ((route: Route) => void) | undefined;
+  const retryRequest = new Promise<Route>((resolve) => {
+    resolveRetry = resolve;
+  });
+
+  await page.route('**/api/launch-intel**', async (route) => {
+    requestCount += 1;
+    if (requestCount === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Coverage provider maintenance' }),
+      });
+      return;
+    }
+
+    resolveRetry?.(route);
+  });
+
+  await page.goto('/watch');
+
+  const retry = page.getByRole('button', { name: 'Retry coverage' });
+  await expect(retry).toBeVisible();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Coverage signals could not be checked' })
+  ).toContainText('Coverage provider maintenance');
+  await retry.focus();
+  await retry.press('Enter');
+
+  const pendingRoute = await retryRequest;
+  const retrying = page.getByRole('button', { name: 'Retrying coverage…' });
+  await expect(retrying).toBeFocused();
+  await expect(retrying).toHaveAttribute('aria-disabled', 'true');
+  await expect(retrying).toHaveAttribute('aria-busy', 'true');
+  await retrying.press('Enter');
+  expect(requestCount).toBe(2);
+
+  const target = await retrying.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      height: bounds.height,
+      width: bounds.width,
+    };
+  });
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(target.width).toBeGreaterThanOrEqual(44);
+
+  await pendingRoute.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify(LAUNCH_INTEL),
+  });
+
+  const restored = page.getByRole('region', { name: 'Mission intelligence' });
+  await expect(restored).toBeFocused();
+  await expect(
+    restored.getByRole('group', { name: 'Coverage signal' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps the schedule usable when detail enrichment fails', async ({
   page,
 }) => {

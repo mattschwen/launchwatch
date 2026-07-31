@@ -223,6 +223,7 @@ export function useLaunchIntel(
 ) {
   const launchId = launch?.id ?? null;
   const launchIsLive = Boolean(launch?.isLive);
+  const [retryVersion, setRetryVersion] = useState(0);
   const [intelState, setIntelState] = useState<{
     launchId: string | null;
     intel: LaunchIntel | null;
@@ -251,7 +252,7 @@ export function useLaunchIntel(
       launchId,
       intel: current.launchId === launchId ? current.intel : null,
       loading: true,
-      error: null,
+      error: current.launchId === launchId ? current.error : null,
     }));
 
     async function fetchIntel(): Promise<void> {
@@ -313,10 +314,14 @@ export function useLaunchIntel(
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [enabled, launchId, launchIsLive]);
+  }, [enabled, launchId, launchIsLive, retryVersion]);
 
   const currentState =
     enabled && intelState.launchId === launchId ? intelState : null;
+  const retry = (): void => {
+    if (!currentState?.error || currentState.loading) return;
+    setRetryVersion((current) => current + 1);
+  };
 
   return {
     intel: currentState?.intel ?? null,
@@ -324,6 +329,7 @@ export function useLaunchIntel(
       !currentState || currentState.loading
     ),
     error: currentState?.error ?? null,
+    retry,
   };
 }
 

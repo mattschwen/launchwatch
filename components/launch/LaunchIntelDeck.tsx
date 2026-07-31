@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
 import {
   AlertTriangle,
   ExternalLink,
@@ -19,6 +22,7 @@ interface LaunchIntelDeckProps {
   intel: LaunchIntel | null;
   loading?: boolean;
   error?: string | null;
+  onRetry?: () => void;
   className?: string;
 }
 
@@ -117,13 +121,39 @@ export default function LaunchIntelDeck({
   intel,
   loading = false,
   error = null,
+  onRetry,
   className = '',
 }: LaunchIntelDeckProps): React.ReactElement {
-  if (loading && !intel) {
+  const regionRef = useRef<HTMLElement>(null);
+  const recoveryPendingRef = useRef(false);
+
+  useEffect(() => {
+    recoveryPendingRef.current = false;
+  }, [launch.id]);
+
+  useEffect(() => {
+    if (!intel || loading || !recoveryPendingRef.current) return;
+    recoveryPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      regionRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [intel, loading]);
+
+  const retryCoverage = (): void => {
+    if (loading || !onRetry) return;
+    recoveryPendingRef.current = true;
+    onRetry();
+  };
+
+  if (loading && !intel && !error) {
     return (
       <section
+        ref={regionRef}
+        tabIndex={-1}
         aria-label="Loading mission intelligence"
-        className={`surface-card holo-card signal-cold p-5 ${className}`}
+        aria-busy="true"
+        className={`surface-card holo-card signal-cold p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
       >
         <div className="skeleton h-7 w-56 rounded" />
         <div className="skeleton mt-5 h-16 rounded" />
@@ -136,10 +166,13 @@ export default function LaunchIntelDeck({
   if (!intel) {
     return (
       <section
+        ref={regionRef}
+        tabIndex={-1}
         aria-labelledby="mission-intelligence-title"
+        aria-busy={loading}
         className={`surface-card holo-card ${
           error ? 'signal-warm' : 'signal-cold'
-        } p-5 sm:p-6 ${className}`}
+        } p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 ${className}`}
       >
         <div className="flex items-start gap-3">
           {error ? (
@@ -177,6 +210,17 @@ export default function LaunchIntelDeck({
                 of truth.
               </p>
             )}
+            {error && onRetry ? (
+              <button
+                type="button"
+                onClick={retryCoverage}
+                aria-disabled={loading}
+                aria-busy={loading}
+                className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
+              >
+                {loading ? 'Retrying coverage…' : 'Retry coverage'}
+              </button>
+            ) : null}
           </div>
         </div>
       </section>
@@ -189,8 +233,11 @@ export default function LaunchIntelDeck({
 
   return (
     <section
+      ref={regionRef}
+      tabIndex={-1}
       aria-labelledby="mission-intelligence-title"
-      className={`surface-card holo-card signal-cold overflow-hidden ${className}`}
+      aria-busy={loading}
+      className={`surface-card holo-card signal-cold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
     >
       <header className="border-b border-[var(--border-subtle)] p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

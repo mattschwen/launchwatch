@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LaunchDataProvider } from '@/lib/contexts';
-import { useLaunchById, useLaunches } from '@/lib/hooks';
-import { UPCOMING_LAUNCHES } from '../fixtures/launches';
+import { useLaunchById, useLaunchIntel, useLaunches } from '@/lib/hooks';
+import { LAUNCH_INTEL, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 function HookHarness({
   initialId,
@@ -54,6 +54,27 @@ function FeedRetryHarness(): React.ReactElement {
             : error
               ? error
               : `${launches.length} launches`}
+      </p>
+    </>
+  );
+}
+
+function IntelRetryHarness(): React.ReactElement {
+  const { intel, loading, error, retry } = useLaunchIntel(UPCOMING_LAUNCHES[0]);
+
+  return (
+    <>
+      <button type="button" onClick={retry}>
+        Retry intelligence
+      </button>
+      <p data-testid="intel-state">
+        {loading
+          ? error
+            ? `retrying: ${error}`
+            : 'loading'
+          : error
+            ? error
+            : intel?.summary.rationale ?? 'empty'}
       </p>
     </>
   );
@@ -192,6 +213,46 @@ describe('LaunchDataProvider retries', () => {
     resolveRetry?.(response({ launches: UPCOMING_LAUNCHES }));
     await waitFor(() =>
       expect(screen.getByTestId('feed-state')).toHaveTextContent('2 launches')
+    );
+  });
+});
+
+describe('useLaunchIntel retries', () => {
+  it('retains the degraded state and suppresses duplicate recovery requests', async () => {
+    const user = userEvent.setup();
+    let resolveRetry: ((value: Response) => void) | undefined;
+    const retryResponse = new Promise<Response>((resolve) => {
+      resolveRetry = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'Coverage provider maintenance' }),
+      } as Response)
+      .mockImplementationOnce(() => retryResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<IntelRetryHarness />);
+
+    await expect(
+      screen.findByText('Coverage provider maintenance')
+    ).resolves.toBeVisible();
+
+    const retry = screen.getByRole('button', { name: 'Retry intelligence' });
+    await user.click(retry);
+    expect(screen.getByTestId('intel-state')).toHaveTextContent(
+      'retrying: Coverage provider maintenance'
+    );
+    await user.click(retry);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    resolveRetry?.(response(LAUNCH_INTEL));
+    await waitFor(() =>
+      expect(screen.getByTestId('intel-state')).toHaveTextContent(
+        LAUNCH_INTEL.summary.rationale
+      )
     );
   });
 });
