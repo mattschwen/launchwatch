@@ -1928,6 +1928,23 @@ test('upcoming and historical details place one trajectory before mission suppor
           exact: true,
         })
       ).toBeVisible();
+      await expect(
+        unavailableVisual.getByText('Source actions unavailable', {
+          exact: true,
+        })
+      ).toBeVisible();
+      await expect(
+        unavailableVisual.locator('.mission-visual-placeholder-action')
+      ).toHaveCount(0);
+      const unavailableLayout = await unavailableVisual.evaluate((element) => {
+        const caption = element.querySelector('.mission-visual-caption');
+        return {
+          cardHeight: element.getBoundingClientRect().height,
+          captionHeight: caption?.getBoundingClientRect().height ?? 0,
+        };
+      });
+      expect(unavailableLayout.captionHeight).toBeLessThan(120);
+      expect(unavailableLayout.cardHeight).toBeLessThan(390);
     }
     await expect(
       trajectory.locator('[data-trajectory-map]')

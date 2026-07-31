@@ -115,7 +115,8 @@ The optional expanded map remains a modal dialog. It must:
   Their scanline/sheen treatment is decorative, low contrast, and disabled with
   reduced motion; image failures resolve to a readable amber state with a
   focus-safe retry that returns keyboard users to the recovered full-image
-  action.
+  action. Once acquisition resolves without an eligible visual, the terminal
+  state replaces loading-control silhouettes with compact usage-policy copy.
 - Avoid using animation as the only live-status cue.
 - Pair every semantic signal with text: green for nominal, magenta for live
   coverage, red for critical/hold states, cyan for trajectory data, and amber

@@ -984,6 +984,10 @@ body::before {
   pointer-events: none;
 }
 
+.mission-visual-unavailable .mission-visual-placeholder-caption {
+  min-height: 0;
+}
+
 .mission-visual-placeholder-action {
   flex: 1 1 5.5rem;
   border: 1px solid var(--border-subtle);
@@ -1023,6 +1027,10 @@ body::before {
 @media (max-width: 639px) {
   .mission-visual-caption {
     min-height: 14.5rem;
+  }
+
+  .mission-visual-unavailable .mission-visual-placeholder-caption {
+    min-height: 0;
   }
 
   .mission-visual-actions > a,

@@ -306,6 +306,9 @@ describe('MissionVisual', () => {
       screen.getByRole('status', { name: 'Loading mission visual' })
     ).toHaveTextContent('Requesting licensed mission imagery');
     expect(
+      document.querySelectorAll('.mission-visual-placeholder-action')
+    ).toHaveLength(3);
+    expect(
       screen.queryByLabelText('Mission visual unavailable')
     ).not.toBeInTheDocument();
 
@@ -319,6 +322,11 @@ describe('MissionVisual', () => {
     expect(
       screen.getByLabelText('Mission visual unavailable')
     ).toHaveAttribute('data-visual-status', 'missing');
+    expect(screen.getByText('Usage policy')).toBeVisible();
+    expect(screen.getByText('Source actions unavailable')).toBeVisible();
+    expect(
+      document.querySelector('.mission-visual-placeholder-action')
+    ).not.toBeInTheDocument();
   });
 
   it('retries a broken image, preserves focus while busy, and hands focus to the recovered image action', async () => {
@@ -440,9 +448,13 @@ describe('MissionVisual', () => {
     );
 
     expect(screen.getByText('Provider image not supplied')).toBeVisible();
+    expect(screen.getByText('Source actions unavailable')).toBeVisible();
     expect(
       screen.getByLabelText('Mission visual unavailable')
     ).toHaveAttribute('data-visual-status', 'missing');
+    expect(
+      document.querySelector('.mission-visual-placeholder-action')
+    ).not.toBeInTheDocument();
 
     rerender(
       <MissionVisual

@@ -119,21 +119,33 @@ function PlaceholderMissionVisual({
         className="mission-visual-caption mission-visual-placeholder-caption"
       >
         <div>
-          <p className="data-label text-[var(--console-cyan)]">
-            Source controls
+          <p
+            className={`data-label ${
+              loading
+                ? 'text-[var(--console-cyan)]'
+                : 'text-[var(--console-amber)]'
+            }`}
+          >
+            {loading ? 'Source controls' : 'Usage policy'}
           </p>
           <p className="mission-visual-name">
-            {loading ? 'Verification in progress' : 'Visual unavailable'}
+            {loading
+              ? 'Verification in progress'
+              : 'Source actions unavailable'}
           </p>
           <p className="mission-visual-credit">
-            Credit, license, and source must be explicit.
+            {loading
+              ? 'Credit, license, and source must be explicit.'
+              : 'Links appear only when credit, license, and reuse rights are verified.'}
           </p>
         </div>
-        <div className="mission-visual-actions">
-          <span className="mission-visual-placeholder-action" />
-          <span className="mission-visual-placeholder-action" />
-          <span className="mission-visual-placeholder-action" />
-        </div>
+        {loading ? (
+          <div className="mission-visual-actions">
+            <span className="mission-visual-placeholder-action" />
+            <span className="mission-visual-placeholder-action" />
+            <span className="mission-visual-placeholder-action" />
+          </div>
+        ) : null}
       </div>
     </div>
   );
