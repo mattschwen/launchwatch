@@ -1299,6 +1299,65 @@ test('watch prioritizes coverage intelligence before trajectory telemetry', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch identifies provider synchronization before mission data arrives', async ({
+  page,
+}) => {
+  let releaseFeed: (() => void) | undefined;
+  const feedGate = new Promise<void>((resolve) => {
+    releaseFeed = resolve;
+  });
+
+  await page.route('**/api/launches?type=all', async (route) => {
+    await feedGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Watch room' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({
+      hasText: 'Synchronizing mission queue and coverage channels.',
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      level: 2,
+      name: 'Acquiring mission coverage',
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Mission queue' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Synchronizing watch room')).toHaveAttribute(
+    'aria-busy',
+    'true',
+  );
+  await expect(page.locator('[aria-busy="true"]:visible')).toHaveCount(3);
+  expect(
+    await page
+      .locator('h1, h2, h3, h4, h5, h6')
+      .first()
+      .evaluate((element) => element.tagName),
+  ).toBe('H1');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  releaseFeed?.();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Synchronizing watch room')).toHaveCount(0);
+});
+
 test('watch defers offscreen trajectory with a keyboard load path', async ({
   page,
 }) => {

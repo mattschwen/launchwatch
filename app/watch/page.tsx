@@ -46,10 +46,12 @@ const MissionTrajectory = dynamic(
     ssr: false,
     loading: () => (
       <div
-        aria-label="Loading mission trajectory"
+        role="status"
         aria-busy="true"
         className="skeleton min-h-[55rem] rounded-[var(--radius-md)] sm:min-h-[52rem]"
-      />
+      >
+        <span className="sr-only">Loading mission trajectory</span>
+      </div>
     ),
   },
 );
@@ -74,17 +76,35 @@ function DeferredWatchTrajectory({
     const host = hostRef.current;
     if (!host) return;
 
+    let activationFrame = 0;
+    let confirmationFrame = 0;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !keyboardEncounteredRef.current) {
-          setEnabled(true);
-          observer.disconnect();
-        }
+        if (!entry.isIntersecting || keyboardEncounteredRef.current) return;
+
+        window.cancelAnimationFrame(activationFrame);
+        window.cancelAnimationFrame(confirmationFrame);
+        activationFrame = window.requestAnimationFrame(() => {
+          confirmationFrame = window.requestAnimationFrame(() => {
+            const bounds = host.getBoundingClientRect();
+            const withinPreloadRange =
+              bounds.bottom >= -600 && bounds.top <= window.innerHeight + 600;
+            if (!withinPreloadRange || keyboardEncounteredRef.current) return;
+
+            setEnabled(true);
+            observer.disconnect();
+          });
+        });
       },
       { rootMargin: '600px 0px' },
     );
     observer.observe(host);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(activationFrame);
+      window.cancelAnimationFrame(confirmationFrame);
+    };
   }, [enabled]);
 
   useEffect(() => {
@@ -166,6 +186,109 @@ function DeferredWatchTrajectory({
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function WatchLoadingState({
+  requestedMission = false,
+}: {
+  requestedMission?: boolean;
+}): React.ReactElement {
+  return (
+    <div
+      className="page-container py-4 sm:py-6 lg:py-8"
+      aria-label="Synchronizing watch room"
+      aria-busy="true"
+    >
+      <div className="route-masthead signal-live mb-6 pb-2">
+        <p className="data-label text-[var(--console-cyan)]">
+          Launch network / provider handshake
+        </p>
+        <h1 className="section-title mt-1 text-[clamp(1.55rem,4vw,2.4rem)]">
+          Watch room
+        </h1>
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="mt-1 text-sm text-[var(--text-muted)]"
+        >
+          {requestedMission
+            ? 'Resolving the requested mission and checking provider coverage.'
+            : 'Synchronizing mission queue and coverage channels.'}
+        </p>
+      </div>
+
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <section
+          aria-labelledby="watch-coverage-loading-title"
+          aria-busy="true"
+          className="surface-card holo-card signal-cold min-h-[22rem] overflow-hidden p-5 sm:aspect-video sm:p-6"
+        >
+          <div className="flex items-start gap-3">
+            <Radio
+              aria-hidden="true"
+              size={20}
+              className="mt-0.5 shrink-0 text-[var(--console-cyan)]"
+            />
+            <div>
+              <p className="data-label text-[var(--console-cyan)]">
+                Coverage console
+              </p>
+              <h2
+                id="watch-coverage-loading-title"
+                className="section-title mt-2"
+              >
+                {requestedMission
+                  ? 'Resolving requested mission'
+                  : 'Acquiring mission coverage'}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+                Verifying launch timing, official streams, and provider handoff
+                details.
+              </p>
+            </div>
+          </div>
+          <div aria-hidden="true" className="mt-8">
+            <div className="skeleton aspect-video max-h-[17rem] rounded-[var(--radius-sm)]" />
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="skeleton h-11 rounded-[var(--radius-sm)]" />
+              <div className="skeleton h-11 rounded-[var(--radius-sm)]" />
+            </div>
+          </div>
+        </section>
+
+        <aside
+          aria-labelledby="watch-queue-loading-title"
+          aria-busy="true"
+          className="surface-card holo-card signal-cold min-h-[30rem] overflow-hidden"
+        >
+          <header className="border-b border-[var(--border-subtle)] px-5 py-5">
+            <p className="data-label text-[var(--console-cyan)]">
+              Upcoming network
+            </p>
+            <h2 id="watch-queue-loading-title" className="section-title mt-2">
+              Mission queue
+            </h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Awaiting synchronized launch windows
+            </p>
+          </header>
+          <div aria-hidden="true">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div
+                key={index}
+                className="border-b border-[var(--border-subtle)] p-4 last:border-0"
+              >
+                <div className="skeleton h-4 w-2/3 rounded" />
+                <div className="skeleton mt-3 h-3 w-full rounded" />
+                <div className="skeleton mt-2 h-3 w-1/2 rounded" />
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -497,14 +620,7 @@ function WatchContent(): React.ReactElement {
     (Boolean(requestedId) && selected.loading && !selected.launch);
 
   if (loading) {
-    return (
-      <div className="page-container py-5 sm:py-7">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
-          <div className="skeleton min-h-[22rem] w-full min-w-0 rounded-[var(--radius-md)] sm:aspect-video" />
-          <div className="skeleton min-h-[30rem] rounded-[var(--radius-md)]" />
-        </div>
-      </div>
-    );
+    return <WatchLoadingState requestedMission={Boolean(requestedId)} />;
   }
 
   if (!selectedLaunch) {
@@ -704,11 +820,7 @@ function WatchContent(): React.ReactElement {
 }
 
 function WatchFallback(): React.ReactElement {
-  return (
-    <div className="page-container py-5">
-      <div className="skeleton aspect-video rounded-[var(--radius-md)]" />
-    </div>
-  );
+  return <WatchLoadingState />;
 }
 
 export default function WatchPage(): React.ReactElement {

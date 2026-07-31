@@ -77,9 +77,9 @@ The optional expanded map remains a modal dialog. It must:
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Launch actions wrap into labeled, touch-friendly controls.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
-- Initial synchronization keeps a real page heading and visible acquisition
-  labels for the featured mission and mission queue; loading geometry remains
-  reserved and decorative placeholders stay hidden from assistive technology.
+- Initial synchronization keeps the real Watch heading and visible acquisition
+  labels for coverage and the mission queue; loading geometry remains reserved
+  and decorative placeholders stay hidden from assistive technology.
 
 ## History
 
