@@ -85,7 +85,7 @@ export function generateICS(launch: Launch): string {
     `DTEND:${formatDate(endDate)}`,
     `SUMMARY:${escapeICSText(launch.name)}`,
     `DESCRIPTION:${escapeICSText([
-      `Target Time: ${formatLaunchDate(launch.date)}`,
+      `Target Time: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
       launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launch.launchSite}`,
@@ -142,7 +142,7 @@ export function getGoogleCalendarUrl(launch: Launch): string {
     text: launch.name,
     dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
     details: [
-      `Target Time: ${formatLaunchDate(launch.date)}`,
+      `Target Time: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
       launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launch.launchSite}`,
@@ -163,7 +163,7 @@ export async function copyToClipboard(launch: Launch): Promise<boolean> {
   const text = [
     `🚀 ${launch.name}`,
     ``,
-    `📅 Target: ${formatLaunchDate(launch.date)}`,
+    `📅 Target: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
     launchWindow ? `🛰️ Window: ${launchWindow}` : '',
     `🚀 Rocket: ${launch.rocket}`,
     `📍 Launch Site: ${launch.launchSite}`,

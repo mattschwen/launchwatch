@@ -2,12 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatLaunchPrecisionLabel,
+  formatLaunchTarget,
+  formatLaunchTime,
   formatLaunchWindow,
   formatTimelineOffset,
   formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
   isMeaningfulLaunchValue,
+  hasCalendarReadyLaunchTime,
+  hasExactLaunchTime,
   launchOutcomeLabel,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -26,6 +31,28 @@ describe('launch formatting', () => {
   it('formats dates in UTC and handles invalid input', () => {
     expect(formatLaunchDate('2035-07-28T14:30:00.000Z')).toContain('UTC');
     expect(formatLaunchDate('not-a-date')).toBe('Date unavailable');
+  });
+
+  it('formats provider precision without inventing exact placeholder times', () => {
+    const month = { name: 'Month', abbrev: 'M' };
+    const quarter = { name: 'Quarter 3', abbrev: 'Q3' };
+    const hour = { name: 'Hour', abbrev: 'HR' };
+
+    expect(formatLaunchTarget('2035-08-31T00:00:00.000Z', month)).toBe(
+      'August 2035'
+    );
+    expect(formatLaunchTarget('2035-09-30T00:00:00.000Z', quarter)).toBe(
+      'Q3 2035'
+    );
+    expect(formatLaunchTime('2035-08-17T02:00:00.000Z', hour)).toBe(
+      '02:00 UTC · Hour estimate'
+    );
+    expect(formatLaunchPrecisionLabel(month)).toBe('Month estimate');
+    expect(hasExactLaunchTime(month)).toBe(false);
+    expect(hasCalendarReadyLaunchTime(month)).toBe(false);
+    expect(hasCalendarReadyLaunchTime({ name: 'Minute', abbrev: 'MIN' })).toBe(
+      true
+    );
   });
 
   it('uses concise relative labels around the current day', () => {

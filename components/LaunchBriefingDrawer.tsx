@@ -155,7 +155,7 @@ export default function LaunchBriefingDrawer({
                 <span className="data-label">Target time</span>
               </dt>
               <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
-                {formatLaunchDate(launch.date)}
+                {formatLaunchDate(launch.date, launch.datePrecision)}
               </dd>
             </div>
             {launchWindow ? (

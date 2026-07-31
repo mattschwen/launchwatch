@@ -82,6 +82,8 @@ ll2-<Launch Library 2 source ID>
 - de-duplicates equivalent cross-provider missions, preferring richer LL2 metadata;
 - preserves provider image provenance, attribution, license, and single-use
   metadata without inferring rights from a URL;
+- preserves provider launch-date precision so boundary timestamps are not
+  mistaken for exact launch times;
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 
@@ -143,7 +145,11 @@ History has a separate server endpoint because its retention window and provider
 - **History** provides search, provider/year/outcome filters, expandable visual summaries, and stable links to details and available replays.
 - **Detail** resolves current and completed missions with the same layout and actions, presents one eligible vehicle or mission visual before telemetry and trajectory, then adapts countdown, timeline, video, and return navigation to mission state.
 
-All routes provide loading, empty, unavailable, and retry states. Primary controls meet a minimum 44-pixel touch target and remain keyboard accessible.
+All routes provide loading, empty, unavailable, and retry states. Coarse launch
+targets use stable date estimates rather than ticking countdowns, and calendar
+or alert actions stay disabled until the provider supplies at least minute-level
+precision. Primary controls meet a minimum 44-pixel touch target and remain
+keyboard accessible.
 
 ## Visual Provenance Boundary
 

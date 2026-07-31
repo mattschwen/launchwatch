@@ -7,6 +7,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDay,
+  formatLaunchTime,
   isCriticalLaunchStatusName,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -24,17 +25,6 @@ interface HeroSectionProps {
   visualLoading?: boolean;
   visualError?: string | null;
   refresh: () => Promise<void>;
-}
-
-function launchTime(date: string): string {
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return 'Time TBD';
-  return parsed.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC',
-  });
 }
 
 function splitSite(site: string): [string, string] {
@@ -260,7 +250,11 @@ export default function HeroSection({
                 </p>
               </div>
             ) : (
-              <Countdown targetDate={activeLaunch.date} featured />
+              <Countdown
+                targetDate={activeLaunch.date}
+                precision={activeLaunch.datePrecision}
+                featured
+              />
             )}
           </div>
 
@@ -273,10 +267,16 @@ export default function HeroSection({
               />
               <dt className="data-label">Date (UTC)</dt>
               <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
-                {formatLaunchDay(activeLaunch.date)}
+                {formatLaunchDay(
+                  activeLaunch.date,
+                  activeLaunch.datePrecision
+                )}
               </dd>
               <dd className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]">
-                {launchTime(activeLaunch.date)}
+                {formatLaunchTime(
+                  activeLaunch.date,
+                  activeLaunch.datePrecision
+                )}
               </dd>
             </div>
             <div className="relative min-w-0 px-3 pl-10 xl:border-r xl:border-[var(--border-subtle)]">

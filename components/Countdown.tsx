@@ -1,6 +1,13 @@
 'use client';
 
 import { useCountdown } from '@/lib/hooks';
+import {
+  formatLaunchDay,
+  formatLaunchPrecisionLabel,
+  formatLaunchTarget,
+  hasExactLaunchTime,
+} from '@/lib/format';
+import type { LaunchDatePrecision } from '@/lib/types';
 
 interface CountdownProps {
   targetDate: string;
@@ -8,6 +15,7 @@ interface CountdownProps {
   compact?: boolean;
   completedLabel?: string;
   featured?: boolean;
+  precision?: LaunchDatePrecision | null;
 }
 
 export default function Countdown({
@@ -16,8 +24,49 @@ export default function Countdown({
   compact = false,
   completedLabel = 'Window open',
   featured = false,
+  precision = null,
 }: CountdownProps): React.ReactElement {
   const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
+
+  if (!hasExactLaunchTime(precision)) {
+    const target = formatLaunchTarget(targetDate, precision);
+    const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
+
+    if (compact) {
+      return (
+        <time
+          dateTime={targetDate}
+          className={`font-mono text-xs font-semibold text-[var(--console-amber)] ${className}`}
+        >
+          {formatLaunchDay(targetDate, precision)} · {precisionLabel}
+        </time>
+      );
+    }
+
+    return (
+      <time dateTime={targetDate} className={`block ${className}`}>
+        <span className="sr-only">
+          Estimated launch target: {target}. {precisionLabel}.
+        </span>
+        <span
+          aria-hidden="true"
+          className={`block rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_30%,transparent)] bg-[color-mix(in_srgb,var(--console-amber)_6%,var(--surface-base))] px-4 py-3 ${
+            featured ? 'max-w-[30rem]' : 'max-w-[36rem]'
+          }`}
+        >
+          <span className="data-label block text-[var(--console-amber)]">
+            Target estimate
+          </span>
+          <span className="mt-1 block break-words font-mono text-[clamp(1.4rem,4vw,2.35rem)] font-semibold leading-tight tracking-[-0.035em] text-[var(--text-primary)]">
+            {target}
+          </span>
+          <span className="mt-1 block text-xs text-[var(--text-muted)]">
+            {precisionLabel} · countdown begins when the provider confirms T-0
+          </span>
+        </span>
+      </time>
+    );
+  }
 
   if (total <= 0) {
     return (

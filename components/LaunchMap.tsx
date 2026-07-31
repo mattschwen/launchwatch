@@ -895,7 +895,11 @@ export default function LaunchMap({ launches }: LaunchMapProps): React.ReactElem
                           {launch.rocket}
                         </span>
                       </span>
-                      <Countdown targetDate={launch.date} compact />
+                      <Countdown
+                        targetDate={launch.date}
+                        precision={launch.datePrecision}
+                        compact
+                      />
                       <ChevronRight
                         aria-hidden="true"
                         size={14}
@@ -1019,7 +1023,11 @@ export default function LaunchMap({ launches }: LaunchMapProps): React.ReactElem
                     {highlightedSite.nextLaunch.name}
                   </span>
                 </span>
-                <Countdown targetDate={highlightedSite.nextLaunch.date} compact />
+                <Countdown
+                  targetDate={highlightedSite.nextLaunch.date}
+                  precision={highlightedSite.nextLaunch.datePrecision}
+                  compact
+                />
                 <ChevronRight
                   aria-hidden="true"
                   size={14}

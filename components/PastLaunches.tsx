@@ -116,7 +116,7 @@ function HistoryRow({
             <span className="min-w-0">
               <span className="data-label block">Date (UTC)</span>
               <span className="mt-1 block text-xs text-[var(--text-secondary)]">
-                {formatLaunchDate(launch.date)}
+                {formatLaunchDate(launch.date, launch.datePrecision)}
               </span>
             </span>
             <span className="min-w-0">
@@ -153,7 +153,7 @@ function HistoryRow({
             </span>
           </span>
           <span className="hidden text-sm text-[var(--text-secondary)] xl:block">
-            {formatLaunchDate(launch.date)}
+            {formatLaunchDate(launch.date, launch.datePrecision)}
           </span>
           <span className="hidden truncate text-sm text-[var(--text-secondary)] xl:block">
             {launch.rocket}

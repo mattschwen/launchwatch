@@ -36,6 +36,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - The featured mission uses fluid type and keeps its primary mission actions
   ahead of secondary imagery in a single-column hierarchy on narrow screens.
 - Countdown values wrap without horizontal overflow.
+- Provider day/month/quarter/year targets render as amber estimates instead of
+  false second-by-second countdowns. Calendar export and launch alerts remain
+  visibly pending until the provider confirms a minute-level target.
 - Mission metadata adapts from multiple columns to stacked groups.
 - Upcoming missions render as compact responsive rows.
 - Filters are collapsed until requested.

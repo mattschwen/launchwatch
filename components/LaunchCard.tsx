@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
   formatLaunchDay,
+  formatLaunchTime,
   isCriticalLaunchStatusName,
   launchOutcomeLabel,
   shortenLaunchSite,
@@ -50,12 +51,7 @@ export default function LaunchCard({
         : launch.status === 'tbd'
           ? 'bg-[var(--console-amber)]'
           : 'bg-[var(--console-green)]';
-  const launchTime = new Date(launch.date).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC',
-  });
+  const launchTime = formatLaunchTime(launch.date, launch.datePrecision);
 
   return (
     <article className="group border-b border-[var(--border-subtle)] last:border-b-0">
@@ -71,17 +67,13 @@ export default function LaunchCard({
           />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-              {formatLaunchDay(launch.date)}
+              {formatLaunchDay(launch.date, launch.datePrecision)}
             </p>
             <p
-              aria-label={`${launchTime} UTC`}
+              aria-label={launchTime}
               className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]"
             >
               {launchTime}
-              <span aria-hidden="true" className="lg:hidden">
-                {' '}
-                UTC
-              </span>
             </p>
           </div>
         </div>

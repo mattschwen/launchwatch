@@ -1,4 +1,5 @@
 import { Launch } from './types';
+import { hasCalendarReadyLaunchTime } from './format';
 
 function markNotified(notificationKey: string): void {
   try {
@@ -88,6 +89,10 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
   const now = Date.now();
 
   for (const launch of launches) {
+    if (!launch.isLive && !hasCalendarReadyLaunchTime(launch.datePrecision)) {
+      continue;
+    }
+
     const launchTime = new Date(launch.date).getTime();
     const timeUntilLaunch = launchTime - now;
 

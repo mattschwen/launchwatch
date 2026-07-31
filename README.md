@@ -42,7 +42,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Mission briefings, coverage, community links, and replay surfaces
 - Provider-sourced vehicle and mission imagery with visible creator and license
   attribution, a full-resolution action, and truthful unavailable states
-- Calendar export and opt-in browser launch alerts while LaunchWatch is open
+- Calendar export and opt-in browser launch alerts while LaunchWatch is open,
+  once the provider confirms a minute-level launch target
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available
@@ -134,6 +135,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   canonical launch detail record to acquire richer vehicle-image provenance;
   the server caches the result under the existing detail policy.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
+- Provider date precision is normalized with each mission. Coarse day, month,
+  quarter, and year targets render as estimates instead of exact countdowns;
+  calendar export and alerts remain pending until T-0 is precise enough.
 - Visual metadata is normalized with its provider record. The UI displays only
   supported image origins with explicit, meaningful attribution, an explicit reusable
   license, and an explicit `singleUse: false` clearance. Unknown-rights images

@@ -80,4 +80,23 @@ describe('Countdown', () => {
     expect(screen.getByText('T−2d 03h')).toBeVisible();
     expect(container.querySelector('.countdown-display')).not.toBeInTheDocument();
   });
+
+  it('shows a stable estimate instead of a false countdown for coarse dates', () => {
+    const { container } = render(
+      <Countdown
+        targetDate="2035-08-31T00:00:00.000Z"
+        precision={{ name: 'Month', abbrev: 'M' }}
+        featured
+      />
+    );
+
+    expect(screen.getByText('August 2035')).toBeVisible();
+    expect(screen.getByText(/Month estimate · countdown begins/)).toBeVisible();
+    expect(
+      screen.getByText(
+        'Estimated launch target: August 2035. Month estimate.'
+      )
+    ).toHaveClass('sr-only');
+    expect(container.querySelector('.countdown-display')).not.toBeInTheDocument();
+  });
 });

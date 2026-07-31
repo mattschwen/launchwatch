@@ -251,7 +251,8 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `id` | Canonical provider-qualified ID |
 | `sourceId` | Provider-native identifier |
 | `source` | `spacex` or `ll2` |
-| `name`, `date`, `dateUnix` | Mission identity and timing |
+| `name`, `date`, `dateUnix` | Mission identity and provider target timestamp |
+| `datePrecision` | Optional provider precision (`name`, `abbrev`, and description) used to distinguish exact T-0 values from day/month/quarter/year estimates |
 | `rocket`, `launchSite`, `location` | Vehicle and pad data |
 | `status`, `statusName`, `isLive` | Normalized mission state |
 | `livestream`, `livestreams` | Verified provider video candidates |

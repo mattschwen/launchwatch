@@ -6,6 +6,7 @@ import {
   LL2Video,
   APOD,
   Launch,
+  LaunchDatePrecision,
   LaunchFeedMeta,
   LaunchFeedResult,
   LaunchProviderMeta,
@@ -541,6 +542,33 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed || undefined;
 }
 
+function normalizeDatePrecision(value: unknown): LaunchDatePrecision | null {
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return normalized
+      ? { name: normalized, abbrev: normalized.toUpperCase() }
+      : null;
+  }
+
+  if (!isRecord(value)) return null;
+  const name = optionalText(
+    typeof value.name === 'string' ? value.name : undefined
+  );
+  const abbrev = optionalText(
+    typeof value.abbrev === 'string' ? value.abbrev : undefined
+  );
+  const description = optionalText(
+    typeof value.description === 'string' ? value.description : undefined
+  );
+  if (!name || !abbrev) return null;
+
+  return {
+    name,
+    abbrev,
+    ...(description ? { description } : {}),
+  };
+}
+
 function ll2Visual(
   kind: LaunchVisual['kind'],
   media: LL2Media | string | null | undefined,
@@ -822,6 +850,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     name: launch.name,
     date: launch.date_utc,
     dateUnix: launch.date_unix,
+    datePrecision: normalizeDatePrecision(launch.date_precision),
     rocket,
     launchSite,
     status,
@@ -913,6 +942,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     name: launch.name,
     date: launch.net,
     dateUnix: Number.isFinite(parsedDate) ? parsedDate : 0,
+    datePrecision: normalizeDatePrecision(launch.net_precision),
     rocket: configuration.name || 'Unknown Rocket',
     launchSite: launch.pad.name || 'Unknown Site',
     status: isLive ? 'live' : sourceStatus,

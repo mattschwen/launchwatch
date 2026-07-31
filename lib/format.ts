@@ -1,4 +1,4 @@
-import type { Launch } from './types';
+import type { Launch, LaunchDatePrecision } from './types';
 
 const UTC_DATE_TIME = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -22,6 +22,12 @@ const UTC_TIME = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
+  timeZone: 'UTC',
+});
+
+const UTC_MONTH = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  year: 'numeric',
   timeZone: 'UTC',
 });
 
@@ -57,14 +63,167 @@ export function firstLaunchValue(
   return values.find(isMeaningfulLaunchValue)?.trim() || fallback;
 }
 
-export function formatLaunchDate(date: string): string {
-  const parsed = new Date(date);
-  return Number.isNaN(parsed.getTime()) ? 'Date unavailable' : UTC_DATE_TIME.format(parsed);
+export function formatLaunchDate(
+  date: string,
+  precision?: LaunchDatePrecision | null
+): string {
+  const target = formatLaunchTarget(date, precision);
+  const label = formatLaunchPrecisionLabel(precision);
+  return label && target !== 'Date unavailable'
+    ? `${target} · ${label}`
+    : target;
 }
 
-export function formatLaunchDay(date: string): string {
+function precisionCode(
+  precision: LaunchDatePrecision | null | undefined
+): string | null {
+  const value = precision?.abbrev?.trim() || precision?.name?.trim();
+  return value ? value.toUpperCase() : null;
+}
+
+function precisionQuarter(code: string, date: Date): string {
+  return /^Q[1-4]$/.test(code)
+    ? code
+    : `Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
+}
+
+function precisionHalf(code: string, date: Date): string {
+  return /^H[12]$/.test(code)
+    ? code
+    : `H${date.getUTCMonth() < 6 ? 1 : 2}`;
+}
+
+export function hasExactLaunchTime(
+  precision: LaunchDatePrecision | null | undefined
+): boolean {
+  const code = precisionCode(precision);
+  return code === null || code === 'SEC' || code === 'SECOND';
+}
+
+export function hasCalendarReadyLaunchTime(
+  precision: LaunchDatePrecision | null | undefined
+): boolean {
+  const code = precisionCode(precision);
+  return (
+    hasExactLaunchTime(precision) || code === 'MIN' || code === 'MINUTE'
+  );
+}
+
+export function formatLaunchPrecisionLabel(
+  precision: LaunchDatePrecision | null | undefined
+): string | null {
+  const code = precisionCode(precision);
+  if (!code || code === 'SEC' || code === 'SECOND') return null;
+
+  if (code === 'MIN' || code === 'MINUTE') return 'Minute estimate';
+  if (code === 'HR' || code === 'HOUR') return 'Hour estimate';
+  if (code === 'AM') return 'Morning estimate';
+  if (code === 'PM') return 'Afternoon estimate';
+  if (code === 'DAY') return 'Day estimate';
+  if (code === 'WK' || code === 'WEEK') return 'Week estimate';
+  if (code === 'M' || code === 'MONTH') return 'Month estimate';
+  if (code.startsWith('Q') || code === 'QUARTER') return 'Quarter estimate';
+  if (/^H[12]$/.test(code) || code === 'HALF') return 'Half-year estimate';
+  if (code === 'Y' || code === 'YEAR') return 'Year estimate';
+  if (code === 'FY' || code === 'FISCAL YEAR') return 'Fiscal-year estimate';
+  if (code === 'DEC' || code === 'DECADE') return 'Decade estimate';
+  return `${precision?.name || 'Date'} estimate`;
+}
+
+export function formatLaunchTarget(
+  date: string,
+  precision?: LaunchDatePrecision | null
+): string {
   const parsed = new Date(date);
-  return Number.isNaN(parsed.getTime()) ? 'Date unavailable' : UTC_DATE.format(parsed);
+  if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
+
+  const code = precisionCode(precision);
+  const year = parsed.getUTCFullYear();
+  if (code === 'M' || code === 'MONTH') return UTC_MONTH.format(parsed);
+  if (code?.startsWith('Q') || code === 'QUARTER') {
+    return `${precisionQuarter(code, parsed)} ${year}`;
+  }
+  if ((code && /^H[12]$/.test(code)) || code === 'HALF') {
+    return `${precisionHalf(code, parsed)} ${year}`;
+  }
+  if (code === 'Y' || code === 'YEAR') return String(year);
+  if (code === 'FY' || code === 'FISCAL YEAR') return `FY ${year}`;
+  if (code === 'DEC' || code === 'DECADE') {
+    return `${Math.floor(year / 10) * 10}s`;
+  }
+  if (code === 'WK' || code === 'WEEK') {
+    return `Week of ${UTC_DATE.format(parsed)}`;
+  }
+  if (code === 'DAY' || code === 'AM' || code === 'PM') {
+    return UTC_DATE.format(parsed);
+  }
+
+  return UTC_DATE_TIME.format(parsed);
+}
+
+export function formatLaunchDay(
+  date: string,
+  precision?: LaunchDatePrecision | null
+): string {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
+
+  const code = precisionCode(precision);
+  if (
+    code === 'M' ||
+    code === 'MONTH' ||
+    code?.startsWith('Q') ||
+    code === 'QUARTER' ||
+    (Boolean(code) && /^H[12]$/.test(code!)) ||
+    code === 'HALF' ||
+    code === 'Y' ||
+    code === 'YEAR' ||
+    code === 'FY' ||
+    code === 'FISCAL YEAR' ||
+    code === 'DEC' ||
+    code === 'DECADE' ||
+    code === 'WK' ||
+    code === 'WEEK'
+  ) {
+    return formatLaunchTarget(date, precision);
+  }
+
+  return UTC_DATE.format(parsed);
+}
+
+export function formatLaunchTime(
+  date: string,
+  precision?: LaunchDatePrecision | null
+): string {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return 'Time unavailable';
+
+  const label = formatLaunchPrecisionLabel(precision);
+  const code = precisionCode(precision);
+  if (
+    code === 'DAY' ||
+    code === 'AM' ||
+    code === 'PM' ||
+    code === 'WK' ||
+    code === 'WEEK' ||
+    code === 'M' ||
+    code === 'MONTH' ||
+    code?.startsWith('Q') ||
+    code === 'QUARTER' ||
+    (Boolean(code) && /^H[12]$/.test(code!)) ||
+    code === 'HALF' ||
+    code === 'Y' ||
+    code === 'YEAR' ||
+    code === 'FY' ||
+    code === 'FISCAL YEAR' ||
+    code === 'DEC' ||
+    code === 'DECADE'
+  ) {
+    return label || 'Time pending';
+  }
+
+  const time = UTC_TIME.format(parsed);
+  return label ? `${time} UTC · ${label}` : `${time} UTC`;
 }
 
 export function getLaunchWindowBounds(

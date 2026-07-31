@@ -368,7 +368,11 @@ function WatchStage({
           {launch.name}
         </Link>
         <div className="mt-3">
-          <Countdown targetDate={launch.date} compact />
+          <Countdown
+            targetDate={launch.date}
+            precision={launch.datePrecision}
+            compact
+          />
         </div>
         {fallback.recommendedUrl ? (
           <a
@@ -529,7 +533,7 @@ function MissionQueue({
                   {launch.name}
                 </span>
                 <span className="mt-1 block truncate text-xs text-[var(--text-muted)]">
-                  {formatLaunchDate(launch.date)}
+                  {formatLaunchDate(launch.date, launch.datePrecision)}
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-[var(--console-cyan)]">
                   {launch.provider || launch.rocket}
@@ -727,7 +731,10 @@ function WatchContent(): React.ReactElement {
                     {shortenLaunchSite(selectedLaunch.launchSite)}
                   </p>
                   <p className="mt-1 font-mono text-xs text-[var(--console-cyan)]">
-                    {formatLaunchDate(selectedLaunch.date)}
+                    {formatLaunchDate(
+                      selectedLaunch.date,
+                      selectedLaunch.datePrecision
+                    )}
                   </p>
                 </div>
                 <LaunchActions

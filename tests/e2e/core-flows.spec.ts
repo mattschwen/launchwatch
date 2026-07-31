@@ -170,6 +170,60 @@ test('home keeps meaningful hierarchy while the launch feed is synchronizing', a
   ).toBeVisible();
 });
 
+test('coarse provider dates stay estimates until T-0 is confirmed', async ({
+  page,
+}) => {
+  const estimatedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: '2035-08-31T00:00:00.000Z',
+    dateUnix: 2072131200,
+    datePrecision: {
+      name: 'Month',
+      abbrev: 'M',
+      description: 'The T-0 is expected in the given month.',
+    },
+    status: 'tbd' as const,
+    statusName: 'To Be Determined',
+    windowStart: '2035-08-31T00:00:00.000Z',
+    windowEnd: '2035-08-31T00:00:00.000Z',
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [estimatedLaunch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero.getByText('Target estimate')).toBeVisible();
+  await expect(hero.getByText('August 2035', { exact: true })).toHaveCount(2);
+  await expect(hero.getByText(/Month estimate · countdown begins/)).toBeVisible();
+  await expect(hero.locator('.countdown-display')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const calendar = page.getByRole('button', {
+    name: 'Calendar export pending a confirmed launch time',
+  });
+  await expect(calendar).toBeVisible();
+  await expect(calendar).toBeDisabled();
+  await expect(calendar).toHaveAccessibleDescription(
+    'Month estimate. Calendar export and browser alerts become available after the provider confirms the launch time.'
+  );
+  expect(
+    await calendar.evaluate((element) => element.getBoundingClientRect().height)
+  ).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared chrome reports partial feed health on every route', async ({
   page,
 }) => {

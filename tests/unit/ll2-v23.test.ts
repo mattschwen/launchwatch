@@ -10,6 +10,11 @@ const NORMAL_LIST_LAUNCH = {
   id: '8b8a30c5-12b5-4a37-bbea-160d90ec65e5',
   name: 'Falcon 9 Block 5 | Fixture Mission',
   net: '2035-07-29T02:00:00Z',
+  net_precision: {
+    name: 'Hour',
+    abbrev: 'HR',
+    description: 'The T-0 is accurate to the hour.',
+  },
   window_start: '2035-07-29T02:00:00Z',
   window_end: '2035-07-29T06:00:00Z',
   status: {
@@ -200,6 +205,11 @@ describe('Launch Library 2.3 adapter', () => {
     );
     expect(result.data).toMatchObject({
       id: `ll2-${DETAILED_LAUNCH.id}`,
+      datePrecision: {
+        name: 'Hour',
+        abbrev: 'HR',
+        description: 'The T-0 is accurate to the hour.',
+      },
       rocket: 'Falcon 9',
       rocketFamily: 'Falcon',
       rocketVariant: 'Block 5',

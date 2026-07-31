@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import {
   Bell,
   Calendar,
+  CalendarClock,
   Check,
   CircleAlert,
   Copy,
@@ -15,6 +16,10 @@ import {
   downloadICS,
   getGoogleCalendarUrl,
 } from '@/lib/calendar';
+import {
+  formatLaunchPrecisionLabel,
+  hasCalendarReadyLaunchTime,
+} from '@/lib/format';
 
 interface AddToCalendarProps {
   launch: Launch;
@@ -131,6 +136,41 @@ export default function AddToCalendar({
             : alertState === 'error'
               ? 'Could not enable alerts — retry'
               : 'Enable browser launch alerts';
+  const calendarReady = hasCalendarReadyLaunchTime(launch.datePrecision);
+
+  if (!calendarReady) {
+    const pendingDescriptionId = `${menuId}-pending`;
+    const precisionLabel =
+      formatLaunchPrecisionLabel(launch.datePrecision) || 'Estimated date';
+
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          disabled
+          title="Calendar available when the provider confirms the launch time"
+          aria-label={
+            variant === 'icon'
+              ? 'Calendar export pending a confirmed launch time'
+              : undefined
+          }
+          aria-describedby={pendingDescriptionId}
+          className={`cursor-not-allowed opacity-55 ${
+            variant === 'button'
+              ? 'action-button action-button-secondary'
+              : 'icon-button'
+          }`}
+        >
+          <CalendarClock aria-hidden="true" size={17} />
+          {variant === 'button' ? <span>Calendar pending</span> : null}
+        </button>
+        <span id={pendingDescriptionId} className="sr-only">
+          {precisionLabel}. Calendar export and browser alerts become available
+          after the provider confirms the launch time.
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div

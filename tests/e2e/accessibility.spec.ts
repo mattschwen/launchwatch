@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { installApiFixtures } from './support/api-fixtures';
+import { FEED_META, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 const routes = [
   { path: '/', heading: 'Orbital Dawn', pageHeading: 'Orbital Dawn' },
@@ -78,6 +79,56 @@ test('@a11y mission briefing calendar has no serious WCAG A/AA violations', asyn
   await expect(
     dialog.getByRole('group', { name: 'Calendar options' })
   ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
+test('@a11y coarse launch estimate has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  const estimatedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: '2035-08-31T00:00:00.000Z',
+    dateUnix: 2072131200,
+    datePrecision: { name: 'Month', abbrev: 'M' },
+    status: 'tbd' as const,
+    statusName: 'To Be Determined',
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [estimatedLaunch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+  await expect(page.getByText('Target estimate')).toBeVisible();
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  await expect(
+    page.getByRole('button', {
+      name: 'Calendar export pending a confirmed launch time',
+    })
+  ).toBeDisabled();
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

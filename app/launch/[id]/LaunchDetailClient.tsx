@@ -191,7 +191,7 @@ export default function LaunchDetailClient({
                 size={17}
                 className="text-[var(--console-amber)]"
               />
-              {formatLaunchDate(launch.date)}
+              {formatLaunchDate(launch.date, launch.datePrecision)}
             </p>
 
             {launch.description ? (
@@ -221,6 +221,7 @@ export default function LaunchDetailClient({
                   <p className="data-label">T-minus</p>
                   <Countdown
                     targetDate={launch.date}
+                    precision={launch.datePrecision}
                     className="mt-3 [&>span:first-child]:!text-[clamp(1.8rem,4vw,3.4rem)]"
                   />
                 </div>

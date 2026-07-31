@@ -15,6 +15,24 @@ afterEach(() => {
 });
 
 describe('AddToCalendar', () => {
+  it('keeps calendar export disabled while the provider reports only a coarse date', () => {
+    render(
+      <AddToCalendar
+        launch={{
+          ...UPCOMING_LAUNCHES[0],
+          status: 'tbd',
+          datePrecision: { name: 'Month', abbrev: 'M' },
+        }}
+      />
+    );
+
+    const calendar = screen.getByRole('button', { name: 'Calendar pending' });
+    expect(calendar).toBeDisabled();
+    expect(calendar).toHaveAccessibleDescription(
+      'Month estimate. Calendar export and browser alerts become available after the provider confirms the launch time.'
+    );
+  });
+
   it('makes browser launch alerts reachable with honest permission states', async () => {
     const user = userEvent.setup();
     let resolvePermission: ((value: NotificationPermission) => void) | undefined;

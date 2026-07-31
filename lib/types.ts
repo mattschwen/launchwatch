@@ -4,6 +4,7 @@ export interface SpaceXLaunch {
   name: string;
   date_utc: string;
   date_unix: number;
+  date_precision?: string | null;
   rocket: string | {
     id: string;
     name: string;
@@ -113,6 +114,7 @@ export interface LL2Launch {
   id: string;
   name: string;
   net: string; // Network Estimated Time
+  net_precision?: LaunchDatePrecision | null;
   window_start?: string | null;
   window_end?: string | null;
   status: {
@@ -227,6 +229,12 @@ export interface LaunchTimelineEvent {
   description: string;
 }
 
+export interface LaunchDatePrecision {
+  name: string;
+  abbrev: string;
+  description?: string | null;
+}
+
 export type LaunchSource = 'spacex' | 'll2';
 
 export type LaunchVisualKind = 'vehicle' | 'mission';
@@ -255,6 +263,7 @@ export interface Launch {
   name: string;
   date: string;
   dateUnix: number;
+  datePrecision?: LaunchDatePrecision | null;
   rocket: string;
   launchSite: string;
   status: 'upcoming' | 'live' | 'success' | 'failure' | 'tbd';

@@ -1,12 +1,14 @@
 'use client';
 
 import Countdown from '@/components/Countdown';
+import type { LaunchDatePrecision } from '@/lib/types';
 
 interface ProgressCountdownProps {
   targetDate: string;
   size?: 'sm' | 'md' | 'lg';
   showProgress?: boolean;
   className?: string;
+  precision?: LaunchDatePrecision | null;
 }
 
 const sizeClass = {
@@ -19,10 +21,12 @@ export default function ProgressCountdown({
   targetDate,
   size = 'md',
   className = '',
+  precision = null,
 }: ProgressCountdownProps): React.ReactElement {
   return (
     <Countdown
       targetDate={targetDate}
+      precision={precision}
       className={`${sizeClass[size]} ${className}`}
     />
   );
