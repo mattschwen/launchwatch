@@ -60,9 +60,12 @@ export default function LaunchList(): React.ReactElement {
 
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (refreshing) return;
-    event.currentTarget.scrollIntoView({ block: 'nearest' });
+    const retryButton = event.currentTarget;
     retryFocusPendingRef.current = true;
     void refresh();
+    window.requestAnimationFrame(() =>
+      retryButton.scrollIntoView({ block: 'nearest' }),
+    );
   };
 
   const clearFilters = (): void => {

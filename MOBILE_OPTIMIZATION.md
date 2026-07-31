@@ -59,7 +59,9 @@ The optional expanded map remains a modal dialog. It must:
   empty stage. A verified stream remains the primary visual.
 - The mission queue follows the selected mission summary and actions on smaller
   screens, ahead of secondary vehicle imagery, and becomes a side rail on larger
-  screens.
+  screens. Long queues show four complete mission rows on smaller screens with a
+  visible count and scroll cue; all ten queued missions remain keyboard and
+  touch reachable without pushing coverage intelligence down another viewport.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail. Stream and coverage
   intelligence appears before that illustrative telemetry so Watch keeps its

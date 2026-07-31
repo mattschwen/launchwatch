@@ -1041,6 +1041,89 @@ test('watch enriches the selected mission and switches the mission queue', async
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps long mission queues compact and keyboard-reachable', async ({
+  page,
+}) => {
+  const queuedLaunches = Array.from({ length: 10 }, (_, index) => ({
+    ...UPCOMING_LAUNCHES[0],
+    id: `ll2-demo-queue-${index + 1}`,
+    sourceId: `demo-queue-${index + 1}`,
+    ll2Id: `demo-queue-${index + 1}`,
+    name: `Queue mission ${index + 1}`,
+    missionName: `Queue mission ${index + 1}`,
+    date: new Date(
+      Date.parse(UPCOMING_LAUNCHES[0].date) + index * 86_400_000
+    ).toISOString(),
+    dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index * 86_400,
+  }));
+
+  await page.route('**/api/launches**', async (route) => {
+    const url = new URL(route.request().url());
+
+    if (url.pathname === '/api/launches') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launches: queuedLaunches,
+          meta: FEED_META,
+          cached: false,
+          source: 'api',
+        }),
+      });
+      return;
+    }
+
+    const id = decodeURIComponent(url.pathname.replace('/api/launches/', ''));
+    const launch = queuedLaunches.find((candidate) => candidate.id === id);
+    await route.fulfill({
+      status: launch ? 200 : 404,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        launch
+          ? { launch, canonicalId: launch.id, meta: FEED_META }
+          : { error: 'Launch not found' }
+      ),
+    });
+  });
+
+  await page.goto('/watch');
+
+  const queue = page.getByRole('complementary', { name: 'Next up' });
+  await expect(queue.getByText('10 missions · scroll', { exact: true }))
+    .toBeVisible();
+
+  const queueViewport = queue.locator('[data-watch-queue-scroll]');
+  const queueMetrics = await queueViewport.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(queueMetrics.scrollHeight).toBeGreaterThan(queueMetrics.clientHeight);
+  if (queueMetrics.viewportWidth >= 1024) {
+    expect(queueMetrics.clientHeight).toBeGreaterThan(600);
+  } else {
+    expect(queueMetrics.clientHeight).toBeLessThanOrEqual(334);
+  }
+
+  const finalMission = queue.getByRole('button', {
+    name: /Queue mission 10/i,
+  });
+  await finalMission.focus();
+  await expect(finalMission).toBeFocused();
+  expect(
+    await queueViewport.evaluate((element) => element.scrollTop)
+  ).toBeGreaterThan(0);
+  await finalMission.press('Enter');
+
+  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Queue mission 10' })
+  ).toBeVisible();
+  await expect(finalMission).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps verified streams primary and offers a rocket visual on demand', async ({
   page,
 }) => {

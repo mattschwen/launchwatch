@@ -350,18 +350,29 @@ function MissionQueue({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }): React.ReactElement {
+  const queuedLaunches = launches.slice(0, 10);
+  const queueLabel = `${queuedLaunches.length} mission${
+    queuedLaunches.length === 1 ? '' : 's'
+  }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
+
   return (
     <aside
       aria-labelledby="next-up-title"
       className="surface-card holo-card signal-cold overflow-hidden"
     >
-      <div className="border-b border-[var(--border-subtle)] p-4">
+      <div className="flex min-h-14 items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
         <h2 id="next-up-title" className="section-title text-[1.2rem]">
           Next up
         </h2>
+        <p className="data-label shrink-0 text-[var(--text-muted)]">
+          {queueLabel}
+        </p>
       </div>
-      <div className="max-h-[42rem] overflow-y-auto">
-        {launches.slice(0, 10).map((launch) => {
+      <div
+        data-watch-queue-scroll
+        className="max-h-[20.8rem] overflow-y-auto overscroll-contain lg:max-h-[42rem]"
+      >
+        {queuedLaunches.map((launch) => {
           const selected = launch.id === selectedId;
           return (
             <button
