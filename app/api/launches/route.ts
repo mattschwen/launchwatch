@@ -6,20 +6,18 @@ import {
   getPastLaunchesResult,
   MAX_HISTORY_LIMIT,
 } from '@/lib/api';
+import {
+  parseLaunchFeedQuery,
+  type LaunchFeedRequestType,
+} from '@/lib/launch-feed-params';
 import type { LaunchFeedMeta } from '@/lib/types';
 
-type LaunchRequestType = 'all' | 'live' | 'next' | 'history';
-
-const CACHE_SECONDS: Record<LaunchRequestType, number> = {
+const CACHE_SECONDS: Record<LaunchFeedRequestType, number> = {
   all: 300,
   live: 60,
   next: 120,
   history: 3600,
 };
-
-function isLaunchRequestType(value: string): value is LaunchRequestType {
-  return value === 'all' || value === 'live' || value === 'next' || value === 'history';
-}
 
 function hasUsableProvider(meta: LaunchFeedMeta): boolean {
   return Object.values(meta.providers).some((provider) => (
@@ -33,48 +31,27 @@ function legacySource(meta: LaunchFeedMeta): 'api' | 'server-cache' | 'stale-cac
   return 'api';
 }
 
-function responseHeaders(type: LaunchRequestType): HeadersInit {
+function responseHeaders(type: LaunchFeedRequestType): HeadersInit {
   return {
     'Cache-Control': `public, s-maxage=${CACHE_SECONDS[type]}, stale-while-revalidate=${CACHE_SECONDS[type] * 2}`,
   };
 }
 
-function parseHistoryLimit(searchParams: URLSearchParams): number | null {
-  const rawLimit = searchParams.get('limit');
-  if (rawLimit === null) {
-    return 50;
-  }
-
-  if (!/^\d+$/.test(rawLimit)) {
-    return null;
-  }
-
-  const limit = Number.parseInt(rawLimit, 10);
-  return limit >= 1 && limit <= MAX_HISTORY_LIMIT ? limit : null;
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const typeValue = searchParams.get('type') || 'all';
+  const query = parseLaunchFeedQuery(searchParams, MAX_HISTORY_LIMIT);
 
-  if (!isLaunchRequestType(typeValue)) {
+  if (query.type === null) {
     return NextResponse.json(
-      { error: 'Invalid type parameter. Use: all, live, next, or history' },
+      { error: query.error },
       { status: 400 },
     );
   }
+  const typeValue = query.type;
 
   try {
     if (typeValue === 'history') {
-      const limit = parseHistoryLimit(searchParams);
-      if (limit === null) {
-        return NextResponse.json(
-          { error: `Invalid limit parameter. Use an integer from 1 to ${MAX_HISTORY_LIMIT}` },
-          { status: 400 },
-        );
-      }
-
-      const result = await getPastLaunchesResult(limit);
+      const result = await getPastLaunchesResult(query.historyLimit);
       if (!hasUsableProvider(result.meta)) {
         return NextResponse.json(
           {

@@ -9,6 +9,9 @@ LaunchWatch exposes a small same-origin API for normalized launch data and missi
 - Format: JSON
 - Authentication: none for internal read routes
 - Credentials: optional, server-side provider credentials only
+- Query contracts are exact: duplicate keys, unsupported keys, and `limit`
+  outside the history feed return `400` before provider work begins. This keeps
+  public CDN variants bounded to the documented URLs.
 
 ## Canonical Launch IDs
 
@@ -142,6 +145,8 @@ CDN policy: 60 minutes fresh, 120 minutes stale-while-revalidate.
 | --- | --- | --- |
 | Unknown `type` | `400` | `{ "error": "Invalid type parameter..." }` |
 | Invalid history limit | `400` | `{ "error": "Invalid limit parameter..." }` |
+| Duplicate or unsupported query parameters | `400` | Error describing the accepted canonical query |
+| `limit` used outside `type=history` | `400` | `{ "error": "The limit parameter is only available for history" }` |
 | No requested provider has usable data | `502` | Error plus empty data and provider metadata |
 | Unexpected route failure | `500` | `{ "error": "Failed to fetch launches" }` |
 

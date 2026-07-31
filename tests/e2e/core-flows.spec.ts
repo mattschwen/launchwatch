@@ -14,6 +14,34 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('launch feed rejects cache-fragmenting query variants', async ({
+  request,
+}) => {
+  const cases = [
+    {
+      query: 'type=all&tracking=campaign',
+      error: 'Only type and the history limit parameters are accepted',
+    },
+    {
+      query: 'type=all&type=history',
+      error: 'Only one type parameter is accepted',
+    },
+    {
+      query: 'type=all&limit=20',
+      error: 'The limit parameter is only available for history',
+    },
+  ];
+
+  for (const testCase of cases) {
+    const response = await request.get(`/api/launches?${testCase.query}`);
+
+    expect(response.status()).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: testCase.error,
+    });
+  }
+});
+
 test('keyboard skip link is visible, touch-safe, and clears the sticky header', async ({
   page,
 }) => {
@@ -1120,6 +1148,11 @@ test('watch defers offscreen trajectory with a keyboard load path', async ({
   await pendingTrajectory.scrollIntoViewIfNeeded();
   await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
 
+  await page.evaluate(() => {
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+  });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.reload({ waitUntil: 'networkidle' });
   await expect(pendingTrajectory).toBeVisible();
   await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
