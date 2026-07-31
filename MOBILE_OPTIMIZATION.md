@@ -116,6 +116,8 @@ The optional expanded map remains a modal dialog. It must:
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
   their own region when necessary. Touch-safe previous/next controls expose
   one-event movement without replacing direct scrolling or arrow-key access.
+  Boundary controls remain focusable with truthful unavailable semantics so
+  keyboard focus is not lost when the first or final event is reached.
 - Video and intelligence sections become a single column.
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support.

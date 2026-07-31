@@ -301,9 +301,9 @@ export default function LaunchDetailClient({
                     type="button"
                     aria-label="Previous timeline event"
                     aria-controls="launch-timeline-events"
-                    disabled={!timelineScroll.canMoveBackward}
+                    aria-disabled={!timelineScroll.canMoveBackward}
                     onClick={() => moveTimeline(-1)}
-                    className="icon-button h-11 w-11 disabled:cursor-not-allowed disabled:opacity-35"
+                    className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
                   >
                     <ChevronLeft aria-hidden="true" size={17} />
                   </button>
@@ -311,9 +311,9 @@ export default function LaunchDetailClient({
                     type="button"
                     aria-label="Next timeline event"
                     aria-controls="launch-timeline-events"
-                    disabled={!timelineScroll.canMoveForward}
+                    aria-disabled={!timelineScroll.canMoveForward}
                     onClick={() => moveTimeline(1)}
-                    className="icon-button h-11 w-11 disabled:cursor-not-allowed disabled:opacity-35"
+                    className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
                   >
                     <ChevronRight aria-hidden="true" size={17} />
                   </button>

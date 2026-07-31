@@ -2510,8 +2510,10 @@ test('upcoming and historical details place one trajectory before mission suppor
       const nextEvent = timeline.getByRole('button', {
         name: 'Next timeline event',
       });
-      await expect(previousEvent).toBeDisabled();
-      await expect(nextEvent).toBeEnabled();
+      await expect(previousEvent).not.toHaveAttribute('disabled');
+      await expect(previousEvent).toHaveAttribute('aria-disabled', 'true');
+      await expect(nextEvent).not.toHaveAttribute('disabled');
+      await expect(nextEvent).toHaveAttribute('aria-disabled', 'false');
       for (const control of [previousEvent, nextEvent]) {
         const bounds = await control.boundingBox();
         expect(bounds).not.toBeNull();
@@ -2524,8 +2526,33 @@ test('upcoming and historical details place one trajectory before mission suppor
       await expect
         .poll(() => timelineEvents.evaluate((element) => element.scrollLeft))
         .toBeGreaterThan(0);
-      await expect(previousEvent).toBeEnabled();
+      await expect(previousEvent).not.toHaveAttribute('disabled');
       await expect(nextEvent).toBeFocused();
+
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      const timelineScrollWidth = await timelineEvents.evaluate((element) => ({
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      }));
+      const remainingSteps = Math.ceil(
+        (timelineScrollWidth.scrollWidth -
+          timelineScrollWidth.clientWidth -
+          (await timelineEvents.evaluate((element) => element.scrollLeft))) /
+          176
+      );
+      for (let step = 0; step < remainingSteps; step += 1) {
+        await nextEvent.press('Enter');
+      }
+      await expect(nextEvent).toHaveAttribute('aria-disabled', 'true');
+      await expect(nextEvent).toBeFocused();
+      const terminalScrollLeft = await timelineEvents.evaluate(
+        (element) => element.scrollLeft
+      );
+      await nextEvent.press('Enter');
+      await expect(nextEvent).toBeFocused();
+      await expect
+        .poll(() => timelineEvents.evaluate((element) => element.scrollLeft))
+        .toBe(terminalScrollLeft);
 
       await timelineEvents.focus();
       await expect(timelineEvents).toBeFocused();
