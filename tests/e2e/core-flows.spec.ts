@@ -2245,6 +2245,7 @@ test('history search reaches a completed mission detail', async ({ page }) => {
 
   await expect(clearFilters).toBeDisabled();
   await search.fill('no matching mission');
+  await expect(page).toHaveURL(/\/history\?q=no\+matching\+mission$/);
   const archiveResults = page.getByRole('status', {
     name: 'Archive results',
   });
@@ -2253,12 +2254,19 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   await clearFilters.press('Enter');
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
+  await expect(page).toHaveURL(/\/history$/);
   await expect(archiveResults).toHaveText('2 results');
   await expect(clearFilters).toBeDisabled();
 
   await search.fill('Return');
 
+  await expect(page).toHaveURL(/\/history\?q=Return$/);
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
+  await expect(archiveResults).toHaveText('1 result');
+  await page.reload();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search missions' })
+  ).toHaveValue('Return');
   await expect(archiveResults).toHaveText('1 result');
   const missionDetail = page.getByRole('link', { name: 'View mission' });
   await expect(missionDetail).toHaveCount(1);

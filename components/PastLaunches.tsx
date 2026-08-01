@@ -26,6 +26,7 @@ import {
 import {
   buildHistoryDetailHref,
   DEFAULT_HISTORY_FILTERS,
+  serializeHistoryFilters,
   type HistoryFilters,
 } from '@/lib/history-return';
 import MissionVisual from '@/components/launch/MissionVisual';
@@ -358,6 +359,21 @@ export default function PastLaunches({
     filtered.length > PAGE_SIZE && !allResultsVisible
       ? `Showing ${visibleLaunches.length} of ${filtered.length} results`
       : `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
+
+  useEffect(() => {
+    const query = serializeHistoryFilters({
+      search,
+      provider,
+      year,
+      outcome,
+    });
+    const nextUrl = query ? `/history?${query}` : '/history';
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (currentUrl !== nextUrl) {
+      window.history.replaceState(window.history.state, '', nextUrl);
+    }
+  }, [outcome, provider, search, year]);
 
   const clearFilters = (): void => {
     setSearch('');

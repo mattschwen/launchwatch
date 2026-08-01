@@ -135,7 +135,8 @@ The optional expanded map remains a modal dialog. It must:
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support.
 - Completed missions return to History—or the filtered archive that opened
-  them—and omit future-only calendar actions.
+  them—and omit future-only calendar actions. Active archive filters remain in
+  the address so a filtered result set survives reloads and can be shared.
 
 ## Touch and Keyboard Requirements
 
