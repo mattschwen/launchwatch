@@ -2861,13 +2861,18 @@ test('home schedule filters survive mission detail navigation', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('history keeps long mission and provider names readable', async ({
+test('history keeps long mission telemetry readable', async ({
   page,
 }) => {
   const longMissionName =
     'Vega-C | Solar wind Magnetosphere Ionosphere Link Explorer (SMILE)';
   const longProviderName =
     'China Aerospace Science and Technology Corporation';
+  const longVehicleName = 'Soyuz 2.1b/Fregat-M with extended fairing';
+  const longSiteName =
+    'Rocket Lab Launch Complex 2 (Launch Area 0 C), Wallops Island';
+  const displayedSiteName =
+    'Rocket Lab LC-2 (Launch Area 0 C), Wallops Island';
 
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -2883,6 +2888,8 @@ test('history keeps long mission and provider names readable', async ({
             ...HISTORICAL_LAUNCHES[0],
             name: longMissionName,
             provider: longProviderName,
+            rocket: longVehicleName,
+            launchSite: longSiteName,
           },
         ],
         meta: FEED_META,
@@ -2895,26 +2902,37 @@ test('history keeps long mission and provider names readable', async ({
   const archiveRow = page.locator('article').filter({ hasText: longMissionName });
   const missionName = archiveRow.getByText(longMissionName, { exact: true });
   const providerName = archiveRow.getByText(longProviderName, { exact: true });
+  const vehicleNames = archiveRow.getByText(longVehicleName, { exact: true });
+  const siteNames = archiveRow.getByText(displayedSiteName, { exact: true });
   await expect(missionName).toBeVisible();
   await expect(providerName).toBeVisible();
+  await expect(vehicleNames).toHaveCount(2);
+  await expect(siteNames).toHaveCount(2);
 
-  for (const identity of [missionName, providerName]) {
-    const layout = await identity.evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      const style = getComputedStyle(element);
-      return {
-        clientWidth: element.clientWidth,
-        height: bounds.height,
-        lineHeight: Number.parseFloat(style.lineHeight),
-        scrollWidth: element.scrollWidth,
-        textOverflow: style.textOverflow,
-        whiteSpace: style.whiteSpace,
-      };
-    });
+  for (const content of [missionName, providerName, vehicleNames, siteNames]) {
+    const layouts = await content.evaluateAll((elements) =>
+      elements
+        .filter((element) => element.getClientRects().length > 0)
+        .map((element) => {
+          const bounds = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return {
+            clientWidth: element.clientWidth,
+            height: bounds.height,
+            lineHeight: Number.parseFloat(style.lineHeight),
+            scrollWidth: element.scrollWidth,
+            textOverflow: style.textOverflow,
+            whiteSpace: style.whiteSpace,
+          };
+        })
+    );
 
-    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
-    expect(layout.textOverflow).not.toBe('ellipsis');
-    expect(layout.whiteSpace).toBe('normal');
+    expect(layouts).toHaveLength(1);
+    expect(layouts[0].scrollWidth).toBeLessThanOrEqual(
+      layouts[0].clientWidth + 1
+    );
+    expect(layouts[0].textOverflow).not.toBe('ellipsis');
+    expect(layouts[0].whiteSpace).toBe('normal');
   }
 
   const disclosure = archiveRow.getByRole('button');

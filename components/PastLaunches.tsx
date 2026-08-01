@@ -122,13 +122,13 @@ function HistoryRow({
             </span>
             <span className="min-w-0">
               <span className="data-label block">Vehicle</span>
-              <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
+              <span className="mt-1 block break-words text-xs leading-4 text-[var(--text-secondary)]">
                 {launch.rocket}
               </span>
             </span>
             <span className="min-w-0">
               <span className="data-label block">Site</span>
-              <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
+              <span className="mt-1 block break-words text-xs leading-4 text-[var(--text-secondary)]">
                 {shortenLaunchSite(launch.launchSite)}
               </span>
             </span>
@@ -156,10 +156,10 @@ function HistoryRow({
           <span className="hidden text-sm text-[var(--text-secondary)] xl:block">
             {formatLaunchDate(launch.date, launch.datePrecision)}
           </span>
-          <span className="hidden truncate text-sm text-[var(--text-secondary)] xl:block">
+          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] xl:block">
             {launch.rocket}
           </span>
-          <span className="hidden truncate text-sm text-[var(--text-secondary)] xl:block">
+          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] xl:block">
             {shortenLaunchSite(launch.launchSite)}
           </span>
           <span

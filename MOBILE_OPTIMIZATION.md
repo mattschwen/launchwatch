@@ -135,6 +135,8 @@ The optional expanded map remains a modal dialog. It must:
 - Each archive row keeps the complete mission and provider identity readable,
   wrapping long provider-supplied names instead of hiding them behind
   ellipses, before exposing secondary metadata and the View Mission action.
+- Vehicle and launch-site telemetry also wraps within its responsive grid so
+  compact rows never silently remove the identifying end of a provider value.
 - Expanded summaries remain in normal document flow.
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.
