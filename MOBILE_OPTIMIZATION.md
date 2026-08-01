@@ -46,7 +46,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Countdown values wrap without horizontal overflow.
 - Provider day/month/quarter/year targets render as amber estimates instead of
   false second-by-second countdowns. Calendar export and launch alerts remain
-  visibly pending until the provider confirms a minute-level target.
+  visibly pending until the provider confirms a minute-level target. The
+  pending control remains keyboard-focusable and exposes its precision-aware
+  explanation on focus or hover without opening calendar actions.
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping complete

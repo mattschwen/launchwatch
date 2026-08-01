@@ -142,12 +142,14 @@ export default function AddToCalendar({
     const pendingDescriptionId = `${menuId}-pending`;
     const precisionLabel =
       formatLaunchPrecisionLabel(launch.datePrecision) || 'Estimated date';
+    const pendingMessage =
+      'Calendar export and browser alerts become available after the provider confirms the launch time.';
 
     return (
-      <div className="relative">
+      <div className="calendar-pending-control relative">
         <button
           type="button"
-          disabled
+          aria-disabled="true"
           title="Calendar available when the provider confirms the launch time"
           aria-label={
             variant === 'icon'
@@ -155,7 +157,7 @@ export default function AddToCalendar({
               : undefined
           }
           aria-describedby={pendingDescriptionId}
-          className={`cursor-not-allowed opacity-55 ${
+          className={`cursor-not-allowed opacity-55 focus-visible:opacity-80 ${
             variant === 'button'
               ? 'action-button action-button-secondary'
               : 'icon-button'
@@ -165,8 +167,25 @@ export default function AddToCalendar({
           {variant === 'button' ? <span>Calendar pending</span> : null}
         </button>
         <span id={pendingDescriptionId} className="sr-only">
-          {precisionLabel}. Calendar export and browser alerts become available
-          after the provider confirms the launch time.
+          {precisionLabel}. {pendingMessage}
+        </span>
+        <span
+          aria-hidden="true"
+          data-calendar-pending-tooltip="true"
+          className={`calendar-pending-tooltip pointer-events-none absolute z-[75] rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_32%,var(--border-subtle))] bg-[var(--surface-raised)] px-3 py-2 text-left shadow-[var(--shadow-elevated)] ${
+            variant === 'button'
+              ? 'left-0 w-[min(16rem,calc(100vw-2rem))]'
+              : 'left-1/2 w-[min(10rem,calc(100vw-2rem))] -translate-x-1/2'
+          } ${
+            menuPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
+        >
+          <span className="data-label block text-[var(--console-amber)]">
+            {precisionLabel}
+          </span>
+          <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">
+            {pendingMessage}
+          </span>
         </span>
       </div>
     );

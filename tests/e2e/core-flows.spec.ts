@@ -331,10 +331,35 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
     name: 'Calendar export pending a confirmed launch time',
   });
   await expect(calendar).toBeVisible();
-  await expect(calendar).toBeDisabled();
+  await expect(calendar).not.toHaveAttribute('disabled', '');
+  await expect(calendar).toHaveAttribute('aria-disabled', 'true');
   await expect(calendar).toHaveAccessibleDescription(
     'Month estimate. Calendar export and browser alerts become available after the provider confirms the launch time.'
   );
+  const fullMission = page.getByRole('link', { name: 'View full mission' });
+  await fullMission.focus();
+  await fullMission.press('Tab');
+  await expect(calendar).toBeFocused();
+  const pendingExplanation = page.locator(
+    '[data-calendar-pending-tooltip="true"]'
+  );
+  await expect(pendingExplanation).toBeVisible();
+  await expect(pendingExplanation).toHaveCSS('opacity', '1');
+  expect(
+    await pendingExplanation.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return (
+        bounds.top >= 0 &&
+        bounds.left >= 0 &&
+        bounds.right <= window.innerWidth &&
+        bounds.bottom <= window.innerHeight
+      );
+    })
+  ).toBe(true);
+  await calendar.press('Enter');
+  await expect(
+    page.getByRole('group', { name: 'Calendar options' })
+  ).toHaveCount(0);
   expect(
     await calendar.evaluate((element) => element.getBoundingClientRect().height)
   ).toBeGreaterThanOrEqual(44);

@@ -15,8 +15,9 @@ afterEach(() => {
 });
 
 describe('AddToCalendar', () => {
-  it('keeps calendar export disabled while the provider reports only a coarse date', () => {
-    render(
+  it('keeps calendar export focusable and explained while the provider reports only a coarse date', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
       <AddToCalendar
         launch={{
           ...UPCOMING_LAUNCHES[0],
@@ -27,10 +28,24 @@ describe('AddToCalendar', () => {
     );
 
     const calendar = screen.getByRole('button', { name: 'Calendar pending' });
-    expect(calendar).toBeDisabled();
+    expect(calendar).not.toBeDisabled();
+    expect(calendar).toHaveAttribute('aria-disabled', 'true');
     expect(calendar).toHaveAccessibleDescription(
       'Month estimate. Calendar export and browser alerts become available after the provider confirms the launch time.'
     );
+
+    await user.tab();
+    expect(calendar).toHaveFocus();
+    expect(
+      container.querySelector('[data-calendar-pending-tooltip="true"]')
+    ).toHaveTextContent(
+      'Month estimateCalendar export and browser alerts become available after the provider confirms the launch time.'
+    );
+
+    await user.keyboard('{Enter}');
+    expect(
+      screen.queryByRole('group', { name: 'Calendar options' })
+    ).not.toBeInTheDocument();
   });
 
   it('makes browser launch alerts reachable with honest permission states', async () => {

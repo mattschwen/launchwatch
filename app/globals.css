@@ -1358,6 +1358,18 @@ body::before {
   color: var(--text-primary);
 }
 
+.calendar-pending-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out-quick);
+}
+
+.calendar-pending-control:hover .calendar-pending-tooltip,
+.calendar-pending-control:focus-within .calendar-pending-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
 input[type='search'],
 select {
   color-scheme: dark;

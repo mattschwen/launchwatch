@@ -273,7 +273,7 @@ export default function LaunchBriefingDrawer({
           ) : null}
         </div>
 
-        <footer className="flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 px-5 py-4 sm:px-6">
+        <footer className="relative z-10 flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 px-5 py-4 sm:px-6">
           <Link
             href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
             onClick={onClose}
