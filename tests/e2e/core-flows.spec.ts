@@ -3654,6 +3654,90 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await expect(expandButton).toBeFocused();
 });
 
+test('expanded trajectory keeps long mission context readable', async ({
+  page,
+}) => {
+  const missionName =
+    'Falcon 9 Block 5 | BlueBird 11-13 (Block 2 #6-8)';
+  const launch = {
+    ...UPCOMING_LAUNCHES[0],
+    name: missionName,
+    missionName,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [launch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch,
+        canonicalId: launch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page
+      .locator('button[aria-controls="mobile-mission-map"]:visible')
+      .click();
+  }
+
+  await page
+    .getByRole('button', { name: 'Enlarge illustrative trajectory map' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: missionName });
+  const title = dialog.getByRole('heading', { name: missionName });
+  const closeButton = dialog.getByRole('button', {
+    name: 'Close full trajectory map',
+  });
+
+  await expect(dialog).toBeVisible();
+  await expect(title).toBeVisible();
+  await expect(closeButton).toBeFocused();
+  const geometry = await title.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: bounds.bottom,
+      clientWidth: element.clientWidth,
+      lineHeight: Number.parseFloat(styles.lineHeight),
+      overflow: styles.overflow,
+      scrollWidth: element.scrollWidth,
+      textOverflow: styles.textOverflow,
+      top: bounds.top,
+      whiteSpace: styles.whiteSpace,
+    };
+  });
+  const closeBounds = await closeButton.boundingBox();
+
+  expect(geometry.textOverflow).not.toBe('ellipsis');
+  expect(geometry.whiteSpace).toBe('normal');
+  expect(geometry.overflow).not.toBe('hidden');
+  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    expect(geometry.bottom - geometry.top).toBeGreaterThan(
+      geometry.lineHeight * 1.5
+    );
+  }
+  expect(closeBounds).not.toBeNull();
+  expect(closeBounds!.x + closeBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('archive stays usable at the desktop-tablet boundary', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto('/history');

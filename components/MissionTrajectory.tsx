@@ -478,7 +478,7 @@ function MissionTrajectoryController({
                   <p className="console-label">Enlarged mission map</p>
                   <h2
                     id={dialogTitleId}
-                    className="mt-1 truncate text-lg font-bold text-[var(--text-primary)] sm:text-xl"
+                    className="mt-1 break-words text-lg font-bold leading-snug text-[var(--text-primary)] sm:text-xl"
                   >
                     {launch?.name || 'Mission trajectory'}
                   </h2>

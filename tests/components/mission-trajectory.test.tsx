@@ -46,7 +46,11 @@ describe('MissionTrajectory', () => {
 
   it('opens a focus-managed full-map dialog and closes with Escape', async () => {
     const user = userEvent.setup();
-    render(<MissionTrajectory launch={makeLaunch()} />);
+    const missionName =
+      'Falcon 9 Block 5 | BlueBird 11-13 (Block 2 #6-8)';
+    render(
+      <MissionTrajectory launch={makeLaunch({ name: missionName })} />
+    );
 
     const expandButton = screen.getByRole('button', {
       name: 'Enlarge illustrative trajectory map',
@@ -54,9 +58,14 @@ describe('MissionTrajectory', () => {
     await user.click(expandButton);
 
     const dialog = await screen.findByRole('dialog', {
-      name: /Orbital Dawn/i,
+      name: missionName,
     });
     expect(dialog).toBeVisible();
+    const dialogTitle = within(dialog).getByRole('heading', {
+      name: missionName,
+    });
+    expect(dialogTitle).toHaveClass('break-words');
+    expect(dialogTitle).not.toHaveClass('truncate');
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: 'Close full trajectory map' })

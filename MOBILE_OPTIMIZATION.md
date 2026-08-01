@@ -81,6 +81,8 @@ The optional expanded map remains a modal dialog. It must:
 - trap focus while open;
 - close with Escape and the labeled close control;
 - restore focus to the expand control;
+- show the complete mission title without ellipsis, wrapping long provider
+  names while keeping the close control fixed and reachable;
 - remain usable in portrait and landscape.
 
 ## Watch
