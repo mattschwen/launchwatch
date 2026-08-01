@@ -529,13 +529,13 @@ function MissionQueue({
                 }`}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">
+                <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
                   {launch.name}
                 </span>
-                <span className="mt-1 block truncate text-xs text-[var(--text-muted)]">
+                <span className="mt-1 block text-xs leading-4 text-[var(--text-muted)]">
                   {formatLaunchDate(launch.date, launch.datePrecision)}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-[var(--console-cyan)]">
+                <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--console-cyan)]">
                   {launch.provider || launch.rocket}
                 </span>
               </span>

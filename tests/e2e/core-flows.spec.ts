@@ -1385,13 +1385,19 @@ test('watch enriches the selected mission and switches the mission queue', async
 test('watch keeps long mission queues compact and keyboard-reachable', async ({
   page,
 }) => {
+  const longMissionName =
+    'Falcon 9 Block 5 | BlueBird 11-13 (Block 2 #6-8)';
+  const longProviderName =
+    'China Aerospace Science and Technology Corporation';
   const queuedLaunches = Array.from({ length: 10 }, (_, index) => ({
     ...UPCOMING_LAUNCHES[0],
     id: `ll2-demo-queue-${index + 1}`,
     sourceId: `demo-queue-${index + 1}`,
     ll2Id: `demo-queue-${index + 1}`,
-    name: `Queue mission ${index + 1}`,
-    missionName: `Queue mission ${index + 1}`,
+    name: index === 0 ? longMissionName : `Queue mission ${index + 1}`,
+    missionName:
+      index === 0 ? longMissionName : `Queue mission ${index + 1}`,
+    provider: index === 0 ? longProviderName : UPCOMING_LAUNCHES[0].provider,
     date: new Date(
       Date.parse(UPCOMING_LAUNCHES[0].date) + index * 86_400_000
     ).toISOString(),
@@ -1445,6 +1451,30 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
     expect(queueMetrics.clientHeight).toBeGreaterThan(600);
   } else {
     expect(queueMetrics.clientHeight).toBeLessThanOrEqual(334);
+  }
+
+  for (const identity of [longMissionName, longProviderName]) {
+    const text = queue.getByText(identity, { exact: true });
+    await expect(text).toBeVisible();
+    const textMetrics = await text.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return {
+        clientHeight: element.clientHeight,
+        clientWidth: element.clientWidth,
+        scrollHeight: element.scrollHeight,
+        scrollWidth: element.scrollWidth,
+        textOverflow: styles.textOverflow,
+        whiteSpace: styles.whiteSpace,
+      };
+    });
+    expect(textMetrics.scrollWidth).toBeLessThanOrEqual(
+      textMetrics.clientWidth + 1
+    );
+    expect(textMetrics.scrollHeight).toBeLessThanOrEqual(
+      textMetrics.clientHeight + 1
+    );
+    expect(textMetrics.textOverflow).not.toBe('ellipsis');
+    expect(textMetrics.whiteSpace).not.toBe('nowrap');
   }
 
   const finalMission = queue.getByRole('button', {
