@@ -110,6 +110,9 @@ The optional expanded map remains a modal dialog. It must:
 
 ## History
 
+- Initial archive synchronization exposes a visible section heading, truthful
+  provider-acquisition copy, and a named busy region while decorative result
+  placeholders stay out of the accessibility tree.
 - Search and provider/year/outcome filters stack on narrow screens.
 - Each archive row keeps the complete mission and provider identity readable,
   wrapping long provider-supplied names instead of hiding them behind

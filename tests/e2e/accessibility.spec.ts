@@ -66,6 +66,47 @@ for (const route of routes) {
   });
 }
 
+test('@a11y history synchronization has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  let releaseHistory: () => void = () => undefined;
+  const historyGate = new Promise<void>((resolve) => {
+    releaseHistory = resolve;
+  });
+  await page.route('**/api/launches?type=history&limit=100', async (route) => {
+    await historyGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [], meta: FEED_META }),
+    });
+  });
+
+  await page.goto('/history');
+  await expect(
+    page.getByRole('region', { name: 'Synchronizing launch archive' })
+  ).toHaveAttribute('aria-busy', 'true');
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  releaseHistory();
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y mission briefing calendar has no serious WCAG A/AA violations', async ({
   page,
 }) => {

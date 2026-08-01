@@ -18,6 +18,35 @@ describe('PastLaunches', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(successfulResponse));
   });
 
+  it('explains archive synchronization while results are loading', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)));
+
+    render(<PastLaunches />);
+
+    const loadingRegion = screen.getByRole('region', {
+      name: 'Synchronizing launch archive',
+    });
+    expect(loadingRegion).toHaveAttribute('aria-busy', 'true');
+    expect(loadingRegion).toHaveAccessibleDescription(
+      'Retrieving completed missions from connected providers.'
+    );
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Synchronizing launch archive',
+      })
+    ).toBeVisible();
+    expect(screen.getByText('Acquiring records')).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
+    const skeletons = [...loadingRegion.querySelectorAll('.skeleton')];
+    expect(skeletons.length).toBeGreaterThan(0);
+    expect(
+      skeletons.every((skeleton) => skeleton.closest('[aria-hidden="true"]'))
+    ).toBe(true);
+  });
+
   it('loads, filters, and expands deterministic archive results', async () => {
     const user = userEvent.setup();
     render(<PastLaunches />);

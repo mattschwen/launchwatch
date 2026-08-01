@@ -2513,6 +2513,62 @@ test('history keeps long mission and provider names readable', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history identifies provider synchronization before archive results arrive', async ({
+  page,
+}) => {
+  let releaseHistory: () => void = () => undefined;
+  const historyGate = new Promise<void>((resolve) => {
+    releaseHistory = resolve;
+  });
+  await page.route('**/api/launches?type=history&limit=100', async (route) => {
+    await historyGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: HISTORICAL_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/history');
+
+  const loadingRegion = page.getByRole('region', {
+    name: 'Synchronizing launch archive',
+  });
+  await expect(loadingRegion).toBeVisible();
+  await expect(loadingRegion).toHaveAttribute('aria-busy', 'true');
+  await expect(loadingRegion).toHaveAttribute(
+    'aria-describedby',
+    /-loading-description$/
+  );
+  await expect(
+    loadingRegion.getByText(
+      'Retrieving completed missions from connected providers.',
+      { exact: true }
+    )
+  ).toBeVisible();
+  await expect(
+    loadingRegion.getByText('Acquiring records', { exact: true })
+  ).toBeVisible();
+  const layout = await loadingRegion.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      width: bounds.width,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  expect(layout.width).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  releaseHistory();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search missions' })
+  ).toBeVisible();
+  await expect(loadingRegion).toHaveCount(0);
+});
+
 test('history loads licensed mission imagery only after archive expansion', async ({
   page,
 }) => {

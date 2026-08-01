@@ -394,16 +394,58 @@ export default function PastLaunches({
   if (loading && launches.length === 0 && !error) {
     return (
       <section
+        aria-labelledby={`${id}-loading-title`}
+        aria-describedby={`${id}-loading-description`}
+        aria-busy="true"
         className="surface-card holo-card signal-cold overflow-hidden"
-        aria-label="Loading launch history"
       >
-        <div className="skeleton m-4 h-12 rounded" />
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="skeleton mx-4 mb-2 h-16 rounded"
-          />
-        ))}
+        <header className="flex flex-col gap-3 border-b border-[var(--border-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div>
+            <h2 id={`${id}-loading-title`} className="section-title">
+              Synchronizing launch archive
+            </h2>
+            <p
+              id={`${id}-loading-description`}
+              className="mt-1 text-xs leading-5 text-[var(--text-muted)]"
+            >
+              Retrieving completed missions from connected providers.
+            </p>
+          </div>
+          <p
+            aria-hidden="true"
+            className="data-label flex items-center gap-2 text-[var(--console-cyan)]"
+          >
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--console-cyan)]" />
+            Acquiring records
+          </p>
+        </header>
+        <div aria-hidden="true">
+          <div className="grid gap-3 border-b border-[var(--border-subtle)] p-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_7rem]">
+            <div className="skeleton h-11 rounded" />
+            <div className="skeleton h-11 rounded" />
+            <div className="skeleton h-11 rounded" />
+            <div className="skeleton h-11 rounded" />
+            <div className="skeleton h-11 rounded md:col-span-2 xl:col-span-1" />
+          </div>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="grid min-h-20 gap-3 border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 xl:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] xl:items-center"
+            >
+              <div className="min-w-0 space-y-2">
+                <div className="skeleton h-4 w-[min(22rem,82%)] rounded" />
+                <div className="skeleton h-3 w-[min(15rem,58%)] rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-3 xl:contents">
+                <div className="skeleton h-4 rounded" />
+                <div className="skeleton h-4 rounded" />
+                <div className="skeleton h-4 rounded" />
+                <div className="skeleton h-4 rounded" />
+              </div>
+              <div className="skeleton h-11 w-28 rounded" />
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
