@@ -637,13 +637,32 @@ function ll2Videos(launch: LL2Launch): LL2Video[] {
   ];
   const seen = new Set<string>();
 
-  return candidates.filter((candidate) => {
-    if (!candidate?.url || seen.has(candidate.url)) {
-      return false;
-    }
-    seen.add(candidate.url);
-    return true;
-  });
+  return candidates
+    .map((candidate, index) => ({ candidate, index }))
+    .filter(({ candidate }) => Boolean(candidate?.url))
+    .sort((left, right) => {
+      const trust = (video: LL2Video): number => {
+        const type = video.type?.name?.trim().toLowerCase() || '';
+        if (type.startsWith('official')) return 2;
+        if (type.includes('unofficial')) return 0;
+        return 1;
+      };
+      const trustDifference = trust(right.candidate) - trust(left.candidate);
+      if (trustDifference !== 0) return trustDifference;
+
+      const liveDifference = Number(Boolean(right.candidate.live)) -
+        Number(Boolean(left.candidate.live));
+      if (liveDifference !== 0) return liveDifference;
+
+      const priorityDifference = (right.candidate.priority ?? 0) -
+        (left.candidate.priority ?? 0);
+      return priorityDifference || left.index - right.index;
+    })
+    .flatMap(({ candidate }) => {
+      if (seen.has(candidate.url)) return [];
+      seen.add(candidate.url);
+      return [candidate];
+    });
 }
 
 function coordinate(value: number | string | null | undefined): number {

@@ -84,6 +84,8 @@ ll2-<Launch Library 2 source ID>
   metadata without inferring rights from a URL;
 - preserves provider launch-date precision so boundary timestamps are not
   mistaken for exact launch times;
+- ranks detailed provider broadcasts by source trust, live state, and provider
+  priority so official coverage remains the primary mission action;
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 

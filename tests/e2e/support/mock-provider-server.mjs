@@ -235,6 +235,30 @@ ll2Upcoming.rocket.configuration.image = {
   single_use: false,
   variants: [],
 };
+const ll2RankedCoverage = {
+  ...ll2Upcoming,
+  id: 'demo-ranked-coverage',
+  vid_urls: [
+    {
+      priority: 8,
+      source: 'youtube.com',
+      publisher: 'Community relay',
+      title: 'Orbital Dawn community restream',
+      url: 'https://www.youtube.com/watch?v=community-orbital-dawn',
+      type: { name: 'Unofficial Re-stream' },
+      live: false,
+    },
+    {
+      priority: 10,
+      source: 'x.com',
+      publisher: 'Demo Launch Alliance',
+      title: 'Orbital Dawn official webcast',
+      url: 'https://x.com/i/broadcasts/official-orbital-dawn',
+      type: { name: 'Official Webcast' },
+      live: false,
+    },
+  ],
+};
 
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
@@ -345,6 +369,8 @@ const server = createServer(async (request, response) => {
     const launch =
       id === ll2Upcoming.id
         ? ll2Upcoming
+        : id === ll2RankedCoverage.id
+          ? ll2RankedCoverage
         : id === ll2Previous.id
           ? ll2Previous
           : null;

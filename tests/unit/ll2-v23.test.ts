@@ -270,6 +270,51 @@ describe('Launch Library 2.3 adapter', () => {
     });
   });
 
+  it('prefers official coverage when providers return unofficial streams first', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      id: 'ranked-stream-fixture',
+      vid_urls: [
+        {
+          priority: 8,
+          source: 'youtube.com',
+          publisher: 'Community relay',
+          title: 'Community restream',
+          url: 'https://www.youtube.com/watch?v=community123',
+          type: { name: 'Unofficial Re-stream' },
+          live: true,
+        },
+        {
+          priority: 9,
+          source: 'youtube.com',
+          publisher: 'News desk',
+          title: 'News webcast',
+          url: 'https://www.youtube.com/watch?v=news123',
+          type: { name: 'Unofficial Webcast' },
+          live: true,
+        },
+        {
+          priority: 10,
+          source: 'x.com',
+          publisher: 'SpaceX',
+          title: 'Official mission webcast',
+          url: 'https://x.com/i/broadcasts/official123',
+          type: { name: 'Official Webcast' },
+          live: true,
+        },
+      ],
+    });
+
+    expect(normalized.livestream).toBe(
+      'https://x.com/i/broadcasts/official123'
+    );
+    expect(normalized.livestreams?.map((stream) => stream.type)).toEqual([
+      'Official Webcast',
+      'Unofficial Webcast',
+      'Unofficial Re-stream',
+    ]);
+  });
+
   it('retains compatibility with LL2 2.2 field names', () => {
     const legacyLaunch: LL2Launch = {
       id: 'legacy-fixture',

@@ -42,6 +42,34 @@ test('launch feed rejects cache-fragmenting query variants', async ({
   }
 });
 
+test('watch prefers official provider coverage over an earlier restream', async ({
+  page,
+}) => {
+  await page.unroute('**/api/launches**');
+  await page.goto('/watch?id=ll2-demo-ranked-coverage');
+
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  const primaryCoverage = page.getByRole('link', {
+    name: 'Open provider stream',
+  });
+  await expect(primaryCoverage).toHaveAttribute(
+    'href',
+    'https://x.com/i/broadcasts/official-orbital-dawn'
+  );
+  await primaryCoverage.focus();
+  await expect(primaryCoverage).toBeFocused();
+  const primaryBounds = await primaryCoverage.boundingBox();
+  expect(primaryBounds?.height).toBeGreaterThanOrEqual(44);
+  expect(
+    page.locator(
+      'a[href="https://www.youtube.com/watch?v=community-orbital-dawn"]'
+    )
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('keyboard skip link is visible, touch-safe, and clears the sticky header', async ({
   page,
 }) => {
