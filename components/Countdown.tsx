@@ -4,6 +4,7 @@ import { useCountdown } from '@/lib/hooks';
 import {
   formatLaunchPrecisionLabel,
   formatLaunchTarget,
+  hasCountdownTarget,
   hasExactLaunchTime,
 } from '@/lib/format';
 import type { LaunchDatePrecision } from '@/lib/types';
@@ -26,10 +27,16 @@ export default function Countdown({
   precision = null,
 }: CountdownProps): React.ReactElement {
   const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
+  const exact = hasExactLaunchTime(precision);
+  const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
+  const precisionCode = (
+    precision?.abbrev?.trim() || precision?.name?.trim() || ''
+  ).toUpperCase();
+  const hourEstimate = precisionCode === 'HR' || precisionCode === 'HOUR';
+  const estimated = !exact && hasCountdownTarget(precision);
 
-  if (!hasExactLaunchTime(precision)) {
+  if (!hasCountdownTarget(precision)) {
     const target = formatLaunchTarget(targetDate, precision);
-    const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
 
     if (compact) {
       return (
@@ -82,28 +89,50 @@ export default function Countdown({
   );
 
   if (compact) {
-    const compactValue =
-      days > 0
-        ? `T−${days}d ${String(hours).padStart(2, '0')}h`
+    const compactValue = estimated
+      ? days > 0
+        ? `≈T−${days}d ${values[1]}h · ${precisionLabel}`
+        : hourEstimate
+          ? `≈T−${values[1]}h · ${precisionLabel}`
+          : `≈T−${values[1]}:${values[2]} · ${precisionLabel}`
+      : days > 0
+        ? `T−${days}d ${values[1]}h`
         : `T−${values[1]}:${values[2]}:${values[3]}`;
 
     return (
       <time
         dateTime={targetDate}
-        className={`font-mono text-sm font-semibold tabular-nums text-[var(--console-green)] ${className}`}
+        aria-label={
+          estimated
+            ? `Estimated countdown: ${days} days, ${hours} hours${hourEstimate ? '' : `, ${minutes} minutes`} until the provider target. ${precisionLabel}.`
+            : undefined
+        }
+        className={`font-mono text-sm font-semibold tabular-nums ${
+          estimated
+            ? 'text-[var(--console-amber)]'
+            : 'text-[var(--console-green)]'
+        } ${className}`}
         suppressHydrationWarning
       >
-        {compactValue}
+        <span aria-hidden={estimated ? 'true' : undefined}>{compactValue}</span>
       </time>
     );
   }
 
-  const units = [
+  const allUnits = [
     { label: 'days', value: values[0] },
     { label: 'hrs', value: values[1] },
     { label: 'min', value: values[2] },
     { label: 'sec', value: values[3] },
   ];
+  const units = estimated
+    ? allUnits.slice(0, hourEstimate ? 2 : 3)
+    : allUnits;
+  const gridColumns = estimated
+    ? hourEstimate
+      ? 'grid-cols-[auto_minmax(3ch,1.2fr)_minmax(2ch,1fr)]'
+      : 'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(2,minmax(2ch,1fr))]'
+    : 'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))]';
 
   return (
     <time
@@ -112,28 +141,46 @@ export default function Countdown({
       suppressHydrationWarning
     >
       <span className="sr-only" suppressHydrationWarning>
-        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until
-        launch
+        {estimated ? 'Estimated countdown: ' : ''}
+        {days} days, {hours} hours
+        {!estimated || !hourEstimate ? `, ${minutes} minutes` : ''}
+        {!estimated ? `, ${seconds} seconds` : ''} until {estimated
+          ? `the provider target. ${precisionLabel}.`
+          : 'launch'}
       </span>
       <span
         aria-hidden="true"
         suppressHydrationWarning
-        className={`countdown-display grid w-full grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))] items-stretch gap-1 font-medium leading-none tabular-nums sm:gap-2 ${
+        className={`countdown-display grid w-full ${gridColumns} items-stretch gap-1 font-medium leading-none tabular-nums sm:gap-2 ${
           featured
             ? 'max-w-[30rem] text-[clamp(1.6rem,3.6vw,3.25rem)]'
             : 'max-w-[36rem] text-[clamp(1.7rem,5vw,4.25rem)]'
         }`}
       >
-        <span className="countdown-prefix flex items-center pr-1 text-[0.68em] tracking-[-0.04em] text-[var(--console-green)] sm:pr-2">
-          T−
+        <span
+          className={`countdown-prefix flex items-center pr-1 text-[0.68em] tracking-[-0.04em] sm:pr-2 ${
+            estimated
+              ? 'text-[var(--console-amber)]'
+              : 'text-[var(--console-green)]'
+          }`}
+        >
+          {estimated ? '≈T−' : 'T−'}
         </span>
         {units.map((unit) => (
           <span
             key={unit.label}
-            className="countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))] px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] sm:px-2 sm:py-2.5"
+            className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] sm:px-2 sm:py-2.5 ${
+              estimated
+                ? 'border-[color-mix(in_srgb,var(--console-amber)_25%,transparent)] bg-[linear-gradient(180deg,rgba(244,185,95,0.075),rgba(7,11,18,0.72))]'
+                : 'border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))]'
+            }`}
           >
             <span
-              className="countdown-digits block text-center tracking-[-0.055em] text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]"
+              className={`countdown-digits block text-center tracking-[-0.055em] ${
+                estimated
+                  ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
+                  : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'
+              }`}
               suppressHydrationWarning
             >
               {unit.value}
@@ -144,6 +191,14 @@ export default function Countdown({
           </span>
         ))}
       </span>
+      {estimated ? (
+        <span
+          aria-hidden="true"
+          className="mt-2 block font-sans text-xs leading-5 text-[var(--console-amber)]"
+        >
+          {precisionLabel} · provider target may move
+        </span>
+      ) : null}
     </time>
   );
 }

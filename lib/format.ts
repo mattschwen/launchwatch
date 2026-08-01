@@ -100,6 +100,19 @@ export function hasExactLaunchTime(
   return code === null || code === 'SEC' || code === 'SECOND';
 }
 
+export function hasCountdownTarget(
+  precision: LaunchDatePrecision | null | undefined
+): boolean {
+  const code = precisionCode(precision);
+  return (
+    hasExactLaunchTime(precision) ||
+    code === 'MIN' ||
+    code === 'MINUTE' ||
+    code === 'HR' ||
+    code === 'HOUR'
+  );
+}
+
 export function hasCalendarReadyLaunchTime(
   precision: LaunchDatePrecision | null | undefined
 ): boolean {

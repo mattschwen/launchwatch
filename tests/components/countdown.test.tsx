@@ -101,10 +101,40 @@ describe('Countdown', () => {
   });
 
   it.each([
+    [{ name: 'Minute', abbrev: 'MIN' }, 'Minute estimate', 3],
+    [{ name: 'Hour', abbrev: 'HR' }, 'Hour estimate', 2],
+  ])(
+    'renders a live, precision-aware %s countdown',
+    (precision, label, unitCount) => {
+      const { container } = render(
+        <Countdown
+          targetDate="2035-07-28T14:30:00.000Z"
+          precision={precision}
+          featured
+        />
+      );
+
+      expect(
+        screen.getByText(
+          new RegExp(`Estimated countdown: 2 days, 3 hours.*${label}`)
+        )
+      ).toBeVisible();
+      expect(container.querySelector('.countdown-prefix')).toHaveTextContent(
+        '≈T−'
+      );
+      expect(container.querySelectorAll('.countdown-unit')).toHaveLength(
+        unitCount
+      );
+      expect(screen.getByText(`${label} · provider target may move`)).toBeVisible();
+      expect(container.querySelector('.countdown-display')).toBeInTheDocument();
+    }
+  );
+
+  it.each([
     [{ name: 'Minute', abbrev: 'MIN' }, 'Minute estimate'],
     [{ name: 'Hour', abbrev: 'HR' }, 'Hour estimate'],
   ])(
-    'keeps provider-supplied time of day in compact %s estimates',
+    'keeps a compact approximate countdown for %s targets',
     (precision, label) => {
       render(
         <Countdown
@@ -114,9 +144,7 @@ describe('Countdown', () => {
         />
       );
 
-      expect(
-        screen.getByText(`Jul 28, 2035, 14:30 UTC · ${label}`)
-      ).toBeVisible();
+      expect(screen.getByText(`≈T−2d 03h · ${label}`)).toBeVisible();
     }
   );
 });

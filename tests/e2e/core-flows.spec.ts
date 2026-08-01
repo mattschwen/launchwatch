@@ -366,7 +366,7 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('compact estimates retain confirmed provider target times', async ({
+test('timed estimates retain a live approximate countdown', async ({
   page,
 }) => {
   const hourLaunch = {
@@ -397,21 +397,31 @@ test('compact estimates retain confirmed provider target times', async ({
     })
   );
 
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero.locator('.countdown-display')).toBeVisible();
+  await expect(hero.locator('.countdown-prefix')).toHaveText('≈T−');
+  await expect(hero.locator('.countdown-unit')).toHaveCount(2);
+  await expect(
+    hero.getByText('Hour estimate · provider target may move')
+  ).toBeVisible();
+  await expect(hero.getByText('Target estimate')).toHaveCount(0);
+
   await page.goto(`/watch?id=${hourLaunch.id}`);
 
   const compactTarget = page.locator('section.stream-surface time');
-  await expect(compactTarget).toHaveText(
-    'Jul 28, 2035, 14:30 UTC · Hour estimate'
-  );
-  await expect(compactTarget).not.toContainText('T−');
+  await expect(compactTarget).toContainText('≈T−');
+  await expect(compactTarget).toContainText('Hour estimate');
 
   if (!test.info().project.name.startsWith('mobile')) {
     const ticker = page
       .getByRole('complementary', { name: 'Mission status' })
       .getByRole('link', { name: /Orbital Dawn/ });
-    await expect(ticker).toContainText(
-      'Jul 28, 2035, 14:30 UTC · Hour estimate'
-    );
+    await expect(ticker).toContainText('≈T−');
+    await expect(ticker).toContainText('Hour estimate');
   }
 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
