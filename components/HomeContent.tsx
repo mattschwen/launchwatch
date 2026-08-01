@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Globe2 } from 'lucide-react';
 import HeroSection from '@/components/launch/HeroSection';
+import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import LaunchList from '@/components/LaunchList';
 import { useLaunchById, useLaunches } from '@/lib/hooks';
 import { selectLaunchVisual } from '@/lib/launch-visual';
@@ -109,17 +110,6 @@ export default function HomeContent(): React.ReactElement {
             needsCoverageEnrichment &&
             Boolean(featuredDetail.error || featuredDetail.notFound)
           }
-          visualLoading={
-            needsVisualEnrichment && featuredDetail.enriching
-          }
-          visualError={
-            needsVisualEnrichment
-              ? featuredDetail.error ??
-                (featuredDetail.notFound
-                  ? 'Mission detail was not found.'
-                  : null)
-              : null
-          }
           refresh={refresh}
         />
         <aside aria-label="Mission trajectory" className="hidden min-w-0 lg:block">
@@ -172,6 +162,22 @@ export default function HomeContent(): React.ReactElement {
           </div>
         ) : null}
       </section>
+
+      {featuredMission ? (
+        <MissionVisualDisclosure
+          launch={featuredMission}
+          loading={needsVisualEnrichment && featuredDetail.enriching}
+          error={
+            needsVisualEnrichment
+              ? featuredDetail.error ??
+                (featuredDetail.notFound
+                  ? 'Mission detail was not found.'
+                  : null)
+              : null
+          }
+          className="mt-4"
+        />
+      ) : null}
     </div>
   );
 }

@@ -636,11 +636,14 @@ test('home keeps the schedule ahead of optional licensed mission imagery', async
     };
   });
   expect(initialHierarchy.actionBottom).toBeLessThan(
-    initialHierarchy.disclosureTop
+    initialHierarchy.scheduleTop
   );
   expect(initialHierarchy.disclosureHeight).toBeGreaterThanOrEqual(44);
   expect(initialHierarchy.scheduleTop).toBeLessThan(
     initialHierarchy.viewportHeight
+  );
+  expect(initialHierarchy.scheduleTop).toBeLessThan(
+    initialHierarchy.disclosureTop
   );
 
   await showVisual.focus();

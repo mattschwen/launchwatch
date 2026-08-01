@@ -54,9 +54,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
 - The featured mission keeps its optional licensed vehicle or mission visual
-  behind a touch-safe disclosure so the schedule begins within the initial
-  viewport. Opening it must preserve the caption and full-image action without
-  widening the page; the image itself should not load before disclosure.
+  behind a touch-safe disclosure after the schedule and mobile trajectory
+  disclosure. Opening it must preserve the caption and full-image action
+  without widening the page; the image itself should not load before
+  disclosure.
 - When the feed does not yet include official coverage, the featured mission
   holds the generic search fallback while canonical detail is checked. The
   loading action keeps its 44px footprint; a failed check labels the fallback
