@@ -776,13 +776,20 @@ test('short mobile viewports keep featured actions clear of primary navigation',
   );
 
   await page.setViewportSize({ width: 393, height: 851 });
-  const [standardTelemetryBox, standardPrimaryBox] = await Promise.all([
-    telemetry.boundingBox(),
-    primaryAction.boundingBox(),
-  ]);
-  expect(standardTelemetryBox).not.toBeNull();
-  expect(standardPrimaryBox).not.toBeNull();
-  expect(standardTelemetryBox!.y).toBeLessThan(standardPrimaryBox!.y);
+  await expect
+    .poll(async () => {
+      const [standardTelemetryBox, standardPrimaryBox] = await Promise.all([
+        telemetry.boundingBox(),
+        primaryAction.boundingBox(),
+      ]);
+
+      return Boolean(
+        standardTelemetryBox &&
+          standardPrimaryBox &&
+          standardTelemetryBox.y < standardPrimaryBox.y
+      );
+    })
+    .toBe(true);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -2390,6 +2397,16 @@ test('briefing calendar options stay visible and restore trigger focus', async (
 
   await page.getByRole('button', { name: 'Open briefing' }).click();
   const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const backgroundRoot = page.locator('body > :has(#main-content)');
+  await expect(backgroundRoot).toHaveCount(1);
+  await expect(backgroundRoot).toHaveAttribute('aria-hidden', 'true');
+  await expect(backgroundRoot).toHaveAttribute('inert', '');
+  await expect(
+    page.getByRole('button', { name: 'Open briefing' })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Close mission briefing' })
+  ).toHaveCount(1);
   await expect(dialog.getByText('Target time', { exact: true })).toBeVisible();
   await expect(
     dialog.getByText('Jul 28, 2035, 14:30 UTC', { exact: true })
@@ -2475,6 +2492,15 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   await expect(calendarOptions).toHaveCount(0);
   await expect(dialog).toBeVisible();
   await expect(calendarTrigger).toBeFocused();
+  await dialog
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(backgroundRoot).not.toHaveAttribute('aria-hidden');
+  await expect(backgroundRoot).not.toHaveAttribute('inert');
+  await expect(
+    page.getByRole('button', { name: 'Open briefing' })
+  ).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

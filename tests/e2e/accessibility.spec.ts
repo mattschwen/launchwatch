@@ -148,6 +148,12 @@ test('@a11y mission briefing calendar has no serious WCAG A/AA violations', asyn
   await page.getByRole('button', { name: 'Open briefing' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  const backgroundRoot = page.locator('body > :has(#main-content)');
+  await expect(backgroundRoot).toHaveAttribute('aria-hidden', 'true');
+  await expect(backgroundRoot).toHaveAttribute('inert', '');
+  await expect(
+    page.getByRole('button', { name: 'Close mission briefing' })
+  ).toHaveCount(1);
   await dialog
     .getByRole('button', { name: 'Add launch to calendar' })
     .click();

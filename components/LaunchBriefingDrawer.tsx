@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
   CalendarDays,
@@ -52,6 +53,23 @@ export default function LaunchBriefingDrawer({
 
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
+    const backgroundElements = [
+      ...document.body.querySelectorAll<HTMLElement>(
+        ':scope > :not([data-launch-briefing-dialog])'
+      ),
+    ].filter(
+      (element) => !['LINK', 'SCRIPT', 'STYLE'].includes(element.tagName)
+    );
+    const backgroundState = backgroundElements.map((element) => ({
+      element,
+      ariaHidden: element.getAttribute('aria-hidden'),
+      inert: element.inert,
+    }));
+
+    backgroundElements.forEach((element) => {
+      element.inert = true;
+      element.setAttribute('aria-hidden', 'true');
+    });
     document.body.style.overflow = 'hidden';
     const frame = window.requestAnimationFrame(() => closeRef.current?.focus());
 
@@ -83,22 +101,31 @@ export default function LaunchBriefingDrawer({
       window.cancelAnimationFrame(frame);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
+      backgroundState.forEach(({ element, ariaHidden, inert }) => {
+        element.inert = inert;
+        if (ariaHidden === null) {
+          element.removeAttribute('aria-hidden');
+        } else {
+          element.setAttribute('aria-hidden', ariaHidden);
+        }
+      });
       previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
     };
   }, [open]);
 
-  if (!open || !launch) return null;
+  if (!open || !launch || typeof document === 'undefined') return null;
 
   const launchWindow = formatLaunchWindow(launch);
 
-  return (
-    <div className="fixed inset-0 z-[80]">
-      <button
-        type="button"
-        aria-label="Close mission briefing"
-        onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default bg-black/70 backdrop-blur-sm"
-      />
+  return createPortal(
+    <div
+      data-launch-briefing-dialog
+      className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+    >
       <div
         ref={dialogRef}
         role="dialog"
@@ -284,6 +311,7 @@ export default function LaunchBriefingDrawer({
           ) : null}
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

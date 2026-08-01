@@ -171,6 +171,9 @@ The optional expanded map remains a modal dialog. It must:
 - Connect disclosures to controlled regions with `aria-expanded` and `aria-controls`.
 - Give icon-only buttons an accessible name.
 - Prevent background scrolling while modal drawers or the expanded map are open.
+  Portal-backed modals must also make the application shell inert and hidden
+  from assistive technology, expose only one close control, and restore the
+  prior shell state and trigger focus when closed.
 
 ## Motion and Readability
 
