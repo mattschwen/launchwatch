@@ -387,6 +387,19 @@ test('shared chrome reports partial feed health on every route', async ({
   await expect.poll(() => visualAge.innerText()).not.toBe(initialVisualAge);
   await expect(footerStatus).not.toHaveAttribute('aria-live');
   await expect(page.locator('footer [aria-live]')).toHaveCount(0);
+  const sourceFeeds = page.getByRole('navigation', {
+    name: 'Launch data sources',
+  });
+  await expect(
+    sourceFeeds.getByRole('link', {
+      name: 'SpaceX source — unavailable',
+    })
+  ).toContainText('unavailable');
+  await expect(
+    sourceFeeds.getByRole('link', {
+      name: 'Launch Library 2 source — available',
+    })
+  ).toContainText('available');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -983,11 +996,11 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
     name: 'Launch data sources',
   });
   const spacexSource = sourceFeeds.getByRole('link', {
-    name: 'SpaceX',
+    name: 'SpaceX source — available',
     exact: true,
   });
   const launchLibrarySource = sourceFeeds.getByRole('link', {
-    name: 'Launch Library 2',
+    name: 'Launch Library 2 source — available',
     exact: true,
   });
   await expect(refresh).toHaveText('Refresh now');

@@ -4,6 +4,61 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import { useCurrentTime, useLaunches } from '@/lib/hooks';
 import { getFeedHealth } from '@/lib/feed-health';
 
+function providerStatus(meta: unknown, pending: boolean): {
+  label: string;
+  className: string;
+  dotClassName: string;
+} {
+  if (pending) {
+    return {
+      label: 'syncing',
+      className: 'text-[var(--console-cyan)]',
+      dotClassName: 'bg-[var(--console-cyan)]',
+    };
+  }
+
+  const state =
+    meta && typeof meta === 'object' && !Array.isArray(meta)
+      ? (meta as Record<string, unknown>).state
+      : null;
+
+  if (state === 'error') {
+    return {
+      label: 'unavailable',
+      className: 'text-[var(--console-red)]',
+      dotClassName: 'bg-[var(--console-red)]',
+    };
+  }
+
+  if (state === 'stale') {
+    return {
+      label: 'stale',
+      className: 'text-[var(--console-amber)]',
+      dotClassName: 'bg-[var(--console-amber)]',
+    };
+  }
+
+  if (state === 'not-requested') {
+    return {
+      label: 'standby',
+      className: 'text-[var(--text-muted)]',
+      dotClassName: 'bg-[var(--text-muted)]',
+    };
+  }
+
+  return state === 'ok'
+    ? {
+        label: 'available',
+        className: 'text-[var(--console-green)]',
+        dotClassName: 'bg-[var(--console-green)]',
+      }
+    : {
+        label: 'unknown',
+        className: 'text-[var(--text-muted)]',
+        dotClassName: 'bg-[var(--text-muted)]',
+      };
+}
+
 function refreshAge(generatedAt: string | undefined, now: number): string {
   if (!generatedAt) return 'pending';
   const timestamp = new Date(generatedAt).getTime();
@@ -26,6 +81,12 @@ export default function Footer(): React.ReactElement {
     partial: Boolean(meta?.partial),
     stale: Boolean(meta?.stale),
   });
+  const providers =
+    meta?.providers && !Array.isArray(meta.providers)
+      ? meta.providers
+      : null;
+  const spacexStatus = providerStatus(providers?.spacex, !meta);
+  const ll2Status = providerStatus(providers?.ll2, !meta);
   const age = refreshAge(meta?.generatedAt, now);
   const statusLabel =
     feedHealth === 'offline'
@@ -76,18 +137,38 @@ export default function Footer(): React.ReactElement {
               href="https://github.com/r-spacex/SpaceX-API"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`SpaceX source — ${spacexStatus.label}`}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
             >
-              SpaceX
+              <span>SpaceX</span>
+              <span
+                aria-hidden="true"
+                className={`inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] ${spacexStatus.className}`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${spacexStatus.dotClassName}`}
+                />
+                {spacexStatus.label}
+              </span>
               <ExternalLink aria-hidden="true" size={12} />
             </a>
             <a
               href="https://thespacedevs.com/llapi"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Launch Library 2 source — ${ll2Status.label}`}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
             >
-              Launch Library 2
+              <span>Launch Library 2</span>
+              <span
+                aria-hidden="true"
+                className={`inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] ${ll2Status.className}`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${ll2Status.dotClassName}`}
+                />
+                {ll2Status.label}
+              </span>
               <ExternalLink aria-hidden="true" size={12} />
             </a>
           </nav>

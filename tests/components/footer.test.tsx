@@ -35,9 +35,11 @@ describe('Footer', () => {
     const sources = await screen.findByRole('navigation', {
       name: 'Launch data sources',
     });
-    const spacex = screen.getByRole('link', { name: 'SpaceX' });
+    const spacex = screen.getByRole('link', {
+      name: 'SpaceX source — available',
+    });
     const launchLibrary = screen.getByRole('link', {
-      name: 'Launch Library 2',
+      name: 'Launch Library 2 source — available',
     });
 
     expect(sources).toContainElement(spacex);
@@ -60,7 +62,19 @@ describe('Footer', () => {
       vi.fn().mockResolvedValue(
         response({
           launches: UPCOMING_LAUNCHES,
-          meta: { ...FEED_META, partial: true },
+          meta: {
+            ...FEED_META,
+            partial: true,
+            providers: {
+              ...FEED_META.providers,
+              spacex: {
+                state: 'error',
+                cached: false,
+                updatedAt: null,
+                error: 'Provider request failed',
+              },
+            },
+          },
         })
       )
     );
@@ -79,6 +93,14 @@ describe('Footer', () => {
     expect(status).not.toHaveTextContent('pending');
     expect(status?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'SpaceX source — unavailable' })
+    ).toHaveTextContent('unavailable');
+    expect(
+      screen.getByRole('link', {
+        name: 'Launch Library 2 source — available',
+      })
+    ).toHaveTextContent('available');
   });
 
   it('keeps the ticking refresh age visual and non-live', async () => {
