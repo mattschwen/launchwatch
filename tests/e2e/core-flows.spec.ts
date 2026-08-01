@@ -1412,13 +1412,19 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('home schedule keeps long mission and provider identities readable', async ({
+test('home schedule keeps long mission telemetry readable', async ({
   page,
 }) => {
   const longMissionName =
     'Falcon 9 Block 5 | Transporter 18 (Dedicated SSO Rideshare)';
   const longProviderName =
     'China Aerospace Science and Technology Corporation';
+  const longVehicleName = 'Firefly Alpha Block 2 with extended fairing';
+  const longVehicleFamily = 'Firefly Alpha reusable launch vehicle';
+  const longSiteName = 'Satish Dhawan Space Centre Second Launch Pad';
+  const displayedSiteName = 'Satish Dhawan Space Centre Second Pad';
+  const longSiteLocality =
+    "Wenchang Space Launch Site, People's Republic of China";
 
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -1434,6 +1440,13 @@ test('home schedule keeps long mission and provider identities readable', async 
             ...UPCOMING_LAUNCHES[0],
             name: longMissionName,
             provider: longProviderName,
+            rocket: longVehicleName,
+            rocketFamily: longVehicleFamily,
+            launchSite: longSiteName,
+            location: {
+              ...UPCOMING_LAUNCHES[0].location!,
+              name: longSiteLocality,
+            },
           },
         ],
         meta: FEED_META,
@@ -1449,11 +1462,25 @@ test('home schedule keeps long mission and provider identities readable', async 
   await expect(missionName).toBeVisible();
   await expect(providerName).toBeVisible();
 
-  for (const identity of [missionName, providerName]) {
-    const layout = await identity.evaluate((element) => {
+  const readableContent = [missionName, providerName];
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    readableContent.push(
+      schedule.getByText(longVehicleName, { exact: true }),
+      schedule.getByText(longVehicleFamily, { exact: true }),
+      schedule.getByText(displayedSiteName, { exact: true }),
+      schedule.getByText(longSiteLocality, { exact: true })
+    );
+  }
+
+  for (const content of readableContent) {
+    await expect(content).toBeVisible();
+    const layout = await content.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
       const style = getComputedStyle(element);
       return {
         clientWidth: element.clientWidth,
+        height: bounds.height,
+        lineHeight: Number.parseFloat(style.lineHeight),
         scrollWidth: element.scrollWidth,
         textOverflow: style.textOverflow,
         whiteSpace: style.whiteSpace,
@@ -1463,6 +1490,7 @@ test('home schedule keeps long mission and provider identities readable', async 
     expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
     expect(layout.textOverflow).not.toBe('ellipsis');
     expect(layout.whiteSpace).toBe('normal');
+    expect(layout.height).toBeGreaterThanOrEqual(layout.lineHeight);
   }
 
   const missionLink = schedule.getByRole('link', { name: longMissionName });

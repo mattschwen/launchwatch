@@ -88,19 +88,19 @@ export default function LaunchCard({
         </div>
 
         <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-sm text-[var(--text-primary)]">
+          <p className="break-words text-sm leading-5 text-[var(--text-primary)]">
             {launch.rocket}
           </p>
-          <p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">
+          <p className="mt-0.5 break-words text-xs leading-4 text-[var(--text-muted)]">
             {launch.rocketFamily || launch.missionType || 'Launch vehicle'}
           </p>
         </div>
 
         <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+          <p className="break-words text-sm font-medium leading-5 text-[var(--text-primary)]">
             {siteName.trim()}
           </p>
-          <p className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+          <p className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
             {siteLocality.join(',').trim() ||
               launch.location?.name ||
               'Location pending'}

@@ -57,8 +57,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping complete
-  mission and provider identities readable instead of clipping provider-supplied
-  names.
+  mission, provider, vehicle, and launch-site telemetry readable instead of
+  clipping provider-supplied values.
 - Filters are collapsed until requested.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
