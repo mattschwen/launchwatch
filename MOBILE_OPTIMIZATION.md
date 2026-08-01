@@ -48,12 +48,13 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - At the smallest short viewport, featured mission actions precede the telemetry
   grid so Watch and Briefing remain visible above the fixed primary navigation.
 - Countdown values wrap without horizontal overflow.
-- Provider minute/hour targets retain a live amber countdown without exposing
-  unsupported seconds; day/month/quarter/year targets render as stable amber
-  estimates. Calendar export and launch alerts remain visibly pending until the
-  provider confirms a minute-level target. The pending control remains
-  keyboard-focusable and exposes its precision-aware explanation on focus or
-  hover without opening calendar actions.
+- Provider minute/hour targets retain a live amber countdown that visibly ticks
+  every second toward the approximate provider target; the `≈T−` prefix and
+  estimate note preserve the source precision. Day/month/quarter/year targets
+  remain stable amber estimates. Calendar export and launch alerts remain
+  visibly pending until the provider confirms a minute-level target. The
+  pending control remains keyboard-focusable and exposes its precision-aware
+  explanation on focus or hover without opening calendar actions.
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping complete

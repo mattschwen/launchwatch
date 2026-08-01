@@ -369,6 +369,7 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
 test('timed estimates retain a live approximate countdown', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   const hourLaunch = {
     ...UPCOMING_LAUNCHES[0],
     datePrecision: {
@@ -404,7 +405,34 @@ test('timed estimates retain a live approximate countdown', async ({
   );
   await expect(hero.locator('.countdown-display')).toBeVisible();
   await expect(hero.locator('.countdown-prefix')).toHaveText('≈T−');
-  await expect(hero.locator('.countdown-unit')).toHaveCount(2);
+  await expect(hero.locator('.countdown-unit')).toHaveCount(4);
+  await expect(hero.locator('.countdown-unit-label')).toHaveText([
+    'days',
+    'hrs',
+    'min',
+    'sec',
+  ]);
+  const seconds = hero.locator('.countdown-digits').last();
+  const initialSeconds = await seconds.textContent();
+  await expect
+    .poll(() => seconds.textContent(), { timeout: 3_000 })
+    .not.toBe(initialSeconds);
+  await expect(seconds).toHaveClass(/countdown-digit-tick/);
+  const animation = await seconds.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      name: style.animationName,
+      duration: Number.parseFloat(style.animationDuration),
+    };
+  });
+  expect(animation.name).toBe('countdown-digit-tick');
+  expect(animation.duration).toBeGreaterThan(0.25);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedDuration = await seconds.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).animationDuration)
+  );
+  expect(reducedDuration).toBeLessThanOrEqual(0.001);
   await expect(
     hero.getByText('Hour estimate · provider target may move')
   ).toBeVisible();
@@ -415,6 +443,7 @@ test('timed estimates retain a live approximate countdown', async ({
   const compactTarget = page.locator('section.stream-surface time');
   await expect(compactTarget).toContainText('≈T−');
   await expect(compactTarget).toContainText('Hour estimate');
+  await expect(compactTarget.locator('.countdown-compact-tick')).toBeVisible();
 
   if (!test.info().project.name.startsWith('mobile')) {
     const ticker = page

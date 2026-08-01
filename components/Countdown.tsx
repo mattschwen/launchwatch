@@ -29,10 +29,6 @@ export default function Countdown({
   const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
   const exact = hasExactLaunchTime(precision);
   const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
-  const precisionCode = (
-    precision?.abbrev?.trim() || precision?.name?.trim() || ''
-  ).toUpperCase();
-  const hourEstimate = precisionCode === 'HR' || precisionCode === 'HOUR';
   const estimated = !exact && hasCountdownTarget(precision);
 
   if (!hasCountdownTarget(precision)) {
@@ -91,10 +87,8 @@ export default function Countdown({
   if (compact) {
     const compactValue = estimated
       ? days > 0
-        ? `≈T−${days}d ${values[1]}h · ${precisionLabel}`
-        : hourEstimate
-          ? `≈T−${values[1]}h · ${precisionLabel}`
-          : `≈T−${values[1]}:${values[2]} · ${precisionLabel}`
+        ? `≈T−${days}d ${values[1]}:${values[2]}:${values[3]} · ${precisionLabel}`
+        : `≈T−${values[1]}:${values[2]}:${values[3]} · ${precisionLabel}`
       : days > 0
         ? `T−${days}d ${values[1]}h`
         : `T−${values[1]}:${values[2]}:${values[3]}`;
@@ -104,7 +98,7 @@ export default function Countdown({
         dateTime={targetDate}
         aria-label={
           estimated
-            ? `Estimated countdown: ${days} days, ${hours} hours${hourEstimate ? '' : `, ${minutes} minutes`} until the provider target. ${precisionLabel}.`
+            ? `Estimated countdown: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds until the provider target. ${precisionLabel}.`
             : undefined
         }
         className={`font-mono text-sm font-semibold tabular-nums ${
@@ -114,7 +108,13 @@ export default function Countdown({
         } ${className}`}
         suppressHydrationWarning
       >
-        <span aria-hidden={estimated ? 'true' : undefined}>{compactValue}</span>
+        <span
+          key={estimated ? seconds : 'exact'}
+          aria-hidden={estimated ? 'true' : undefined}
+          className={estimated ? 'countdown-compact-tick inline-block' : undefined}
+        >
+          {compactValue}
+        </span>
       </time>
     );
   }
@@ -125,14 +125,9 @@ export default function Countdown({
     { label: 'min', value: values[2] },
     { label: 'sec', value: values[3] },
   ];
-  const units = estimated
-    ? allUnits.slice(0, hourEstimate ? 2 : 3)
-    : allUnits;
-  const gridColumns = estimated
-    ? hourEstimate
-      ? 'grid-cols-[auto_minmax(3ch,1.2fr)_minmax(2ch,1fr)]'
-      : 'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(2,minmax(2ch,1fr))]'
-    : 'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))]';
+  const units = allUnits;
+  const gridColumns =
+    'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))]';
 
   return (
     <time
@@ -142,9 +137,7 @@ export default function Countdown({
     >
       <span className="sr-only" suppressHydrationWarning>
         {estimated ? 'Estimated countdown: ' : ''}
-        {days} days, {hours} hours
-        {!estimated || !hourEstimate ? `, ${minutes} minutes` : ''}
-        {!estimated ? `, ${seconds} seconds` : ''} until {estimated
+        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until {estimated
           ? `the provider target. ${precisionLabel}.`
           : 'launch'}
       </span>
@@ -176,7 +169,8 @@ export default function Countdown({
             }`}
           >
             <span
-              className={`countdown-digits block text-center tracking-[-0.055em] ${
+              key={`${unit.label}-${unit.value}`}
+              className={`countdown-digits countdown-digit-tick block text-center tracking-[-0.055em] ${
                 estimated
                   ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
                   : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'

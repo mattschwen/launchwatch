@@ -101,11 +101,11 @@ describe('Countdown', () => {
   });
 
   it.each([
-    [{ name: 'Minute', abbrev: 'MIN' }, 'Minute estimate', 3],
-    [{ name: 'Hour', abbrev: 'HR' }, 'Hour estimate', 2],
+    [{ name: 'Minute', abbrev: 'MIN' }, 'Minute estimate'],
+    [{ name: 'Hour', abbrev: 'HR' }, 'Hour estimate'],
   ])(
     'renders a live, precision-aware %s countdown',
-    (precision, label, unitCount) => {
+    (precision, label) => {
       const { container } = render(
         <Countdown
           targetDate="2035-07-28T14:30:00.000Z"
@@ -116,15 +116,19 @@ describe('Countdown', () => {
 
       expect(
         screen.getByText(
-          new RegExp(`Estimated countdown: 2 days, 3 hours.*${label}`)
+          `Estimated countdown: 2 days, 3 hours, 4 minutes, 5 seconds until the provider target. ${label}.`
         )
       ).toBeVisible();
       expect(container.querySelector('.countdown-prefix')).toHaveTextContent(
         '≈T−'
       );
-      expect(container.querySelectorAll('.countdown-unit')).toHaveLength(
-        unitCount
-      );
+      expect(container.querySelectorAll('.countdown-unit')).toHaveLength(4);
+      expect(
+        [...container.querySelectorAll('.countdown-digits')].map(
+          (element) => element.textContent
+        )
+      ).toEqual(['02', '03', '04', '05']);
+      expect(container.querySelectorAll('.countdown-digit-tick')).toHaveLength(4);
       expect(screen.getByText(`${label} · provider target may move`)).toBeVisible();
       expect(container.querySelector('.countdown-display')).toBeInTheDocument();
     }
@@ -144,7 +148,8 @@ describe('Countdown', () => {
         />
       );
 
-      expect(screen.getByText(`≈T−2d 03h · ${label}`)).toBeVisible();
+      expect(screen.getByText(`≈T−2d 03:04:05 · ${label}`)).toBeVisible();
+      expect(screen.getByText(/≈T−/)).toHaveClass('countdown-compact-tick');
     }
   );
 });
