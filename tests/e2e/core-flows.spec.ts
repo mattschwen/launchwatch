@@ -451,12 +451,17 @@ test('watch mission details return to the same selected mission', async ({
 test('featured mission telemetry stays legible in the split layout', async ({
   page,
 }) => {
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+  } else {
+    await page.setViewportSize({ width: 320, height: 568 });
+  }
   const telemetryLaunch = {
     ...UPCOMING_LAUNCHES[0],
     rocket: 'Long March 6A',
     launchSite:
       "Taiyuan Satellite Launch Center, People's Republic of China",
-    missionType: null,
+    missionType: 'Communications',
     orbit: null,
   };
   await page.route('**/api/launches?type=all', (route) =>
@@ -504,15 +509,28 @@ test('featured mission telemetry stays legible in the split layout', async ({
     return {
       columns: columns.length,
       narrowestCell: Math.min(...cells),
+      clippedValues: Array.from(element.querySelectorAll('dd')).filter(
+        (value) => value.scrollWidth > value.clientWidth + 1
+      ).length,
     };
   });
 
   expect(layout.columns).toBe(2);
   expect(layout.narrowestCell).toBeGreaterThanOrEqual(
-    (page.viewportSize()?.width ?? 0) >= 1024 ? 220 : 120
+    (page.viewportSize()?.width ?? 0) >= 768 ? 220 : 120
   );
+  expect(layout.clippedValues).toBe(0);
   await expect(
     telemetry.getByText('Long March 6A', { exact: true })
+  ).toBeVisible();
+  await expect(
+    telemetry.getByText('Taiyuan Satellite Launch Center', { exact: true })
+  ).toBeVisible();
+  await expect(
+    telemetry.getByText("People's Republic of China", { exact: true })
+  ).toBeVisible();
+  await expect(
+    telemetry.getByText('Communications', { exact: true })
   ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

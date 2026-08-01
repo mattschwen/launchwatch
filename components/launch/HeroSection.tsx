@@ -262,7 +262,7 @@ export default function HeroSection({
             )}
           </div>
 
-          <dl className="grid grid-cols-2 gap-y-5 xl:grid-cols-4 xl:gap-y-0">
+          <dl className="grid grid-cols-2 gap-y-5">
             <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <CalendarDays
                 aria-hidden="true"
@@ -270,7 +270,7 @@ export default function HeroSection({
                 size={18}
               />
               <dt className="data-label">Date (UTC)</dt>
-              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+              <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
                 {formatLaunchDay(
                   activeLaunch.date,
                   activeLaunch.datePrecision
@@ -283,45 +283,45 @@ export default function HeroSection({
                 )}
               </dd>
             </div>
-            <div className="relative min-w-0 px-3 pl-10 xl:border-r xl:border-[var(--border-subtle)]">
+            <div className="relative min-w-0 pl-6 min-[360px]:px-3 min-[360px]:pl-10">
               <MapPin
                 aria-hidden="true"
-                className="absolute left-3 top-0.5 text-[var(--text-muted)]"
+                className="absolute left-0 top-0.5 text-[var(--text-muted)] min-[360px]:left-3"
                 size={18}
               />
               <dt className="data-label">Site</dt>
-              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+              <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
                 {siteName}
               </dd>
-              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+              <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
                 {siteLocality || activeLaunch.location?.name || 'Location pending'}
               </dd>
             </div>
-            <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7 xl:px-3 xl:pl-10">
+            <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <Rocket
                 aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)] xl:left-3"
+                className="absolute left-0 top-0.5 text-[var(--text-muted)]"
                 size={18}
               />
               <dt className="data-label">Vehicle</dt>
-              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+              <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
                 {activeLaunch.rocket}
               </dd>
-              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+              <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
                 {vehicleDetail || activeLaunch.provider || 'Vehicle profile'}
               </dd>
             </div>
-            <div className="relative min-w-0 px-3 pl-10">
+            <div className="relative min-w-0 pl-6 min-[360px]:px-3 min-[360px]:pl-10">
               <Target
                 aria-hidden="true"
-                className="absolute left-3 top-0.5 text-[var(--text-muted)]"
+                className="absolute left-0 top-0.5 text-[var(--text-muted)] min-[360px]:left-3"
                 size={18}
               />
               <dt className="data-label">Mission</dt>
-              <dd className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
+              <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
                 {missionType}
               </dd>
-              <dd className="mt-0.5 truncate text-xs text-[var(--console-cyan)]">
+              <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
                 {missionDetail}
               </dd>
             </div>

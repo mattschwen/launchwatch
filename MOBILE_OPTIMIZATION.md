@@ -45,7 +45,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Provider day/month/quarter/year targets render as amber estimates instead of
   false second-by-second countdowns. Calendar export and launch alerts remain
   visibly pending until the provider confirms a minute-level target.
-- Mission metadata adapts from multiple columns to stacked groups.
+- Mission metadata adapts from multiple columns to stacked groups and wraps
+  complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping complete
   mission and provider identities readable instead of clipping provider-supplied
   names.
