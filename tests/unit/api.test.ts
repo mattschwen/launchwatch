@@ -112,6 +112,32 @@ describe('SpaceX normalization', () => {
     expect(normalized.missionVisual).not.toHaveProperty('licenseUrl');
   });
 
+  it('drops unsafe provider webcast URLs', () => {
+    const launch: SpaceXLaunch = {
+      id: 'unsafe-webcast',
+      name: 'Unsafe Webcast Fixture',
+      date_utc: '2026-08-01T12:00:00.000Z',
+      date_unix: 1785585600,
+      rocket: 'falcon-9',
+      success: null,
+      details: null,
+      links: {
+        webcast: 'javascript:alert(document.domain)',
+        youtube_id: null,
+        article: null,
+        wikipedia: null,
+      },
+      launchpad: '39a',
+      upcoming: true,
+    };
+
+    expect(normalizeSpaceXLaunch(launch)).toMatchObject({
+      livestream: null,
+      livestreams: null,
+      videoThumbnail: null,
+    });
+  });
+
   it('accepts numeric coordinate strings and meaningful launchpad fallbacks', () => {
     const launch: SpaceXLaunch = {
       id: 'fallback-pad',

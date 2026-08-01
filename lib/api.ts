@@ -16,6 +16,7 @@ import {
 } from './types';
 import { firstLaunchValue, isMeaningfulLaunchValue } from './format';
 import { isEligibleLaunchVisual } from './launch-visual';
+import { extractYouTubeId } from './youtube';
 
 // API Configuration
 const SPACEX_PUBLIC_API = 'https://api.spacexdata.com/v4';
@@ -511,19 +512,10 @@ export async function getNASAAPOD(): Promise<APOD | null> {
 }
 
 function buildYouTubeThumbnail(url: string | null | undefined): string | null {
-  if (!url) {
-    return null;
-  }
-
-  const match = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/live\/)([^&?/]+)/
-  );
-
-  if (!match?.[1]) {
-    return null;
-  }
-
-  return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+  const videoId = url ? extractYouTubeId(url) : null;
+  return videoId
+    ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+    : null;
 }
 
 function mediaUrl(media: LL2Media | string | null | undefined): string | null {
@@ -540,6 +532,25 @@ function optionalText(value: string | null | undefined): string | undefined {
 
   const trimmed = value.trim();
   return trimmed || undefined;
+}
+
+function safeProviderCoverageUrl(
+  value: string | null | undefined,
+): string | null {
+  const normalized = optionalText(value);
+  if (!normalized) return null;
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === 'https:' &&
+      Boolean(parsed.hostname) &&
+      !parsed.username &&
+      !parsed.password
+      ? normalized
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeDatePrecision(value: unknown): LaunchDatePrecision | null {
@@ -638,8 +649,10 @@ function ll2Videos(launch: LL2Launch): LL2Video[] {
   const seen = new Set<string>();
 
   return candidates
-    .map((candidate, index) => ({ candidate, index }))
-    .filter(({ candidate }) => Boolean(candidate?.url))
+    .flatMap((candidate, index) => {
+      const url = safeProviderCoverageUrl(candidate?.url);
+      return url ? [{ candidate: { ...candidate, url }, index }] : [];
+    })
     .sort((left, right) => {
       const trust = (video: LL2Video): number => {
         const type = video.type?.name?.trim().toLowerCase() || '';
@@ -837,7 +850,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     populatedLaunchpad?.full_name,
     populatedLaunchpad?.name,
   ], launchSite);
-  const webcast = launch.links.webcast || null;
+  const webcast = safeProviderCoverageUrl(launch.links.webcast);
   const image = launch.links.flickr?.original?.[0] || null;
   const rocketImage = (Array.isArray(populatedRocket?.flickr_images)
     ? populatedRocket.flickr_images

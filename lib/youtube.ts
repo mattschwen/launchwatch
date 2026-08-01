@@ -3,7 +3,17 @@
  * Automatically finds livestreams for launches when API doesn't provide them
  */
 
-import { Launch } from './types';
+import type { Launch } from './types';
+
+const YOUTUBE_HOSTS = new Set([
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'music.youtube.com',
+  'www.youtube-nocookie.com',
+  'youtube-nocookie.com',
+]);
+const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{3,128}$/;
 
 /**
  * Extract YouTube video ID from various URL formats
@@ -11,19 +21,32 @@ import { Launch } from './types';
 export function extractYouTubeId(url: string): string | null {
   if (!url) return null;
 
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\?\/]+)/,
-    /youtube\.com\/live\/([^&\?\/]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
+      return null;
     }
-  }
 
-  return null;
+    const hostname = parsed.hostname.toLowerCase();
+    let videoId: string | null = null;
+
+    if (hostname === 'youtu.be') {
+      videoId = parsed.pathname.split('/').filter(Boolean)[0] ?? null;
+    } else if (YOUTUBE_HOSTS.has(hostname)) {
+      if (parsed.pathname === '/watch') {
+        videoId = parsed.searchParams.get('v');
+      } else {
+        const [kind, candidate] = parsed.pathname.split('/').filter(Boolean);
+        if (kind === 'embed' || kind === 'v' || kind === 'live' || kind === 'shorts') {
+          videoId = candidate ?? null;
+        }
+      }
+    }
+
+    return videoId && YOUTUBE_ID_PATTERN.test(videoId) ? videoId : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

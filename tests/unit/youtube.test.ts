@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 import {
   buildSearchQuery,
+  extractYouTubeId,
   generateYouTubeSearchUrl,
 } from '@/lib/youtube';
 
@@ -37,5 +38,24 @@ describe('YouTube fallback search', () => {
     expect(buildSearchQuery(launch)).toBe(
       'SpaceX Falcon 9 Polaris Relay launch livestream'
     );
+  });
+});
+
+describe('YouTube URL parsing', () => {
+  it('extracts supported YouTube URLs without trusting lookalike hosts', () => {
+    expect(
+      extractYouTubeId('https://www.youtube.com/watch?v=fixture123')
+    ).toBe('fixture123');
+    expect(extractYouTubeId('https://youtu.be/fixture456')).toBe(
+      'fixture456'
+    );
+    expect(
+      extractYouTubeId(
+        'https://example.test/youtube.com/watch?v=spoofed123'
+      )
+    ).toBeNull();
+    expect(
+      extractYouTubeId('javascript:youtube.com/watch?v=scripted123')
+    ).toBeNull();
   });
 });

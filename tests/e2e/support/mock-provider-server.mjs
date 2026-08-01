@@ -260,6 +260,30 @@ const ll2RankedCoverage = {
   ],
 };
 
+const ll2UnsafeCoverage = {
+  ...ll2Upcoming,
+  id: 'demo-unsafe-coverage',
+  name: 'Unsafe Coverage Fixture',
+  vid_urls: [
+    {
+      priority: 10,
+      publisher: 'Compromised provider record',
+      title: 'Unsafe scripted coverage',
+      url: 'javascript:alert(document.domain)',
+      type: { name: 'Official Webcast' },
+      live: true,
+    },
+    {
+      priority: 9,
+      publisher: 'Compromised provider record',
+      title: 'Credential-bearing coverage',
+      url: 'https://viewer:secret@example.test/stream',
+      type: { name: 'Official Webcast' },
+      live: true,
+    },
+  ],
+};
+
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
   name: 'Pathfinder Qualification',
@@ -371,6 +395,8 @@ const server = createServer(async (request, response) => {
         ? ll2Upcoming
         : id === ll2RankedCoverage.id
           ? ll2RankedCoverage
+        : id === ll2UnsafeCoverage.id
+          ? ll2UnsafeCoverage
         : id === ll2Previous.id
           ? ll2Previous
           : null;

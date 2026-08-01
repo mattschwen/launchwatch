@@ -315,6 +315,37 @@ describe('Launch Library 2.3 adapter', () => {
     ]);
   });
 
+  it('drops unsafe coverage URLs before deriving live state', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      webcast_live: false,
+      vid_urls: [
+        {
+          priority: 10,
+          title: 'Unsafe scripted coverage',
+          url: 'javascript:alert(document.domain)',
+          type: { name: 'Official Webcast' },
+          live: true,
+        },
+        {
+          priority: 9,
+          title: 'Credential-bearing coverage',
+          url: 'https://viewer:secret@example.test/stream',
+          type: { name: 'Official Webcast' },
+          live: true,
+        },
+      ],
+    });
+
+    expect(normalized).toMatchObject({
+      livestream: null,
+      livestreams: null,
+      videoThumbnail: null,
+      isLive: false,
+      status: 'upcoming',
+    });
+  });
+
   it('retains compatibility with LL2 2.2 field names', () => {
     const legacyLaunch: LL2Launch = {
       id: 'legacy-fixture',

@@ -86,6 +86,9 @@ ll2-<Launch Library 2 source ID>
   mistaken for exact launch times;
 - ranks detailed provider broadcasts by source trust, live state, and provider
   priority so official coverage remains the primary mission action;
+- accepts provider coverage only as credential-free HTTPS URLs and parses
+  YouTube IDs from recognized YouTube hosts, so malformed records fall back to
+  safe stream search instead of becoming executable or misleading actions;
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 

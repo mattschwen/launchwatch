@@ -70,6 +70,28 @@ test('watch prefers official provider coverage over an earlier restream', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch degrades unsafe provider coverage to a safe stream search', async ({
+  page,
+}) => {
+  await page.unroute('**/api/launches**');
+  await page.goto('/watch?id=ll2-demo-unsafe-coverage');
+
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Unsafe Coverage Fixture' })
+  ).toBeVisible();
+  const fallback = page.getByRole('link', { name: 'Search for stream' });
+  await expect(fallback).toHaveAttribute(
+    'href',
+    /https:\/\/www\.youtube\.com\/results\?search_query=/
+  );
+  await fallback.focus();
+  await expect(fallback).toBeFocused();
+  expect((await fallback.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+  await expect(page.locator('a[href*="viewer:secret"]')).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('keyboard skip link is visible, touch-safe, and clears the sticky header', async ({
   page,
 }) => {
