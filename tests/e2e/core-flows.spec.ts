@@ -2351,6 +2351,108 @@ test('mission intelligence keeps generic search separate from stream leads', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence keeps complete stream identities contained', async ({
+  page,
+}) => {
+  const streamTitle =
+    'Polaris Relay Mission Official Launch Coverage and Preflight Briefing';
+  const channelTitle = 'International Orbital Communications Directorate';
+
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        summary: {
+          ...LAUNCH_INTEL.summary,
+          streamState: 'upcoming',
+          recommendedLabel: 'Open official coverage',
+          recommendedUrl: 'https://www.youtube.com/watch?v=official-test',
+        },
+        streamCandidates: [
+          {
+            id: 'official-test',
+            title: streamTitle,
+            url: 'https://www.youtube.com/watch?v=official-test',
+            channelTitle,
+            source: 'youtube-api',
+            confidence: 'high',
+            liveStatus: 'upcoming',
+          },
+        ],
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  const title = intelligence.getByText(streamTitle, { exact: true });
+  const channel = intelligence.getByText(
+    `${channelTitle} · high confidence`,
+    { exact: true }
+  );
+  const stream = title.locator('xpath=ancestor::a');
+
+  await stream.scrollIntoViewIfNeeded();
+  await stream.focus();
+  await expect(stream).toBeFocused();
+
+  const geometry = await intelligence.evaluate((region, values) => {
+    const findExactText = (value: string): HTMLElement | undefined =>
+      Array.from(region.querySelectorAll<HTMLElement>('span')).find(
+        (element) => element.textContent === value
+      );
+    const titleElement = findExactText(values.streamTitle);
+    const channelElement = findExactText(
+      `${values.channelTitle} · high confidence`
+    );
+    const streamElement = titleElement?.closest('a');
+    const regionBounds = region.getBoundingClientRect();
+    const streamBounds = streamElement?.getBoundingClientRect();
+
+    return {
+      regionContained: region.scrollWidth <= region.clientWidth + 1,
+      streamContained: Boolean(
+        streamBounds &&
+          streamBounds.left >= regionBounds.left - 1 &&
+          streamBounds.right <= regionBounds.right + 1
+      ),
+      targetHeight: streamBounds?.height ?? 0,
+      titleComplete: Boolean(
+        titleElement &&
+          titleElement.scrollWidth <= titleElement.clientWidth + 1 &&
+          titleElement.scrollHeight <= titleElement.clientHeight + 1
+      ),
+      channelComplete: Boolean(
+        channelElement &&
+          channelElement.scrollWidth <= channelElement.clientWidth + 1 &&
+          channelElement.scrollHeight <= channelElement.clientHeight + 1
+      ),
+      titleWrapped: Boolean(
+        titleElement &&
+          titleElement.clientHeight >
+            Number.parseFloat(getComputedStyle(titleElement).lineHeight) * 1.5
+      ),
+    };
+  }, { streamTitle, channelTitle });
+
+  expect(geometry).toMatchObject({
+    regionContained: true,
+    streamContained: true,
+    titleComplete: true,
+    channelComplete: true,
+    titleWrapped: true,
+  });
+  expect(geometry.targetHeight).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  await expect(title).toBeVisible();
+  await expect(channel).toBeVisible();
+});
+
 test('watch keeps the schedule usable when detail enrichment fails', async ({
   page,
 }) => {

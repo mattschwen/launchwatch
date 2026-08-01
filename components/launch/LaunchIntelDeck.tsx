@@ -50,11 +50,11 @@ function StreamRow({
       href={candidate.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-[4.25rem] items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 transition-colors last:border-0 hover:bg-[var(--surface-subtle)]"
+      className="group flex min-h-[4.25rem] min-w-0 items-start gap-3 border-b border-[var(--border-subtle)] px-4 py-3 transition-colors last:border-0 hover:bg-[var(--surface-subtle)]"
     >
       <span
         aria-hidden="true"
-        className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+        className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
           candidate.liveStatus === 'live'
             ? 'status-dot-live bg-[var(--console-magenta)]'
             : candidate.confidence === 'high'
@@ -63,10 +63,10 @@ function StreamRow({
         }`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+        <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
           {candidate.title}
         </span>
-        <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)]">
+        <span className="mt-0.5 block break-words text-xs leading-5 text-[var(--text-muted)]">
           {candidate.channelTitle || 'Provider stream'} · {candidate.confidence}{' '}
           confidence
         </span>
@@ -74,7 +74,7 @@ function StreamRow({
       <ExternalLink
         aria-hidden="true"
         size={15}
-        className="shrink-0 text-[var(--text-muted)]"
+        className="mt-0.5 shrink-0 text-[var(--text-muted)]"
       />
     </a>
   );
@@ -288,8 +288,8 @@ export default function LaunchIntelDeck({
         <CoverageSignal intel={intel} className="mt-5" />
       </header>
 
-      <div className="grid lg:grid-cols-2">
-        <div className="border-b border-[var(--border-subtle)] lg:border-b-0 lg:border-r">
+      <div className="grid min-w-0 lg:grid-cols-2">
+        <div className="min-w-0 border-b border-[var(--border-subtle)] lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-4 py-3">
             <Radio
               aria-hidden="true"
@@ -315,7 +315,7 @@ export default function LaunchIntelDeck({
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] px-4 py-3">
             <Newspaper
               aria-hidden="true"

@@ -107,6 +107,9 @@ The optional expanded map remains a modal dialog. It must:
   community records; they do not imply measured radio strength. A generic
   search fallback remains a clearly labeled action and never increments the
   stream-lead count or appears as an identified broadcast.
+- Identified stream titles and channel names wrap completely inside the
+  intelligence grid so provider identity is never hidden by clipping or an
+  ellipsis.
 - Failed mission-intelligence requests keep a stable, touch-safe recovery
   action, suppress duplicate retries, and move keyboard focus to the restored
   intelligence region after recovery.

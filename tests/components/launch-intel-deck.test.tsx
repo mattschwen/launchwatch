@@ -139,6 +139,46 @@ describe('LaunchIntelDeck', () => {
     ).toHaveClass('action-button-secondary');
   });
 
+  it('keeps complete stream and channel identities readable', () => {
+    const streamTitle =
+      'Polaris Relay Mission Official Launch Coverage and Preflight Briefing';
+    const channelTitle = 'International Orbital Communications Directorate';
+
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          streamCandidates: [
+            {
+              id: 'official-test',
+              title: streamTitle,
+              url: 'https://www.youtube.com/watch?v=official-test',
+              channelTitle,
+              source: 'youtube-api',
+              confidence: 'high',
+              liveStatus: 'upcoming',
+            },
+          ],
+        }}
+      />
+    );
+
+    const streamLink = screen.getByRole('link', {
+      name: new RegExp(streamTitle),
+    });
+    const title = within(streamLink).getByText(streamTitle);
+    const channel = within(streamLink).getByText(
+      `${channelTitle} · high confidence`
+    );
+
+    expect(streamLink).toHaveClass('min-w-0');
+    expect(title).toHaveClass('break-words');
+    expect(title).not.toHaveClass('truncate');
+    expect(channel).toHaveClass('break-words');
+    expect(channel).not.toHaveClass('truncate');
+  });
+
   it('presents a generic search as a fallback instead of a stream lead', () => {
     render(
       <LaunchIntelDeck
