@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Newspaper,
   Radio,
+  Search,
 } from 'lucide-react';
 import CoverageSignal from './CoverageSignal';
 import type {
@@ -227,7 +228,9 @@ export default function LaunchIntelDeck({
     );
   }
 
-  const streams = intel.streamCandidates.slice(0, 4);
+  const streams = intel.streamCandidates
+    .filter((candidate) => candidate.source !== 'search')
+    .slice(0, 4);
   const news = intel.newsItems.slice(0, 5);
   const social = intel.socialItems.slice(0, 4);
 
@@ -269,7 +272,11 @@ export default function LaunchIntelDeck({
                 : 'action-button action-button-secondary mt-4'
             }
           >
-            <Radio aria-hidden="true" size={16} />
+            {intel.summary.streamState === 'search' ? (
+              <Search aria-hidden="true" size={16} />
+            ) : (
+              <Radio aria-hidden="true" size={16} />
+            )}
             {intel.summary.recommendedLabel}
           </a>
         ) : null}
@@ -298,7 +305,8 @@ export default function LaunchIntelDeck({
             ))
           ) : (
             <p className="px-4 py-6 text-sm leading-6 text-[var(--text-muted)]">
-              No verified broadcast has been ranked yet.
+              No verified broadcast has been ranked yet. Use the search action
+              above to check current coverage.
             </p>
           )}
         </div>

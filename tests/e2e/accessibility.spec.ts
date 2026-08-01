@@ -1,7 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { installApiFixtures } from './support/api-fixtures';
-import { FEED_META, UPCOMING_LAUNCHES } from '../fixtures/launches';
+import {
+  FEED_META,
+  LAUNCH_INTEL,
+  UPCOMING_LAUNCHES,
+} from '../fixtures/launches';
 
 const routes = [
   { path: '/', heading: 'Orbital Dawn', pageHeading: 'Orbital Dawn' },
@@ -149,6 +153,64 @@ test('@a11y mission briefing calendar has no serious WCAG A/AA violations', asyn
     .click();
   await expect(
     dialog.getByRole('group', { name: 'Calendar options' })
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
+test('@a11y search-only mission intelligence has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        summary: {
+          streamState: 'search',
+          recommendedLabel: 'Search YouTube',
+          recommendedUrl:
+            'https://www.youtube.com/results?search_query=Orbital+Dawn',
+          rationale: 'No verified stream is currently available.',
+          lastUpdated: '2035-07-26T12:00:00.000Z',
+        },
+        streamCandidates: [
+          {
+            id: 'search-fallback',
+            title: 'YouTube search fallback',
+            url: 'https://www.youtube.com/results?search_query=Orbital+Dawn',
+            channelTitle: 'YouTube',
+            source: 'search',
+            confidence: 'low',
+            liveStatus: 'unknown',
+          },
+        ],
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+  await expect(
+    page
+      .getByRole('region', { name: 'Mission intelligence' })
+      .getByRole('link', { name: 'Search YouTube' })
   ).toBeVisible();
 
   const results = await new AxeBuilder({ page })

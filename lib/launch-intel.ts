@@ -847,7 +847,9 @@ async function fetchXItems(launch: Launch): Promise<LaunchSocialItem[]> {
   }
 }
 
-function summarizeCandidates(candidates: LaunchStreamCandidate[]): LaunchIntel['summary'] {
+export function summarizeStreamCandidates(
+  candidates: LaunchStreamCandidate[]
+): LaunchIntel['summary'] {
   const recommended = candidates[0];
 
   if (!recommended) {
@@ -905,9 +907,11 @@ function summarizeCandidates(candidates: LaunchStreamCandidate[]): LaunchIntel['
   if (recommended.url) {
     return {
       streamState: 'search',
-      recommendedLabel: 'Open Stream Lead',
+      recommendedLabel: 'Search YouTube',
       recommendedUrl: recommended.url,
-      rationale: recommended.note || 'Search fallback is currently the best available lead.',
+      rationale:
+        recommended.note ||
+        'No ranked stream is available; a mission-specific search is provided instead.',
       lastUpdated: new Date().toISOString(),
     };
   }
@@ -935,7 +939,7 @@ export async function getLaunchIntel(launch: Launch): Promise<LaunchIntel> {
     ]);
 
     return {
-      summary: summarizeCandidates(streamCandidates),
+      summary: summarizeStreamCandidates(streamCandidates),
       streamCandidates,
       newsItems,
       socialItems: [...xItems, ...redditItems].sort((a, b) => {

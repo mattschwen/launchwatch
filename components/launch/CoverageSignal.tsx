@@ -33,7 +33,9 @@ export default function CoverageSignal({
   className = '',
 }: CoverageSignalProps): React.ReactElement {
   const streamState = intel.summary.streamState;
-  const streamCount = intel.streamCandidates.length;
+  const streamCount = intel.streamCandidates.filter(
+    (candidate) => candidate.source !== 'search'
+  ).length;
   const newsCount = intel.newsItems.length;
   const socialCount = intel.socialItems.length;
 

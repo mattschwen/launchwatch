@@ -202,6 +202,10 @@ The route accepts only a launch identifier as input. It resolves the authoritati
 - recent Reddit and X items when available;
 - provider, YouTube, Reddit, and X quick links.
 
+A generic search URL is reported with `streamState: "search"` and a search
+label. It remains available as a fallback candidate, but is not presented or
+counted by the interface as an identified stream lead.
+
 Example:
 
 ```http

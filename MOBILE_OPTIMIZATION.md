@@ -98,7 +98,9 @@ The optional expanded map remains a modal dialog. It must:
   intelligence appears before that illustrative telemetry so Watch keeps its
   primary coverage task ahead of secondary mission context.
 - Coverage signal bars represent the presence of verified stream, news, and
-  community records; they do not imply measured radio strength.
+  community records; they do not imply measured radio strength. A generic
+  search fallback remains a clearly labeled action and never increments the
+  stream-lead count or appears as an identified broadcast.
 - Failed mission-intelligence requests keep a stable, touch-safe recovery
   action, suppress duplicate retries, and move keyboard focus to the restored
   intelligence region after recovery.

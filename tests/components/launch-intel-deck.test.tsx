@@ -138,4 +138,41 @@ describe('LaunchIntelDeck', () => {
       })
     ).toHaveClass('action-button-secondary');
   });
+
+  it('presents a generic search as a fallback instead of a stream lead', () => {
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          summary: {
+            ...LAUNCH_INTEL.summary,
+            streamState: 'search',
+            recommendedLabel: 'Search YouTube',
+          },
+          streamCandidates: [
+            {
+              id: 'search-fallback',
+              title: 'YouTube search fallback',
+              url: 'https://www.youtube.com/results?search_query=Orbital+Dawn',
+              channelTitle: 'YouTube',
+              source: 'search',
+              confidence: 'low',
+              liveStatus: 'unknown',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Search YouTube' })).toBeVisible();
+    expect(screen.queryByText('YouTube search fallback')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/No verified broadcast has been ranked yet/)
+    ).toBeVisible();
+    const signal = screen.getByRole('group', { name: 'Coverage signal' });
+    expect(
+      within(signal).getByText('Stream leads').nextElementSibling
+    ).toHaveTextContent('0');
+  });
 });

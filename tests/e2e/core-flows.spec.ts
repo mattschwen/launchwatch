@@ -2152,6 +2152,62 @@ test('mission intelligence recovers without losing keyboard context', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence keeps generic search separate from stream leads', async ({
+  page,
+}) => {
+  const searchUrl =
+    'https://www.youtube.com/results?search_query=Orbital+Dawn+launch+livestream';
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        summary: {
+          streamState: 'search',
+          recommendedLabel: 'Search YouTube',
+          recommendedUrl: searchUrl,
+          rationale: 'No verified stream is currently available.',
+          lastUpdated: '2035-07-26T12:00:00.000Z',
+        },
+        streamCandidates: [
+          {
+            id: 'search-fallback',
+            title: 'YouTube search fallback',
+            url: searchUrl,
+            channelTitle: 'YouTube',
+            source: 'search',
+            confidence: 'low',
+            liveStatus: 'unknown',
+          },
+        ],
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  const search = intelligence.getByRole('link', { name: 'Search YouTube' });
+  const signal = intelligence.getByRole('group', { name: 'Coverage signal' });
+
+  await expect(search).toHaveAttribute('href', searchUrl);
+  await expect(intelligence.getByText('Search fallback only')).toBeVisible();
+  await expect(
+    signal.getByText('Stream leads').locator('..').getByRole('definition')
+  ).toHaveText('0');
+  await expect(intelligence.getByText('YouTube search fallback')).toHaveCount(0);
+  await expect(
+    intelligence.getByText(/No verified broadcast has been ranked yet/)
+  ).toBeVisible();
+  await search.focus();
+  await expect(search).toBeFocused();
+  expect((await search.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps the schedule usable when detail enrichment fails', async ({
   page,
 }) => {

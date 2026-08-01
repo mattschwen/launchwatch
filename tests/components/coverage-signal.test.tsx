@@ -120,4 +120,31 @@ describe('CoverageSignal', () => {
       screen.getAllByRole('definition').map((definition) => definition.textContent)
     ).toEqual(['0', '0', '0']);
   });
+
+  it('does not count a generic search fallback as a stream lead', () => {
+    const intel = makeIntel({
+      summary: {
+        ...LAUNCH_INTEL.summary,
+        streamState: 'search',
+      },
+      streamCandidates: [
+        {
+          id: 'search-fallback',
+          title: 'YouTube search fallback',
+          url: 'https://www.youtube.com/results?search_query=Orbital+Dawn',
+          channelTitle: 'YouTube',
+          source: 'search',
+          confidence: 'low',
+          liveStatus: 'unknown',
+        },
+      ],
+    });
+
+    render(<CoverageSignal intel={intel} />);
+
+    expect(screen.getByText('Search fallback only')).toBeVisible();
+    expect(screen.getByText('Stream leads').nextElementSibling).toHaveTextContent(
+      '0'
+    );
+  });
 });
