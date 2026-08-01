@@ -17,6 +17,10 @@ import {
   inferLaunchProvider,
 } from './youtube';
 import { serializeLaunchForIntel } from './launch-intel-params';
+import {
+  publicLaunchIntelRationale,
+  STREAM_VERIFICATION_UNAVAILABLE_RATIONALE,
+} from './launch-intel-copy';
 import { TTLCache } from './ttl-cache';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_DATA_API_KEY || '';
@@ -525,14 +529,10 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
   }
 
   if (!YOUTUBE_API_KEY) {
-    return addFallbacks(
-      'Search fallback because no YouTube Data API key is configured.',
-    );
+    return addFallbacks(STREAM_VERIFICATION_UNAVAILABLE_RATIONALE);
   }
   if (!reserveYouTubeLookup()) {
-    return addFallbacks(
-      'The daily YouTube verification budget is exhausted; using safe fallbacks.',
-    );
+    return addFallbacks(STREAM_VERIFICATION_UNAVAILABLE_RATIONALE);
   }
 
   const query = buildSearchQuery(launch);
@@ -850,7 +850,12 @@ async function fetchXItems(launch: Launch): Promise<LaunchSocialItem[]> {
 export function summarizeStreamCandidates(
   candidates: LaunchStreamCandidate[]
 ): LaunchIntel['summary'] {
-  const recommended = candidates[0];
+  const recommended = candidates[0]
+    ? {
+        ...candidates[0],
+        note: publicLaunchIntelRationale(candidates[0].note),
+      }
+    : undefined;
 
   if (!recommended) {
     return {
@@ -938,9 +943,14 @@ export async function getLaunchIntel(launch: Launch): Promise<LaunchIntel> {
       xCache.getOrLoad(socialKey, () => fetchXItems(launch)),
     ]);
 
+    const publicStreamCandidates = streamCandidates.map((candidate) => ({
+      ...candidate,
+      note: publicLaunchIntelRationale(candidate.note),
+    }));
+
     return {
-      summary: summarizeStreamCandidates(streamCandidates),
-      streamCandidates,
+      summary: summarizeStreamCandidates(publicStreamCandidates),
+      streamCandidates: publicStreamCandidates,
       newsItems,
       socialItems: [...xItems, ...redditItems].sort((a, b) => {
         const left = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;

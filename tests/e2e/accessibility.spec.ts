@@ -194,7 +194,8 @@ test('@a11y search-only mission intelligence has no serious WCAG A/AA violations
           recommendedLabel: 'Search YouTube',
           recommendedUrl:
             'https://www.youtube.com/results?search_query=Orbital+Dawn',
-          rationale: 'No verified stream is currently available.',
+          rationale:
+            'Search fallback because no YouTube Data API key is configured.',
           lastUpdated: '2035-07-26T12:00:00.000Z',
         },
         streamCandidates: [

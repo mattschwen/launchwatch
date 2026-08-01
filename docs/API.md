@@ -206,6 +206,10 @@ A generic search URL is reported with `streamState: "search"` and a search
 label. It remains available as a fallback candidate, but is not presented or
 counted by the interface as an identified stream lead.
 
+Public rationale and candidate-note text describes the available user action
+without disclosing deployment configuration, credential availability, or
+internal verification budgets. Operational detail remains server-side.
+
 Example:
 
 ```http

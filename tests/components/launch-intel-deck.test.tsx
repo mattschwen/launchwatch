@@ -175,4 +175,27 @@ describe('LaunchIntelDeck', () => {
       within(signal).getByText('Stream leads').nextElementSibling
     ).toHaveTextContent('0');
   });
+
+  it('replaces internal verification details with public degraded-state copy', () => {
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          summary: {
+            ...LAUNCH_INTEL.summary,
+            rationale:
+              'Search fallback because no YouTube Data API key is configured.',
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByText(
+        'Automatic stream verification is unavailable. Use the mission-specific search to check current coverage.'
+      )
+    ).toBeVisible();
+    expect(screen.queryByText(/API key|configured/i)).not.toBeInTheDocument();
+  });
 });

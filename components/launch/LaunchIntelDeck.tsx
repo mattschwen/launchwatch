@@ -10,6 +10,7 @@ import {
   Search,
 } from 'lucide-react';
 import CoverageSignal from './CoverageSignal';
+import { publicLaunchIntelRationale } from '@/lib/launch-intel-copy';
 import type {
   Launch,
   LaunchIntel,
@@ -233,6 +234,9 @@ export default function LaunchIntelDeck({
     .slice(0, 4);
   const news = intel.newsItems.slice(0, 5);
   const social = intel.socialItems.slice(0, 4);
+  const publicRationale = publicLaunchIntelRationale(
+    intel.summary.rationale
+  );
 
   return (
     <section
@@ -249,7 +253,7 @@ export default function LaunchIntelDeck({
               Mission intelligence
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              {intel.summary.rationale ||
+              {publicRationale ||
                 `Verified public signals associated with ${launch.name}.`}
             </p>
           </div>

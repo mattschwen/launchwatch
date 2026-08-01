@@ -2303,7 +2303,8 @@ test('mission intelligence keeps generic search separate from stream leads', asy
           streamState: 'search',
           recommendedLabel: 'Search YouTube',
           recommendedUrl: searchUrl,
-          rationale: 'No verified stream is currently available.',
+          rationale:
+            'Search fallback because no YouTube Data API key is configured.',
           lastUpdated: '2035-07-26T12:00:00.000Z',
         },
         streamCandidates: [
@@ -2330,6 +2331,12 @@ test('mission intelligence keeps generic search separate from stream leads', asy
   const signal = intelligence.getByRole('group', { name: 'Coverage signal' });
 
   await expect(search).toHaveAttribute('href', searchUrl);
+  await expect(
+    intelligence.getByText(
+      'Automatic stream verification is unavailable. Use the mission-specific search to check current coverage.'
+    )
+  ).toBeVisible();
+  await expect(intelligence.getByText(/API key|configured/i)).toHaveCount(0);
   await expect(intelligence.getByText('Search fallback only')).toBeVisible();
   await expect(
     signal.getByText('Stream leads').locator('..').getByRole('definition')
