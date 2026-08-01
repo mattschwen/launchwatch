@@ -598,7 +598,7 @@ test('featured mission telemetry stays legible in the split layout', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('home shows one truthful licensed visual with touch-safe attribution actions', async ({
+test('home keeps the schedule ahead of optional licensed mission imagery', async ({
   page,
 }) => {
   await page.goto('/');
@@ -612,39 +612,56 @@ test('home shows one truthful licensed visual with touch-safe attribution action
     exact: true,
   });
   const visuals = page.locator('figure[data-visual-kind]');
-  await expect(visuals).toHaveCount(1);
+  await expect(visuals).toHaveCount(0);
 
-  const visual = visuals.first();
-  const hierarchy = await primaryAction.evaluate((element) => {
-    const visual = element
-      .closest('section')
-      ?.querySelector('figure[data-visual-kind]');
-    const actionBounds = element.getBoundingClientRect();
-    const visualBounds = visual?.getBoundingClientRect();
+  const showVisual = page.getByRole('button', {
+    name: 'Show mission visual for Orbital Dawn',
+  });
+  await expect(showVisual).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.mission-visual')).toHaveCount(0);
 
+  const initialHierarchy = await showVisual.evaluate((element) => {
+    const scheduleHeading = Array.from(document.querySelectorAll('h2')).find(
+      (heading) => heading.textContent?.includes('Upcoming launches')
+    );
+    const action = Array.from(document.querySelectorAll('a, button')).find(
+      (candidate) => candidate.textContent?.trim() === 'Open briefing'
+    );
     return {
-      actionBottom: actionBounds.bottom,
-      actionTop: actionBounds.top,
-      visualTop: visualBounds?.top ?? 0,
+      actionBottom: action?.getBoundingClientRect().bottom ?? 0,
+      disclosureTop: element.getBoundingClientRect().top,
+      disclosureHeight: element.getBoundingClientRect().height,
+      scheduleTop: scheduleHeading?.getBoundingClientRect().top ?? Infinity,
       viewportHeight: window.innerHeight,
     };
   });
-  expect(hierarchy.actionTop).toBeLessThan(hierarchy.visualTop);
-  expect(hierarchy.actionBottom).toBeLessThanOrEqual(
-    hierarchy.viewportHeight
+  expect(initialHierarchy.actionBottom).toBeLessThan(
+    initialHierarchy.disclosureTop
   );
-  await expect(briefingAction).toBeInViewport();
-  expect(
-    await briefingAction.evaluate((element) => {
-      const visual = element
-        .closest('section')
-        ?.querySelector('figure[data-visual-kind]');
-      return (
-        (visual?.getBoundingClientRect().top ?? 0) -
-        element.getBoundingClientRect().bottom
-      );
-    })
-  ).toBeGreaterThanOrEqual(16);
+  expect(initialHierarchy.disclosureHeight).toBeGreaterThanOrEqual(44);
+  expect(initialHierarchy.scheduleTop).toBeLessThan(
+    initialHierarchy.viewportHeight
+  );
+
+  await showVisual.focus();
+  await showVisual.press('Enter');
+  const hideVisual = page.getByRole('button', {
+    name: 'Hide mission visual for Orbital Dawn',
+  });
+  await expect(hideVisual).toBeFocused();
+  await expect(hideVisual).toHaveAttribute('aria-expanded', 'true');
+  await expect(visuals).toHaveCount(1);
+
+  const visual = visuals.first();
+  const hierarchy = await visual.evaluate((element) => ({
+    disclosureBottom:
+      element.parentElement?.previousElementSibling?.getBoundingClientRect()
+        .bottom ?? 0,
+    visualTop: element.getBoundingClientRect().top,
+  }));
+  expect(hierarchy.disclosureBottom).toBeLessThanOrEqual(hierarchy.visualTop);
+  await expect(primaryAction).toBeVisible();
+  await expect(briefingAction).toBeVisible();
   await expect(visual).toHaveAttribute('data-visual-kind', 'vehicle');
   await expect(
     visual.getByRole('img', {
@@ -808,6 +825,9 @@ test('mission imagery recovers from a transient load failure without losing keyb
 
   await page.goto('/');
 
+  await page
+    .getByRole('button', { name: 'Show mission visual for Orbital Dawn' })
+    .click();
   const visual = page.locator('figure[data-visual-kind="vehicle"]');
   await expect(visual).toHaveAttribute('data-visual-status', 'error');
   await expect(
@@ -885,6 +905,9 @@ test('home visual enrichment keeps a stable footprint', async ({ page }) => {
 
   await page.goto('/');
 
+  await page
+    .getByRole('button', { name: 'Show mission visual for Orbital Dawn' })
+    .click();
   const loadingVisual = page.getByRole('status', {
     name: 'Loading mission visual',
   });
@@ -939,6 +962,9 @@ test('home reports visual-detail failures as degraded data', async ({
 
   await page.goto('/');
 
+  await page
+    .getByRole('button', { name: 'Show mission visual for Orbital Dawn' })
+    .click();
   const degradedVisual = page.getByRole('status', {
     name: 'Mission visual unavailable',
   });

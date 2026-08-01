@@ -66,6 +66,36 @@ for (const route of routes) {
   });
 }
 
+test('@a11y home mission visual disclosure has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'Show mission visual for Orbital Dawn' })
+    .click();
+  await expect(
+    page.locator('figure[data-visual-kind="vehicle"]')
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y history synchronization has no serious WCAG A/AA violations', async ({
   page,
 }) => {
