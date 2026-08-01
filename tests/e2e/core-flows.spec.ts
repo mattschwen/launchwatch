@@ -2810,6 +2810,62 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   ).toBeVisible();
 });
 
+test('mission sharing copies canonical links from watch and completed details', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          (
+            window as Window & { __launchWatchSharedUrl?: string }
+          ).__launchWatchSharedUrl = value;
+        },
+      },
+    });
+  });
+
+  await page.goto('/watch');
+  const compactShare = page.getByRole('button', { name: 'Share', exact: true });
+  await compactShare.focus();
+  await compactShare.press('Enter');
+  const watchCopied = page.getByRole('button', { name: 'Link copied' });
+  await expect(watchCopied).toBeFocused();
+  expect((await watchCopied.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __launchWatchSharedUrl?: string })
+            .__launchWatchSharedUrl
+      )
+    )
+    .toBe(`${new URL(page.url()).origin}/launch/ll2-demo-orbital-dawn`);
+
+  await page.goto('/launch/spacex-demo-return?from=history');
+  const detailShare = page.getByRole('button', { name: 'Share mission' });
+  await detailShare.focus();
+  await detailShare.press('Enter');
+  await expect(
+    page.getByRole('button', { name: 'Link copied' })
+  ).toBeFocused();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __launchWatchSharedUrl?: string })
+            .__launchWatchSharedUrl
+      )
+    )
+    .toBe(`${new URL(page.url()).origin}/launch/spacex-demo-return`);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('upcoming and historical details place one trajectory before mission support', async ({
   page,
 }) => {

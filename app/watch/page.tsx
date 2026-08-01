@@ -743,6 +743,7 @@ function WatchContent(): React.ReactElement {
                   onOpenBriefing={() => setBriefingOpen(true)}
                   compact
                   showPrimaryAction={false}
+                  showShare
                   className="shrink-0"
                 />
               </div>

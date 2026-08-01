@@ -204,6 +204,7 @@ export default function LaunchDetailClient({
               launch={launch}
               onOpenBriefing={() => setBriefingOpen(true)}
               showCalendar={!completed}
+              showShare
               className="mt-6"
             />
           </div>

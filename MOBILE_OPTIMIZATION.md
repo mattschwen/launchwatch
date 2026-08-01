@@ -102,6 +102,9 @@ The optional expanded map remains a modal dialog. It must:
   reserved surface preserves layout stability and exposes a keyboard-operable
   load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
+- The selected mission exposes a labeled, 44px share action. It prefers the
+  platform share sheet and otherwise copies the canonical detail URL, with
+  visible recovery copy when both browser paths are unavailable.
 - Launch actions wrap into labeled, touch-friendly controls.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
 - Initial synchronization keeps the real Watch heading and visible acquisition
@@ -134,6 +137,9 @@ The optional expanded map remains a modal dialog. It must:
   trajectory; when rights cannot be verified, the layout presents a compact,
   honest unavailable state in the same stable visual footprint.
 - Primary and secondary actions remain labeled; icon-only controls require accessible names.
+- Sharing always targets the canonical mission URL without transient Watch,
+  schedule, or archive return context; completed missions retain the same
+  share path after future-only actions are removed.
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
   their own region when necessary. Touch-safe previous/next controls expose
   one-event movement without replacing direct scrolling or arrow-key access.
@@ -226,6 +232,7 @@ For each relevant viewport:
 - [`components/LaunchList.tsx`](components/LaunchList.tsx)
 - [`components/PastLaunches.tsx`](components/PastLaunches.tsx)
 - [`components/LaunchMap.tsx`](components/LaunchMap.tsx)
+- [`components/ShareMissionButton.tsx`](components/ShareMissionButton.tsx)
 - [`components/layout/MobileNav.tsx`](components/layout/MobileNav.tsx)
 - [`app/globals.css`](app/globals.css)
 - [`public/manifest.json`](public/manifest.json)

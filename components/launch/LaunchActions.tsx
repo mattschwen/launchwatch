@@ -7,12 +7,14 @@ import { getFallbackLaunchSummary } from '@/lib/launch-action';
 import { isCompletedLaunch } from '@/lib/format';
 import { extractYouTubeId } from '@/lib/youtube';
 import AddToCalendar from '@/components/AddToCalendar';
+import ShareMissionButton from '@/components/ShareMissionButton';
 
 interface LaunchActionsProps {
   launch: Launch;
   onOpenBriefing?: () => void;
   detailHref?: string;
   showCalendar?: boolean;
+  showShare?: boolean;
   compact?: boolean;
   featured?: boolean;
   coverageLoading?: boolean;
@@ -26,6 +28,7 @@ export default function LaunchActions({
   onOpenBriefing,
   detailHref,
   showCalendar = true,
+  showShare = false,
   compact = false,
   featured = false,
   coverageLoading = false,
@@ -117,6 +120,10 @@ export default function LaunchActions({
 
       {showCalendar && !completed ? (
         <AddToCalendar launch={launch} variant={compact ? 'icon' : 'button'} />
+      ) : null}
+
+      {showShare ? (
+        <ShareMissionButton key={launch.id} launch={launch} compact={compact} />
       ) : null}
 
       {coverageUnavailable && !launch.livestream ? (
