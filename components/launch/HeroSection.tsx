@@ -257,7 +257,7 @@ export default function HeroSection({
             )}
           </div>
 
-          <dl className="grid grid-cols-2 gap-y-5">
+          <dl className="compact-hero-telemetry grid grid-cols-2 gap-y-5">
             <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <CalendarDays
                 aria-hidden="true"
@@ -329,7 +329,7 @@ export default function HeroSection({
             featured
             coverageLoading={coverageLoading}
             coverageUnavailable={coverageUnavailable}
-            className="mt-6"
+            className="compact-hero-actions mt-6"
           />
         </div>
       </section>

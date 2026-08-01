@@ -41,6 +41,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 - The featured mission uses fluid type and keeps its primary mission actions
   ahead of secondary imagery in a single-column hierarchy on narrow screens.
+- At the smallest short viewport, featured mission actions precede the telemetry
+  grid so Watch and Briefing remain visible above the fixed primary navigation.
 - Countdown values wrap without horizontal overflow.
 - Provider day/month/quarter/year targets render as amber estimates instead of
   false second-by-second countdowns. Calendar export and launch alerts remain

@@ -733,6 +733,59 @@ test('home keeps the schedule ahead of optional licensed mission imagery', async
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('short mobile viewports keep featured actions clear of primary navigation', async ({
+  page,
+}) => {
+  test.skip(!test.info().project.name.startsWith('mobile'));
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  const primaryAction = hero.locator('a.action-button').first();
+  const briefingAction = hero.getByRole('button', {
+    name: 'Open briefing',
+  });
+  const telemetry = hero.locator('dl');
+  const mobileNav = page.locator(
+    'nav[aria-label="Primary navigation"]:visible'
+  );
+
+  await expect(primaryAction).toBeInViewport();
+  await expect(briefingAction).toBeInViewport();
+  await primaryAction.focus();
+  await expect(primaryAction).toBeFocused();
+  await briefingAction.focus();
+  await expect(briefingAction).toBeFocused();
+
+  const [primaryBox, briefingBox, telemetryBox, navBox] = await Promise.all([
+    primaryAction.boundingBox(),
+    briefingAction.boundingBox(),
+    telemetry.boundingBox(),
+    mobileNav.boundingBox(),
+  ]);
+
+  expect(primaryBox).not.toBeNull();
+  expect(briefingBox).not.toBeNull();
+  expect(telemetryBox).not.toBeNull();
+  expect(navBox).not.toBeNull();
+  expect(primaryBox!.y).toBeLessThan(telemetryBox!.y);
+  expect(briefingBox!.y + briefingBox!.height + 4).toBeLessThanOrEqual(
+    navBox!.y
+  );
+
+  await page.setViewportSize({ width: 393, height: 851 });
+  const [standardTelemetryBox, standardPrimaryBox] = await Promise.all([
+    telemetry.boundingBox(),
+    primaryAction.boundingBox(),
+  ]);
+  expect(standardTelemetryBox).not.toBeNull();
+  expect(standardPrimaryBox).not.toBeNull();
+  expect(standardTelemetryBox!.y).toBeLessThan(standardPrimaryBox!.y);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home waits for canonical coverage before offering a stream fallback', async ({
   page,
 }) => {

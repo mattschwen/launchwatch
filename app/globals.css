@@ -184,6 +184,18 @@ body::before {
   }
 }
 
+@media (max-width: 359px) and (max-height: 640px) {
+  .compact-hero-actions {
+    order: 1;
+    margin-top: 0;
+  }
+
+  .compact-hero-telemetry {
+    order: 2;
+    margin-top: 1.5rem;
+  }
+}
+
 /* ═══════════════════════════════════════════════════
    PANEL STYLES
    ═══════════════════════════════════════════════════ */
