@@ -1376,6 +1376,12 @@ test('watch enriches the selected mission and switches the mission queue', async
     'https://x.com/i/broadcasts/demo-orbital-dawn'
   );
   await expect(
+    page.locator('a[href="/watch?id=ll2-demo-orbital-dawn"]')
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Briefing' })
+  ).toBeVisible();
+  await expect(
     page.getByRole('heading', { name: 'No live stream right now' })
   ).toHaveCount(0);
   await expect(
@@ -1404,6 +1410,12 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
+  ).toBeVisible();
+  await expect(
+    page.locator('a[href="/watch?id=spacex-demo-polaris"]')
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Load video for Polaris Relay' })
   ).toBeVisible();
   await expect(watchTrajectory).toContainText('Polaris Relay');
   await expect(polarisQueueItem).toBeFocused();

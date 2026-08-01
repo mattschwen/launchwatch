@@ -742,6 +742,7 @@ function WatchContent(): React.ReactElement {
                   detailHref={selectedDetailHref}
                   onOpenBriefing={() => setBriefingOpen(true)}
                   compact
+                  showPrimaryAction={false}
                   className="shrink-0"
                 />
               </div>

@@ -17,6 +17,7 @@ interface LaunchActionsProps {
   featured?: boolean;
   coverageLoading?: boolean;
   coverageUnavailable?: boolean;
+  showPrimaryAction?: boolean;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export default function LaunchActions({
   featured = false,
   coverageLoading = false,
   coverageUnavailable = false,
+  showPrimaryAction = true,
   className = '',
 }: LaunchActionsProps): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
@@ -60,45 +62,47 @@ export default function LaunchActions({
           : 'flex flex-wrap items-center gap-2'
       } ${className}`}
     >
-      {coverageLoading && !launch.livestream ? (
-        <div
-          role="status"
-          aria-label="Checking official coverage"
-          className="action-button action-button-secondary cursor-wait opacity-70"
-        >
-          <LoaderCircle
-            aria-hidden="true"
-            size={17}
-            className="animate-spin"
-          />
-          Checking coverage
-        </div>
-      ) : launch.livestream ? (
-        <Link
-          href={`/watch?id=${encodeURIComponent(launch.id)}`}
-          className="action-button action-button-stream"
-        >
-          <Play aria-hidden="true" size={17} fill="currentColor" />
-          {primaryLabel}
-        </Link>
-      ) : fallback.recommendedUrl ? (
-        <a
-          href={fallback.recommendedUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="action-button action-button-secondary"
-        >
-          <ExternalLink aria-hidden="true" size={17} />
-          {primaryLabel}
-        </a>
-      ) : (
-        <Link
-          href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
-          className="action-button action-button-primary"
-        >
-          View mission
-        </Link>
-      )}
+      {showPrimaryAction ? (
+        coverageLoading && !launch.livestream ? (
+          <div
+            role="status"
+            aria-label="Checking official coverage"
+            className="action-button action-button-secondary cursor-wait opacity-70"
+          >
+            <LoaderCircle
+              aria-hidden="true"
+              size={17}
+              className="animate-spin"
+            />
+            Checking coverage
+          </div>
+        ) : launch.livestream ? (
+          <Link
+            href={`/watch?id=${encodeURIComponent(launch.id)}`}
+            className="action-button action-button-stream"
+          >
+            <Play aria-hidden="true" size={17} fill="currentColor" />
+            {primaryLabel}
+          </Link>
+        ) : fallback.recommendedUrl ? (
+          <a
+            href={fallback.recommendedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="action-button action-button-secondary"
+          >
+            <ExternalLink aria-hidden="true" size={17} />
+            {primaryLabel}
+          </a>
+        ) : (
+          <Link
+            href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
+            className="action-button action-button-primary"
+          >
+            View mission
+          </Link>
+        )
+      ) : null}
 
       {onOpenBriefing ? (
         <button

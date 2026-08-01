@@ -55,4 +55,22 @@ describe('LaunchActions', () => {
       'Official coverage status unavailable; search fallback shown.'
     );
   });
+
+  it('can leave the primary coverage action to the surrounding surface', () => {
+    render(
+      <LaunchActions
+        launch={UPCOMING_LAUNCHES[1]}
+        onOpenBriefing={() => undefined}
+        showCalendar={false}
+        showPrimaryAction={false}
+      />
+    );
+
+    expect(
+      screen.queryByRole('link', { name: 'Watch mission' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Open briefing' })
+    ).toBeVisible();
+  });
 });
