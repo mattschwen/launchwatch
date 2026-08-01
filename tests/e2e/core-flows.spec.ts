@@ -366,6 +366,57 @@ test('coarse provider dates stay estimates until T-0 is confirmed', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('compact estimates retain confirmed provider target times', async ({
+  page,
+}) => {
+  const hourLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    datePrecision: {
+      name: 'Hour',
+      abbrev: 'HR',
+      description: 'The T-0 is accurate to the hour.',
+    },
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [hourLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: hourLaunch,
+        canonicalId: hourLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto(`/watch?id=${hourLaunch.id}`);
+
+  const compactTarget = page.locator('section.stream-surface time');
+  await expect(compactTarget).toHaveText(
+    'Jul 28, 2035, 14:30 UTC · Hour estimate'
+  );
+  await expect(compactTarget).not.toContainText('T−');
+
+  if (!test.info().project.name.startsWith('mobile')) {
+    const ticker = page
+      .getByRole('complementary', { name: 'Mission status' })
+      .getByRole('link', { name: /Orbital Dawn/ });
+    await expect(ticker).toContainText(
+      'Jul 28, 2035, 14:30 UTC · Hour estimate'
+    );
+  }
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared chrome reports partial feed health on every route', async ({
   page,
 }) => {

@@ -58,6 +58,33 @@ describe('LaunchTicker', () => {
     );
   });
 
+  it('keeps a confirmed target hour visible in the compact status bar', async () => {
+    const estimatedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      datePrecision: { name: 'Hour', abbrev: 'HR' },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({ launches: [estimatedLaunch], meta: FEED_META })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <LaunchTicker />
+      </LaunchDataProvider>
+    );
+
+    const missionLink = await screen.findByRole('link', {
+      name: /Orbital Dawn/,
+    });
+    expect(missionLink).toHaveTextContent(
+      'Jul 28, 2035, 14:30 UTC · Hour estimate'
+    );
+    expect(missionLink).not.toHaveTextContent('T−');
+  });
+
   it('keeps the last successful mission reachable after a refresh failure', async () => {
     const fetchMock = vi
       .fn()

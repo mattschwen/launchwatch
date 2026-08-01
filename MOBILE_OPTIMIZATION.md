@@ -37,7 +37,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   header live region announces feed-state transitions; repeated visual status
   readouts must not create duplicate assistive-technology announcements.
 - The desktop mission ticker preserves provider date precision: coarse targets
-  use a stable amber estimate instead of a false second-by-second countdown.
+  use a stable amber estimate instead of a false second-by-second countdown,
+  while minute- and hour-level estimates retain their actionable UTC target.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home

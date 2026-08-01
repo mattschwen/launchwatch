@@ -2,7 +2,6 @@
 
 import { useCountdown } from '@/lib/hooks';
 import {
-  formatLaunchDay,
   formatLaunchPrecisionLabel,
   formatLaunchTarget,
   hasExactLaunchTime,
@@ -38,7 +37,7 @@ export default function Countdown({
           dateTime={targetDate}
           className={`font-mono text-xs font-semibold text-[var(--console-amber)] ${className}`}
         >
-          {formatLaunchDay(targetDate, precision)} · {precisionLabel}
+          {formatLaunchTarget(targetDate, precision)} · {precisionLabel}
         </time>
       );
     }
