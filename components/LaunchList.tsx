@@ -67,6 +67,16 @@ export default function LaunchList({
     return () => window.cancelAnimationFrame(frame);
   }, [launches.length, refreshing]);
 
+  useEffect(() => {
+    const query = serializeScheduleFilters(filters);
+    const nextUrl = query ? `/?${query}` : '/';
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (currentUrl !== nextUrl) {
+      window.history.replaceState(window.history.state, '', nextUrl);
+    }
+  }, [filters]);
+
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (refreshing) return;
     const retryButton = event.currentTarget;

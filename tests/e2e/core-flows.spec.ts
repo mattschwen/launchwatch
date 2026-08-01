@@ -1097,6 +1097,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(providerPlacement.fullyVisible).toBe(true);
   expect(providerPlacement.height).toBeGreaterThanOrEqual(44);
   await provider.selectOption({ label: 'Demo Launch Alliance' });
+  await expect(page).toHaveURL(/\/?provider=Demo\+Launch\+Alliance$/);
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' })
   ).toHaveText('1 mission');
@@ -1109,6 +1110,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
 
   await provider.selectOption('all');
   await search.fill('Polaris');
+  await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' })
   ).toHaveText('1 mission');
@@ -1128,6 +1130,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
   await expect(toolbarClear).toBeDisabled();
+  await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' })
   ).toHaveText('2 missions');
@@ -2419,7 +2422,13 @@ test('home schedule filters survive mission detail navigation', async ({
   const scheduleResults = page.getByRole('status', {
     name: 'Upcoming launch results',
   });
+  await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(scheduleResults).toHaveText('1 mission');
+  await page.reload();
+  await expect(page).toHaveURL(/\/?q=Polaris$/);
+  await expect(search).toHaveValue('Polaris');
+  await expect(scheduleResults).toHaveText('1 mission');
+  await expect(page.getByRole('button', { name: 'Hide filters' })).toBeVisible();
   const missionDetail = page
     .getByRole('link')
     .filter({ hasText: 'Polaris Relay' });
