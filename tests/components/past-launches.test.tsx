@@ -73,6 +73,30 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('discloses secondary archive filters while keeping search primary', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    const toggle = screen.getByRole('button', {
+      name: 'Show archive filters',
+    });
+    const controlledId = toggle.getAttribute('aria-controls');
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(controlledId).toBeTruthy();
+    expect(document.getElementById(controlledId!)).toHaveClass('hidden');
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAccessibleName('Hide archive filters');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById(controlledId!)).toHaveClass('contents');
+    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
+      'all'
+    );
+  });
+
   it('preserves active archive filters in mission detail links', async () => {
     render(
       <PastLaunches
@@ -95,6 +119,9 @@ describe('PastLaunches', () => {
     expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
       'SpaceX',
     );
+    expect(
+      screen.getByRole('button', { name: 'Hide archive filters' })
+    ).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'View mission' })).toHaveAttribute(
       'href',
       '/launch/spacex-demo-return?from=history&history=q%3DReturn%26provider%3DSpaceX%26year%3D2025%26outcome%3Dsuccess',

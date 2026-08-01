@@ -2879,6 +2879,46 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history keeps secondary filters compact on mobile', async ({ page }) => {
+  await page.goto('/history');
+
+  const filterToggle = page.getByRole('button', {
+    name: 'Show archive filters',
+  });
+  const provider = page.getByRole('combobox', { name: 'Provider' });
+  const mobile = test.info().project.name.startsWith('mobile');
+
+  if (!mobile) {
+    await expect(filterToggle).toBeHidden();
+    await expect(provider).toBeVisible();
+    return;
+  }
+
+  await expect(filterToggle).toBeVisible();
+  await expect(filterToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(provider).toBeHidden();
+
+  const firstMission = page.locator('article').first();
+  const firstMissionBounds = await firstMission.boundingBox();
+  expect(firstMissionBounds).not.toBeNull();
+  expect(firstMissionBounds!.y).toBeLessThan(page.viewportSize()!.height);
+
+  await filterToggle.focus();
+  await filterToggle.press('Enter');
+  const hideFilterToggle = page.getByRole('button', {
+    name: 'Hide archive filters',
+  });
+  await expect(hideFilterToggle).toBeFocused();
+  await expect(hideFilterToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(provider).toBeVisible();
+  expect((await hideFilterToggle.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  await provider.selectOption({ label: 'SpaceX' });
+  await expect(page).toHaveURL(/\/history\?provider=SpaceX$/);
+  await expect(hideFilterToggle).toContainText('1');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule filters survive mission detail navigation', async ({
   page,
 }) => {

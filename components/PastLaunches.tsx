@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Archive,
   ChevronDown,
+  Filter,
   Search,
   X,
 } from 'lucide-react';
@@ -253,6 +254,12 @@ export default function PastLaunches({
   const [provider, setProvider] = useState(initialFilters.provider);
   const [year, setYear] = useState(initialFilters.year);
   const [outcome, setOutcome] = useState(initialFilters.outcome);
+  const [filtersOpen, setFiltersOpen] = useState(
+    () =>
+      initialFilters.provider !== 'all' ||
+      initialFilters.year !== 'all' ||
+      initialFilters.outcome !== 'all'
+  );
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -352,6 +359,11 @@ export default function PastLaunches({
     provider !== 'all' ||
     year !== 'all' ||
     outcome !== 'all';
+  const secondaryFilterCount = [
+    provider !== 'all',
+    year !== 'all',
+    outcome !== 'all',
+  ].filter(Boolean).length;
   const visibleLaunches = filtered.slice(0, visibleCount);
   const allResultsVisible =
     filtered.length > 0 && visibleLaunches.length === filtered.length;
@@ -380,6 +392,7 @@ export default function PastLaunches({
     setProvider('all');
     setYear('all');
     setOutcome('all');
+    setFiltersOpen(false);
     setVisibleCount(PAGE_SIZE);
     searchRef.current?.focus();
   };
@@ -482,86 +495,113 @@ export default function PastLaunches({
     >
       <div className="border-b border-[var(--border-subtle)] p-4">
         <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
-          <div className="relative min-w-0">
-            <label htmlFor={`${id}-search`} className="sr-only">
-              Search missions
-            </label>
-            <Search
-              aria-hidden="true"
-              size={17}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
-            <input
-              ref={searchRef}
-              id={`${id}-search`}
-              type="search"
-              maxLength={120}
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setVisibleCount(PAGE_SIZE);
-              }}
-              placeholder="Search missions"
-              className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-            />
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 md:contents">
+            <div className="relative min-w-0">
+              <label htmlFor={`${id}-search`} className="sr-only">
+                Search missions
+              </label>
+              <Search
+                aria-hidden="true"
+                size={17}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+              />
+              <input
+                ref={searchRef}
+                id={`${id}-search`}
+                type="search"
+                maxLength={120}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                placeholder="Search missions"
+                className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              />
+            </div>
+            <div className="md:hidden">
+              <button
+                type="button"
+                aria-expanded={filtersOpen}
+                aria-controls={`${id}-filters`}
+                aria-label={
+                  filtersOpen ? 'Hide archive filters' : 'Show archive filters'
+                }
+                onClick={() => setFiltersOpen((open) => !open)}
+                className="action-button action-button-secondary px-3"
+              >
+                <Filter aria-hidden="true" size={16} />
+                <span className="hidden min-[360px]:inline">Filters</span>
+                {secondaryFilterCount > 0 ? (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--console-cyan)]/15 px-1.5 font-mono text-[0.65rem] text-[var(--console-cyan)]">
+                    {secondaryFilterCount}
+                  </span>
+                ) : null}
+              </button>
+            </div>
           </div>
 
-          <label className="sr-only" htmlFor={`${id}-provider`}>
-            Provider
-          </label>
-          <select
-            id={`${id}-provider`}
-            value={provider}
-            onChange={(event) => {
-              setProvider(event.target.value);
-              setVisibleCount(PAGE_SIZE);
-            }}
-            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+          <div
+            id={`${id}-filters`}
+            className={`${filtersOpen ? 'contents' : 'hidden'} md:contents`}
           >
-            <option value="all">All providers</option>
-            {providers.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+            <label className="sr-only" htmlFor={`${id}-provider`}>
+              Provider
+            </label>
+            <select
+              id={`${id}-provider`}
+              value={provider}
+              onChange={(event) => {
+                setProvider(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+            >
+              <option value="all">All providers</option>
+              {providers.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
 
-          <label className="sr-only" htmlFor={`${id}-year`}>
-            Year
-          </label>
-          <select
-            id={`${id}-year`}
-            value={year}
-            onChange={(event) => {
-              setYear(event.target.value);
-              setVisibleCount(PAGE_SIZE);
-            }}
-            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
-          >
-            <option value="all">All years</option>
-            {years.map((item) => (
-              <option key={item} value={String(item)}>
-                {item}
-              </option>
-            ))}
-          </select>
+            <label className="sr-only" htmlFor={`${id}-year`}>
+              Year
+            </label>
+            <select
+              id={`${id}-year`}
+              value={year}
+              onChange={(event) => {
+                setYear(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+            >
+              <option value="all">All years</option>
+              {years.map((item) => (
+                <option key={item} value={String(item)}>
+                  {item}
+                </option>
+              ))}
+            </select>
 
-          <label className="sr-only" htmlFor={`${id}-outcome`}>
-            Outcome
-          </label>
-          <select
-            id={`${id}-outcome`}
-            value={outcome}
-            onChange={(event) => {
-              setOutcome(event.target.value);
-              setVisibleCount(PAGE_SIZE);
-            }}
-            className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
-          >
-            <option value="all">All outcomes</option>
-            <option value="success">Success</option>
-            <option value="failure">Failure</option>
-          </select>
+            <label className="sr-only" htmlFor={`${id}-outcome`}>
+              Outcome
+            </label>
+            <select
+              id={`${id}-outcome`}
+              value={outcome}
+              onChange={(event) => {
+                setOutcome(event.target.value);
+                setVisibleCount(PAGE_SIZE);
+              }}
+              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+            >
+              <option value="all">All outcomes</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+            </select>
+          </div>
 
           <div className="flex min-h-11 items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
             <p
