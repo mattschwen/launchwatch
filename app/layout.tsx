@@ -1,21 +1,49 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import RegisterServiceWorker from "./register-sw";
 import AppShell from "@/components/layout/AppShell";
 
-const geistSans = Space_Grotesk({
+const launchSans = localFont({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "700"],
+  src: [
+    {
+      path: "../node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-400-normal.woff2",
+      weight: "400",
+    },
+    {
+      path: "../node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2",
+      weight: "500",
+    },
+    {
+      path: "../node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2",
+      weight: "700",
+    },
+  ],
 });
 
-const geistMono = IBM_Plex_Mono({
+const launchMono = localFont({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  src: [
+    {
+      path: "../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2",
+      weight: "400",
+    },
+    {
+      path: "../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2",
+      weight: "500",
+    },
+    {
+      path: "../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2",
+      weight: "600",
+    },
+    {
+      path: "../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-700-normal.woff2",
+      weight: "700",
+    },
+  ],
 });
 
 export const metadata: Metadata = {
@@ -65,7 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
+        className={`${launchSans.variable} ${launchMono.variable} antialiased relative`}
       >
         <RegisterServiceWorker />
         <AppShell>{children}</AppShell>

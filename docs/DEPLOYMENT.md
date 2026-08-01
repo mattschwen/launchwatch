@@ -37,6 +37,10 @@ Install exactly what is recorded in the lockfile:
 npm ci
 ```
 
+The Space Grotesk and IBM Plex Mono production fonts are lockfile-pinned and
+self-hosted through `next/font/local`; the build does not contact a remote font
+provider.
+
 Run the complete validation gate:
 
 ```bash
