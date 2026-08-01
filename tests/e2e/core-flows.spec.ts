@@ -428,6 +428,59 @@ test('shared chrome reports partial feed health on every route', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('desktop ticker keeps the last known mission after refresh failure', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name.startsWith('mobile'),
+    'The mission ticker is desktop system-bar navigation.'
+  );
+
+  let feedRequests = 0;
+  await page.route('**/api/launches?type=all', (route) => {
+    feedRequests += 1;
+    if (feedRequests === 1) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ launches: UPCOMING_LAUNCHES, meta: FEED_META }),
+      });
+    }
+
+    return route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Provider maintenance' }),
+    });
+  });
+
+  await page.goto('/');
+
+  const statusBar = page.getByRole('complementary', {
+    name: 'Mission status',
+  });
+  const missionLink = statusBar.getByRole('link', { name: /Orbital Dawn/ });
+  await expect(missionLink).toContainText('NEXT');
+
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  await expect(statusBar).toContainText('PARTIAL FEED');
+  await expect(missionLink).toContainText('LAST KNOWN');
+  await expect(missionLink).toHaveAttribute(
+    'href',
+    '/launch/ll2-demo-orbital-dawn'
+  );
+  await expect(statusBar).not.toContainText('SCHEDULE DEGRADED');
+  await missionLink.focus();
+  await expect(missionLink).toBeFocused();
+  expect(
+    await missionLink.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('primary mission title links are touch-safe and keyboard-focusable', async ({
   page,
 }) => {

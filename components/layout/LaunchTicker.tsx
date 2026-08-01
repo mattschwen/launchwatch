@@ -5,26 +5,56 @@ import Countdown from '@/components/Countdown';
 import { useLaunches } from '@/lib/hooks';
 import { Launch } from '@/lib/types';
 
-function NextLaunchStatus({ launch }: { launch: Launch }): React.ReactElement {
+function NextLaunchStatus({
+  launch,
+  retained = false,
+}: {
+  launch: Launch;
+  retained?: boolean;
+}): React.ReactElement {
+  const statusLabel = retained
+    ? 'LAST KNOWN'
+    : launch.isLive
+      ? 'LIVE'
+      : 'NEXT';
+
   return (
     <Link
       href={launch.isLive ? `/watch?id=${launch.id}` : `/launch/${launch.id}`}
       className="flex min-h-11 min-w-0 max-w-full items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
     >
-      <span className={launch.isLive ? 'text-[var(--console-magenta)]' : 'text-[var(--console-cyan)]'}>
-        {launch.isLive ? 'LIVE' : 'NEXT'}
+      <span
+        className={
+          retained
+            ? 'text-[var(--console-amber)]'
+            : launch.isLive
+              ? 'text-[var(--console-magenta)]'
+              : 'text-[var(--console-cyan)]'
+        }
+      >
+        {statusLabel}
       </span>
       <span aria-hidden="true" className="text-[var(--border-strong)]">/</span>
       <span className="min-w-0 max-w-[48vw] truncate font-medium text-[var(--text-secondary)]">
         {launch.name}
       </span>
-      <Countdown
-        targetDate={launch.date}
-        precision={launch.datePrecision}
-        compact
-        completedLabel={launch.isLive ? 'In progress' : 'Window open'}
-        className={launch.isLive ? 'shrink-0 !text-[var(--console-magenta)]' : 'shrink-0'}
-      />
+      {retained && launch.isLive ? (
+        <span className="shrink-0 text-[var(--console-amber)]">
+          Coverage unconfirmed
+        </span>
+      ) : (
+        <Countdown
+          targetDate={launch.date}
+          precision={launch.datePrecision}
+          compact
+          completedLabel={launch.isLive ? 'In progress' : 'Window open'}
+          className={
+            launch.isLive
+              ? 'shrink-0 !text-[var(--console-magenta)]'
+              : 'shrink-0'
+          }
+        />
+      )}
     </Link>
   );
 }
@@ -40,7 +70,7 @@ export default function LaunchTicker(): React.ReactElement | null {
     );
   }
 
-  if (error) {
+  if (error && launches.length === 0) {
     return (
       <div className="mx-5 min-w-0 flex-1 text-center text-[var(--console-amber)]">
         SCHEDULE DEGRADED
@@ -60,7 +90,7 @@ export default function LaunchTicker(): React.ReactElement | null {
 
   return (
     <div className="mx-5 flex min-w-0 flex-1 justify-center overflow-hidden">
-      <NextLaunchStatus launch={primaryLaunch} />
+      <NextLaunchStatus launch={primaryLaunch} retained={Boolean(error)} />
     </div>
   );
 }

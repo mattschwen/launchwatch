@@ -18,7 +18,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 - Desktop uses the sticky top navigation for Home, Watch, and History.
 - Desktop keeps a 44-pixel system bar below page content with the current feed
-  condition and a persistent link to the live or next mission.
+  condition and a persistent link to the live or next mission. If a refresh
+  fails after a successful load, the link remains available as an amber last-known
+  mission; retained live state is labeled unconfirmed instead of presented as
+  current coverage.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
 - Server route transitions retain a visible route-level heading, truthful
   synchronization copy, and named mission-control status while application and
