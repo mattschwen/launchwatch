@@ -11,6 +11,7 @@ import type { LaunchDatePrecision } from '@/lib/types';
 
 interface CountdownProps {
   targetDate: string;
+  animated?: boolean;
   className?: string;
   compact?: boolean;
   completedLabel?: string;
@@ -20,6 +21,7 @@ interface CountdownProps {
 
 export default function Countdown({
   targetDate,
+  animated = true,
   className = '',
   compact = false,
   completedLabel = 'Window open',
@@ -114,9 +116,13 @@ export default function Countdown({
           </span>
         ) : null}
         <span
-          key={estimated ? seconds : 'exact'}
+          key={animated && estimated ? seconds : 'steady'}
           aria-hidden={estimated ? 'true' : undefined}
-          className={estimated ? 'countdown-compact-tick inline-block' : undefined}
+          className={
+            animated && estimated
+              ? 'countdown-compact-tick inline-block'
+              : undefined
+          }
         >
           {compactValue}
         </span>
@@ -176,7 +182,9 @@ export default function Countdown({
           >
             <span
               key={`${unit.label}-${unit.value}`}
-              className={`countdown-digits countdown-digit-tick block text-center tracking-[-0.055em] ${
+              className={`countdown-digits block text-center tracking-[-0.055em] ${
+                animated ? 'countdown-digit-tick' : ''
+              } ${
                 estimated
                   ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
                   : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'

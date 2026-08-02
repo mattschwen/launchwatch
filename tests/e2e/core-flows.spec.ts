@@ -422,21 +422,27 @@ test('timed estimates retain a live approximate countdown', async ({
     .poll(() => seconds.textContent(), { timeout: 3_000 })
     .not.toBe(initialSeconds);
   await expect(seconds).toHaveClass(/countdown-digit-tick/);
-  const animation = await seconds.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      name: style.animationName,
-      duration: Number.parseFloat(style.animationDuration),
-    };
-  });
-  expect(animation.name).toBe('countdown-digit-tick');
-  expect(animation.duration).toBeGreaterThan(0.25);
+  await expect
+    .poll(() =>
+      seconds.evaluate((element) => getComputedStyle(element).animationName)
+    )
+    .toBe('countdown-digit-tick');
+  await expect
+    .poll(() =>
+      seconds.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).animationDuration)
+      )
+    )
+    .toBeGreaterThan(0.25);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const reducedDuration = await seconds.evaluate((element) =>
-    Number.parseFloat(getComputedStyle(element).animationDuration)
-  );
-  expect(reducedDuration).toBeLessThanOrEqual(0.001);
+  await expect
+    .poll(() =>
+      seconds.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).animationDuration)
+      )
+    )
+    .toBeLessThanOrEqual(0.001);
   await expect(
     hero.getByText('Hour estimate · provider target may move')
   ).toBeVisible();
@@ -455,6 +461,15 @@ test('timed estimates retain a live approximate countdown', async ({
       .getByRole('link', { name: /Orbital Dawn/ });
     await expect(ticker).toContainText('≈T−');
     await expect(ticker).toContainText('Hour estimate');
+    const tickerCountdown = ticker.locator('time');
+    const initialTickerCountdown = await tickerCountdown.textContent();
+    await expect
+      .poll(() => tickerCountdown.textContent(), { timeout: 3_000 })
+      .not.toBe(initialTickerCountdown);
+    await expect(
+      tickerCountdown.locator('.countdown-compact-tick')
+    ).toHaveCount(0);
+    await expect(tickerCountdown).toHaveClass(/!text-\[var\(--text-muted\)\]/);
   }
 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);

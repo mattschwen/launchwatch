@@ -37,8 +37,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   header live region announces feed-state transitions; repeated visual status
   readouts must not create duplicate assistive-technology announcements.
 - The desktop mission ticker preserves provider date precision: minute- and
-  hour-level targets use an amber approximate countdown at the available
-  granularity, while day-and-coarser targets remain stable estimates.
+  hour-level targets keep quietly ticking at the available granularity without
+  repeating the primary countdown animation, while day-and-coarser targets
+  remain stable estimates.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home

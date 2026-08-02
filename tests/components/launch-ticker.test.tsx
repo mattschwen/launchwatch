@@ -85,8 +85,16 @@ describe('LaunchTicker', () => {
       /Estimated countdown: .*Hour estimate/i
     );
     expect(spokenCountdown).toHaveClass('sr-only', 'countdown-spoken');
-    expect(missionLink.querySelector('time')).toContainElement(spokenCountdown);
-    expect(missionLink.querySelector('time')).not.toHaveAttribute('aria-label');
+    const tickerCountdown = missionLink.querySelector('time');
+    expect(tickerCountdown).toContainElement(spokenCountdown);
+    expect(tickerCountdown).not.toHaveAttribute('aria-label');
+    expect(tickerCountdown).toHaveClass(
+      '!font-medium',
+      '!text-[var(--text-muted)]'
+    );
+    expect(
+      tickerCountdown?.querySelector('.countdown-compact-tick')
+    ).not.toBeInTheDocument();
   });
 
   it('keeps the last successful mission reachable after a refresh failure', async () => {

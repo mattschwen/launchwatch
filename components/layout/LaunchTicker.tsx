@@ -45,13 +45,14 @@ function NextLaunchStatus({
       ) : (
         <Countdown
           targetDate={launch.date}
+          animated={false}
           precision={launch.datePrecision}
           compact
           completedLabel={launch.isLive ? 'In progress' : 'Window open'}
           className={
             launch.isLive
               ? 'shrink-0 !text-[var(--console-magenta)]'
-              : 'shrink-0'
+              : 'shrink-0 !font-medium !text-[var(--text-muted)]'
           }
         />
       )}
