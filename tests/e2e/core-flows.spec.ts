@@ -1652,14 +1652,33 @@ test('home schedule keeps long mission telemetry readable', async ({
   await expect(missionName).toBeVisible();
   await expect(providerName).toBeVisible();
 
-  const readableContent = [missionName, providerName];
+  const readableContent = [
+    missionName,
+    providerName,
+    schedule
+      .getByText(longVehicleName, { exact: true })
+      .filter({ visible: true }),
+    schedule
+      .getByText(displayedSiteName, { exact: true })
+      .filter({ visible: true }),
+  ];
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     readableContent.push(
-      schedule.getByText(longVehicleName, { exact: true }),
-      schedule.getByText(longVehicleFamily, { exact: true }),
-      schedule.getByText(displayedSiteName, { exact: true }),
-      schedule.getByText(longSiteLocality, { exact: true })
+      schedule
+        .getByText(longVehicleFamily, { exact: true })
+        .filter({ visible: true }),
+      schedule
+        .getByText(longSiteLocality, { exact: true })
+        .filter({ visible: true })
     );
+  } else {
+    const scheduleRow = schedule.locator('article').first();
+    await expect(
+      scheduleRow.getByText('Vehicle', { exact: true }).filter({ visible: true })
+    ).toBeVisible();
+    await expect(
+      scheduleRow.getByText('Site', { exact: true }).filter({ visible: true })
+    ).toBeVisible();
   }
 
   for (const content of readableContent) {

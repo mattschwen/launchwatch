@@ -123,6 +123,21 @@ export default function LaunchCard({
             className="shrink-0 text-[var(--text-muted)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--console-cyan)]"
           />
         </div>
+
+        <dl className="col-span-2 grid min-w-0 grid-cols-2 gap-4 border-t border-[var(--border-subtle)] pt-2.5 lg:hidden">
+          <div className="min-w-0">
+            <dt className="data-label">Vehicle</dt>
+            <dd className="mt-1 break-words text-xs leading-4 text-[var(--text-secondary)]">
+              {launch.rocket}
+            </dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="data-label">Site</dt>
+            <dd className="mt-1 break-words text-xs leading-4 text-[var(--console-cyan)]">
+              {shortenLaunchSite(launch.launchSite)}
+            </dd>
+          </div>
+        </dl>
       </Link>
     </article>
   );

@@ -60,8 +60,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping complete
-  mission, provider, vehicle, and launch-site telemetry readable instead of
-  clipping provider-supplied values.
+  mission, provider, vehicle, and launch-site telemetry readable at every
+  viewport width instead of hiding or clipping provider-supplied values.
 - Large mission queues report the visible and total result count, then reveal
   five more rows per touch-safe command instead of mounting the full provider
   schedule at once.
