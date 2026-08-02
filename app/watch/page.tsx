@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
 } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -478,9 +479,43 @@ function MissionQueue({
   onSelect: (id: string) => void;
 }): React.ReactElement {
   const queuedLaunches = launches.slice(0, 10);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const selectedIndex = queuedLaunches.findIndex(
+    (launch) => launch.id === selectedId
+  );
+  const tabStopIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const queueLabel = `${queuedLaunches.length} mission${
     queuedLaunches.length === 1 ? '' : 's'
   }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
+
+  const handleQueueKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ): void => {
+    if (
+      event.key !== 'ArrowDown' &&
+      event.key !== 'ArrowUp' &&
+      event.key !== 'Home' &&
+      event.key !== 'End'
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    const lastIndex = queuedLaunches.length - 1;
+    const nextIndex =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? lastIndex
+          : event.key === 'ArrowDown'
+            ? (index + 1) % queuedLaunches.length
+            : (index - 1 + queuedLaunches.length) % queuedLaunches.length;
+    const nextLaunch = queuedLaunches[nextIndex];
+
+    optionRefs.current[nextIndex]?.focus();
+    onSelect(nextLaunch.id);
+  };
 
   return (
     <aside
@@ -497,16 +532,28 @@ function MissionQueue({
       </div>
       <div
         data-watch-queue-scroll
+        role="group"
+        aria-label="Mission selection"
+        aria-describedby="watch-queue-instructions"
         className="max-h-[20.8rem] overflow-y-auto overscroll-contain lg:max-h-[42rem]"
       >
-        {queuedLaunches.map((launch) => {
+        <p id="watch-queue-instructions" className="sr-only">
+          Use the Up and Down arrow keys to move between missions. Use Home or
+          End to jump to the first or last mission.
+        </p>
+        {queuedLaunches.map((launch, index) => {
           const selected = launch.id === selectedId;
           return (
             <button
               key={launch.id}
+              ref={(element) => {
+                optionRefs.current[index] = element;
+              }}
               type="button"
               aria-pressed={selected}
+              tabIndex={index === tabStopIndex ? 0 : -1}
               onClick={() => onSelect(launch.id)}
+              onKeyDown={(event) => handleQueueKeyDown(event, index)}
               className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
                 selected
                   ? launch.isLive

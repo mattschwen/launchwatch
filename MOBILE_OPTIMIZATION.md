@@ -112,6 +112,9 @@ The optional expanded map remains a modal dialog. It must:
   wrap instead of disappearing behind ellipses, while all ten queued missions
   remain keyboard and touch reachable without pushing coverage intelligence down
   another viewport.
+- The bounded queue is one page Tab stop. Up and Down select adjacent missions,
+  Home and End jump to its boundaries, and only the selected mission remains in
+  the Tab order while every item stays directly touch and pointer operable.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail. Stream and coverage
   intelligence appears before that illustrative telemetry so Watch keeps its
