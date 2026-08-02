@@ -60,7 +60,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Upcoming missions render as compact responsive rows while keeping complete
   mission, provider, vehicle, and launch-site telemetry readable instead of
   clipping provider-supplied values.
-- Filters are collapsed until requested.
+- Filters are collapsed until requested. Once open, every control keeps a
+  visible category label as values change, and the reset action uses text as
+  well as an icon so its purpose remains clear on narrow screens.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
 - The featured mission keeps its optional licensed vehicle or mission visual

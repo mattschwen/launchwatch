@@ -1321,6 +1321,9 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
 });
 
 test('home schedule filters missions and opens a detail route', async ({ page }) => {
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    await page.setViewportSize({ width: 1024, height: 900 });
+  }
   await page.goto('/');
 
   await expect(
@@ -1331,6 +1334,15 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Filter' }).click();
+  const filterPanel = page.locator('#launch-filters');
+  for (const label of [
+    'Search launches',
+    'Provider',
+    'Status',
+    'Sort launches',
+  ]) {
+    await expect(filterPanel.getByText(label, { exact: true })).toBeVisible();
+  }
   const provider = page.getByRole('combobox', { name: 'Provider' });
   await expect(provider.getByRole('option')).toHaveText([
     'All providers',
@@ -1386,6 +1398,9 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   const toolbarClear = page.getByRole('button', {
     name: 'Clear launch filters',
   });
+  await expect(toolbarClear).toHaveText('Clear filters');
+  await expect(toolbarClear).toHaveCSS('white-space', 'nowrap');
+  expect((await toolbarClear.boundingBox())?.height).toBe(44);
   await toolbarClear.focus();
   await toolbarClear.press('Enter');
   await expect(search).toHaveValue('');

@@ -63,30 +63,32 @@ export default function FilterBar({
     filters.sortBy !== resetFilters.sortBy;
 
   return (
-    <div className="grid gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_minmax(12rem,16rem)_12rem_12rem_auto]">
-      <div className="relative sm:col-span-2 lg:col-span-1">
-        <label htmlFor={`${id}-search`} className="sr-only">
+    <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1fr)_minmax(10rem,14rem)_10.5rem_10.5rem_auto]">
+      <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+        <label htmlFor={`${id}-search`} className="data-label mb-1.5 block">
           Search launches
         </label>
-        <Search
-          aria-hidden="true"
-          size={17}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-        />
-        <input
-          ref={resolvedSearchInputRef}
-          id={`${id}-search`}
-          type="search"
-          value={filters.search}
-          onChange={(event) => update('search', event.target.value)}
-          placeholder="Search missions"
-          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-        />
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            size={17}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          />
+          <input
+            ref={resolvedSearchInputRef}
+            id={`${id}-search`}
+            type="search"
+            value={filters.search}
+            onChange={(event) => update('search', event.target.value)}
+            placeholder="Mission, vehicle, site, or provider"
+            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          />
+        </div>
       </div>
 
       {showProvider ? (
-        <div>
-          <label htmlFor={`${id}-provider`} className="sr-only">
+        <div className="min-w-0">
+          <label htmlFor={`${id}-provider`} className="data-label mb-1.5 block">
             Provider
           </label>
           <select
@@ -105,8 +107,8 @@ export default function FilterBar({
         </div>
       ) : null}
 
-      <div>
-        <label htmlFor={`${id}-status`} className="sr-only">
+      <div className="min-w-0">
+        <label htmlFor={`${id}-status`} className="data-label mb-1.5 block">
           Status
         </label>
         <select
@@ -125,8 +127,8 @@ export default function FilterBar({
         </select>
       </div>
 
-      <div>
-        <label htmlFor={`${id}-sort`} className="sr-only">
+      <div className="min-w-0">
+        <label htmlFor={`${id}-sort`} className="data-label mb-1.5 block">
           Sort launches
         </label>
         <select
@@ -153,10 +155,11 @@ export default function FilterBar({
           onFilterChange(next);
           requestAnimationFrame(() => resolvedSearchInputRef.current?.focus());
         }}
-        className="icon-button disabled:cursor-not-allowed disabled:opacity-35"
+        className="action-button action-button-quiet w-full justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-35 sm:w-auto"
         aria-label="Clear launch filters"
       >
         <X aria-hidden="true" size={17} />
+        Clear filters
       </button>
     </div>
   );

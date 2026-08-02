@@ -4,6 +4,23 @@ import { describe, expect, it, vi } from 'vitest';
 import FilterBar from '@/components/FilterBar';
 
 describe('FilterBar', () => {
+  it('keeps filter categories and the reset action visible', () => {
+    render(<FilterBar onFilterChange={vi.fn()} />);
+
+    for (const label of [
+      'Search launches',
+      'Provider',
+      'Status',
+      'Sort launches',
+    ]) {
+      expect(screen.getByText(label, { selector: 'label' })).toBeVisible();
+    }
+
+    expect(
+      screen.getByRole('button', { name: 'Clear launch filters' })
+    ).toHaveTextContent('Clear filters');
+  });
+
   it('renders the current providers and emits the selected provider name', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();
