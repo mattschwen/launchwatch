@@ -46,8 +46,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 - The featured mission uses fluid type and keeps its primary mission actions
   ahead of secondary imagery in a single-column hierarchy on narrow screens.
-- At the smallest short viewport, featured mission actions precede the telemetry
-  grid so Watch and Briefing remain visible above the fixed primary navigation.
+- On compact mobile viewports up to 430 × 760, featured mission actions precede
+  the telemetry grid so both 44-pixel controls remain fully available above the
+  fixed primary navigation.
 - Countdown values wrap without horizontal overflow.
 - Provider minute/hour targets retain a live amber countdown that visibly ticks
   every second toward the approximate provider target; the `≈T−` prefix and

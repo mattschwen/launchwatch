@@ -962,6 +962,32 @@ test('short mobile viewports keep featured actions clear of primary navigation',
     navBox!.y
   );
 
+  await page.setViewportSize({ width: 393, height: 727 });
+  await expect
+    .poll(async () => {
+      const [
+        compactTelemetryBox,
+        compactPrimaryBox,
+        compactBriefingBox,
+        compactNavBox,
+      ] = await Promise.all([
+          telemetry.boundingBox(),
+          primaryAction.boundingBox(),
+          briefingAction.boundingBox(),
+          mobileNav.boundingBox(),
+        ]);
+
+      return Boolean(
+        compactTelemetryBox &&
+          compactPrimaryBox &&
+          compactBriefingBox &&
+          compactNavBox &&
+          compactPrimaryBox.y < compactTelemetryBox.y &&
+          compactBriefingBox.y + compactBriefingBox.height + 4 <= compactNavBox.y
+      );
+    })
+    .toBe(true);
+
   await page.setViewportSize({ width: 393, height: 851 });
   await expect
     .poll(async () => {
