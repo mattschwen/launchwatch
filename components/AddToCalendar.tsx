@@ -25,7 +25,7 @@ interface AddToCalendarProps {
   launch: Launch;
   variant?: 'button' | 'compact' | 'icon';
   menuPlacement?: 'top' | 'bottom';
-  menuAlign?: 'right' | 'center';
+  menuAlign?: 'left' | 'right' | 'center';
 }
 
 type CopyState = 'idle' | 'copying' | 'success' | 'error';
@@ -243,6 +243,8 @@ export default function AddToCalendar({
           className={`panel absolute z-[70] w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
             menuAlign === 'center' || variant === 'compact'
               ? 'left-1/2 -translate-x-1/2'
+              : menuAlign === 'left'
+                ? 'left-0'
               : 'right-0'
           } ${
             menuPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'

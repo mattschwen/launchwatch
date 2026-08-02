@@ -84,7 +84,7 @@ describe('LaunchTicker', () => {
     const spokenCountdown = screen.getByText(
       /Estimated countdown: .*Hour estimate/i
     );
-    expect(spokenCountdown).toHaveClass('sr-only');
+    expect(spokenCountdown).toHaveClass('sr-only', 'countdown-spoken');
     expect(missionLink.querySelector('time')).toContainElement(spokenCountdown);
     expect(missionLink.querySelector('time')).not.toHaveAttribute('aria-label');
   });

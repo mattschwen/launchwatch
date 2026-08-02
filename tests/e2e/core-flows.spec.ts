@@ -406,6 +406,10 @@ test('timed estimates retain a live approximate countdown', async ({
   await expect(hero.locator('.countdown-display')).toBeVisible();
   await expect(hero.locator('.countdown-prefix')).toHaveText('≈T−');
   await expect(hero.locator('.countdown-unit')).toHaveCount(4);
+  const spokenCountdown = hero.locator('.countdown-spoken');
+  await expect(spokenCountdown).toContainText('Estimated countdown:');
+  await expect(spokenCountdown).toHaveCSS('white-space', 'normal');
+  await expect(spokenCountdown).toHaveCSS('overflow-wrap', 'anywhere');
   await expect(hero.locator('.countdown-unit-label')).toHaveText([
     'days',
     'hrs',
@@ -3390,6 +3394,93 @@ test('mission sharing copies canonical links from watch and completed details', 
       )
     )
     .toBe(`${new URL(page.url()).origin}/launch/spacex-demo-return`);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('upcoming detail keeps mission commands in a touch-safe mobile console', async ({
+  page,
+}) => {
+  test.skip(
+    !test.info().project.name.startsWith('mobile'),
+    'Mobile detail command layout'
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const findStream = page.getByRole('link', {
+    name: 'Find stream',
+    exact: true,
+  });
+  const briefing = page.getByRole('button', {
+    name: 'Open briefing',
+    exact: true,
+  });
+  const calendar = page.getByRole('button', {
+    name: 'Add to calendar',
+    exact: true,
+  });
+  const share = page.getByRole('button', {
+    name: 'Share mission',
+    exact: true,
+  });
+  const commands = [findStream, briefing, calendar, share];
+
+  const bounds = await Promise.all(
+    commands.map(async (command) => {
+      await expect(command).toBeVisible();
+      const box = await command.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+      return box!;
+    })
+  );
+
+  expect(Math.abs(bounds[0].y - bounds[1].y)).toBeLessThan(2);
+  expect(Math.abs(bounds[2].y - bounds[3].y)).toBeLessThan(2);
+  expect(bounds[2].y).toBeGreaterThan(bounds[0].y + bounds[0].height - 2);
+  expect(
+    Math.max(...bounds.map((box) => box.width)) -
+      Math.min(...bounds.map((box) => box.width))
+  ).toBeLessThan(2);
+
+  await calendar.focus();
+  await calendar.press('Enter');
+  const menu = page.getByRole('group', { name: 'Calendar options' });
+  await expect(menu).toBeVisible();
+  await expect(
+    menu.getByRole('button', { name: 'Google Calendar' })
+  ).toBeFocused();
+
+  const placement = await menu.evaluate((element) => {
+    const options = element.getBoundingClientRect();
+    const trigger = element.parentElement
+      ?.querySelector('button')
+      ?.getBoundingClientRect();
+    const mobileNav = Array.from(
+      document.querySelectorAll('nav[aria-label="Primary navigation"]')
+    )
+      .map((navigation) => navigation.getBoundingClientRect())
+      .find((bounds) => bounds.height > 0);
+
+    return {
+      insideViewport:
+        options.top >= 0 &&
+        options.left >= 0 &&
+        options.right <= window.innerWidth,
+      aboveTrigger: Boolean(trigger && options.bottom <= trigger.top),
+      aboveNavigation: Boolean(
+        !mobileNav || options.bottom <= mobileNav.top
+      ),
+    };
+  });
+
+  expect(placement).toEqual({
+    insideViewport: true,
+    aboveTrigger: true,
+    aboveNavigation: true,
+  });
+  await page.keyboard.press('Escape');
+  await expect(calendar).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

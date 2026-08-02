@@ -16,6 +16,7 @@ interface LaunchActionsProps {
   showCalendar?: boolean;
   showShare?: boolean;
   compact?: boolean;
+  detail?: boolean;
   featured?: boolean;
   coverageLoading?: boolean;
   coverageUnavailable?: boolean;
@@ -30,6 +31,7 @@ export default function LaunchActions({
   showCalendar = true,
   showShare = false,
   compact = false,
+  detail = false,
   featured = false,
   coverageLoading = false,
   coverageUnavailable = false,
@@ -64,7 +66,9 @@ export default function LaunchActions({
           ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 [&>.action-button]:w-full'
           : compact
             ? 'compact-launch-actions grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center'
-          : 'flex flex-wrap items-center gap-2'
+            : detail
+              ? 'detail-launch-actions grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center'
+            : 'flex flex-wrap items-center gap-2'
       } ${className}`}
     >
       {showPrimaryAction ? (
@@ -124,7 +128,8 @@ export default function LaunchActions({
         <AddToCalendar
           launch={launch}
           variant={compact ? 'compact' : 'button'}
-          menuPlacement={compact ? 'top' : 'bottom'}
+          menuPlacement={compact || detail ? 'top' : 'bottom'}
+          menuAlign={detail ? 'left' : 'right'}
         />
       ) : null}
 

@@ -159,6 +159,9 @@ The optional expanded map remains a modal dialog. It must:
 
 - Long names wrap as phrases within the available width.
 - The status, title, description, actions, and telemetry summary stack on narrow screens.
+- Upcoming mission actions form a stable two-by-two command console on narrow
+  screens instead of wrapping into uneven single-control rows. The calendar
+  menu opens above its trigger and stays clear of persistent navigation.
 - One licensed vehicle or mission visual appears before the telemetry card and
   trajectory; when rights cannot be verified, the layout presents a compact,
   honest unavailable state in the same stable visual footprint.

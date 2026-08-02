@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import LaunchActions from '@/components/launch/LaunchActions';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
@@ -88,5 +89,29 @@ describe('LaunchActions', () => {
     expect(screen.getByRole('button', { name: 'Briefing' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Calendar' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Share' })).toBeVisible();
+  });
+
+  it('uses the detail command grid and keeps calendar options above it', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <LaunchActions
+        launch={UPCOMING_LAUNCHES[0]}
+        onOpenBriefing={() => undefined}
+        showShare
+        detail
+      />
+    );
+
+    expect(container.firstChild).toHaveClass(
+      'detail-launch-actions',
+      'grid-cols-2'
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add to calendar' })
+    );
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' })
+    ).toHaveClass('bottom-full', 'left-0');
   });
 });

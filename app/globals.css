@@ -476,6 +476,10 @@ body::before {
 .status-transition { animation: status-flicker 420ms steps(2, end) both; }
 .countdown-digit-tick,
 .countdown-compact-tick { animation: countdown-digit-tick 320ms var(--ease-out-quart) both; }
+.countdown-spoken {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 
 /* ═══════════════════════════════════════════════════
    UTILITY CLASSES
@@ -1256,6 +1260,16 @@ body::before {
   width: 100%;
 }
 
+.detail-launch-actions > *,
+.detail-launch-actions > * > .action-button {
+  min-width: 0;
+  width: 100%;
+}
+
+.detail-launch-actions > [role='status'] {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 639px) {
   .compact-launch-actions .action-button {
     min-height: 3.5rem;
@@ -1264,11 +1278,23 @@ body::before {
     padding: 0.45rem 0.3rem;
     font-size: 0.78rem;
   }
+
+  .detail-launch-actions .action-button {
+    min-height: 3.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.45rem 0.35rem;
+    font-size: 0.78rem;
+    text-align: center;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 640px) {
   .compact-launch-actions > *,
-  .compact-launch-actions > * > .action-button {
+  .compact-launch-actions > * > .action-button,
+  .detail-launch-actions > *,
+  .detail-launch-actions > * > .action-button {
     width: auto;
   }
 }

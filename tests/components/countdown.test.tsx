@@ -32,9 +32,10 @@ describe('Countdown', () => {
     const display = container.querySelector('.countdown-display');
     const units = container.querySelectorAll('.countdown-unit');
 
-    expect(spokenCountdown).toHaveClass('sr-only');
+    expect(spokenCountdown).toHaveClass('sr-only', 'countdown-spoken');
     expect(time?.tagName).toBe('TIME');
     expect(time).toHaveAttribute('datetime', '2035-07-28T14:30:00.000Z');
+    expect(time).not.toHaveAttribute('aria-label');
     expect(display).toBeInTheDocument();
     expect(display).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelector('.countdown-prefix')).toHaveTextContent('T−');
@@ -96,7 +97,7 @@ describe('Countdown', () => {
       screen.getByText(
         'Estimated launch target: August 2035. Month estimate.'
       )
-    ).toHaveClass('sr-only');
+    ).toHaveClass('sr-only', 'countdown-spoken');
     expect(container.querySelector('.countdown-display')).not.toBeInTheDocument();
   });
 
@@ -118,7 +119,7 @@ describe('Countdown', () => {
         screen.getByText(
           `Estimated countdown: 2 days, 3 hours, 4 minutes, 5 seconds until the provider target. ${label}.`
         )
-      ).toBeVisible();
+      ).toHaveClass('sr-only', 'countdown-spoken');
       expect(container.querySelector('.countdown-prefix')).toHaveTextContent(
         '≈T−'
       );
@@ -151,7 +152,7 @@ describe('Countdown', () => {
       const spokenCountdown = screen.getByText(
         `Estimated countdown: 2 days, 3 hours, 4 minutes, 5 seconds until the provider target. ${label}.`
       );
-      expect(spokenCountdown).toHaveClass('sr-only');
+      expect(spokenCountdown).toHaveClass('sr-only', 'countdown-spoken');
       expect(spokenCountdown.closest('time')).not.toHaveAttribute('aria-label');
       expect(screen.getByText(`≈T−2d 03:04:05 · ${label}`)).toBeVisible();
       expect(screen.getByText(/≈T−/)).toHaveClass('countdown-compact-tick');

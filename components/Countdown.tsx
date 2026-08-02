@@ -47,7 +47,7 @@ export default function Countdown({
 
     return (
       <time dateTime={targetDate} className={`block ${className}`}>
-        <span className="sr-only">
+        <span className="countdown-spoken sr-only">
           Estimated launch target: {target}. {precisionLabel}.
         </span>
         <span
@@ -104,7 +104,10 @@ export default function Countdown({
         suppressHydrationWarning
       >
         {estimated ? (
-          <span className="sr-only" suppressHydrationWarning>
+          <span
+            className="countdown-spoken sr-only"
+            suppressHydrationWarning
+          >
             Estimated countdown: {days} days, {hours} hours, {minutes}{' '}
             minutes, {seconds} seconds until the provider target.{' '}
             {precisionLabel}.
@@ -137,9 +140,10 @@ export default function Countdown({
       className={`block font-mono ${className}`}
       suppressHydrationWarning
     >
-      <span className="sr-only" suppressHydrationWarning>
+      <span className="countdown-spoken sr-only" suppressHydrationWarning>
         {estimated ? 'Estimated countdown: ' : ''}
-        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until {estimated
+        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until{' '}
+        {estimated
           ? `the provider target. ${precisionLabel}.`
           : 'launch'}
       </span>
