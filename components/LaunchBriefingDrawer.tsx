@@ -20,6 +20,7 @@ import {
   shortenLaunchSite,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
+import MissionDescription from './MissionDescription';
 import StatusBadge from './ui/StatusBadge';
 
 interface LaunchBriefingDrawerProps {
@@ -162,9 +163,10 @@ export default function LaunchBriefingDrawer({
           <StatusBadge status={launch.status} statusName={launch.statusName} />
 
           {launch.description ? (
-            <p className="mt-5 text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
-              {launch.description}
-            </p>
+            <MissionDescription
+              description={launch.description}
+              className="mt-5 text-sm leading-7 text-[var(--text-secondary)] sm:text-base"
+            />
           ) : (
             <p className="mt-5 text-sm leading-6 text-[var(--text-muted)]">
               The provider has not supplied a full mission description.

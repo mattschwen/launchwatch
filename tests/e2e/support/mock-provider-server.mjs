@@ -218,7 +218,7 @@ const ll2Upcoming = ll2Launch({
   longitude: -80.5774,
   missionType: 'Communications',
   description:
-    'A communications payload mission opening a new low-Earth-orbit relay corridor.',
+    'A communications payload mission opening a new low-Earth-orbit relay corridor.\n\nMission objectives:\n\n* Deploy the relay payload\n* Validate the communications link',
 });
 
 ll2Upcoming.rocket.configuration.image = {

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import MissionDescription from '@/components/MissionDescription';
 import MissionTrajectory from '@/components/MissionTrajectory';
 import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
@@ -195,9 +196,10 @@ export default function LaunchDetailClient({
             </p>
 
             {launch.description ? (
-              <p className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7">
-                {launch.description}
-              </p>
+              <MissionDescription
+                description={launch.description}
+                className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7"
+              />
             ) : (
               <p className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-muted)] sm:text-base sm:leading-7">
                 Mission description pending from the provider.

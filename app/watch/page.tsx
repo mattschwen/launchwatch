@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import MissionDescription from '@/components/MissionDescription';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
 import MissionVisual from '@/components/launch/MissionVisual';
@@ -801,9 +802,10 @@ function WatchContent(): React.ReactElement {
                 />
               </div>
               {selectedLaunch.description ? (
-                <p className="mt-5 max-w-4xl border-t border-[var(--border-subtle)] pt-5 text-sm leading-6 text-[var(--text-secondary)]">
-                  {selectedLaunch.description}
-                </p>
+                <MissionDescription
+                  description={selectedLaunch.description}
+                  className="mt-5 max-w-4xl border-t border-[var(--border-subtle)] pt-5 text-sm leading-6 text-[var(--text-secondary)]"
+                />
               ) : null}
             </section>
           </div>

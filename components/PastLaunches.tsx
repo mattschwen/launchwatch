@@ -31,6 +31,7 @@ import {
   type HistoryFilters,
 } from '@/lib/history-return';
 import MissionVisual from '@/components/launch/MissionVisual';
+import MissionDescription from '@/components/MissionDescription';
 
 const PAGE_SIZE = 20;
 
@@ -196,9 +197,16 @@ function HistoryRow({
           className="grid gap-5 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/45 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_18rem]"
         >
           <div>
-            <p className="max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
-              {launch.description || 'No mission summary was supplied by the provider.'}
-            </p>
+            {launch.description ? (
+              <MissionDescription
+                description={launch.description}
+                className="max-w-3xl text-sm leading-6 text-[var(--text-secondary)]"
+              />
+            ) : (
+              <p className="max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+                No mission summary was supplied by the provider.
+              </p>
+            )}
             <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
               <div>
                 <dt className="data-label">Mission type</dt>

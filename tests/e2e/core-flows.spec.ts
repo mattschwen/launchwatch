@@ -3586,6 +3586,28 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   expect(consoleErrors).toEqual([]);
 });
 
+test('mission descriptions preserve provider paragraphs and list structure', async ({
+  page,
+}) => {
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const description = page.locator('[data-mission-description]').first();
+  await expect(description.locator('p')).toHaveCount(2);
+  await expect(description.getByText('Mission objectives:')).toBeVisible();
+  await expect(description.getByRole('list')).toBeVisible();
+  await expect(description.getByRole('listitem')).toHaveText([
+    'Deploy the relay payload',
+    'Validate the communications link',
+  ]);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  const briefingDescription = briefing.locator('[data-mission-description]');
+  await expect(briefingDescription.locator('p')).toHaveCount(2);
+  await expect(briefingDescription.getByRole('listitem')).toHaveCount(2);
+});
+
 test('mission sharing copies canonical links from watch and completed details', async ({
   page,
 }) => {

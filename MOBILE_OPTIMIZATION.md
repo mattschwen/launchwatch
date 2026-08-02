@@ -255,6 +255,8 @@ The optional expanded map remains a modal dialog. It must:
   tree; assistive technology should hear each feed-state transition once, not
   a duplicate announcement or a new age every second.
 - Avoid dense all-uppercase labels for primary reading content.
+- Preserve provider-supplied paragraphs and bullet lists in mission narratives;
+  do not collapse structured briefing copy into one dense text block.
 - The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
 
 ## PWA and Offline Behavior
@@ -298,6 +300,7 @@ For each relevant viewport:
 - [`components/LaunchList.tsx`](components/LaunchList.tsx)
 - [`components/PastLaunches.tsx`](components/PastLaunches.tsx)
 - [`components/LaunchMap.tsx`](components/LaunchMap.tsx)
+- [`components/MissionDescription.tsx`](components/MissionDescription.tsx)
 - [`components/ShareMissionButton.tsx`](components/ShareMissionButton.tsx)
 - [`components/layout/MobileNav.tsx`](components/layout/MobileNav.tsx)
 - [`app/globals.css`](app/globals.css)
