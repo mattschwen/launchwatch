@@ -2870,7 +2870,7 @@ test('history search reaches a completed mission detail', async ({ page }) => {
     name: 'Clear archive filters',
   });
 
-  await expect(clearFilters).toBeDisabled();
+  await expect(clearFilters).toHaveCount(0);
   await search.fill('no matching mission');
   await expect(page).toHaveURL(/\/history\?q=no\+matching\+mission$/);
   const archiveResults = page.getByRole('status', {
@@ -2878,12 +2878,14 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   });
   await expect(archiveResults).toHaveText('0 results');
   await expect(clearFilters).toBeEnabled();
+  await expect(clearFilters).toContainText('Clear filters');
+  expect((await clearFilters.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await clearFilters.press('Enter');
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
   await expect(page).toHaveURL(/\/history$/);
   await expect(archiveResults).toHaveText('2 results');
-  await expect(clearFilters).toBeDisabled();
+  await expect(clearFilters).toHaveCount(0);
 
   await search.fill('Return');
 

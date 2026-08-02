@@ -613,15 +613,17 @@ export default function PastLaunches({
             >
               {resultCountLabel}
             </p>
-            <button
-              type="button"
-              disabled={!filtersActive}
-              onClick={clearFilters}
-              className="icon-button shrink-0 disabled:cursor-not-allowed disabled:opacity-35"
-              aria-label="Clear archive filters"
-            >
-              <X aria-hidden="true" size={17} />
-            </button>
+            {filtersActive ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="action-button action-button-quiet shrink-0 px-3"
+                aria-label="Clear archive filters"
+              >
+                <X aria-hidden="true" size={16} />
+                <span>Clear filters</span>
+              </button>
+            ) : null}
           </div>
         </div>
       </div>

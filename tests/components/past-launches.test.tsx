@@ -134,15 +134,18 @@ describe('PastLaunches', () => {
 
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
     const search = screen.getByRole('searchbox', { name: 'Search missions' });
-    const clear = screen.getByRole('button', {
-      name: 'Clear archive filters',
-    });
 
-    expect(clear).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'Clear archive filters' })
+    ).not.toBeInTheDocument();
     await user.type(search, 'no matching mission');
 
     expect(screen.getByRole('status')).toHaveTextContent('0 results');
+    const clear = screen.getByRole('button', {
+      name: 'Clear archive filters',
+    });
     expect(clear).toBeEnabled();
+    expect(clear).toHaveTextContent('Clear filters');
 
     clear.focus();
     await user.keyboard('{Enter}');
@@ -152,7 +155,9 @@ describe('PastLaunches', () => {
     expect(screen.getByRole('status')).toHaveTextContent('2 results');
     expect(screen.getByText('Demo Return Flight')).toBeVisible();
     expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
-    expect(clear).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'Clear archive filters' })
+    ).not.toBeInTheDocument();
   });
 
   it('treats whitespace-only search input as an inactive filter', async () => {
@@ -161,14 +166,13 @@ describe('PastLaunches', () => {
 
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
     const search = screen.getByRole('searchbox', { name: 'Search missions' });
-    const clear = screen.getByRole('button', {
-      name: 'Clear archive filters',
-    });
 
     await user.type(search, '   ');
 
     expect(screen.getByRole('status')).toHaveTextContent('2 results');
-    expect(clear).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'Clear archive filters' })
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Demo Return Flight')).toBeVisible();
     expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
   });
