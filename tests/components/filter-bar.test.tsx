@@ -19,6 +19,9 @@ describe('FilterBar', () => {
     expect(
       screen.getByRole('button', { name: 'Clear launch filters' })
     ).toHaveTextContent('Clear filters');
+    expect(
+      screen.getByRole('searchbox', { name: 'Search launches' })
+    ).toHaveAttribute('maxlength', '120');
   });
 
   it('renders the current providers and emits the selected provider name', async () => {

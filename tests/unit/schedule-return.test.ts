@@ -5,6 +5,7 @@ import {
   DEFAULT_SCHEDULE_FILTERS,
   parseScheduleFilters,
   readScheduleReturnQuery,
+  SCHEDULE_SEARCH_MAX_LENGTH,
   serializeScheduleFilters,
 } from '@/lib/schedule-return';
 
@@ -28,6 +29,17 @@ describe('schedule return context', () => {
         new URLSearchParams('q=one&q=two&status=invalid&sort=random'),
       ),
     ).toEqual(DEFAULT_SCHEDULE_FILTERS);
+
+    expect(
+      parseScheduleFilters(
+        new URLSearchParams({ q: 'x'.repeat(SCHEDULE_SEARCH_MAX_LENGTH) }),
+      ).search,
+    ).toHaveLength(SCHEDULE_SEARCH_MAX_LENGTH);
+    expect(
+      parseScheduleFilters(
+        new URLSearchParams({ q: 'x'.repeat(SCHEDULE_SEARCH_MAX_LENGTH + 1) }),
+      ).search,
+    ).toBe('');
   });
 
   it('serializes only non-default filters into a canonical order', () => {

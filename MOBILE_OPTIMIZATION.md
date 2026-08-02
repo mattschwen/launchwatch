@@ -68,6 +68,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
   well as an icon so its purpose remains clear on narrow screens.
+- Schedule search enforces the same 120-character boundary as its canonical
+  URL state, preventing a visible filter from diverging from reload, share, or
+  mission-return context.
 - When filters are active, the schedule disclosure keeps their total visibly
   counted while open or collapsed and includes that count in its accessible
   name, so hidden constraints never look like an unfiltered queue.

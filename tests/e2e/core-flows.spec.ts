@@ -1437,6 +1437,18 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     page.getByRole('heading', { name: 'Orbital Dawn' })
   ).toHaveCount(1);
 
+  const boundedSearch = 'x'.repeat(120);
+  await search.fill(boundedSearch);
+  await expect(search).toHaveValue(boundedSearch);
+  await expect(search).toHaveAttribute('maxlength', '120');
+  await search.press('End');
+  await search.press('y');
+  await expect(search).toHaveValue(boundedSearch);
+  await expect(search).toBeFocused();
+  await expect(page).toHaveURL(new RegExp(`\\?q=${boundedSearch}$`));
+
+  await search.fill('Polaris');
+
   const toolbarClear = page.getByRole('button', {
     name: 'Clear launch filters',
   });

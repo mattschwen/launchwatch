@@ -17,7 +17,7 @@ type SearchParamRecord = Record<
   string | string[] | undefined
 >;
 
-const MAX_SEARCH_LENGTH = 120;
+export const SCHEDULE_SEARCH_MAX_LENGTH = 120;
 const MAX_PROVIDER_LENGTH = 120;
 
 function singleValue(
@@ -50,7 +50,7 @@ export function parseScheduleFilters(
         ? params.get(key)
         : null
       : singleValue(params[key]);
-  const search = boundedText(read('q'), MAX_SEARCH_LENGTH);
+  const search = boundedText(read('q'), SCHEDULE_SEARCH_MAX_LENGTH);
   const provider = boundedText(read('provider'), MAX_PROVIDER_LENGTH);
   const status = read('status');
   const sortBy = read('sort');

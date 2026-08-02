@@ -4,6 +4,7 @@ import { useId, useRef, useState, type RefObject } from 'react';
 import { Search, X } from 'lucide-react';
 import {
   DEFAULT_SCHEDULE_FILTERS,
+  SCHEDULE_SEARCH_MAX_LENGTH,
   type ScheduleFilters,
 } from '@/lib/schedule-return';
 
@@ -82,6 +83,7 @@ export default function FilterBar({
             ref={resolvedSearchInputRef}
             id={`${id}-search`}
             type="search"
+            maxLength={SCHEDULE_SEARCH_MAX_LENGTH}
             value={filters.search}
             onChange={(event) => update('search', event.target.value)}
             placeholder="Mission, vehicle, site, or provider"
