@@ -36,6 +36,7 @@ export default function LaunchList({
   const [filterResetKey, setFilterResetKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
+  const loadMoreRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const retryFocusPendingRef = useRef(false);
   const hasActiveFilters =
@@ -120,6 +121,13 @@ export default function LaunchList({
       return a.dateUnix - b.dateUnix;
     });
   }, [filters, launches]);
+  const visibleLaunches = filtered.slice(0, visibleCount);
+  const allResultsVisible =
+    filtered.length > 0 && visibleLaunches.length === filtered.length;
+  const resultCountLabel =
+    filtered.length > INITIAL_VISIBLE_COUNT && !allResultsVisible
+      ? `Showing ${visibleLaunches.length} of ${filtered.length} missions`
+      : `${filtered.length} mission${filtered.length === 1 ? '' : 's'}`;
 
   if (loading && launches.length === 0) {
     return (
@@ -201,7 +209,7 @@ export default function LaunchList({
             aria-label="Upcoming launch results"
             className="mt-1 text-xs text-[var(--text-muted)]"
           >
-            {filtered.length} mission{filtered.length === 1 ? '' : 's'}
+            {resultCountLabel}
             {meta?.partial ? ' · provider data is partial' : ''}
           </p>
         </div>
@@ -217,21 +225,6 @@ export default function LaunchList({
             <Filter aria-hidden="true" size={16} />
             {filtersOpen ? 'Hide filters' : 'Filter'}
           </button>
-          {filtered.length > INITIAL_VISIBLE_COUNT ? (
-            <button
-              type="button"
-              onClick={() =>
-                setVisibleCount((count) =>
-                  count > INITIAL_VISIBLE_COUNT
-                    ? INITIAL_VISIBLE_COUNT
-                    : filtered.length,
-                )
-              }
-              className="action-button action-button-quiet"
-            >
-              {visibleCount > INITIAL_VISIBLE_COUNT ? 'Show fewer' : 'View all'}
-            </button>
-          ) : null}
         </div>
       </header>
 
@@ -293,8 +286,8 @@ export default function LaunchList({
             <span className="data-label">Site</span>
             <span className="data-label">Status</span>
           </div>
-          <div>
-            {filtered.slice(0, visibleCount).map((launch) => (
+          <div id="upcoming-launch-results">
+            {visibleLaunches.map((launch) => (
               <div
                 key={launch.id}
                 className="mission-row"
@@ -316,6 +309,34 @@ export default function LaunchList({
               </div>
             ))}
           </div>
+          {filtered.length > INITIAL_VISIBLE_COUNT ? (
+            <div className="border-t border-[var(--border-subtle)] p-4 text-center">
+              <button
+                ref={loadMoreRef}
+                type="button"
+                aria-controls="upcoming-launch-results"
+                aria-disabled={allResultsVisible}
+                onClick={() => {
+                  if (!allResultsVisible) {
+                    setVisibleCount((count) => count + INITIAL_VISIBLE_COUNT);
+                    requestAnimationFrame(() =>
+                      loadMoreRef.current?.scrollIntoView?.({
+                        block: 'nearest',
+                      })
+                    );
+                  }
+                }}
+                className="action-button action-button-secondary aria-disabled:cursor-default aria-disabled:opacity-60"
+              >
+                {allResultsVisible
+                  ? `All ${filtered.length} missions loaded`
+                  : `Load ${Math.min(
+                      INITIAL_VISIBLE_COUNT,
+                      filtered.length - visibleLaunches.length
+                    )} more`}
+              </button>
+            </div>
+          ) : null}
         </>
       )}
     </section>

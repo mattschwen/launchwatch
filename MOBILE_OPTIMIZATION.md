@@ -62,6 +62,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Upcoming missions render as compact responsive rows while keeping complete
   mission, provider, vehicle, and launch-site telemetry readable instead of
   clipping provider-supplied values.
+- Large mission queues report the visible and total result count, then reveal
+  five more rows per touch-safe command instead of mounting the full provider
+  schedule at once.
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
   well as an icon so its purpose remains clear on narrow screens.

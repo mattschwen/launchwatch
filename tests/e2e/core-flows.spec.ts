@@ -1501,6 +1501,61 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home reveals a large mission queue in honest, touch-safe batches', async ({
+  page,
+}) => {
+  const launches = Array.from({ length: 12 }, (_, index) => ({
+    ...UPCOMING_LAUNCHES[index % UPCOMING_LAUNCHES.length],
+    id:
+      index === 0
+        ? UPCOMING_LAUNCHES[0].id
+        : `schedule-mission-${index + 1}`,
+    sourceId: `schedule-mission-${index + 1}`,
+    name: `Schedule Mission ${index + 1}`,
+    dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
+  }));
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const results = schedule.locator('#upcoming-launch-results article');
+  const resultStatus = schedule.getByRole('status', {
+    name: 'Upcoming launch results',
+  });
+
+  await expect(resultStatus).toHaveText('Showing 5 of 12 missions');
+  await expect(results).toHaveCount(5);
+  await expect(schedule.getByText('Schedule Mission 6')).toHaveCount(0);
+
+  const loadFive = schedule.getByRole('button', { name: 'Load 5 more' });
+  await loadFive.focus();
+  await expect(loadFive).toBeFocused();
+  expect((await loadFive.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await loadFive.press('Enter');
+
+  await expect(resultStatus).toHaveText('Showing 10 of 12 missions');
+  await expect(results).toHaveCount(10);
+  const loadTwo = schedule.getByRole('button', { name: 'Load 2 more' });
+  await expect(loadTwo).toBeFocused();
+  await loadTwo.press('Enter');
+
+  await expect(resultStatus).toHaveText('12 missions');
+  await expect(results).toHaveCount(12);
+  const allLoaded = schedule.getByRole('button', {
+    name: 'All 12 missions loaded',
+  });
+  await expect(allLoaded).toBeFocused();
+  await expect(allLoaded).toHaveAttribute('aria-disabled', 'true');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule keeps long mission telemetry readable', async ({
   page,
 }) => {
