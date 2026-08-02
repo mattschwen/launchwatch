@@ -3124,11 +3124,26 @@ test('home schedule filters survive mission detail navigation', async ({
   });
   await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(scheduleResults).toHaveText('1 mission');
+  const hideFilters = page.getByRole('button', {
+    name: 'Hide filters, 1 active',
+  });
+  await expect(hideFilters).toContainText('1');
+  await hideFilters.click();
+  const collapsedFilters = page.getByRole('button', {
+    name: 'Filter, 1 active',
+  });
+  await expect(collapsedFilters).toContainText('1');
+  expect(
+    (await collapsedFilters.boundingBox())?.height
+  ).toBeGreaterThanOrEqual(44);
+  await collapsedFilters.click();
   await page.reload();
   await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(search).toHaveValue('Polaris');
   await expect(scheduleResults).toHaveText('1 mission');
-  await expect(page.getByRole('button', { name: 'Hide filters' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Hide filters, 1 active' })
+  ).toBeVisible();
   const missionDetail = page
     .getByRole('link')
     .filter({ hasText: 'Polaris Relay' });
@@ -3154,7 +3169,9 @@ test('home schedule filters survive mission detail navigation', async ({
   await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(search).toHaveValue('Polaris');
   await expect(scheduleResults).toHaveText('1 mission');
-  await expect(page.getByRole('button', { name: 'Hide filters' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Hide filters, 1 active' })
+  ).toBeVisible();
   await expect(missionDetail).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

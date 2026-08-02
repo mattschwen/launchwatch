@@ -10,6 +10,45 @@ vi.mock('@/lib/hooks', () => ({
 }));
 
 describe('LaunchList', () => {
+  it('keeps active schedule filters visible when the controls are collapsed', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search launches' }),
+      'Polaris',
+    );
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Sort launches' }),
+      'name-asc',
+    );
+
+    const hideFilters = screen.getByRole('button', {
+      name: 'Hide filters, 2 active',
+    });
+    expect(hideFilters).toHaveTextContent('2');
+    await user.click(hideFilters);
+
+    const collapsedFilters = screen.getByRole('button', {
+      name: 'Filter, 2 active',
+    });
+    expect(collapsedFilters).toHaveTextContent('2');
+    expect(
+      screen.queryByRole('searchbox', { name: 'Search launches' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('announces and reveals a large mission queue in focused batches', async () => {
     const user = userEvent.setup();
     const launches = Array.from({ length: 12 }, (_, index) => ({

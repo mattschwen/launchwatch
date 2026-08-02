@@ -43,6 +43,12 @@ export default function LaunchList({
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
     filters.status !== DEFAULT_FILTERS.status;
+  const activeFilterCount = [
+    Boolean(filters.search.trim()),
+    filters.provider !== DEFAULT_FILTERS.provider,
+    filters.status !== DEFAULT_FILTERS.status,
+    filters.sortBy !== DEFAULT_FILTERS.sortBy,
+  ].filter(Boolean).length;
   const providerOptions = useMemo(
     () =>
       [...new Set(
@@ -219,11 +225,24 @@ export default function LaunchList({
             type="button"
             aria-expanded={filtersOpen}
             aria-controls="launch-filters"
+            aria-label={`${filtersOpen ? 'Hide filters' : 'Filter'}${
+              activeFilterCount > 0
+                ? `, ${activeFilterCount} active`
+                : ''
+            }`}
             onClick={() => setFiltersOpen((value) => !value)}
             className="action-button action-button-secondary"
           >
             <Filter aria-hidden="true" size={16} />
             {filtersOpen ? 'Hide filters' : 'Filter'}
+            {activeFilterCount > 0 ? (
+              <span
+                aria-hidden="true"
+                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--console-cyan)]/15 px-1.5 font-mono text-[0.65rem] text-[var(--console-cyan)]"
+              >
+                {activeFilterCount}
+              </span>
+            ) : null}
           </button>
         </div>
       </header>

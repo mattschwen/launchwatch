@@ -68,6 +68,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
   well as an icon so its purpose remains clear on narrow screens.
+- When filters are active, the schedule disclosure keeps their total visibly
+  counted while open or collapsed and includes that count in its accessible
+  name, so hidden constraints never look like an unfiltered queue.
 - A restored provider filter stays visibly selected and is labeled as absent
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
