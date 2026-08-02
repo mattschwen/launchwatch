@@ -111,7 +111,8 @@ The command creates a preview by default. Do not add `--prod` until that preview
 - `/history` loads completed missions through the internal API; search and filters work.
 - `/launch/<canonical-id>` resolves an upcoming mission.
 - `/launch/<canonical-history-id>` resolves a completed mission and returns to History.
-- a valid-but-missing canonical ID shows a not-found state without breaking the shell.
+- a valid-but-missing canonical ID shows a not-found state with schedule and
+  archive recovery paths without breaking the shell.
 
 ### API routes
 

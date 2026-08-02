@@ -26,6 +26,11 @@ const routes = [
     heading: 'Orbital Dawn',
     pageHeading: 'Orbital Dawn',
   },
+  {
+    path: '/launch/ll2-unavailable-mission',
+    heading: 'This mission path is off course.',
+    pageHeading: 'This mission path is off course.',
+  },
 ];
 
 test.beforeEach(async ({ page }) => {

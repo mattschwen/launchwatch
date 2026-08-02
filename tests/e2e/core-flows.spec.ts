@@ -3353,11 +3353,38 @@ test('history pagination reports progress and keeps terminal focus visible', asy
 test('detail routes render malformed IDs as noindex and canonicalize legacy links', async ({
   page,
 }) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+
   await page.goto('/launch/not-a-provider-id');
 
   await expect(
     page.getByRole('heading', { name: 'This mission path is off course.' })
   ).toBeVisible();
+  await expect(
+    page.getByText(/belong in the completed-flight archive/i)
+  ).toBeVisible();
+  const recovery = page.getByRole('navigation', {
+    name: 'Mission recovery',
+  });
+  const scheduleLink = recovery.getByRole('link', {
+    name: 'View upcoming launches',
+  });
+  const archiveLink = recovery.getByRole('link', {
+    name: 'Search launch archive',
+  });
+  await expect(scheduleLink).toHaveAttribute('href', '/');
+  await expect(archiveLink).toHaveAttribute('href', '/history');
+  for (const link of [scheduleLink, archiveLink]) {
+    await link.focus();
+    await expect(link).toBeFocused();
+    expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
   await expect(page.locator('meta[name="robots"]').first()).toHaveAttribute(
     'content',
     /noindex/
@@ -3369,6 +3396,8 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   await expect(
     page.getByRole('heading', { level: 1, name: 'Demo Return Flight' })
   ).toBeVisible();
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('mission sharing copies canonical links from watch and completed details', async ({

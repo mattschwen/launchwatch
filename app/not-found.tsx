@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Radar, ArrowLeft } from 'lucide-react';
+import { Archive, CalendarDays, Radar } from 'lucide-react';
 
 export default function NotFound(): React.ReactElement {
   return (
@@ -14,13 +14,25 @@ export default function NotFound(): React.ReactElement {
         This mission path is off course.
       </h1>
       <p className="mx-auto mt-2 max-w-lg text-[var(--text-secondary)]">
-        The page may have moved, or the launch identifier is no longer in the
-        active schedule.
+        The mission may have moved, left the current schedule, or belong in the
+        completed-flight archive.
       </p>
-      <Link href="/" className="action-button action-button-primary mt-6">
-        <ArrowLeft aria-hidden="true" size={16} />
-        Back to launch control
-      </Link>
+      <nav
+        aria-label="Mission recovery"
+        className="mx-auto mt-7 grid max-w-xl gap-3 sm:grid-cols-2"
+      >
+        <Link href="/" className="action-button action-button-primary w-full">
+          <CalendarDays aria-hidden="true" size={17} />
+          View upcoming launches
+        </Link>
+        <Link
+          href="/history"
+          className="action-button action-button-secondary w-full"
+        >
+          <Archive aria-hidden="true" size={17} />
+          Search launch archive
+        </Link>
+      </nav>
     </div>
   );
 }
