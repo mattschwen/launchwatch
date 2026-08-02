@@ -13,7 +13,22 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { href: '/history', label: 'History', icon: Archive },
 ];
 
-export function isNavItemActive(pathname: string, href: string): boolean {
+export function isNavItemActive(
+  pathname: string,
+  href: string,
+  detailSource: string | null = null,
+): boolean {
+  if (pathname.startsWith('/launch/')) {
+    const detailParent =
+      detailSource === 'watch'
+        ? '/watch'
+        : detailSource === 'history'
+          ? '/history'
+          : '/';
+
+    return href === detailParent;
+  }
+
   if (href === '/') {
     return pathname === '/';
   }

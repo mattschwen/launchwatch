@@ -23,6 +23,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   mission; retained live state is labeled unconfirmed instead of presented as
   current coverage.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
+- Mission details keep the originating Home, Watch, or History destination
+  visibly and semantically current; direct canonical detail links default to
+  Home context.
 - Server route transitions retain a visible route-level heading, truthful
   synchronization copy, and named mission-control status while application and
   provider data resolve; decorative loading geometry stays hidden from

@@ -1,11 +1,16 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useLiveContext } from '@/lib/contexts';
 import { isNavItemActive, PRIMARY_NAV_ITEMS } from './navigation';
 
-export default function MobileNav(): React.ReactElement {
+function MobileNavContents({
+  detailSource,
+}: {
+  detailSource: string | null;
+}): React.ReactElement {
   const pathname = usePathname();
   const { hasLiveLaunches } = useLiveContext();
 
@@ -16,7 +21,11 @@ export default function MobileNav(): React.ReactElement {
     >
       <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around px-2">
         {PRIMARY_NAV_ITEMS.map((link) => {
-          const isActive = isNavItemActive(pathname, link.href);
+          const isActive = isNavItemActive(
+            pathname,
+            link.href,
+            detailSource,
+          );
           const Icon = link.icon;
           return (
             <Link
@@ -47,5 +56,18 @@ export default function MobileNav(): React.ReactElement {
         })}
       </div>
     </nav>
+  );
+}
+
+function ContextAwareMobileNav(): React.ReactElement {
+  const searchParams = useSearchParams();
+  return <MobileNavContents detailSource={searchParams.get('from')} />;
+}
+
+export default function MobileNav(): React.ReactElement {
+  return (
+    <Suspense fallback={<MobileNavContents detailSource={null} />}>
+      <ContextAwareMobileNav />
+    </Suspense>
   );
 }

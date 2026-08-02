@@ -1,7 +1,8 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
 import { useLaunchData, useLiveContext } from '@/lib/contexts';
 import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
@@ -54,7 +55,11 @@ const FEED_STATUS: Record<
   },
 };
 
-export default function TopNav(): React.ReactElement {
+function TopNavContents({
+  detailSource,
+}: {
+  detailSource: string | null;
+}): React.ReactElement {
   const pathname = usePathname();
   const { hasLiveLaunches, liveCount } = useLiveContext();
   const { launches, loading, refreshing, error, meta } = useLaunchData();
@@ -95,7 +100,11 @@ export default function TopNav(): React.ReactElement {
           className="ml-10 hidden h-[4.375rem] items-stretch gap-5 md:flex lg:ml-16"
         >
           {PRIMARY_NAV_ITEMS.map((link) => {
-            const isActive = isNavItemActive(pathname, link.href);
+            const isActive = isNavItemActive(
+              pathname,
+              link.href,
+              detailSource,
+            );
             const Icon = link.icon;
             return (
               <Link
@@ -172,5 +181,18 @@ export default function TopNav(): React.ReactElement {
         </div>
       </div>
     </header>
+  );
+}
+
+function ContextAwareTopNav(): React.ReactElement {
+  const searchParams = useSearchParams();
+  return <TopNavContents detailSource={searchParams.get('from')} />;
+}
+
+export default function TopNav(): React.ReactElement {
+  return (
+    <Suspense fallback={<TopNavContents detailSource={null} />}>
+      <ContextAwareTopNav />
+    </Suspense>
   );
 }

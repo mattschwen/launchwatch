@@ -699,6 +699,38 @@ test('watch mission details return to the same selected mission', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission details keep their parent surface current in primary navigation', async ({
+  page,
+}) => {
+  const cases = [
+    {
+      path: '/launch/ll2-demo-orbital-dawn',
+      activeLabel: 'Home',
+    },
+    {
+      path: '/launch/ll2-demo-orbital-dawn?from=watch',
+      activeLabel: 'Watch',
+    },
+    {
+      path: '/launch/spacex-demo-return?from=history',
+      activeLabel: 'History',
+    },
+  ];
+
+  for (const { path, activeLabel } of cases) {
+    await page.goto(path);
+    const navigation = page.locator(
+      'nav[aria-label="Primary navigation"]:visible',
+    );
+    const currentLink = navigation.locator('[aria-current="page"]');
+
+    await expect(currentLink).toHaveCount(1);
+    await expect(currentLink).toHaveAccessibleName(
+      new RegExp(`^${activeLabel}$`, 'i'),
+    );
+  }
+});
+
 test('featured mission telemetry stays legible in the split layout', async ({
   page,
 }) => {
