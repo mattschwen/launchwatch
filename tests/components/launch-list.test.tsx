@@ -10,6 +10,33 @@ vi.mock('@/lib/hooks', () => ({
 }));
 
 describe('LaunchList', () => {
+  it('finds missions by profile and orbit metadata', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search launches' }),
+      'communications low earth',
+    );
+
+    expect(screen.getByText('Orbital Dawn')).toBeVisible();
+    expect(screen.queryByText('Polaris Relay')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('1 mission');
+  });
+
   it('keeps active schedule filters visible when the controls are collapsed', async () => {
     const user = userEvent.setup();
 

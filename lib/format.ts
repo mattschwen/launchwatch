@@ -84,6 +84,32 @@ export function firstLaunchValue(
   return values.find(isMeaningfulLaunchValue)?.trim() || fallback;
 }
 
+export function matchesLaunchSearch(launch: Launch, query: string): boolean {
+  const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+
+  const profile = [
+    launch.name,
+    launch.missionName,
+    launch.missionType,
+    launch.description,
+    launch.program,
+    launch.orbit,
+    launch.rocket,
+    launch.rocketFamily,
+    launch.rocketVariant,
+    launch.launchSite,
+    launch.location?.name,
+    launch.provider,
+    launch.statusName,
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(' ')
+    .toLocaleLowerCase();
+
+  return terms.every((term) => profile.includes(term));
+}
+
 export function formatLaunchDate(
   date: string,
   precision?: LaunchDatePrecision | null

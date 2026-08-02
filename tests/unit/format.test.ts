@@ -15,6 +15,7 @@ import {
   hasCalendarReadyLaunchTime,
   hasExactLaunchTime,
   launchOutcomeLabel,
+  matchesLaunchSearch,
   shortenLaunchSite,
 } from '@/lib/format';
 import { HISTORICAL_LAUNCHES, UPCOMING_LAUNCHES } from '../fixtures/launches';
@@ -130,6 +131,16 @@ describe('launch formatting', () => {
     expect(
       normalizeLaunchDescription('Details pending final mission review.')
     ).toBe('Details pending final mission review.');
+  });
+
+  it('matches every search term across a launch mission profile', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    expect(matchesLaunchSearch(launch, 'communications')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'low earth orbit')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'orbital alliance nova')).toBe(true);
+    expect(matchesLaunchSearch(launch, '  ')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
   });
 
   it('labels completed and scheduled missions consistently', () => {

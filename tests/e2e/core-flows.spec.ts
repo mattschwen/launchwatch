@@ -2341,13 +2341,13 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
 test('trajectory and signal motion settles for reduced-motion users', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/watch');
-  const loadButton = page.getByRole('button', {
-    name: 'Load mission trajectory',
-  });
-  await loadButton.focus();
-  await loadButton.press('Enter');
-  await expect(page.locator('.trajectory-path-ascent')).toHaveCount(1);
+  const trajectoryPath = page.locator('.trajectory-path-ascent');
+  await page
+    .getByRole('heading', { level: 2, name: 'Mission trajectory' })
+    .scrollIntoViewIfNeeded();
+  await expect(trajectoryPath).toHaveCount(1);
 
   const motion = await page.evaluate(() => {
     const animationName = (selector: string): string | null => {
@@ -3124,6 +3124,56 @@ test('history search reaches a completed mission detail', async ({ page }) => {
     page.getByRole('searchbox', { name: 'Search missions' })
   ).toHaveValue('Return');
   await expect(archiveResults).toHaveText('1 result');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('schedule and archive search across mission profile data', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Filter' }).click();
+  const scheduleSearch = page.getByRole('searchbox', {
+    name: 'Search launches',
+  });
+  await expect(scheduleSearch).toHaveAttribute(
+    'placeholder',
+    'Mission, profile, orbit, vehicle, site, or provider',
+  );
+  await scheduleSearch.fill('communications low earth');
+
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' }),
+  ).toHaveText('1 mission');
+  await expect(
+    page.getByRole('region', { name: 'Upcoming launches' }).getByText(
+      'Orbital Dawn',
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Upcoming launches' }).getByText(
+      'Polaris Relay',
+      { exact: true },
+    ),
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/history');
+  const archiveSearch = page.getByRole('searchbox', {
+    name: 'Search missions',
+  });
+  await expect(archiveSearch).toHaveAttribute(
+    'placeholder',
+    'Mission, profile, orbit, vehicle, or site',
+  );
+  await archiveSearch.fill('crew demonstration low earth');
+
+  await expect(
+    page.getByRole('status', { name: 'Archive results' }),
+  ).toHaveText('1 result');
+  await expect(page.getByText('Demo Return Flight')).toBeVisible();
+  await expect(page.getByText('Pathfinder Qualification')).toHaveCount(0);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

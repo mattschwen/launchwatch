@@ -22,6 +22,7 @@ import {
   formatLaunchValue,
   formatLaunchDate,
   launchOutcomeLabel,
+  matchesLaunchSearch,
   shortenLaunchSite,
 } from '@/lib/format';
 import {
@@ -347,14 +348,8 @@ export default function PastLaunches({
     !providers.includes(provider);
 
   const filtered = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
     return launches.filter((launch) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        [launch.name, launch.rocket, launch.launchSite, launch.provider || '']
-          .join(' ')
-          .toLowerCase()
-          .includes(normalizedSearch);
+      const matchesSearch = matchesLaunchSearch(launch, search);
       const matchesProvider =
         provider === 'all' || launch.provider === provider;
       const matchesYear =
@@ -526,7 +521,7 @@ export default function PastLaunches({
                   setSearch(event.target.value);
                   setVisibleCount(PAGE_SIZE);
                 }}
-                placeholder="Search missions"
+                placeholder="Mission, profile, orbit, vehicle, or site"
                 className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
               />
             </div>

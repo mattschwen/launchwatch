@@ -9,7 +9,10 @@ import {
 } from 'react';
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
-import { isCriticalLaunchStatusName } from '@/lib/format';
+import {
+  isCriticalLaunchStatusName,
+  matchesLaunchSearch,
+} from '@/lib/format';
 import LaunchCard from './LaunchCard';
 import FilterBar, {
   DEFAULT_FILTERS,
@@ -104,14 +107,8 @@ export default function LaunchList({
   };
 
   const filtered = useMemo(() => {
-    const search = filters.search.trim().toLowerCase();
     const result = launches.filter((launch) => {
-      const matchesSearch =
-        !search ||
-        [launch.name, launch.rocket, launch.launchSite, launch.provider || '']
-          .join(' ')
-          .toLowerCase()
-          .includes(search);
+      const matchesSearch = matchesLaunchSearch(launch, filters.search);
       const matchesProvider =
         filters.provider === 'all' ||
         launch.provider?.trim() === filters.provider;

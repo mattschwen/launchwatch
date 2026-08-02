@@ -73,6 +73,25 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('finds archived missions by briefing and orbit metadata', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search missions' }),
+      'crew demonstration low earth',
+    );
+
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(
+      screen.queryByText('Pathfinder Qualification'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Archive results' }),
+    ).toHaveTextContent('1 result');
+  });
+
   it('discloses secondary archive filters while keeping search primary', async () => {
     const user = userEvent.setup();
     render(<PastLaunches />);
