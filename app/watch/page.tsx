@@ -647,6 +647,12 @@ function WatchContent(): React.ReactElement {
   } = useLaunchIntel(selectedLaunch, Boolean(selectedLaunch));
 
   useEffect(() => {
+    if (!selectedLaunch) return;
+
+    document.title = `${selectedLaunch.name} | Watch | LaunchWatch`;
+  }, [selectedLaunch]);
+
+  useEffect(() => {
     if (!selectedLaunch || !retryFocusPendingRef.current) return;
 
     retryFocusPendingRef.current = false;

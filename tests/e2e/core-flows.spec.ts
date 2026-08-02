@@ -51,6 +51,7 @@ test('watch prefers official provider coverage over an earlier restream', async 
   await expect(
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   const primaryCoverage = page.getByRole('link', {
     name: 'Open provider stream',
   });
@@ -1877,6 +1878,7 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   const watchTrajectory = page.getByRole('region', {
     name: 'Mission trajectory',
   });
@@ -1898,6 +1900,7 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
   ).toBeVisible();
+  await expect(page).toHaveTitle('Polaris Relay | Watch | LaunchWatch');
   await expect(
     page.locator('a[href="/watch?id=spacex-demo-polaris"]')
   ).toHaveCount(0);
@@ -1907,6 +1910,9 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(watchTrajectory).toContainText('Polaris Relay');
   await expect(polarisQueueItem).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/history');
+  await expect(page).toHaveTitle('Launch History | LaunchWatch');
 });
 
 test('watch keeps long mission queues compact and keyboard-reachable', async ({
@@ -2189,6 +2195,7 @@ test('watch identifies provider synchronization before mission data arrives', as
 
   await page.goto('/watch');
 
+  await expect(page).toHaveTitle('Watch Launches | LaunchWatch');
   await expect(
     page.getByRole('heading', { level: 1, name: 'Watch room' }),
   ).toBeVisible();
@@ -2223,6 +2230,7 @@ test('watch identifies provider synchronization before mission data arrives', as
   await expect(
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' }),
   ).toBeVisible();
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   await expect(page.getByLabel('Synchronizing watch room')).toHaveCount(0);
 });
 
