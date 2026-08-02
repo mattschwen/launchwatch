@@ -156,6 +156,9 @@ describe('service worker request policy', () => {
     ['/api/launches?type=all', {}],
     ['/?_rsc=fixture', {}],
     ['/watch?mission=fixture', {}],
+    ['/_next/static/chunks/app-abc123.js?tracking=fixture', {}],
+    ['/_next/static/chunks/app-abc123.js?dpl=deploy-1&tracking=fixture', {}],
+    ['/_next/static/chunks/app-abc123.js?dpl=', {}],
     ['/_next/data', { headers: new Headers({ RSC: '1' }) }],
   ])('leaves fresh data request %s to the network', (path, overrides) => {
     const { handlers } = createHarness();
@@ -189,14 +192,17 @@ describe('service worker request policy', () => {
     });
   });
 
-  it('serves immutable Next assets from the bounded static cache', async () => {
+  it.each([
+    '/_next/static/chunks/app-abc123.js',
+    '/_next/static/chunks/app-abc123.js?dpl=deploy-1',
+  ])('serves immutable Next asset %s from the bounded static cache', async (path) => {
     const { handlers, cache, fetchMock } = createHarness();
     const cachedResponse = new Response('compiled');
     cache.match.mockResolvedValue(cachedResponse);
     let response: Promise<Response> | undefined;
 
     handlers.get('fetch')?.({
-      request: request('/_next/static/chunks/app-abc123.js'),
+      request: request(path),
       respondWith: (value: Promise<Response>) => {
         response = value;
       },

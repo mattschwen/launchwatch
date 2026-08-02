@@ -32,6 +32,22 @@ function isImmutableNextAsset(url) {
   return url.pathname.startsWith('/_next/static/');
 }
 
+function hasOnlyDeploymentIdQuery(url) {
+  const keys = [...url.searchParams.keys()];
+  return (
+    keys.length === 1 &&
+    keys[0] === 'dpl' &&
+    Boolean(url.searchParams.get('dpl'))
+  );
+}
+
+function isCacheableImmutableAsset(url) {
+  return (
+    isImmutableNextAsset(url) &&
+    (url.search === '' || hasOnlyDeploymentIdQuery(url))
+  );
+}
+
 function isExplicitShellAsset(url) {
   return url.search === '' && SHELL_ASSET_PATHS.has(url.pathname);
 }
@@ -162,19 +178,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Never cache arbitrary query-string GETs.
-  if (url.search.length > 0) {
-    return;
-  }
-
   if (isExplicitShellAsset(url)) {
     event.respondWith(cacheFirstShellAsset(request));
     return;
   }
 
-  // Only content-hashed Next.js build assets are safe to cache indefinitely.
-  if (isImmutableNextAsset(url)) {
+  // Vercel appends its deployment ID to content-hashed Next.js assets. Keep
+  // that single versioning parameter while rejecting every other query.
+  if (isCacheableImmutableAsset(url)) {
     event.respondWith(cacheFirstImmutableAsset(request));
+    return;
+  }
+
+  // Never cache arbitrary query-string GETs.
+  if (url.search.length > 0) {
+    return;
   }
 });
 
