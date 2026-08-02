@@ -105,6 +105,7 @@ describe('PastLaunches', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(controlledId).toBeTruthy();
     expect(document.getElementById(controlledId!)).toHaveClass('hidden');
+    expect(screen.getByText('Search missions')).toBeVisible();
 
     await user.click(toggle);
 
@@ -114,6 +115,21 @@ describe('PastLaunches', () => {
     expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
       'all'
     );
+    expect(
+      (screen.getByRole('combobox', {
+        name: 'Provider',
+      }) as HTMLSelectElement).labels?.[0]
+    ).toBeVisible();
+    expect(
+      (screen.getByRole('combobox', {
+        name: 'Launch year',
+      }) as HTMLSelectElement).labels?.[0]
+    ).toBeVisible();
+    expect(
+      (screen.getByRole('combobox', {
+        name: 'Outcome',
+      }) as HTMLSelectElement).labels?.[0]
+    ).toBeVisible();
   });
 
   it('preserves active archive filters in mission detail links', async () => {

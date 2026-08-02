@@ -172,6 +172,8 @@ The optional expanded map remains a modal dialog. It must:
 - Search stays immediately available on narrow screens while secondary
   provider/year/outcome filters use a touch-safe disclosure. Active secondary
   filters reopen from URL return context and remain visibly counted.
+- Search, provider, launch year, and outcome retain visible field labels as
+  values change, so restored or shared archive filters remain self-identifying.
 - The archive exposes a labeled clear action only while filters are active, so
   its compact result toolbar never presents a disabled icon-only dead end.
 - Each archive row keeps the complete mission and provider identity readable,

@@ -439,11 +439,13 @@ export default function PastLaunches({
           </p>
         </header>
         <div aria-hidden="true">
-          <div className="grid gap-3 border-b border-[var(--border-subtle)] p-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_7rem]">
-            <div className="skeleton h-11 rounded" />
-            <div className="skeleton h-11 rounded" />
-            <div className="skeleton h-11 rounded" />
-            <div className="skeleton h-11 rounded" />
+          <div className="grid items-end gap-3 border-b border-[var(--border-subtle)] p-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_7rem]">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <div className="skeleton h-3 w-20 rounded" />
+                <div className="skeleton h-11 rounded" />
+              </div>
+            ))}
             <div className="skeleton h-11 rounded md:col-span-2 xl:col-span-1" />
           </div>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -500,30 +502,35 @@ export default function PastLaunches({
       className="surface-card holo-card signal-warm overflow-hidden"
     >
       <div className="border-b border-[var(--border-subtle)] p-4">
-        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 md:contents">
-            <div className="relative min-w-0">
-              <label htmlFor={`${id}-search`} className="sr-only">
+        <div className="grid min-w-0 items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3 md:contents">
+            <div className="min-w-0">
+              <label
+                htmlFor={`${id}-search`}
+                className="data-label mb-1.5 block"
+              >
                 Search missions
               </label>
-              <Search
-                aria-hidden="true"
-                size={17}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-              />
-              <input
-                ref={searchRef}
-                id={`${id}-search`}
-                type="search"
-                maxLength={120}
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setVisibleCount(PAGE_SIZE);
-                }}
-                placeholder="Mission, profile, orbit, vehicle, or site"
-                className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-              />
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  size={17}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                />
+                <input
+                  ref={searchRef}
+                  id={`${id}-search`}
+                  type="search"
+                  maxLength={120}
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setVisibleCount(PAGE_SIZE);
+                  }}
+                  placeholder="Mission, profile, orbit, vehicle, or site"
+                  className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+                />
+              </div>
             </div>
             <div className="md:hidden">
               <button
@@ -551,67 +558,82 @@ export default function PastLaunches({
             id={`${id}-filters`}
             className={`${filtersOpen ? 'contents' : 'hidden'} md:contents`}
           >
-            <label className="sr-only" htmlFor={`${id}-provider`}>
-              Provider
-            </label>
-            <select
-              id={`${id}-provider`}
-              value={provider}
-              onChange={(event) => {
-                setProvider(event.target.value);
-                setVisibleCount(PAGE_SIZE);
-              }}
-              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
-            >
-              <option value="all">All providers</option>
-              {selectedProviderMissing ? (
-                <option value={provider}>
-                  {provider} — not in current feed
-                </option>
-              ) : null}
-              {providers.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <div className="min-w-0">
+              <label
+                className="data-label mb-1.5 block"
+                htmlFor={`${id}-provider`}
+              >
+                Provider
+              </label>
+              <select
+                id={`${id}-provider`}
+                value={provider}
+                onChange={(event) => {
+                  setProvider(event.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+              >
+                <option value="all">All providers</option>
+                {selectedProviderMissing ? (
+                  <option value={provider}>
+                    {provider} — not in current feed
+                  </option>
+                ) : null}
+                {providers.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <label className="sr-only" htmlFor={`${id}-year`}>
-              Year
-            </label>
-            <select
-              id={`${id}-year`}
-              value={year}
-              onChange={(event) => {
-                setYear(event.target.value);
-                setVisibleCount(PAGE_SIZE);
-              }}
-              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
-            >
-              <option value="all">All years</option>
-              {years.map((item) => (
-                <option key={item} value={String(item)}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <div className="min-w-0">
+              <label
+                className="data-label mb-1.5 block"
+                htmlFor={`${id}-year`}
+              >
+                Launch year
+              </label>
+              <select
+                id={`${id}-year`}
+                value={year}
+                onChange={(event) => {
+                  setYear(event.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+              >
+                <option value="all">All years</option>
+                {years.map((item) => (
+                  <option key={item} value={String(item)}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <label className="sr-only" htmlFor={`${id}-outcome`}>
-              Outcome
-            </label>
-            <select
-              id={`${id}-outcome`}
-              value={outcome}
-              onChange={(event) => {
-                setOutcome(event.target.value);
-                setVisibleCount(PAGE_SIZE);
-              }}
-              className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
-            >
-              <option value="all">All outcomes</option>
-              <option value="success">Success</option>
-              <option value="failure">Failure</option>
-            </select>
+            <div className="min-w-0">
+              <label
+                className="data-label mb-1.5 block"
+                htmlFor={`${id}-outcome`}
+              >
+                Outcome
+              </label>
+              <select
+                id={`${id}-outcome`}
+                value={outcome}
+                onChange={(event) => {
+                  setOutcome(event.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+              >
+                <option value="all">All outcomes</option>
+                <option value="success">Success</option>
+                <option value="failure">Failure</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex min-h-11 items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">

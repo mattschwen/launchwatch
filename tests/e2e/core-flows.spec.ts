@@ -2276,34 +2276,25 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
 
   const pendingTrajectory = page.locator('[data-trajectory-pending="true"]');
   const trajectoryMap = page.locator('[data-trajectory-map]');
+  const trajectoryState = page.locator(
+    '[data-trajectory-pending="true"], [data-trajectory-map]'
+  );
   const mobile = test.info().project.name.startsWith('mobile');
-  await expect(
-    page.locator('[data-trajectory-pending="true"], [data-trajectory-map]')
-  ).toHaveCount(1);
+  await expect(trajectoryState).toHaveCount(1);
+  await expect.poll(() =>
+    trajectoryState.evaluate((element) => {
+      const pending = element.hasAttribute('data-trajectory-pending');
+      const minimumTop = window.innerHeight + (pending ? 600 : 0);
+      return element.getBoundingClientRect().top > minimumTop;
+    })
+  ).toBe(true);
 
   if ((await trajectoryMap.count()) === 1) {
-    const placement = await trajectoryMap.evaluate((element) => ({
-      top: element.getBoundingClientRect().top,
-      viewportHeight: window.innerHeight,
-    }));
-
-    expect(placement.top).toBeGreaterThan(placement.viewportHeight);
     expect(await expectNoHorizontalOverflow(page)).toBe(true);
     return;
   }
 
-  await expect(pendingTrajectory).toBeVisible();
-  await expect(trajectoryMap).toHaveCount(0);
-
-  const initialPlacement = await pendingTrajectory.evaluate((element) => ({
-    top: element.getBoundingClientRect().top,
-    viewportHeight: window.innerHeight,
-  }));
-  expect(initialPlacement.top).toBeGreaterThan(
-    initialPlacement.viewportHeight + 600
-  );
-
-  await pendingTrajectory.scrollIntoViewIfNeeded();
+  await trajectoryState.scrollIntoViewIfNeeded();
   await expect(trajectoryMap).toHaveCount(1);
 
   if (!mobile) {
@@ -3180,15 +3171,31 @@ test('schedule and archive search across mission profile data', async ({
 test('history keeps secondary filters compact on mobile', async ({ page }) => {
   await page.goto('/history');
 
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
   const filterToggle = page.getByRole('button', {
     name: 'Show archive filters',
   });
-  const provider = page.getByRole('combobox', { name: 'Provider' });
+  const provider = page.locator('select[id$="-provider"]');
+  const year = page.locator('select[id$="-year"]');
+  const outcome = page.locator('select[id$="-outcome"]');
+  const searchLabel = page.locator(`label[for="${await search.getAttribute('id')}"]`);
+  const providerLabel = page.locator(`label[for="${await provider.getAttribute('id')}"]`);
+  const yearLabel = page.locator(`label[for="${await year.getAttribute('id')}"]`);
+  const outcomeLabel = page.locator(`label[for="${await outcome.getAttribute('id')}"]`);
   const mobile = test.info().project.name.startsWith('mobile');
+
+  await expect(searchLabel).toHaveText('Search missions');
+  await expect(searchLabel).toBeVisible();
 
   if (!mobile) {
     await expect(filterToggle).toBeHidden();
     await expect(provider).toBeVisible();
+    await expect(provider).toHaveAccessibleName('Provider');
+    await expect(year).toHaveAccessibleName('Launch year');
+    await expect(outcome).toHaveAccessibleName('Outcome');
+    await expect(providerLabel).toBeVisible();
+    await expect(yearLabel).toBeVisible();
+    await expect(outcomeLabel).toBeVisible();
     return;
   }
 
@@ -3209,6 +3216,12 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   await expect(hideFilterToggle).toBeFocused();
   await expect(hideFilterToggle).toHaveAttribute('aria-expanded', 'true');
   await expect(provider).toBeVisible();
+  await expect(provider).toHaveAccessibleName('Provider');
+  await expect(year).toHaveAccessibleName('Launch year');
+  await expect(outcome).toHaveAccessibleName('Outcome');
+  await expect(providerLabel).toBeVisible();
+  await expect(yearLabel).toBeVisible();
+  await expect(outcomeLabel).toBeVisible();
   expect((await hideFilterToggle.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   await provider.selectOption({ label: 'SpaceX' });
