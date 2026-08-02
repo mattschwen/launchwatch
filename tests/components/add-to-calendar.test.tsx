@@ -38,6 +38,9 @@ describe('AddToCalendar', () => {
     expect(calendar).toHaveFocus();
     expect(
       container.querySelector('[data-calendar-pending-tooltip="true"]')
+    ).toHaveClass('right-0');
+    expect(
+      container.querySelector('[data-calendar-pending-tooltip="true"]')
     ).toHaveTextContent(
       'Month estimateCalendar export and browser alerts become available after the provider confirms the launch time.'
     );
@@ -46,6 +49,24 @@ describe('AddToCalendar', () => {
     expect(
       screen.queryByRole('group', { name: 'Calendar options' })
     ).not.toBeInTheDocument();
+  });
+
+  it('centers a pending explanation over a compact command', () => {
+    const { container } = render(
+      <AddToCalendar
+        launch={{
+          ...UPCOMING_LAUNCHES[0],
+          datePrecision: { name: 'Hour', abbrev: 'HR' },
+        }}
+        variant="compact"
+        menuPlacement="top"
+        menuAlign="right"
+      />
+    );
+
+    expect(
+      container.querySelector('[data-calendar-pending-tooltip="true"]')
+    ).toHaveClass('left-1/2', '-translate-x-1/2');
   });
 
   it('makes browser launch alerts reachable with honest permission states', async () => {

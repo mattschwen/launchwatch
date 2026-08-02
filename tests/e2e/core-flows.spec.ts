@@ -3590,6 +3590,67 @@ test('watch exposes a labeled mobile mission command rail', async ({ page }) => 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps a pending calendar explanation inside the mobile viewport', async ({
+  page,
+}) => {
+  test.skip(
+    !test.info().project.name.startsWith('mobile'),
+    'Mobile pending calendar placement'
+  );
+
+  const estimatedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    datePrecision: {
+      name: 'Hour',
+      abbrev: 'HR',
+      description: 'The T-0 is accurate to the hour.',
+    },
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [estimatedLaunch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: estimatedLaunch,
+        canonicalId: estimatedLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const calendar = page.getByRole('button', { name: 'Calendar', exact: true });
+  await calendar.focus();
+  const pendingExplanation = page.locator(
+    '[data-calendar-pending-tooltip="true"]'
+  );
+  await expect(calendar).toHaveAttribute('aria-disabled', 'true');
+  await expect(pendingExplanation).toBeVisible();
+  const pendingBounds = await pendingExplanation.boundingBox();
+  expect(pendingBounds).not.toBeNull();
+  expect(pendingBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(pendingBounds!.x + pendingBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await calendar.press('Enter');
+  const menu = page.getByRole('group', { name: 'Calendar options' });
+  await expect(menu).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('upcoming and historical details place one trajectory before mission support', async ({
   page,
 }) => {

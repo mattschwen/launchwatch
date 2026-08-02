@@ -130,7 +130,10 @@ The optional expanded map remains a modal dialog. It must:
 - Briefing, calendar, and sharing form a labeled three-command rail on narrow
   screens instead of mixing text actions with an ambiguous icon-only control.
   Every target remains at least 44px, and the compact calendar menu opens above
-  the rail so persistent mobile navigation cannot cover its options.
+  the rail so persistent mobile navigation cannot cover its options. When a
+  provider time is still too coarse for calendar export, the pending explanation
+  centers over its compact command and remains inside the viewport without
+  widening the page or fixed navigation.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
 - Initial synchronization keeps the real Watch heading and visible acquisition
   labels for coverage and the mission queue; loading geometry remains reserved

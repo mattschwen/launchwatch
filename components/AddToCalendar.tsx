@@ -145,6 +145,12 @@ export default function AddToCalendar({
       formatLaunchPrecisionLabel(launch.datePrecision) || 'Estimated date';
     const pendingMessage =
       'Calendar export and browser alerts become available after the provider confirms the launch time.';
+    const pendingAlignment =
+      variant === 'compact' || variant === 'icon' || menuAlign === 'center'
+        ? 'left-1/2 -translate-x-1/2'
+        : menuAlign === 'left'
+          ? 'left-0'
+          : 'right-0';
 
     return (
       <div className="calendar-pending-control relative">
@@ -176,9 +182,9 @@ export default function AddToCalendar({
           data-calendar-pending-tooltip="true"
           className={`calendar-pending-tooltip pointer-events-none absolute z-[75] rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_32%,var(--border-subtle))] bg-[var(--surface-raised)] px-3 py-2 text-left shadow-[var(--shadow-elevated)] ${
             labeled
-              ? 'left-0 w-[min(16rem,calc(100vw-2rem))]'
-              : 'left-1/2 w-[min(10rem,calc(100vw-2rem))] -translate-x-1/2'
-          } ${
+              ? 'w-[min(16rem,calc(100vw-2rem))]'
+              : 'w-[min(10rem,calc(100vw-2rem))]'
+          } ${pendingAlignment} ${
             menuPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
           }`}
         >
