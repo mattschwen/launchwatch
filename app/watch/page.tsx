@@ -416,14 +416,14 @@ function WatchMissionVisual({
         loading={loading}
         error={error}
         showUnavailableState
-        className={`max-w-xl ${className}`}
+        className={className}
       />
     );
   }
 
   return (
     <section
-      className={`surface-card holo-card signal-cold max-w-xl overflow-hidden ${className}`}
+      className={`surface-card holo-card signal-cold overflow-hidden ${className}`}
     >
       <button
         type="button"
@@ -810,20 +810,21 @@ function WatchContent(): React.ReactElement {
             </section>
           </div>
 
-          <MissionQueue
-            launches={queue}
-            selectedId={selectedLaunch.id}
-            onSelect={selectLaunch}
-          />
+          <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
+            <MissionQueue
+              launches={queue}
+              selectedId={selectedLaunch.id}
+              onSelect={selectLaunch}
+            />
 
-          <WatchMissionVisual
-            key={selectedLaunch.id}
-            launch={selectedLaunch}
-            loading={selected.enriching}
-            error={selected.error}
-            collapsible={Boolean(selectedLaunch.livestream)}
-            className="lg:col-start-1"
-          />
+            <WatchMissionVisual
+              key={selectedLaunch.id}
+              launch={selectedLaunch}
+              loading={selected.enriching}
+              error={selected.error}
+              collapsible={Boolean(selectedLaunch.livestream)}
+            />
+          </div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">

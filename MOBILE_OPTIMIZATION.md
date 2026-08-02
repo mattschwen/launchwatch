@@ -118,6 +118,10 @@ The optional expanded map remains a modal dialog. It must:
   wrap instead of disappearing behind ellipses, while all ten queued missions
   remain keyboard and touch reachable without pushing coverage intelligence down
   another viewport.
+- On larger screens, the mission queue and its optional licensed vehicle reference
+  share one bounded side rail so secondary context does not create an empty grid
+  column or expand ahead of mission intelligence. Their mobile document order
+  remains summary, queue, then visual.
 - The bounded queue is one page Tab stop. Up and Down select adjacent missions,
   Home and End jump to its boundaries, and only the selected mission remains in
   the Tab order while every item stays directly touch and pointer operable.

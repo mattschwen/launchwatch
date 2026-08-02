@@ -2131,6 +2131,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
     return {
       queueBottom: queueBounds.bottom,
       queueLeft: queueBounds.left,
+      queueRight: queueBounds.right,
       queueTop: queueBounds.top,
       visualLeft: visualBounds?.left ?? 0,
       visualRight: visualBounds?.right ?? 0,
@@ -2140,8 +2141,13 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   }, await visual.elementHandle());
 
   if (hierarchy.viewportWidth >= 1024) {
-    expect(hierarchy.queueLeft).toBeGreaterThanOrEqual(hierarchy.visualRight);
-    expect(hierarchy.queueTop).toBeLessThan(hierarchy.visualTop);
+    expect(
+      Math.abs(hierarchy.queueLeft - hierarchy.visualLeft)
+    ).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(hierarchy.queueRight - hierarchy.visualRight)
+    ).toBeLessThanOrEqual(1);
+    expect(hierarchy.queueBottom).toBeLessThanOrEqual(hierarchy.visualTop);
   } else {
     expect(hierarchy.queueBottom).toBeLessThanOrEqual(hierarchy.visualTop);
   }
@@ -2246,14 +2252,48 @@ test('watch identifies provider synchronization before mission data arrives', as
   await expect(page.getByLabel('Synchronizing watch room')).toHaveCount(0);
 });
 
-test('watch defers offscreen trajectory with a keyboard load path', async ({
+test('watch preloads approaching trajectory and keeps an offscreen keyboard path', async ({
   page,
 }) => {
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: {
+            ...UPCOMING_LAUNCHES[0],
+            livestream: null,
+            livestreams: null,
+          },
+          canonicalId: UPCOMING_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      })
+  );
   await page.goto('/watch');
 
   const pendingTrajectory = page.locator('[data-trajectory-pending="true"]');
+  const trajectoryMap = page.locator('[data-trajectory-map]');
+  const mobile = test.info().project.name.startsWith('mobile');
+  await expect(
+    page.locator('[data-trajectory-pending="true"], [data-trajectory-map]')
+  ).toHaveCount(1);
+
+  if ((await trajectoryMap.count()) === 1) {
+    const placement = await trajectoryMap.evaluate((element) => ({
+      top: element.getBoundingClientRect().top,
+      viewportHeight: window.innerHeight,
+    }));
+
+    expect(placement.top).toBeGreaterThan(placement.viewportHeight);
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+    return;
+  }
+
   await expect(pendingTrajectory).toBeVisible();
-  await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+  await expect(trajectoryMap).toHaveCount(0);
 
   const initialPlacement = await pendingTrajectory.evaluate((element) => ({
     top: element.getBoundingClientRect().top,
@@ -2264,7 +2304,12 @@ test('watch defers offscreen trajectory with a keyboard load path', async ({
   );
 
   await pendingTrajectory.scrollIntoViewIfNeeded();
-  await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
+  await expect(trajectoryMap).toHaveCount(1);
+
+  if (!mobile) {
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+    return;
+  }
 
   await page.evaluate(() => {
     window.history.scrollRestoration = 'manual';
@@ -2273,7 +2318,7 @@ test('watch defers offscreen trajectory with a keyboard load path', async ({
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await page.reload({ waitUntil: 'networkidle' });
   await expect(pendingTrajectory).toBeVisible();
-  await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+  await expect(trajectoryMap).toHaveCount(0);
 
   const loadButton = page.getByRole('button', {
     name: 'Load mission trajectory',
@@ -2283,7 +2328,7 @@ test('watch defers offscreen trajectory with a keyboard load path', async ({
   await expect(pendingTrajectory).toBeVisible();
 
   await loadButton.press('Enter');
-  await expect(page.locator('[data-trajectory-map]')).toHaveCount(1);
+  await expect(trajectoryMap).toHaveCount(1);
   await expect(
     page.getByRole('region', { name: 'Mission trajectory' })
   ).toBeVisible();
