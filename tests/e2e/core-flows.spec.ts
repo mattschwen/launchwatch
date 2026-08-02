@@ -1998,7 +1998,7 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
     });
   });
 
-  await page.goto('/watch');
+  await page.goto('/watch?id=ll2-demo-queue-10');
 
   const queue = page.getByRole('complementary', { name: 'Next up' });
   await expect(queue.getByText('10 missions · scroll', { exact: true }))
@@ -2045,8 +2045,8 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
     name: /Queue mission 10/i,
   });
   const firstMission = queue.getByRole('button').first();
-  await expect(firstMission).toHaveAttribute('tabindex', '0');
-  await expect(finalMission).toHaveAttribute('tabindex', '-1');
+  await expect(firstMission).toHaveAttribute('tabindex', '-1');
+  await expect(finalMission).toHaveAttribute('tabindex', '0');
   expect(
     await queue
       .getByRole('button')
@@ -2055,24 +2055,27 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
       )
   ).toBe(1);
 
-  await firstMission.focus();
-  await firstMission.press('End');
-  await expect(finalMission).toBeFocused();
   expect(
     await queueViewport.evaluate((element) => element.scrollTop)
   ).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Queue mission 10' })
   ).toBeVisible();
-  await expect(finalMission).toBeFocused();
   await expect(finalMission).toHaveAttribute('tabindex', '0');
 
+  await finalMission.focus();
   await finalMission.press('ArrowDown');
   await expect(firstMission).toBeFocused();
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-1$/);
   await expect(firstMission).toHaveAttribute('tabindex', '0');
+
+  await firstMission.press('End');
+  await expect(finalMission).toBeFocused();
+  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
+  await expect(finalMission).toHaveAttribute('tabindex', '0');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

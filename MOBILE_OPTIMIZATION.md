@@ -127,7 +127,9 @@ The optional expanded map remains a modal dialog. It must:
   remains summary, queue, then visual.
 - The bounded queue is one page Tab stop. Up and Down select adjacent missions,
   Home and End jump to its boundaries, and only the selected mission remains in
-  the Tab order while every item stays directly touch and pointer operable.
+  the Tab order while every item stays directly touch and pointer operable. A
+  deep-linked selection is revealed inside the bounded rail without moving
+  focus or scrolling the page away from its primary coverage context.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail. Stream and coverage
   intelligence appears before that illustrative telemetry so Watch keeps its
@@ -148,7 +150,8 @@ The optional expanded map remains a modal dialog. It must:
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Browser and history context follow the selected mission as well: Watch uses a
   route-specific title while data is resolving, then names the active mission
-  without leaking the transient selection query into its canonical URL.
+  without leaking the transient selection query into its canonical URL or
+  allowing route metadata to overwrite a completed client-side selection.
 - The selected mission exposes a labeled, 44px share action. It prefers the
   platform share sheet and otherwise copies the canonical detail URL, with
   visible recovery copy when both browser paths are unavailable.

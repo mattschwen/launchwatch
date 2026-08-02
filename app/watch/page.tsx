@@ -480,6 +480,7 @@ function MissionQueue({
   onSelect: (id: string) => void;
 }): React.ReactElement {
   const queuedLaunches = launches.slice(0, 10);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const selectedIndex = queuedLaunches.findIndex(
     (launch) => launch.id === selectedId
@@ -488,6 +489,21 @@ function MissionQueue({
   const queueLabel = `${queuedLaunches.length} mission${
     queuedLaunches.length === 1 ? '' : 's'
   }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const selectedOption = optionRefs.current[selectedIndex];
+    if (!viewport || !selectedOption) return;
+
+    const viewportBounds = viewport.getBoundingClientRect();
+    const optionBounds = selectedOption.getBoundingClientRect();
+
+    if (optionBounds.top < viewportBounds.top) {
+      viewport.scrollTop += optionBounds.top - viewportBounds.top;
+    } else if (optionBounds.bottom > viewportBounds.bottom) {
+      viewport.scrollTop += optionBounds.bottom - viewportBounds.bottom;
+    }
+  }, [selectedId, selectedIndex]);
 
   const handleQueueKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
@@ -532,6 +548,7 @@ function MissionQueue({
         </p>
       </div>
       <div
+        ref={viewportRef}
         data-watch-queue-scroll
         role="group"
         aria-label="Mission selection"
@@ -650,7 +667,19 @@ function WatchContent(): React.ReactElement {
   useEffect(() => {
     if (!selectedLaunch) return;
 
-    document.title = `${selectedLaunch.name} | Watch | LaunchWatch`;
+    const missionTitle = `${selectedLaunch.name} | Watch | LaunchWatch`;
+    const maintainMissionTitle = (): void => {
+      if (document.title !== missionTitle) document.title = missionTitle;
+    };
+
+    maintainMissionTitle();
+    const titleObserver = new MutationObserver(maintainMissionTitle);
+    titleObserver.observe(document.head, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    return () => titleObserver.disconnect();
   }, [selectedLaunch]);
 
   useEffect(() => {
