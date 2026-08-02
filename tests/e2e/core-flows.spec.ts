@@ -1653,6 +1653,14 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   const listRetry = listError.locator('button');
   await expect(heroRetry).toHaveAccessibleName('Retry schedule');
   await expect(listRetry).toHaveAccessibleName('Retry schedule');
+  await expect(
+    page.getByRole('link', { name: 'SpaceX source — unavailable' })
+  ).toContainText('unavailable');
+  await expect(
+    page.getByRole('link', {
+      name: 'Launch Library 2 source — unavailable',
+    })
+  ).toContainText('unavailable');
   await heroRetry.focus();
   await heroRetry.press('Enter');
 
@@ -1674,6 +1682,14 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   await expect(
     page.getByRole('heading', { name: 'Upcoming launches' })
   ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'SpaceX source — available' })
+  ).toContainText('available');
+  await expect(
+    page.getByRole('link', {
+      name: 'Launch Library 2 source — available',
+    })
+  ).toContainText('available');
   await expect(
     page.getByRole('link', { name: 'Orbital Dawn', exact: true }).first()
   ).toBeFocused();

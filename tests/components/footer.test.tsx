@@ -13,6 +13,14 @@ function response(body: unknown): Response {
   } as Response;
 }
 
+function errorResponse(body: unknown): Response {
+  return {
+    ok: false,
+    status: 503,
+    json: async () => body,
+  } as Response;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -101,6 +109,34 @@ describe('Footer', () => {
         name: 'Launch Library 2 source — available',
       })
     ).toHaveTextContent('available');
+  });
+
+  it('reports source feeds as unavailable after the initial feed fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        errorResponse({ error: 'Provider maintenance' })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'SpaceX source — unavailable',
+      })
+    ).toHaveTextContent('unavailable');
+    expect(
+      screen.getByRole('link', {
+        name: 'Launch Library 2 source — unavailable',
+      })
+    ).toHaveTextContent('unavailable');
+    expect(screen.getByText('Launch feed is offline.')).toBeInTheDocument();
+    expect(screen.queryByText('syncing')).not.toBeInTheDocument();
   });
 
   it('keeps the ticking refresh age visual and non-live', async () => {

@@ -4,11 +4,23 @@ import { ExternalLink, RefreshCw } from 'lucide-react';
 import { useCurrentTime, useLaunches } from '@/lib/hooks';
 import { getFeedHealth } from '@/lib/feed-health';
 
-function providerStatus(meta: unknown, pending: boolean): {
+function providerStatus(
+  meta: unknown,
+  pending: boolean,
+  unavailable: boolean,
+): {
   label: string;
   className: string;
   dotClassName: string;
 } {
+  if (unavailable) {
+    return {
+      label: 'unavailable',
+      className: 'text-[var(--console-red)]',
+      dotClassName: 'bg-[var(--console-red)]',
+    };
+  }
+
   if (pending) {
     return {
       label: 'syncing',
@@ -85,8 +97,18 @@ export default function Footer(): React.ReactElement {
     meta?.providers && !Array.isArray(meta.providers)
       ? meta.providers
       : null;
-  const spacexStatus = providerStatus(providers?.spacex, !meta);
-  const ll2Status = providerStatus(providers?.ll2, !meta);
+  const providerSyncPending = loading && !meta;
+  const providerFeedUnavailable = Boolean(error && !meta);
+  const spacexStatus = providerStatus(
+    providers?.spacex,
+    providerSyncPending,
+    providerFeedUnavailable,
+  );
+  const ll2Status = providerStatus(
+    providers?.ll2,
+    providerSyncPending,
+    providerFeedUnavailable,
+  );
   const age = refreshAge(meta?.generatedAt, now);
   const statusLabel =
     feedHealth === 'offline'
