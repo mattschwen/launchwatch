@@ -148,6 +148,11 @@ describe('Countdown', () => {
         />
       );
 
+      const spokenCountdown = screen.getByText(
+        `Estimated countdown: 2 days, 3 hours, 4 minutes, 5 seconds until the provider target. ${label}.`
+      );
+      expect(spokenCountdown).toHaveClass('sr-only');
+      expect(spokenCountdown.closest('time')).not.toHaveAttribute('aria-label');
       expect(screen.getByText(`≈T−2d 03:04:05 · ${label}`)).toBeVisible();
       expect(screen.getByText(/≈T−/)).toHaveClass('countdown-compact-tick');
     }

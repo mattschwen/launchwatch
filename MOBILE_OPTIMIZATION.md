@@ -124,7 +124,10 @@ The optional expanded map remains a modal dialog. It must:
 - The selected mission exposes a labeled, 44px share action. It prefers the
   platform share sheet and otherwise copies the canonical detail URL, with
   visible recovery copy when both browser paths are unavailable.
-- Launch actions wrap into labeled, touch-friendly controls.
+- Briefing, calendar, and sharing form a labeled three-command rail on narrow
+  screens instead of mixing text actions with an ambiguous icon-only control.
+  Every target remains at least 44px, and the compact calendar menu opens above
+  the rail so persistent mobile navigation cannot cover its options.
 - Schedule recovery keeps its retry control focused while busy, suppresses duplicate requests, and moves focus to the restored mission.
 - Initial synchronization keeps the real Watch heading and visible acquisition
   labels for coverage and the mission queue; loading geometry remains reserved

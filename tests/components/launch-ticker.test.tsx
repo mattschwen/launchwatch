@@ -81,9 +81,12 @@ describe('LaunchTicker', () => {
     });
     expect(missionLink).toHaveTextContent('≈T−');
     expect(missionLink).toHaveTextContent('Hour estimate');
-    expect(missionLink.querySelector('time')).toHaveAccessibleName(
+    const spokenCountdown = screen.getByText(
       /Estimated countdown: .*Hour estimate/i
     );
+    expect(spokenCountdown).toHaveClass('sr-only');
+    expect(missionLink.querySelector('time')).toContainElement(spokenCountdown);
+    expect(missionLink.querySelector('time')).not.toHaveAttribute('aria-label');
   });
 
   it('keeps the last successful mission reachable after a refresh failure', async () => {

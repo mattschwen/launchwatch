@@ -62,6 +62,8 @@ export default function LaunchActions({
       className={`${
         featured
           ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 [&>.action-button]:w-full'
+          : compact
+            ? 'compact-launch-actions grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center'
           : 'flex flex-wrap items-center gap-2'
       } ${className}`}
     >
@@ -119,7 +121,11 @@ export default function LaunchActions({
       ) : null}
 
       {showCalendar && !completed ? (
-        <AddToCalendar launch={launch} variant={compact ? 'icon' : 'button'} />
+        <AddToCalendar
+          launch={launch}
+          variant={compact ? 'compact' : 'button'}
+          menuPlacement={compact ? 'top' : 'bottom'}
+        />
       ) : null}
 
       {showShare ? (

@@ -1250,6 +1250,29 @@ body::before {
   transform: translateY(-1px);
 }
 
+.compact-launch-actions > *,
+.compact-launch-actions > * > .action-button {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .compact-launch-actions .action-button {
+    min-height: 3.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.45rem 0.3rem;
+    font-size: 0.78rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .compact-launch-actions > *,
+  .compact-launch-actions > * > .action-button {
+    width: auto;
+  }
+}
+
 .action-button-primary {
   background: var(--console-green);
   color: #03100a;

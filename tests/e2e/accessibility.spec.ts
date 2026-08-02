@@ -301,3 +301,48 @@ test('@a11y coarse launch estimate has no serious WCAG A/AA violations', async (
       .join('\n')
   ).toEqual([]);
 });
+
+test('@a11y watch estimate countdown has valid time semantics', async ({
+  page,
+}) => {
+  const estimatedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    livestream: null,
+    livestreams: null,
+  };
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: estimatedLaunch,
+          canonicalId: estimatedLaunch.id,
+          meta: FEED_META,
+        }),
+      })
+  );
+
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+  await expect(page.getByText(/≈T−/)).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});

@@ -23,7 +23,7 @@ import {
 
 interface AddToCalendarProps {
   launch: Launch;
-  variant?: 'button' | 'icon';
+  variant?: 'button' | 'compact' | 'icon';
   menuPlacement?: 'top' | 'bottom';
   menuAlign?: 'right' | 'center';
 }
@@ -137,6 +137,7 @@ export default function AddToCalendar({
               ? 'Could not enable alerts — retry'
               : 'Enable browser launch alerts';
   const calendarReady = hasCalendarReadyLaunchTime(launch.datePrecision);
+  const labeled = variant !== 'icon';
 
   if (!calendarReady) {
     const pendingDescriptionId = `${menuId}-pending`;
@@ -158,13 +159,14 @@ export default function AddToCalendar({
           }
           aria-describedby={pendingDescriptionId}
           className={`cursor-not-allowed opacity-55 focus-visible:opacity-80 ${
-            variant === 'button'
+            labeled
               ? 'action-button action-button-secondary'
               : 'icon-button'
           }`}
         >
           <CalendarClock aria-hidden="true" size={17} />
           {variant === 'button' ? <span>Calendar pending</span> : null}
+          {variant === 'compact' ? <span>Calendar</span> : null}
         </button>
         <span id={pendingDescriptionId} className="sr-only">
           {precisionLabel}. {pendingMessage}
@@ -173,7 +175,7 @@ export default function AddToCalendar({
           aria-hidden="true"
           data-calendar-pending-tooltip="true"
           className={`calendar-pending-tooltip pointer-events-none absolute z-[75] rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_32%,var(--border-subtle))] bg-[var(--surface-raised)] px-3 py-2 text-left shadow-[var(--shadow-elevated)] ${
-            variant === 'button'
+            labeled
               ? 'left-0 w-[min(16rem,calc(100vw-2rem))]'
               : 'left-1/2 w-[min(10rem,calc(100vw-2rem))] -translate-x-1/2'
           } ${
@@ -223,13 +225,14 @@ export default function AddToCalendar({
           setOpen((value) => !value);
         }}
         className={
-          variant === 'button'
+          labeled
             ? 'action-button action-button-secondary'
             : 'icon-button'
         }
       >
         <Calendar aria-hidden="true" size={17} />
         {variant === 'button' ? <span>Add to calendar</span> : null}
+        {variant === 'compact' ? <span>Calendar</span> : null}
       </button>
 
       {open ? (
@@ -238,7 +241,7 @@ export default function AddToCalendar({
           role="group"
           aria-label="Calendar options"
           className={`panel absolute z-[70] w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
-            menuAlign === 'center'
+            menuAlign === 'center' || variant === 'compact'
               ? 'left-1/2 -translate-x-1/2'
               : 'right-0'
           } ${

@@ -3393,6 +3393,53 @@ test('mission sharing copies canonical links from watch and completed details', 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch exposes a labeled mobile mission command rail', async ({ page }) => {
+  test.skip(
+    !test.info().project.name.startsWith('mobile'),
+    'Mobile command layout'
+  );
+
+  await page.goto('/watch');
+
+  const briefing = page.getByRole('button', { name: 'Briefing', exact: true });
+  const calendar = page.getByRole('button', { name: 'Calendar', exact: true });
+  const share = page.getByRole('button', { name: 'Share', exact: true });
+  const commands = [briefing, calendar, share];
+
+  for (const command of commands) {
+    await expect(command).toBeVisible();
+    expect((await command.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  const bounds = await Promise.all(commands.map((command) => command.boundingBox()));
+  expect(bounds.every(Boolean)).toBe(true);
+  expect(
+    Math.max(...bounds.map((box) => box!.y)) -
+      Math.min(...bounds.map((box) => box!.y))
+  ).toBeLessThan(2);
+
+  await calendar.focus();
+  await calendar.press('Enter');
+  const menu = page.getByRole('group', { name: 'Calendar options' });
+  await expect(menu).toBeVisible();
+  const menuBounds = await menu.boundingBox();
+  expect(menuBounds).not.toBeNull();
+  expect(menuBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0
+  );
+  const mobileNavBounds = await page
+    .locator('nav[aria-label="Primary navigation"]:visible')
+    .boundingBox();
+  expect(mobileNavBounds).not.toBeNull();
+  expect(menuBounds!.y + menuBounds!.height).toBeLessThanOrEqual(
+    mobileNavBounds!.y
+  );
+  await page.keyboard.press('Escape');
+  await expect(calendar).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('upcoming and historical details place one trajectory before mission support', async ({
   page,
 }) => {

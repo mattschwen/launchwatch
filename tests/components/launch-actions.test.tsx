@@ -73,4 +73,20 @@ describe('LaunchActions', () => {
       screen.getByRole('button', { name: 'Open briefing' })
     ).toBeVisible();
   });
+
+  it('keeps every compact mission command visibly labeled', () => {
+    render(
+      <LaunchActions
+        launch={UPCOMING_LAUNCHES[0]}
+        onOpenBriefing={() => undefined}
+        showPrimaryAction={false}
+        showShare
+        compact
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Briefing' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Calendar' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeVisible();
+  });
 });

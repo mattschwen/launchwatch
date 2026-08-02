@@ -96,11 +96,6 @@ export default function Countdown({
     return (
       <time
         dateTime={targetDate}
-        aria-label={
-          estimated
-            ? `Estimated countdown: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds until the provider target. ${precisionLabel}.`
-            : undefined
-        }
         className={`font-mono text-sm font-semibold tabular-nums ${
           estimated
             ? 'text-[var(--console-amber)]'
@@ -108,6 +103,13 @@ export default function Countdown({
         } ${className}`}
         suppressHydrationWarning
       >
+        {estimated ? (
+          <span className="sr-only" suppressHydrationWarning>
+            Estimated countdown: {days} days, {hours} hours, {minutes}{' '}
+            minutes, {seconds} seconds until the provider target.{' '}
+            {precisionLabel}.
+          </span>
+        ) : null}
         <span
           key={estimated ? seconds : 'exact'}
           aria-hidden={estimated ? 'true' : undefined}
