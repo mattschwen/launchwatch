@@ -1556,6 +1556,39 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('provider filters stay visible when the selected source leaves the feed', async ({
+  page,
+}) => {
+  const missingProvider = 'Retired Provider';
+  const missingProviderLabel = `${missingProvider} — not in current feed`;
+
+  await page.goto(`/?provider=${encodeURIComponent(missingProvider)}`);
+
+  const scheduleProvider = page.getByRole('combobox', { name: 'Provider' });
+  await expect(scheduleProvider).toHaveValue(missingProvider);
+  await expect(
+    scheduleProvider.getByRole('option', { name: missingProviderLabel })
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('heading', { name: 'No missions match these filters.' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto(`/history?provider=${encodeURIComponent(missingProvider)}`);
+
+  const archiveProvider = page.getByRole('combobox', { name: 'Provider' });
+  await expect(archiveProvider).toHaveValue(missingProvider);
+  await expect(
+    archiveProvider.getByRole('option', { name: missingProviderLabel })
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('heading', {
+      name: 'No archived missions match these filters.',
+    })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule keeps long mission telemetry readable', async ({
   page,
 }) => {

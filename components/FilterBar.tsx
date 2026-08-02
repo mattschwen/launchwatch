@@ -61,6 +61,10 @@ export default function FilterBar({
     (showProvider && filters.provider !== resetFilters.provider) ||
     filters.status !== resetFilters.status ||
     filters.sortBy !== resetFilters.sortBy;
+  const selectedProviderMissing =
+    showProvider &&
+    filters.provider !== DEFAULT_FILTERS.provider &&
+    !providerOptions.includes(filters.provider);
 
   return (
     <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1fr)_minmax(10rem,14rem)_10.5rem_10.5rem_auto]">
@@ -98,6 +102,11 @@ export default function FilterBar({
             className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
           >
             <option value="all">All providers</option>
+            {selectedProviderMissing ? (
+              <option value={filters.provider}>
+                {filters.provider} — not in current feed
+              </option>
+            ) : null}
             {providerOptions.map((provider) => (
               <option key={provider} value={provider}>
                 {provider}

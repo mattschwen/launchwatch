@@ -128,6 +128,32 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('keeps an unavailable archive provider visible as the selected filter', async () => {
+    render(
+      <PastLaunches
+        initialFilters={{
+          search: '',
+          provider: 'Retired Provider',
+          year: 'all',
+          outcome: 'all',
+        }}
+      />
+    );
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'No archived missions match these filters.',
+      })
+    ).toBeVisible();
+    const provider = screen.getByRole('combobox', { name: 'Provider' });
+    expect(provider).toHaveValue('Retired Provider');
+    expect(
+      screen.getByRole('option', {
+        name: 'Retired Provider — not in current feed',
+      })
+    ).toBeInTheDocument();
+  });
+
   it('announces filtered results and clears all archive filters at once', async () => {
     const user = userEvent.setup();
     render(<PastLaunches />);

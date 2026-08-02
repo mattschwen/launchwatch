@@ -86,6 +86,24 @@ describe('FilterBar', () => {
     await waitFor(() => expect(search).toHaveFocus());
   });
 
+  it('keeps a selected provider visible when it is absent from the current feed', () => {
+    render(
+      <FilterBar
+        initialFilters={{ provider: 'Retired Provider' }}
+        providerOptions={['SpaceX']}
+        onFilterChange={vi.fn()}
+      />
+    );
+
+    const provider = screen.getByRole('combobox', { name: 'Provider' });
+    expect(provider).toHaveValue('Retired Provider');
+    expect(
+      screen.getByRole('option', {
+        name: 'Retired Provider — not in current feed',
+      })
+    ).toBeInTheDocument();
+  });
+
   it('clears filters restored from navigation back to product defaults', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();

@@ -68,6 +68,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
   well as an icon so its purpose remains clear on narrow screens.
+- A restored provider filter stays visibly selected and is labeled as absent
+  when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
 - The featured mission keeps its optional licensed vehicle or mission visual
@@ -165,6 +167,8 @@ The optional expanded map remains a modal dialog. It must:
 - Detail links carry only bounded active archive filters, so the explicit
   return action restores the same filtered result set without accepting an
   arbitrary destination.
+- Restored provider filters remain visible and explicitly identify providers
+  that are absent from the current archive response.
 - Empty, error, stale, and retry states must fit without overflow.
 
 ## Mission Detail

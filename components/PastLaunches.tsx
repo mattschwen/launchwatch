@@ -334,6 +334,9 @@ export default function PastLaunches({
         .sort((a, b) => b - a),
     [launches]
   );
+  const selectedProviderMissing =
+    provider !== DEFAULT_HISTORY_FILTERS.provider &&
+    !providers.includes(provider);
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -558,6 +561,11 @@ export default function PastLaunches({
               className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
             >
               <option value="all">All providers</option>
+              {selectedProviderMissing ? (
+                <option value={provider}>
+                  {provider} — not in current feed
+                </option>
+              ) : null}
               {providers.map((item) => (
                 <option key={item} value={item}>
                   {item}
