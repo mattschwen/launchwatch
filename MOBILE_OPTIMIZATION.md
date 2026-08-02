@@ -163,6 +163,9 @@ The optional expanded map remains a modal dialog. It must:
 
 ## Mission Detail
 
+- Provider description placeholders such as `Details TBD.` normalize to a
+  truthful pending state in the mission hero and briefing instead of appearing
+  as substantive mission copy or page metadata.
 - Long names wrap as phrases within the available width.
 - The status, title, description, actions, and telemetry summary stack on narrow screens.
 - Upcoming mission actions form a stable two-by-two command console on narrow

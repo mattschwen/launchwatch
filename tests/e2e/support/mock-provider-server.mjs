@@ -284,6 +284,17 @@ const ll2UnsafeCoverage = {
   ],
 };
 
+const ll2PendingBriefing = {
+  ...ll2Upcoming,
+  id: 'demo-pending-briefing',
+  name: 'Pending Briefing Mission',
+  mission: {
+    ...ll2Upcoming.mission,
+    name: 'Pending Briefing Mission',
+    description: 'Details TBD.',
+  },
+};
+
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
   name: 'Pathfinder Qualification',
@@ -397,6 +408,8 @@ const server = createServer(async (request, response) => {
           ? ll2RankedCoverage
         : id === ll2UnsafeCoverage.id
           ? ll2UnsafeCoverage
+        : id === ll2PendingBriefing.id
+          ? ll2PendingBriefing
         : id === ll2Previous.id
           ? ll2Previous
           : null;

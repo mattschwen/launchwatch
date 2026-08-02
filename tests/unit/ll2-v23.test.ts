@@ -517,6 +517,7 @@ describe('Launch Library 2.3 adapter', () => {
         ...NORMAL_LIST_LAUNCH.mission,
         name: 'Unknown',
         type: 'To Be Determined',
+        description: 'Details TBD.',
         orbit: {
           name: 'Unknown',
           abbrev: 'N/A',
@@ -528,6 +529,7 @@ describe('Launch Library 2.3 adapter', () => {
     expect(normalized).toMatchObject({
       missionName: null,
       missionType: null,
+      description: null,
       orbit: null,
       program: null,
     });

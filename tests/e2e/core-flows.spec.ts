@@ -3892,6 +3892,57 @@ test('upcoming and historical details place one trajectory before mission suppor
   });
 });
 
+test('mission details replace provider description placeholders with an honest pending state', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+
+  await page.goto('/launch/ll2-demo-pending-briefing');
+
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Pending Briefing Mission',
+    })
+  ).toBeVisible();
+  const pendingDescription = page
+    .locator('#main-content')
+    .getByText('Mission description pending from the provider.', {
+      exact: true,
+    });
+  await expect(pendingDescription).toBeVisible();
+  await expect(page.getByText('Details TBD.', { exact: true })).toHaveCount(0);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    'Pending Briefing Mission launch details, schedule, provider coverage, and mission intelligence.'
+  );
+
+  const openBriefing = page.getByRole('button', { name: 'Open briefing' });
+  await openBriefing.focus();
+  await openBriefing.press('Enter');
+  const briefing = page.getByRole('dialog', {
+    name: 'Pending Briefing Mission',
+  });
+  await expect(
+    briefing.getByRole('button', { name: 'Close mission briefing' })
+  ).toBeFocused();
+  await expect(
+    briefing.getByText(
+      'The provider has not supplied a full mission description.',
+      { exact: true }
+    )
+  ).toBeVisible();
+  await expect(briefing.getByText('Details TBD.', { exact: true })).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test('mission trajectory keeps modeled phases in frame and restores focus', async ({
   page,
 }) => {

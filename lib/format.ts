@@ -33,6 +33,8 @@ const UTC_MONTH = new Intl.DateTimeFormat('en-US', {
 
 const PLACEHOLDER_VALUE =
   /^(?:unknown(?:\s+(?:orbit|mission|profile|vehicle|rocket|site|pad))?|tbd|tbc|to be (?:determined|confirmed)|not (?:available|applicable|provided|supplied)|n\/?a|none|null|-|—)$/i;
+const PLACEHOLDER_DESCRIPTION =
+  /^(?:(?:mission\s+)?(?:details?|description))(?:\s+(?:are|is))?\s*(?:tbd|tbc|pending|to be (?:determined|confirmed)|not (?:available|provided|supplied))$/i;
 const CRITICAL_STATUS_NAME =
   /\b(?:abort(?:ed)?|cancel(?:led|ed)?|failure|failed|hold|scrub(?:bed)?|warning|anomaly)\b/i;
 
@@ -41,6 +43,25 @@ export function isMeaningfulLaunchValue(
 ): value is string {
   const normalized = value?.trim();
   return Boolean(normalized && !PLACEHOLDER_VALUE.test(normalized));
+}
+
+export function normalizeLaunchDescription(
+  value: string | null | undefined
+): string | null {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+
+  const withoutTerminalPunctuation = normalized
+    .replace(/[.!?]+$/, '')
+    .trim();
+  if (
+    !isMeaningfulLaunchValue(withoutTerminalPunctuation) ||
+    PLACEHOLDER_DESCRIPTION.test(withoutTerminalPunctuation)
+  ) {
+    return null;
+  }
+
+  return normalized;
 }
 
 export function isCriticalLaunchStatusName(

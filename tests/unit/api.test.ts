@@ -138,6 +138,28 @@ describe('SpaceX normalization', () => {
     });
   });
 
+  it('drops placeholder SpaceX mission descriptions', () => {
+    const launch: SpaceXLaunch = {
+      id: 'pending-details',
+      name: 'Pending Details Flight',
+      date_utc: '2026-08-01T12:00:00.000Z',
+      date_unix: 1785585600,
+      rocket: 'falcon-9',
+      success: null,
+      details: 'Mission details to be determined.',
+      links: {
+        webcast: null,
+        youtube_id: null,
+        article: null,
+        wikipedia: null,
+      },
+      launchpad: '39a',
+      upcoming: true,
+    };
+
+    expect(normalizeSpaceXLaunch(launch).description).toBeNull();
+  });
+
   it('accepts numeric coordinate strings and meaningful launchpad fallbacks', () => {
     const launch: SpaceXLaunch = {
       id: 'fallback-pad',

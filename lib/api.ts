@@ -14,7 +14,11 @@ import {
   LaunchVisual,
   RocketFact,
 } from './types';
-import { firstLaunchValue, isMeaningfulLaunchValue } from './format';
+import {
+  firstLaunchValue,
+  isMeaningfulLaunchValue,
+  normalizeLaunchDescription,
+} from './format';
 import { isEligibleLaunchVisual } from './launch-visual';
 import { extractYouTubeId } from './youtube';
 
@@ -895,7 +899,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
       isLive: false,
       thumbnail: buildYouTubeThumbnail(webcast),
     }] : null,
-    description: launch.details,
+    description: normalizeLaunchDescription(launch.details),
     isLive: false,
     webcastLive: false,
     image,
@@ -989,7 +993,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     windowEnd: launch.window_end || null,
     livestream: livestreams?.[0]?.url || null,
     livestreams: livestreams.length > 0 ? livestreams : null,
-    description: launch.mission?.description || null,
+    description: normalizeLaunchDescription(launch.mission?.description),
     isLive,
     webcastLive: Boolean(launch.webcast_live),
     image: launchImage || missionImage || rocketImage,

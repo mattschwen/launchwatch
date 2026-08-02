@@ -11,6 +11,7 @@ import {
   formatRelativeDate,
   isCompletedLaunch,
   isMeaningfulLaunchValue,
+  normalizeLaunchDescription,
   hasCalendarReadyLaunchTime,
   hasExactLaunchTime,
   launchOutcomeLabel,
@@ -117,6 +118,18 @@ describe('launch formatting', () => {
     expect(
       firstLaunchValue(['Unknown', null, '  Communications  '], 'Pending')
     ).toBe('Communications');
+  });
+
+  it('normalizes provider description placeholders without hiding real copy', () => {
+    expect(normalizeLaunchDescription(' Details TBD. ')).toBeNull();
+    expect(normalizeLaunchDescription('Description pending')).toBeNull();
+    expect(
+      normalizeLaunchDescription('Mission details to be determined.')
+    ).toBeNull();
+    expect(normalizeLaunchDescription('TBD.')).toBeNull();
+    expect(
+      normalizeLaunchDescription('Details pending final mission review.')
+    ).toBe('Details pending final mission review.');
   });
 
   it('labels completed and scheduled missions consistently', () => {
