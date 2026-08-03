@@ -336,6 +336,67 @@ describe('PastLaunches', () => {
     expect(loadMore).toHaveFocus();
   });
 
+  it('refreshes settled records and reports a retained archive after failure', async () => {
+    const user = userEvent.setup();
+    type MockResponse = {
+      ok: boolean;
+      status: number;
+      json: () => Promise<unknown>;
+    };
+    let resolveRefresh: ((response: MockResponse) => void) | undefined;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(successfulResponse)
+      .mockImplementationOnce(
+        () =>
+          new Promise<MockResponse>((resolve) => {
+            resolveRefresh = resolve;
+          })
+      )
+      .mockResolvedValueOnce(successfulResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    const refresh = screen.getByRole('button', { name: 'Refresh archive' });
+    refresh.focus();
+    await user.keyboard('{Enter}');
+
+    expect(refresh).toHaveAccessibleName('Refreshing archive');
+    expect(refresh).toHaveAttribute('aria-disabled', 'true');
+    expect(refresh).toHaveAttribute('aria-busy', 'true');
+    expect(refresh).toHaveFocus();
+    expect(
+      screen.getByRole('region', { name: 'Archived launch results' })
+    ).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+
+    resolveRefresh?.({
+      ok: false,
+      status: 503,
+      json: async () => ({ error: 'Provider maintenance' }),
+    });
+
+    expect(
+      await screen.findByText('Archive refresh failed.', { exact: false })
+    ).toBeVisible();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(refresh).toHaveAccessibleName('Refresh archive');
+    expect(refresh).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Archive refresh failed.', { exact: false })
+      ).not.toBeInTheDocument();
+    });
+    expect(refresh).toHaveAccessibleName('Refresh archive');
+    expect(refresh).toHaveFocus();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it('offers a retry after an upstream archive error', async () => {
     const user = userEvent.setup();
     let resolveRetry: ((response: typeof successfulResponse) => void) | undefined;

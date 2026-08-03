@@ -187,6 +187,9 @@ The optional expanded map remains a modal dialog. It must:
   values change, so restored or shared archive filters remain self-identifying.
 - The archive exposes a labeled clear action only while filters are active, so
   its compact result toolbar never presents a disabled icon-only dead end.
+- Settled archive results keep a labeled, touch-safe refresh action at every
+  width. Refreshing preserves the current records and keyboard focus; a failed
+  request identifies them as retained until a later refresh recovers.
 - Each archive row keeps the complete mission and provider identity readable,
   wrapping long provider-supplied names instead of hiding them behind
   ellipses, before exposing secondary metadata and the View Mission action.

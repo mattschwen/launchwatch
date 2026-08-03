@@ -14,6 +14,7 @@ import {
   Archive,
   ChevronDown,
   Filter,
+  RefreshCw,
   Search,
   X,
 } from 'lucide-react';
@@ -403,12 +404,15 @@ export default function PastLaunches({
     searchRef.current?.focus();
   };
 
-  const retryHistory = (): void => {
+  const requestHistoryRefresh = (focusSearchOnSuccess: boolean): void => {
     if (loading || retrying) return;
-    focusSearchAfterRetryRef.current = true;
+    focusSearchAfterRetryRef.current = focusSearchOnSuccess;
     setRetrying(true);
     setReloadKey((key) => key + 1);
   };
+
+  const retryHistory = (): void => requestHistoryRefresh(true);
+  const refreshHistory = (): void => requestHistoryRefresh(false);
 
   if (loading && launches.length === 0 && !error) {
     return (
@@ -499,6 +503,7 @@ export default function PastLaunches({
   return (
     <section
       aria-labelledby="archive-results-title"
+      aria-busy={loading || retrying}
       className="surface-card holo-card signal-warm overflow-hidden"
     >
       <div className="border-b border-[var(--border-subtle)] p-4">
@@ -636,7 +641,7 @@ export default function PastLaunches({
             </div>
           </div>
 
-          <div className="flex min-h-11 items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
+          <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
             <p
               role="status"
               aria-live="polite"
@@ -646,22 +651,46 @@ export default function PastLaunches({
             >
               {resultCountLabel}
             </p>
-            {filtersActive ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={clearFilters}
-                className="action-button action-button-quiet shrink-0 px-3"
-                aria-label="Clear archive filters"
+                onClick={refreshHistory}
+                aria-disabled={retrying}
+                aria-busy={retrying}
+                className="action-button action-button-quiet shrink-0 px-3 aria-disabled:cursor-wait aria-disabled:opacity-60"
               >
-                <X aria-hidden="true" size={16} />
-                <span>Clear filters</span>
+                <RefreshCw
+                  aria-hidden="true"
+                  size={16}
+                  className={retrying ? 'animate-spin' : ''}
+                />
+                {retrying ? 'Refreshing archive' : 'Refresh archive'}
               </button>
-            ) : null}
+              {filtersActive ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="action-button action-button-quiet shrink-0 px-3"
+                  aria-label="Clear archive filters"
+                >
+                  <X aria-hidden="true" size={16} />
+                  <span>Clear filters</span>
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
 
-      {meta?.partial || meta?.stale ? (
+      {error && launches.length > 0 ? (
+        <div className="border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
+          <p role="alert" className="text-sm text-[var(--console-amber)]">
+            <strong className="font-semibold">Archive refresh failed.</strong>{' '}
+            Showing the retained mission records. Use Refresh archive to try
+            again.
+          </p>
+        </div>
+      ) : meta?.partial || meta?.stale ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
           <p className="text-sm text-[var(--console-amber)]">
             Some archive results may be delayed while a provider recovers.

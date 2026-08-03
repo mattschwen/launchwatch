@@ -3686,6 +3686,86 @@ test('history retry reports progress and restores keyboard focus', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history refresh retains settled records through failure and recovery', async ({
+  page,
+}) => {
+  let historyRequests = 0;
+  let pendingRefresh: Route | null = null;
+  await page.route('**/api/launches?type=history&limit=100', async (route) => {
+    historyRequests += 1;
+    if (historyRequests === 1) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launches: HISTORICAL_LAUNCHES,
+          meta: FEED_META,
+        }),
+      });
+      return;
+    }
+    pendingRefresh = route;
+  });
+
+  await page.goto('/history');
+  const mission = page.getByText('Demo Return Flight');
+  await expect(mission).toBeVisible();
+
+  const refresh = page.getByRole('button', {
+    name: /Refresh(?:ing)? archive/,
+  });
+  await refresh.focus();
+  await refresh.press('Enter');
+  await expect.poll(() => historyRequests).toBe(2);
+
+  await expect(refresh).toHaveText('Refreshing archive');
+  await expect(refresh).toHaveAttribute('aria-disabled', 'true');
+  await expect(refresh).toHaveAttribute('aria-busy', 'true');
+  await expect(refresh).toBeFocused();
+  await expect(
+    page.getByRole('region', { name: 'Archived launch results' })
+  ).toHaveAttribute('aria-busy', 'true');
+  await expect(mission).toBeVisible();
+  expect((await refresh.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  expect(pendingRefresh).not.toBeNull();
+  await pendingRefresh!.fulfill({
+    status: 503,
+    contentType: 'application/json',
+    body: JSON.stringify({ error: 'Provider maintenance' }),
+  });
+  pendingRefresh = null;
+
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Archive refresh failed.' })
+  ).toBeVisible();
+  await expect(refresh).toHaveText('Refresh archive');
+  await expect(refresh).toBeFocused();
+  await expect(mission).toBeVisible();
+
+  await refresh.press('Enter');
+  await expect.poll(() => historyRequests).toBe(3);
+  await expect(refresh).toHaveText('Refreshing archive');
+  await expect(refresh).toBeFocused();
+  expect(pendingRefresh).not.toBeNull();
+  await pendingRefresh!.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      launches: HISTORICAL_LAUNCHES,
+      meta: FEED_META,
+    }),
+  });
+
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Archive refresh failed.' })
+  ).toHaveCount(0);
+  await expect(refresh).toHaveText('Refresh archive');
+  await expect(refresh).toBeFocused();
+  await expect(mission).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history pagination reports progress and keeps terminal focus visible', async ({
   page,
 }) => {
