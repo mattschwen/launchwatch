@@ -1785,6 +1785,7 @@ test('home schedule keeps long mission telemetry readable', async ({
     'China Aerospace Science and Technology Corporation';
   const longVehicleName = 'Firefly Alpha Block 2 with extended fairing';
   const longVehicleFamily = 'Firefly Alpha reusable launch vehicle';
+  const longStatusName = 'Launch Window Under Review by Range Operations';
   const longSiteName = 'Satish Dhawan Space Centre Second Launch Pad';
   const displayedSiteName = 'Satish Dhawan Space Centre Second Pad';
   const longSiteLocality =
@@ -1806,6 +1807,7 @@ test('home schedule keeps long mission telemetry readable', async ({
             provider: longProviderName,
             rocket: longVehicleName,
             rocketFamily: longVehicleFamily,
+            statusName: longStatusName,
             launchSite: longSiteName,
             location: {
               ...UPCOMING_LAUNCHES[0].location!,
@@ -1824,14 +1826,17 @@ test('home schedule keeps long mission telemetry readable', async ({
   const launchDay = schedule.getByText('Jul 28, 2035', { exact: true });
   const missionName = schedule.getByText(longMissionName, { exact: true });
   const providerName = schedule.getByText(longProviderName, { exact: true });
+  const statusName = schedule.getByText(longStatusName, { exact: true });
   await expect(launchDay).toBeVisible();
   await expect(missionName).toBeVisible();
   await expect(providerName).toBeVisible();
+  await expect(statusName).toBeVisible();
 
   const readableContent = [
     launchDay,
     missionName,
     providerName,
+    statusName,
     schedule
       .getByText(longVehicleName, { exact: true })
       .filter({ visible: true }),

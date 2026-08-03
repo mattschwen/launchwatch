@@ -163,7 +163,7 @@ export default function LaunchList({
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="grid min-h-20 grid-cols-[minmax(7.25rem,.7fr)_minmax(0,1.3fr)] gap-3 border-b border-[var(--border-subtle)] p-4 last:border-0 lg:grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(9rem,.62fr)]"
+              className="grid min-h-20 grid-cols-[minmax(7.25rem,.7fr)_minmax(0,1.3fr)] gap-3 border-b border-[var(--border-subtle)] p-4 last:border-0 lg:grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(11rem,.72fr)]"
             >
               <div className="skeleton rounded" />
               <div className="skeleton rounded" />
@@ -340,7 +340,7 @@ export default function LaunchList({
         <>
           <div
             aria-hidden="true"
-            className="hidden grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(9rem,.62fr)] gap-3 border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.012)] px-4 py-2.5 lg:grid"
+            className="hidden grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(11rem,.72fr)] gap-3 border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.012)] px-4 py-2.5 lg:grid"
           >
             <span className="data-label">Date (UTC)</span>
             <span className="data-label">Mission</span>
