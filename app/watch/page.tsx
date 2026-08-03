@@ -426,6 +426,7 @@ function WatchMissionVisual({
     return (
       <MissionVisual
         launch={launch}
+        priority
         compact
         loading={loading}
         error={error}

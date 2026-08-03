@@ -250,7 +250,8 @@ function AvailableMissionVisual({
               src={visual.url}
               alt={launchVisualAlt(launch, visual)}
               fill
-              priority={priority}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : undefined}
               sizes={
                 compact
                   ? '(max-width: 639px) calc(100vw - 2.5rem), 36rem'

@@ -137,7 +137,9 @@ The optional expanded map remains a modal dialog. It must:
   touch-safe disclosure instead of expanding a non-actionable placeholder.
   Opening it reveals the full rights, missing-source, loading, or degraded state;
   an eligible visual still remains visible when it is the primary no-stream
-  fallback.
+  fallback. That visible fallback receives eager, high-priority image loading
+  as prominent Watch media; verified-stream imagery remains lazy and unmounted
+  behind its disclosure.
 - The bounded queue is one page Tab stop. Up and Down select adjacent missions,
   Home and End jump to its boundaries, and only the selected mission remains in
   the Tab order while every item stays directly touch and pointer operable. A

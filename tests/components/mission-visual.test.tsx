@@ -221,11 +221,12 @@ describe('MissionVisual', () => {
 
     expect(screen.getByText('Vehicle reference')).toBeVisible();
     expect(screen.getByText('Astra Nova')).toBeVisible();
-    expect(
-      screen.getByRole('img', {
-        name: 'Vehicle reference image of Astra Nova',
-      })
-    ).toHaveClass('mission-visual-image-vehicle');
+    const image = screen.getByRole('img', {
+      name: 'Vehicle reference image of Astra Nova',
+    });
+    expect(image).toHaveClass('mission-visual-image-vehicle');
+    expect(image).toHaveAttribute('loading', 'eager');
+    expect(image).toHaveAttribute('fetchpriority', 'high');
     expect(
       screen.getByText(
         'Credit: Mission Imaging Team · via Launch Library 2'

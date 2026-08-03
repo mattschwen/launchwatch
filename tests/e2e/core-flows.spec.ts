@@ -2251,6 +2251,13 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await expect(
     page.locator('figure[data-visual-kind="vehicle"]')
   ).toHaveCount(1);
+  await expect(
+    page
+      .locator('figure[data-visual-kind="vehicle"]')
+      .getByRole('img', {
+        name: 'Vehicle reference image of Astra Nova launch vehicle',
+      })
+  ).toHaveAttribute('loading', 'lazy');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await page.route(
@@ -2277,11 +2284,12 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   ).toHaveCount(0);
   const visual = page.locator('figure[data-visual-kind="vehicle"]');
   await expect(visual).toHaveCount(1);
-  await expect(
-    visual.getByRole('img', {
-      name: 'Vehicle reference image of Astra Nova launch vehicle',
-    })
-  ).toBeVisible();
+  const visualImage = visual.getByRole('img', {
+    name: 'Vehicle reference image of Astra Nova launch vehicle',
+  });
+  await expect(visualImage).toBeVisible();
+  await expect(visualImage).toHaveAttribute('loading', 'eager');
+  await expect(visualImage).toHaveAttribute('fetchpriority', 'high');
   await expect(
     visual.getByText(
       'Credit: LaunchWatch fixture · via LaunchWatch fixture',
