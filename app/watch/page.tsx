@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type MouseEvent,
 } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -492,7 +493,7 @@ function MissionQueue({
 }: {
   launches: Launch[];
   selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, revealMission?: boolean) => void;
 }): React.ReactElement {
   const queuedLaunches = launches.slice(0, 10);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -585,7 +586,9 @@ function MissionQueue({
               type="button"
               aria-pressed={selected}
               tabIndex={index === tabStopIndex ? 0 : -1}
-              onClick={() => onSelect(launch.id)}
+              onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                onSelect(launch.id, event.detail > 0)
+              }
               onKeyDown={(event) => handleQueueKeyDown(event, index)}
               className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
                 selected
@@ -646,6 +649,7 @@ function WatchContent(): React.ReactElement {
   } = useLaunches();
   const { liveLaunches } = useLiveLaunches();
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const selectedMissionRef = useRef<HTMLDivElement>(null);
   const missionLinkRef = useRef<HTMLAnchorElement>(null);
   const retryFocusPendingRef = useRef(false);
 
@@ -707,8 +711,22 @@ function WatchContent(): React.ReactElement {
     return () => window.cancelAnimationFrame(frame);
   }, [selectedLaunch]);
 
-  const selectLaunch = (id: string): void => {
+  const selectLaunch = (id: string, revealMission = false): void => {
     router.replace(`/watch?id=${encodeURIComponent(id)}`, { scroll: false });
+
+    if (
+      revealMission &&
+      window.matchMedia('(max-width: 1023px)').matches
+    ) {
+      window.requestAnimationFrame(() => {
+        selectedMissionRef.current?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'auto'
+            : 'smooth',
+          block: 'start',
+        });
+      });
+    }
   };
 
   const retrySchedule = (): void => {
@@ -799,7 +817,11 @@ function WatchContent(): React.ReactElement {
         </div>
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
-          <div className="min-w-0">
+          <div
+            ref={selectedMissionRef}
+            data-watch-selected-mission
+            className="min-w-0 scroll-mt-20"
+          >
             <WatchStage
               launch={selectedLaunch}
               detailHref={selectedDetailHref}

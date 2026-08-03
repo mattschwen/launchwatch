@@ -225,25 +225,19 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
 
   const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
   await expect(homeLink).toBeVisible();
-
-  const metrics = await homeLink.evaluate((element) => {
-    const linkBox = element.getBoundingClientRect();
-    const wordmark = element.querySelector('span');
-
-    return {
-      imageCount: element.querySelectorAll('img').length,
-      linkHeight: linkBox.height,
-      wordmark: wordmark?.textContent?.trim(),
-      wordmarkSize: wordmark
-        ? Number.parseFloat(getComputedStyle(wordmark).fontSize)
-        : 0,
-    };
-  });
-
-  expect(metrics.imageCount).toBe(0);
-  expect(metrics.linkHeight).toBeGreaterThanOrEqual(44);
-  expect(metrics.wordmark).toBe('LaunchWatch');
-  expect(metrics.wordmarkSize).toBeGreaterThanOrEqual(20);
+  await expect(homeLink.locator('img')).toHaveCount(0);
+  const wordmark = homeLink.locator('span').first();
+  await expect(wordmark).toHaveText('LaunchWatch');
+  await expect
+    .poll(async () => (await homeLink.boundingBox())?.height ?? 0)
+    .toBeGreaterThanOrEqual(44);
+  await expect
+    .poll(() =>
+      wordmark.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize)
+      )
+    )
+    .toBeGreaterThanOrEqual(20);
   await expect(page.locator('link[rel~="icon"][href="/favicon.ico"]')).toHaveCount(
     1
   );
@@ -2127,6 +2121,46 @@ test('watch enriches the selected mission and switches the mission queue', async
 
   await page.goto('/history');
   await expect(page).toHaveTitle('Launch History | LaunchWatch');
+});
+
+test('watch reveals a pointer-selected mission on narrow layouts', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const selectedMission = page.locator('[data-watch-selected-mission]');
+  const polarisQueueItem = page
+    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('button', { name: /Polaris Relay/i });
+  await polarisQueueItem.scrollIntoViewIfNeeded();
+
+  const initialScroll = await page.evaluate(() => window.scrollY);
+  await polarisQueueItem.click();
+  await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
+  ).toBeVisible();
+
+  if (test.info().project.name.startsWith('mobile')) {
+    await expect(selectedMission).toBeInViewport();
+    const geometry = await selectedMission.evaluate((element) => {
+      const selectedBounds = element.getBoundingClientRect();
+      const headerBounds = document.querySelector('header')?.getBoundingClientRect();
+      return {
+        headerBottom: headerBounds?.bottom ?? 0,
+        selectedTop: selectedBounds.top,
+        scrollY: window.scrollY,
+      };
+    });
+    expect(geometry.scrollY).toBeLessThan(initialScroll);
+    expect(geometry.selectedTop).toBeGreaterThanOrEqual(
+      geometry.headerBottom - 1
+    );
+  } else {
+    expect(await page.evaluate(() => window.scrollY)).toBe(initialScroll);
+  }
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
 test('watch keeps long mission queues compact and keyboard-reachable', async ({

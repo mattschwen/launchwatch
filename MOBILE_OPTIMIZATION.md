@@ -145,6 +145,10 @@ The optional expanded map remains a modal dialog. It must:
   the Tab order while every item stays directly touch and pointer operable. A
   deep-linked selection is revealed inside the bounded rail without moving
   focus or scrolling the page away from its primary coverage context.
+- Touch and pointer selection on narrow layouts returns the viewport to the
+  updated mission console so the new coverage and summary are immediately
+  visible. Keyboard selection retains queue focus and keeps the queue in view
+  for efficient arrow-key browsing.
 - The selected mission trajectory follows the stage and queue, and uses the same
   disclosed illustrative model as mission detail. Stream and coverage
   intelligence appears before that illustrative telemetry so Watch keeps its
