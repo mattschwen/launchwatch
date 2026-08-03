@@ -403,6 +403,34 @@ describe('PastLaunches', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
+  it('keeps partial provider guidance on the single archive refresh command', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: HISTORICAL_LAUNCHES,
+          meta: { ...FEED_META, partial: true },
+        }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByText(
+        'Some archive results may be delayed while a provider recovers. Use Refresh archive to check for recovered records.'
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Refresh archive' })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Retry' })
+    ).not.toBeInTheDocument();
+  });
+
   it('offers a retry after an upstream archive error', async () => {
     const user = userEvent.setup();
     let resolveRetry: ((response: typeof successfulResponse) => void) | undefined;

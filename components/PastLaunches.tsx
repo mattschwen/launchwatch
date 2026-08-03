@@ -691,19 +691,11 @@ export default function PastLaunches({
           </p>
         </div>
       ) : meta?.partial || meta?.stale ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
-          <p className="text-sm text-[var(--console-amber)]">
-            Some archive results may be delayed while a provider recovers.
+        <div className="border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
+          <p className="text-sm leading-5 text-[var(--console-amber)]">
+            Some archive results may be delayed while a provider recovers. Use
+            Refresh archive to check for recovered records.
           </p>
-          <button
-            type="button"
-            onClick={retryHistory}
-            aria-disabled={retrying}
-            aria-busy={retrying}
-            className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-[var(--console-cyan)] hover:underline aria-disabled:cursor-wait aria-disabled:opacity-60"
-          >
-            {retrying ? 'Retrying' : 'Retry'}
-          </button>
         </div>
       ) : null}
 

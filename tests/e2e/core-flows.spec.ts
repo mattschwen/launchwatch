@@ -3941,11 +3941,11 @@ test('history retry reports progress and restores keyboard focus', async ({
 test('history refresh retains settled records through failure and recovery', async ({
   page,
 }) => {
-  let historyRequests = 0;
+  let refreshStarted = false;
+  let refreshRequests = 0;
   let pendingRefresh: Route | null = null;
   await page.route('**/api/launches?type=history&limit=100', async (route) => {
-    historyRequests += 1;
-    if (historyRequests === 1) {
+    if (!refreshStarted) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -3956,6 +3956,7 @@ test('history refresh retains settled records through failure and recovery', asy
       });
       return;
     }
+    refreshRequests += 1;
     pendingRefresh = route;
   });
 
@@ -3967,8 +3968,9 @@ test('history refresh retains settled records through failure and recovery', asy
     name: /Refresh(?:ing)? archive/,
   });
   await refresh.focus();
+  refreshStarted = true;
   await refresh.press('Enter');
-  await expect.poll(() => historyRequests).toBe(2);
+  await expect.poll(() => refreshRequests).toBe(1);
 
   await expect(refresh).toHaveText('Refreshing archive');
   await expect(refresh).toHaveAttribute('aria-disabled', 'true');
@@ -3996,7 +3998,7 @@ test('history refresh retains settled records through failure and recovery', asy
   await expect(mission).toBeVisible();
 
   await refresh.press('Enter');
-  await expect.poll(() => historyRequests).toBe(3);
+  await expect.poll(() => refreshRequests).toBe(2);
   await expect(refresh).toHaveText('Refreshing archive');
   await expect(refresh).toBeFocused();
   expect(pendingRefresh).not.toBeNull();
@@ -4015,6 +4017,39 @@ test('history refresh retains settled records through failure and recovery', asy
   await expect(refresh).toHaveText('Refresh archive');
   await expect(refresh).toBeFocused();
   await expect(mission).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history partial provider state keeps one recovery command', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: HISTORICAL_LAUNCHES,
+        meta: { ...FEED_META, partial: true },
+      }),
+    })
+  );
+
+  await page.goto('/history');
+
+  await expect(
+    page.getByText(
+      'Some archive results may be delayed while a provider recovers. Use Refresh archive to check for recovered records.'
+    )
+  ).toBeVisible();
+  const refresh = page.getByRole('button', { name: 'Refresh archive' });
+  await expect(refresh).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0);
+  expect((await refresh.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await refresh.focus();
+  await refresh.press('Tab');
+  await expect(
+    page.getByRole('button', { name: /Demo Return Flight/ })
+  ).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

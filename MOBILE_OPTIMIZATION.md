@@ -203,6 +203,8 @@ The optional expanded map remains a modal dialog. It must:
 - Settled archive results keep a labeled, touch-safe refresh action at every
   width. Refreshing preserves the current records and keyboard focus; a failed
   request identifies them as retained until a later refresh recovers.
+- Partial-provider guidance remains informational and points to that persistent
+  refresh action instead of adding a duplicate recovery command or keyboard stop.
 - Each archive row keeps the complete mission and provider identity readable,
   wrapping long provider-supplied names instead of hiding them behind
   ellipses, before exposing secondary metadata and the View Mission action.
