@@ -66,7 +66,7 @@ export default function LaunchCard({
             className="shrink-0 text-[var(--text-muted)]"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+            <p className="break-words text-sm font-medium leading-5 text-[var(--text-primary)]">
               {formatLaunchDay(launch.date, launch.datePrecision)}
             </p>
             <p

@@ -1788,12 +1788,15 @@ test('home schedule keeps long mission telemetry readable', async ({
   await page.goto('/');
 
   const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const launchDay = schedule.getByText('Jul 28, 2035', { exact: true });
   const missionName = schedule.getByText(longMissionName, { exact: true });
   const providerName = schedule.getByText(longProviderName, { exact: true });
+  await expect(launchDay).toBeVisible();
   await expect(missionName).toBeVisible();
   await expect(providerName).toBeVisible();
 
   const readableContent = [
+    launchDay,
     missionName,
     providerName,
     schedule
