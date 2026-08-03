@@ -3904,7 +3904,7 @@ test('history refresh retains settled records through failure and recovery', asy
 test('history pagination reports progress and keeps terminal focus visible', async ({
   page,
 }) => {
-  const launches = Array.from({ length: 41 }, (_, index) => {
+  const launches = Array.from({ length: 21 }, (_, index) => {
     const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
     return {
       ...launch,
@@ -3930,20 +3930,32 @@ test('history pagination reports progress and keeps terminal focus visible', asy
     name: 'Archive results',
   });
   await expect(archiveResults).toHaveText(
-    'Showing 20 of 41 results'
+    'Showing 10 of 21 results'
   );
   const loadMore = page.locator('button[aria-controls$="-results"]');
-  await expect(loadMore).toHaveText('Load 20 more');
+  await expect(loadMore).toHaveText('Load 10 more');
   await loadMore.focus();
   await loadMore.press('Enter');
   await expect(archiveResults).toHaveText(
-    'Showing 40 of 41 results'
+    'Showing 20 of 21 results'
   );
   await expect(loadMore).toBeFocused();
+  await expect
+    .poll(() =>
+      loadMore.evaluate((element) => {
+        const control = element.getBoundingClientRect();
+        const mobileNav = document.querySelector('nav.fixed.bottom-0');
+        const navBounds = mobileNav?.getBoundingClientRect();
+        const visibleBottom =
+          navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+        return control.top >= 0 && control.bottom <= visibleBottom;
+      })
+    )
+    .toBe(true);
 
   await loadMore.press('Enter');
-  await expect(archiveResults).toHaveText('41 results');
-  await expect(loadMore).toHaveText('All 41 missions loaded');
+  await expect(archiveResults).toHaveText('21 results');
+  await expect(loadMore).toHaveText('All 21 missions loaded');
   await expect(loadMore).toHaveAttribute('aria-disabled', 'true');
   await expect(loadMore).toBeFocused();
 
@@ -3963,7 +3975,7 @@ test('history pagination reports progress and keeps terminal focus visible', asy
   expect(placement.fullyVisible).toBe(true);
   expect(placement.height).toBeGreaterThanOrEqual(44);
   await loadMore.press('Enter');
-  await expect(page.locator('article')).toHaveCount(41);
+  await expect(page.locator('article')).toHaveCount(21);
   await expect(loadMore).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

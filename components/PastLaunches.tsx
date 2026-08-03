@@ -35,7 +35,7 @@ import {
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 function readHistoryPayload(payload: unknown): {
   launches: Launch[];

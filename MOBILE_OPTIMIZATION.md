@@ -201,6 +201,9 @@ The optional expanded map remains a modal dialog. It must:
 - Vehicle and launch-site telemetry also wraps within its responsive grid so
   compact rows never silently remove the identifying end of a provider value.
 - Expanded summaries remain in normal document flow.
+- Archive results reveal ten missions at a time, keeping the initial scan and
+  footer reachable while a focus-stable command progressively loads older
+  records.
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.
 - Replay and detail links use canonical `spacex-*` IDs.

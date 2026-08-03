@@ -299,7 +299,7 @@ describe('PastLaunches', () => {
 
   it('announces pagination progress and preserves focus after the final batch', async () => {
     const user = userEvent.setup();
-    const launches = Array.from({ length: 41 }, (_, index) => {
+    const launches = Array.from({ length: 21 }, (_, index) => {
       const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
       return {
         ...launch,
@@ -320,25 +320,25 @@ describe('PastLaunches', () => {
     render(<PastLaunches />);
 
     expect(
-      await screen.findByText('Showing 20 of 41 results')
+      await screen.findByText('Showing 10 of 21 results')
     ).toBeVisible();
-    const loadMore = screen.getByRole('button', { name: 'Load 20 more' });
+    const loadMore = screen.getByRole('button', { name: 'Load 10 more' });
 
     loadMore.focus();
     await user.keyboard('{Enter}');
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Showing 40 of 41 results'
+      'Showing 20 of 21 results'
     );
     expect(loadMore).toHaveFocus();
 
     await user.keyboard('{Enter}');
-    expect(screen.getByRole('status')).toHaveTextContent('41 results');
-    expect(loadMore).toHaveAccessibleName('All 41 missions loaded');
+    expect(screen.getByRole('status')).toHaveTextContent('21 results');
+    expect(loadMore).toHaveAccessibleName('All 21 missions loaded');
     expect(loadMore).toHaveAttribute('aria-disabled', 'true');
     expect(loadMore).toHaveFocus();
 
     await user.keyboard('{Enter}');
-    expect(screen.getAllByRole('article')).toHaveLength(41);
+    expect(screen.getAllByRole('article')).toHaveLength(21);
     expect(loadMore).toHaveFocus();
   });
 
