@@ -4436,7 +4436,22 @@ test('upcoming and historical details place one trajectory before mission suppor
     telemetryFirst: boolean;
     visualAlt?: string;
   }): Promise<void> => {
+    if (
+      telemetryFirst &&
+      !test.info().project.name.startsWith('mobile')
+    ) {
+      await page.setViewportSize({ width: 1024, height: 900 });
+    }
     await page.goto(path);
+
+    if (
+      telemetryFirst &&
+      !test.info().project.name.startsWith('mobile')
+    ) {
+      await page.addStyleTag({
+        content: 'body { width: calc(100% - 8px); }',
+      });
+    }
 
     await expect(
       page.getByRole('heading', { level: 1, name: mission })
@@ -4495,6 +4510,7 @@ test('upcoming and historical details place one trajectory before mission suppor
     if (telemetryFirst) {
       const countdown = telemetry.locator('time');
       await expect(countdown).toHaveCount(1);
+      await expect(countdown.locator('.countdown-prefix')).toHaveText('≈T−');
       const countdownBounds = await countdown.boundingBox();
       expect(countdownBounds).not.toBeNull();
       expect(countdownBounds!.y).toBeLessThan(
@@ -4680,7 +4696,7 @@ test('upcoming and historical details place one trajectory before mission suppor
   };
 
   await assertDetailTrajectory({
-    path: '/launch/ll2-demo-orbital-dawn',
+    path: '/launch/ll2-demo-hour-estimate',
     mission: 'Orbital Dawn',
     hasTimeline: true,
     telemetryFirst: true,

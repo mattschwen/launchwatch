@@ -295,6 +295,16 @@ const ll2PendingBriefing = {
   },
 };
 
+const ll2HourEstimate = {
+  ...ll2Upcoming,
+  id: 'demo-hour-estimate',
+  net_precision: {
+    name: 'Hour',
+    abbrev: 'HR',
+    description: 'The T-0 is accurate to the hour.',
+  },
+};
+
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
   name: 'Pathfinder Qualification',
@@ -404,6 +414,8 @@ const server = createServer(async (request, response) => {
     const launch =
       id === ll2Upcoming.id
         ? ll2Upcoming
+        : id === ll2HourEstimate.id
+          ? ll2HourEstimate
         : id === ll2RankedCoverage.id
           ? ll2RankedCoverage
         : id === ll2UnsafeCoverage.id
