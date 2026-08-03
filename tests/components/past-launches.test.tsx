@@ -53,6 +53,12 @@ describe('PastLaunches', () => {
 
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
     expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
+    expect(
+      screen.getAllByRole('link', { name: /View mission/i })[0]
+    ).toHaveAttribute(
+      'href',
+      '/launch/spacex-demo-return?from=history',
+    );
 
     await user.type(screen.getByRole('searchbox', { name: 'Search missions' }), 'Return');
 

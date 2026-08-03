@@ -43,6 +43,10 @@ describe('history return context', () => {
   });
 
   it('creates only internal archive return destinations', () => {
+    expect(
+      buildHistoryDetailHref('spacex/demo', DEFAULT_HISTORY_FILTERS),
+    ).toBe('/launch/spacex%2Fdemo?from=history');
+
     const href = buildHistoryDetailHref('spacex/demo', {
       search: 'Return flight',
       provider: 'SpaceX',

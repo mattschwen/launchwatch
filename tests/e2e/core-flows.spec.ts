@@ -809,6 +809,37 @@ test('mission details keep their parent surface current in primary navigation', 
   }
 });
 
+test('unfiltered archive missions retain History navigation context', async ({
+  page,
+}) => {
+  await page.goto('/history');
+
+  const missionDetail = page.locator(
+    'a[href="/launch/spacex-demo-return?from=history"]',
+  );
+  await expect(missionDetail).toHaveCount(1);
+  await expect(missionDetail).toHaveAccessibleName('View mission');
+  await missionDetail.click();
+
+  await expect(page).toHaveURL(
+    /\/launch\/spacex-demo-return\?from=history$/,
+  );
+  const navigation = page.locator(
+    'nav[aria-label="Primary navigation"]:visible',
+  );
+  const currentHistory = navigation.locator('[aria-current="page"]');
+  await expect(currentHistory).toHaveAccessibleName(/^History$/i);
+  await currentHistory.focus();
+  await expect(currentHistory).toBeFocused();
+
+  const returnLink = page.getByRole('link', { name: 'Back to history' });
+  await expect(returnLink).toHaveAttribute('href', '/history');
+  await returnLink.focus();
+  await expect(returnLink).toBeFocused();
+  expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('featured mission telemetry stays legible in the split layout', async ({
   page,
 }) => {

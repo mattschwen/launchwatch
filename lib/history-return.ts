@@ -100,12 +100,11 @@ export function buildHistoryDetailHref(
 ): string {
   const history = serializeHistoryFilters(filters);
   const base = `/launch/${encodeURIComponent(launchId)}`;
-  if (!history) return base;
+  const params = new URLSearchParams({ from: 'history' });
 
-  return `${base}?${new URLSearchParams({
-    from: 'history',
-    history,
-  }).toString()}`;
+  if (history) params.set('history', history);
+
+  return `${base}?${params.toString()}`;
 }
 
 export function readHistoryReturnQuery(

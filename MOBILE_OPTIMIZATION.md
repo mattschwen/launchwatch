@@ -199,9 +199,10 @@ The optional expanded map remains a modal dialog. It must:
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.
 - Replay and detail links use canonical `spacex-*` IDs.
-- Detail links carry only bounded active archive filters, so the explicit
-  return action restores the same filtered result set without accepting an
-  arbitrary destination.
+- Every detail link retains History as its originating surface. Active archive
+  filters travel only as bounded return context, so the explicit return action
+  restores the same filtered result set without accepting an arbitrary
+  destination.
 - Restored provider filters remain visible and explicitly identify providers
   that are absent from the current archive response.
 - Empty, error, stale, and retry states must fit without overflow.
