@@ -133,6 +133,11 @@ The optional expanded map remains a modal dialog. It must:
   share one bounded side rail so secondary context does not create an empty grid
   column or expand ahead of mission intelligence. Their mobile document order
   remains summary, queue, then visual.
+- When no reusable Watch visual is available, the side rail keeps an honest
+  touch-safe disclosure instead of expanding a non-actionable placeholder.
+  Opening it reveals the full rights, missing-source, loading, or degraded state;
+  an eligible visual still remains visible when it is the primary no-stream
+  fallback.
 - The bounded queue is one page Tab stop. Up and Down select adjacent missions,
   Home and End jump to its boundaries, and only the selected mission remains in
   the Tab order while every item stays directly touch and pointer operable. A

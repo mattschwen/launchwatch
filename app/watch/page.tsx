@@ -26,6 +26,7 @@ import MissionDescription from '@/components/MissionDescription';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
 import MissionVisual from '@/components/launch/MissionVisual';
+import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
@@ -40,6 +41,7 @@ import {
   useLiveLaunches,
 } from '@/lib/hooks';
 import { getFallbackLaunchSummary } from '@/lib/launch-action';
+import { selectLaunchVisual } from '@/lib/launch-visual';
 import type { Launch } from '@/lib/types';
 
 const MissionTrajectory = dynamic(
@@ -407,6 +409,18 @@ function WatchMissionVisual({
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
   const regionId = useId();
+  const visual = selectLaunchVisual(launch);
+
+  if (visual.status !== 'available') {
+    return (
+      <MissionVisualDisclosure
+        launch={launch}
+        loading={loading}
+        error={error}
+        className={`max-w-none ${className}`}
+      />
+    );
+  }
 
   if (!collapsible) {
     return (

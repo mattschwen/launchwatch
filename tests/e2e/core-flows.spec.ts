@@ -2318,6 +2318,80 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps an unavailable mission visual secondary and compact', async ({
+  page,
+}) => {
+  const launch = {
+    ...UPCOMING_LAUNCHES[0],
+    image: null,
+    livestream: null,
+    livestreams: null,
+    vehicleVisual: undefined,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [launch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch,
+        canonicalId: launch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  const disclosure = page.getByRole('button', {
+    name: 'Show mission visual for Orbital Dawn',
+  });
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByLabel('Mission visual unavailable')).toHaveCount(0);
+  expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  const hierarchy = await disclosure.evaluate((element, intelElement) => {
+    const disclosureBounds = element.getBoundingClientRect();
+    const intelligenceBounds = intelElement?.getBoundingClientRect();
+    return {
+      disclosureBottom: disclosureBounds.bottom,
+      disclosureHeight: disclosureBounds.height,
+      intelligenceTop: intelligenceBounds?.top ?? Number.POSITIVE_INFINITY,
+    };
+  }, await intelligence.elementHandle());
+
+  expect(hierarchy.disclosureHeight).toBeLessThan(120);
+  expect(hierarchy.disclosureBottom).toBeLessThanOrEqual(
+    hierarchy.intelligenceTop
+  );
+
+  await disclosure.focus();
+  await disclosure.press('Enter');
+  const hideDisclosure = page.getByRole('button', {
+    name: 'Hide mission visual for Orbital Dawn',
+  });
+  await expect(hideDisclosure).toBeFocused();
+  await expect(page.getByLabel('Mission visual unavailable')).toBeVisible();
+  await expect(
+    page.getByText('Provider image not supplied', { exact: true })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch prioritizes coverage intelligence before trajectory telemetry', async ({
   page,
 }) => {
