@@ -152,13 +152,13 @@ function TopNavContents({
             <Link
               href="/watch"
               aria-label={`${liveCount} live launches`}
-              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
+              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--live)]" />
               </span>
-              <span className="hidden min-[360px]:inline">LIVE ({liveCount})</span>
+              <span>LIVE</span>
             </Link>
           )}
           {feedHealth !== 'nominal' ? (
@@ -169,14 +169,14 @@ function TopNavContents({
                 aria-hidden="true"
                 className={`h-2 w-2 shrink-0 rounded-full ${feedStatus.dotClass}`}
               />
-              <span className="hidden min-[370px]:inline">
+              <span className="hidden max-[359px]:inline min-[370px]:inline">
                 {feedStatus.compactLabel}
               </span>
             </span>
           ) : null}
           <UTCClock
             showLabel={false}
-            className="hardware-clock h-10 px-2 text-[var(--console-cyan)]"
+            className="hardware-clock hidden h-10 px-2 text-[var(--console-cyan)] min-[360px]:flex"
           />
         </div>
       </div>

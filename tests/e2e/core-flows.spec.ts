@@ -598,6 +598,61 @@ test('shared chrome reports partial feed health on every route', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('narrow mobile chrome keeps concurrent live and degraded states readable', async ({
+  page,
+}) => {
+  test.skip(!test.info().project.name.startsWith('mobile'));
+  await page.setViewportSize({ width: 320, height: 568 });
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          { ...UPCOMING_LAUNCHES[0], isLive: true },
+          ...UPCOMING_LAUNCHES.slice(1),
+        ],
+        meta: {
+          ...FEED_META,
+          partial: true,
+          providers: {
+            ...FEED_META.providers,
+            spacex: {
+              state: 'error',
+              cached: false,
+              updatedAt: null,
+              error: 'Provider request failed',
+            },
+          },
+        },
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const header = page.locator('header.sticky:visible');
+  await expect(
+    header.getByRole('link', { name: '1 live launches' })
+  ).toContainText('LIVE');
+  await expect(header.getByText('Partial', { exact: true })).toBeVisible();
+  await expect(header.locator('.hardware-clock:visible')).toHaveCount(0);
+
+  const headerLayout = await header.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(headerLayout.scrollWidth).toBeLessThanOrEqual(
+    headerLayout.clientWidth
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.setViewportSize({ width: 360, height: 568 });
+  await expect(header.locator('.hardware-clock:visible')).toHaveCount(1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home identifies and recovers retained missions after refresh failure', async ({
   page,
 }) => {

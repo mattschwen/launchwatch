@@ -305,6 +305,9 @@ The optional expanded map remains a modal dialog. It must:
   footer status non-live and its ticking visual age out of the accessibility
   tree; assistive technology should hear each feed-state transition once, not
   a duplicate announcement or a new age every second.
+- At widths below `360px`, prioritize readable live and degraded-feed labels in
+  the mobile header and defer the UTC clock until the header has room for all
+  three signals without horizontal overflow.
 - Avoid dense all-uppercase labels for primary reading content.
 - Preserve provider-supplied paragraphs and bullet lists in mission narratives;
   do not collapse structured briefing copy into one dense text block.
