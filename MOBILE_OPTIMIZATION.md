@@ -242,6 +242,10 @@ The optional expanded map remains a modal dialog. It must:
 
 - Minimum interactive target: 44 by 44 CSS pixels.
 - Keep fixed navigation clear of `env(safe-area-inset-bottom)`.
+- Keep the persistent primary navigation before main content in landmark and
+  keyboard order even though its mobile presentation is visually fixed to the
+  bottom edge. The brand must lead directly to Home, Watch, and History instead
+  of forcing keyboard users through the full route and footer first.
 - Keep focused main-content controls above persistent bottom chrome when the
   browser scrolls them into view; this applies to the mobile navigation and
   desktop mission status bar. When a service-worker update is ready, measure

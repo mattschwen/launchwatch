@@ -22,6 +22,7 @@ export default function AppShell({ children }: AppShellProps): React.ReactElemen
           Skip to main content
         </a>
         <TopNav />
+        <MobileNav />
         <main
           id="main-content"
           tabIndex={-1}
@@ -31,7 +32,6 @@ export default function AppShell({ children }: AppShellProps): React.ReactElemen
         </main>
         <Footer />
         <SystemStatusBar />
-        <MobileNav />
       </div>
     </LiveProvider>
   );

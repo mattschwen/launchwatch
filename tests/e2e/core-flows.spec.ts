@@ -211,6 +211,33 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('primary navigation follows the brand before mission content', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
+  const primaryNavigation = page.locator(
+    'nav[aria-label="Primary navigation"]:visible'
+  );
+  const home = primaryNavigation.getByRole('link', { name: 'Home' });
+  const watch = primaryNavigation.getByRole('link', { name: 'Watch' });
+  const history = primaryNavigation.getByRole('link', { name: 'History' });
+  const mission = page.getByRole('link', { name: 'Orbital Dawn' }).first();
+
+  await homeLink.focus();
+  await homeLink.press('Tab');
+  await expect(home).toBeFocused();
+  await home.press('Tab');
+  await expect(watch).toBeFocused();
+  await watch.press('Tab');
+  await expect(history).toBeFocused();
+  await history.press('Tab');
+  await expect(mission).toBeFocused();
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home keeps meaningful hierarchy while the launch feed is synchronizing', async ({
   page,
 }) => {
