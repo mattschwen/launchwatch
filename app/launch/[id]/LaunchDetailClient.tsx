@@ -105,6 +105,73 @@ export default function LaunchDetailClient({
         : completed
           ? 'Back to history'
           : 'Back to launches';
+  const missionVisual = (
+    <MissionVisual
+      launch={launch}
+      priority
+      showUnavailableState
+    />
+  );
+  const missionTelemetry = (
+    <section
+      aria-label="Mission telemetry"
+      className="surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5"
+    >
+      {!completed && !launch.isLive ? (
+        <div className="border-b border-[var(--border-subtle)] pb-5">
+          <p className="data-label">T-minus</p>
+          <Countdown
+            targetDate={launch.date}
+            precision={launch.datePrecision}
+            className="mt-3 [&>span:first-child]:!text-[clamp(1.8rem,4vw,3.4rem)]"
+          />
+        </div>
+      ) : launch.isLive ? (
+        <div className="border-b border-[var(--border-subtle)] pb-5">
+          <p className="data-label">Mission state</p>
+          <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-magenta)]">
+            LIVE NOW
+          </p>
+        </div>
+      ) : null}
+
+      <dl className={`${!completed || launch.isLive ? 'mt-5' : ''} space-y-4`}>
+        <div className="relative pl-8">
+          <MapPin
+            aria-hidden="true"
+            size={18}
+            className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+          />
+          <dt className="data-label">Launch site</dt>
+          <dd className="mt-1 text-sm text-[var(--text-primary)]">
+            {shortenLaunchSite(launch.launchSite)}
+          </dd>
+        </div>
+        <div className="relative pl-8">
+          <Rocket
+            aria-hidden="true"
+            size={18}
+            className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+          />
+          <dt className="data-label">Launch vehicle</dt>
+          <dd className="mt-1 text-sm text-[var(--text-primary)]">
+            {launch.rocket}
+          </dd>
+        </div>
+        <div className="relative pl-8">
+          <Orbit
+            aria-hidden="true"
+            size={18}
+            className="absolute left-0 top-0.5 text-[var(--text-muted)]"
+          />
+          <dt className="data-label">Mission profile</dt>
+          <dd className="mt-1 text-sm text-[var(--text-primary)]">
+            {firstLaunchValue([launch.orbit, launch.missionType])}
+          </dd>
+        </div>
+      </dl>
+    </section>
+  );
 
   const updateTimelineControls = useCallback((): void => {
     const timeline = timelineRef.current;
@@ -217,67 +284,8 @@ export default function LaunchDetailClient({
           </div>
 
           <div className="min-w-0 space-y-4">
-            <MissionVisual
-              launch={launch}
-              priority
-              showUnavailableState
-            />
-
-            <div className="surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5">
-              {!completed && !launch.isLive ? (
-                <div className="border-b border-[var(--border-subtle)] pb-5">
-                  <p className="data-label">T-minus</p>
-                  <Countdown
-                    targetDate={launch.date}
-                    precision={launch.datePrecision}
-                    className="mt-3 [&>span:first-child]:!text-[clamp(1.8rem,4vw,3.4rem)]"
-                  />
-                </div>
-              ) : launch.isLive ? (
-                <div className="border-b border-[var(--border-subtle)] pb-5">
-                  <p className="data-label">Mission state</p>
-                  <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-magenta)]">
-                    LIVE NOW
-                  </p>
-                </div>
-              ) : null}
-
-              <dl className={`${!completed || launch.isLive ? 'mt-5' : ''} space-y-4`}>
-                <div className="relative pl-8">
-                  <MapPin
-                    aria-hidden="true"
-                    size={18}
-                    className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                  />
-                  <dt className="data-label">Launch site</dt>
-                  <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                    {shortenLaunchSite(launch.launchSite)}
-                  </dd>
-                </div>
-                <div className="relative pl-8">
-                  <Rocket
-                    aria-hidden="true"
-                    size={18}
-                    className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                  />
-                  <dt className="data-label">Launch vehicle</dt>
-                  <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                    {launch.rocket}
-                  </dd>
-                </div>
-                <div className="relative pl-8">
-                  <Orbit
-                    aria-hidden="true"
-                    size={18}
-                    className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-                  />
-                  <dt className="data-label">Mission profile</dt>
-                  <dd className="mt-1 text-sm text-[var(--text-primary)]">
-                    {firstLaunchValue([launch.orbit, launch.missionType])}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+            {completed ? missionVisual : missionTelemetry}
+            {completed ? missionTelemetry : missionVisual}
           </div>
         </section>
 

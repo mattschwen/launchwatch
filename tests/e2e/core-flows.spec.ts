@@ -4295,11 +4295,13 @@ test('upcoming and historical details place one trajectory before mission suppor
     path,
     mission,
     hasTimeline,
+    telemetryFirst,
     visualAlt,
   }: {
     path: string;
     mission: string;
     hasTimeline: boolean;
+    telemetryFirst: boolean;
     visualAlt?: string;
   }): Promise<void> => {
     await page.goto(path);
@@ -4318,6 +4320,11 @@ test('upcoming and historical details place one trajectory before mission suppor
     const expectedVisual = visualAlt
       ? visual.getByRole('img', { name: visualAlt })
       : unavailableVisual;
+    const telemetry = page.getByRole('region', {
+      name: 'Mission telemetry',
+    });
+    await expect(telemetry).toHaveCount(1);
+    await expect(telemetry).toBeVisible();
 
     if (visualAlt) {
       await expect(visual).toHaveCount(1);
@@ -4352,6 +4359,15 @@ test('upcoming and historical details place one trajectory before mission suppor
       });
       expect(unavailableLayout.captionHeight).toBeLessThan(120);
       expect(unavailableLayout.cardHeight).toBeLessThan(390);
+    }
+    if (telemetryFirst) {
+      const countdown = telemetry.locator('time');
+      await expect(countdown).toHaveCount(1);
+      const countdownBounds = await countdown.boundingBox();
+      expect(countdownBounds).not.toBeNull();
+      expect(countdownBounds!.y).toBeLessThan(
+        page.viewportSize()?.height ?? 0
+      );
     }
     await expect(
       trajectory.locator('[data-trajectory-map]')
@@ -4476,6 +4492,9 @@ test('upcoming and historical details place one trajectory before mission suppor
       const visualElement = document.querySelector(
         'figure[data-visual-kind], [aria-label="Mission visual unavailable"]'
       );
+      const telemetrySection = document.querySelector(
+        'section[aria-label="Mission telemetry"]'
+      );
       const appearsBefore = (
         first: Element | null,
         second: Element | null
@@ -4488,12 +4507,14 @@ test('upcoming and historical details place one trajectory before mission suppor
           : null;
 
       return {
+        telemetryBeforeVisual: appearsBefore(telemetrySection, visualElement),
         visualBeforeMap: appearsBefore(visualElement, mapSection),
         mapBeforeTimeline: appearsBefore(mapSection, timelineSection),
         mapBeforeIntel: appearsBefore(mapSection, intelSection),
       };
     });
 
+    expect(order.telemetryBeforeVisual).toBe(telemetryFirst);
     expect(order.visualBeforeMap).toBe(true);
     expect(order.mapBeforeIntel).toBe(true);
     expect(order.mapBeforeTimeline).toBe(hasTimeline ? true : null);
@@ -4504,12 +4525,14 @@ test('upcoming and historical details place one trajectory before mission suppor
     path: '/launch/ll2-demo-orbital-dawn',
     mission: 'Orbital Dawn',
     hasTimeline: true,
+    telemetryFirst: true,
     visualAlt: 'Vehicle reference image of Astra Nova launch vehicle',
   });
   await assertDetailTrajectory({
     path: '/launch/spacex-demo-return',
     mission: 'Demo Return Flight',
     hasTimeline: false,
+    telemetryFirst: false,
   });
 });
 

@@ -222,9 +222,11 @@ The optional expanded map remains a modal dialog. It must:
 - Upcoming mission actions form a stable two-by-two command console on narrow
   screens instead of wrapping into uneven single-control rows. The calendar
   menu opens above its trigger and stays clear of persistent navigation.
-- One licensed vehicle or mission visual appears before the telemetry card and
-  trajectory; when rights cannot be verified, the layout presents a compact,
-  honest unavailable state in the same stable visual footprint.
+- Live and upcoming mission telemetry appears before licensed imagery so the
+  active state or countdown remains above secondary media on narrow screens.
+  Completed missions retain their visual-first summary. When image rights
+  cannot be verified, the layout presents a compact, honest unavailable state
+  in the same stable visual footprint.
 - Primary and secondary actions remain labeled; icon-only controls require accessible names.
 - Sharing always targets the canonical mission URL without transient Watch,
   schedule, or archive return context; completed missions retain the same
