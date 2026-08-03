@@ -4500,6 +4500,32 @@ test('upcoming and historical details place one trajectory before mission suppor
       expect(countdownBounds!.y).toBeLessThan(
         page.viewportSize()?.height ?? 0
       );
+      const countdownLayout = await countdown.evaluate((element) => {
+        const telemetry = element.closest<HTMLElement>(
+          'section[aria-label="Mission telemetry"]'
+        );
+        const display = element.querySelector<HTMLElement>('.countdown-display');
+        const units = [
+          ...element.querySelectorAll<HTMLElement>('.countdown-unit'),
+        ];
+
+        return {
+          displayRight: display?.getBoundingClientRect().right ?? 0,
+          telemetryRight: telemetry?.getBoundingClientRect().right ?? 0,
+          units: units.map((unit) => ({
+            clientWidth: unit.clientWidth,
+            scrollWidth: unit.scrollWidth,
+          })),
+        };
+      });
+      expect(countdownLayout.displayRight).toBeLessThanOrEqual(
+        countdownLayout.telemetryRight + 1
+      );
+      expect(
+        countdownLayout.units.every(
+          (unit) => unit.scrollWidth <= unit.clientWidth + 1
+        )
+      ).toBe(true);
     }
     await expect(
       trajectory.locator('[data-trajectory-map]')

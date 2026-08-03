@@ -123,7 +123,7 @@ export default function LaunchDetailClient({
           <Countdown
             targetDate={launch.date}
             precision={launch.datePrecision}
-            className="mt-3 [&>span:first-child]:!text-[clamp(1.8rem,4vw,3.4rem)]"
+            className="mt-3 lg:[&>.countdown-display]:!text-[clamp(1.8rem,3.3vw,3rem)]"
           />
         </div>
       ) : launch.isLive ? (
