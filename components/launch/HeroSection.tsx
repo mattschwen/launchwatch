@@ -17,6 +17,7 @@ import LaunchActions from './LaunchActions';
 
 interface HeroSectionProps {
   activeLaunch: Launch | null;
+  detailHref?: string;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -34,6 +35,7 @@ function splitSite(site: string): [string, string] {
 
 export default function HeroSection({
   activeLaunch,
+  detailHref,
   loading,
   refreshing,
   error,
@@ -241,7 +243,10 @@ export default function HeroSection({
 
           <Link
             ref={missionLinkRef}
-            href={`/launch/${encodeURIComponent(activeLaunch.id)}`}
+            href={
+              detailHref ??
+              `/launch/${encodeURIComponent(activeLaunch.id)}`
+            }
             className="group inline-flex min-h-11 w-fit max-w-full items-center"
           >
             <h1

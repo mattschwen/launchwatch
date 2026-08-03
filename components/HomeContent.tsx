@@ -7,9 +7,16 @@ import { ChevronDown, Globe2 } from 'lucide-react';
 import HeroSection from '@/components/launch/HeroSection';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import LaunchList from '@/components/LaunchList';
+import {
+  DEFAULT_FILTERS,
+  type FilterOptions,
+} from '@/components/FilterBar';
 import { useLaunchById, useLaunches } from '@/lib/hooks';
 import { selectLaunchVisual } from '@/lib/launch-visual';
-import { parseScheduleFilters } from '@/lib/schedule-return';
+import {
+  buildScheduleDetailHref,
+  parseScheduleFilters,
+} from '@/lib/schedule-return';
 
 const MissionTrajectory = dynamic(
   () => import('@/components/MissionTrajectory'),
@@ -47,25 +54,25 @@ function TrajectoryLoadingState(): React.ReactElement {
   );
 }
 
-function ScheduleWithReturnContext(): React.ReactElement {
+function HomeWithReturnContext(): React.ReactElement {
   const searchParams = useSearchParams();
   const initialFilters = useMemo(
     () => parseScheduleFilters(searchParams),
     [searchParams],
   );
 
-  return (
-    <LaunchList
-      key={searchParams.toString()}
-      initialFilters={initialFilters}
-    />
-  );
+  return <HomeExperience initialFilters={initialFilters} />;
 }
 
-export default function HomeContent(): React.ReactElement {
+function HomeExperience({
+  initialFilters,
+}: {
+  initialFilters: FilterOptions;
+}): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
+  const [scheduleFilters, setScheduleFilters] = useState(initialFilters);
 
   useEffect(() => {
     const query = window.matchMedia(DESKTOP_MAP_QUERY);
@@ -99,6 +106,11 @@ export default function HomeContent(): React.ReactElement {
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <HeroSection
           activeLaunch={featuredMission}
+          detailHref={
+            featuredMission
+              ? buildScheduleDetailHref(featuredMission.id, scheduleFilters)
+              : undefined
+          }
           loading={loading}
           refreshing={refreshing}
           error={error}
@@ -125,9 +137,10 @@ export default function HomeContent(): React.ReactElement {
       </div>
 
       <div className="mt-4">
-        <Suspense fallback={<LaunchList />}>
-          <ScheduleWithReturnContext />
-        </Suspense>
+        <LaunchList
+          initialFilters={initialFilters}
+          onFiltersChange={setScheduleFilters}
+        />
       </div>
 
       <section className="mt-4 lg:hidden">
@@ -180,5 +193,13 @@ export default function HomeContent(): React.ReactElement {
         />
       ) : null}
     </div>
+  );
+}
+
+export default function HomeContent(): React.ReactElement {
+  return (
+    <Suspense fallback={<HomeExperience initialFilters={DEFAULT_FILTERS} />}>
+      <HomeWithReturnContext />
+    </Suspense>
   );
 }

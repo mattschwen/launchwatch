@@ -3587,6 +3587,29 @@ test('home schedule filters survive mission detail navigation', async ({
   await expect(
     page.getByRole('button', { name: 'Hide filters, 1 active' })
   ).toBeVisible();
+
+  const featuredMissionDetail = page.getByRole('link', {
+    name: 'Orbital Dawn',
+    exact: true,
+  }).first();
+  await expect(featuredMissionDetail).toHaveAttribute(
+    'href',
+    '/launch/ll2-demo-orbital-dawn?from=home&schedule=q%3DPolaris',
+  );
+  await featuredMissionDetail.focus();
+  await featuredMissionDetail.press('Enter');
+  await expect(page).toHaveURL(
+    /\/launch\/ll2-demo-orbital-dawn\?from=home&schedule=q%3DPolaris$/,
+  );
+  const featuredReturnLink = page.getByRole('link', {
+    name: 'Back to filtered schedule',
+  });
+  await expect(featuredReturnLink).toHaveAttribute('href', '/?q=Polaris');
+  await featuredReturnLink.press('Enter');
+  await expect(page).toHaveURL(/\/?q=Polaris$/);
+  await expect(search).toHaveValue('Polaris');
+  await expect(scheduleResults).toHaveText('1 mission');
+
   const missionDetail = page
     .getByRole('link')
     .filter({ hasText: 'Polaris Relay' });

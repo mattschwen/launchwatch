@@ -27,8 +27,10 @@ const INITIAL_VISIBLE_COUNT = 5;
 
 export default function LaunchList({
   initialFilters = DEFAULT_FILTERS,
+  onFiltersChange,
 }: {
   initialFilters?: FilterOptions;
+  onFiltersChange?: (filters: FilterOptions) => void;
 }): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
@@ -80,6 +82,7 @@ export default function LaunchList({
   }, [error, launches.length, refreshing]);
 
   useEffect(() => {
+    onFiltersChange?.(filters);
     const query = serializeScheduleFilters(filters);
     const nextUrl = query ? `/?${query}` : '/';
     const currentUrl = `${window.location.pathname}${window.location.search}`;
@@ -87,7 +90,7 @@ export default function LaunchList({
     if (currentUrl !== nextUrl) {
       window.history.replaceState(window.history.state, '', nextUrl);
     }
-  }, [filters]);
+  }, [filters, onFiltersChange]);
 
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (refreshing) return;

@@ -100,6 +100,23 @@ describe('HeroSection', () => {
     );
   });
 
+  it('uses the supplied detail route for schedule return context', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+    const detailHref = `/launch/${launch.id}?from=home&schedule=q%3DPolaris`;
+
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={launch}
+        detailHref={detailHref}
+      />
+    );
+
+    expect(
+      screen.getByRole('link', { name: launch.name })
+    ).toHaveAttribute('href', detailHref);
+  });
+
   it('marks a retained mission as last-known after refresh failure', () => {
     render(
       <HeroSection
