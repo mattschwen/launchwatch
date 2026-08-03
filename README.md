@@ -52,6 +52,7 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   grid texture, and scanlines
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
+- Branded large-image previews for shared Home, Watch, and History links
 
 ## Tech Stack
 

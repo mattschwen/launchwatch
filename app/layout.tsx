@@ -49,7 +49,7 @@ const launchMono = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.launchwatch.io"),
   title: "LaunchWatch",
-  description: "Track upcoming rocket launches, watch live streams, and explore space mission data. Real-time updates from NASA, SpaceX, and more.",
+  description: "Track upcoming launches, official coverage, and mission telemetry from SpaceX and Launch Library 2.",
   keywords: ["rocket launches", "SpaceX", "NASA", "space", "livestream", "mission control", "launch watch"],
   manifest: "/manifest.json",
   icons: {
@@ -72,8 +72,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "LaunchWatch",
-    description: "Track upcoming rocket launches and watch live streams",
+    description: "Track upcoming launches, official coverage, and mission telemetry from SpaceX and Launch Library 2.",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LaunchWatch",
+    description: "Track upcoming launches, official coverage, and mission telemetry from SpaceX and Launch Library 2.",
   },
 };
 

@@ -14,6 +14,45 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('shared routes publish the branded LaunchWatch social preview', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    'Track upcoming launches, official coverage, and mission telemetry from SpaceX and Launch Library 2.'
+  );
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image'
+  );
+
+  const openGraphImage = page.locator('meta[property="og:image"]');
+  const twitterImage = page.locator('meta[name="twitter:image"]');
+  await expect(openGraphImage).toHaveCount(1);
+  await expect(twitterImage).toHaveCount(1);
+  await expect(openGraphImage).toHaveAttribute(
+    'content',
+    /\/opengraph-image/
+  );
+  await expect(twitterImage).toHaveAttribute(
+    'content',
+    /\/opengraph-image/
+  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+    'content',
+    'LaunchWatch mission control — schedule, coverage, and telemetry'
+  );
+
+  const imageUrl = await openGraphImage.getAttribute('content');
+  expect(imageUrl).not.toBeNull();
+  const imageResponse = await page.request.get(imageUrl!);
+  expect(imageResponse.status()).toBe(200);
+  expect(imageResponse.headers()['content-type']).toContain('image/png');
+  expect((await imageResponse.body()).byteLength).toBeGreaterThan(20_000);
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {
