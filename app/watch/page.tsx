@@ -61,6 +61,29 @@ const MissionTrajectory = dynamic(
   },
 );
 
+const MAX_VISIBLE_QUEUE_MISSIONS = 10;
+
+function getVisibleQueue(
+  launches: Launch[],
+  selectedId: string | null,
+): Launch[] {
+  const firstMissions = launches.slice(0, MAX_VISIBLE_QUEUE_MISSIONS);
+  if (
+    !selectedId ||
+    firstMissions.some((launch) => launch.id === selectedId)
+  ) {
+    return firstMissions;
+  }
+
+  const selectedLaunch = launches.find((launch) => launch.id === selectedId);
+  if (!selectedLaunch) return firstMissions;
+
+  return [
+    ...firstMissions.slice(0, MAX_VISIBLE_QUEUE_MISSIONS - 1),
+    selectedLaunch,
+  ];
+}
+
 function DeferredWatchTrajectory({
   launch,
 }: {
@@ -495,14 +518,17 @@ function MissionQueue({
   selectedId: string | null;
   onSelect: (id: string, revealMission?: boolean) => void;
 }): React.ReactElement {
-  const queuedLaunches = launches.slice(0, 10);
+  const queuedLaunches = getVisibleQueue(launches, selectedId);
   const viewportRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const selectedIndex = queuedLaunches.findIndex(
     (launch) => launch.id === selectedId
   );
   const tabStopIndex = selectedIndex >= 0 ? selectedIndex : 0;
-  const queueLabel = `${queuedLaunches.length} mission${
+  const queueTruncated = launches.length > queuedLaunches.length;
+  const queueLabel = `${queuedLaunches.length}${
+    queueTruncated ? ` of ${launches.length}` : ''
+  } mission${
     queuedLaunches.length === 1 ? '' : 's'
   }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
 
@@ -631,6 +657,17 @@ function MissionQueue({
           );
         })}
       </div>
+      {queueTruncated ? (
+        <div className="border-t border-[var(--border-subtle)] p-2">
+          <Link
+            href="/"
+            className="action-button action-button-quiet w-full justify-between px-3"
+          >
+            View all {launches.length} missions
+            <ArrowRight aria-hidden="true" size={16} />
+          </Link>
+        </div>
+      ) : null}
     </aside>
   );
 }

@@ -2238,7 +2238,7 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
     'Falcon 9 Block 5 | BlueBird 11-13 (Block 2 #6-8)';
   const longProviderName =
     'China Aerospace Science and Technology Corporation';
-  const queuedLaunches = Array.from({ length: 10 }, (_, index) => ({
+  const queuedLaunches = Array.from({ length: 12 }, (_, index) => ({
     ...UPCOMING_LAUNCHES[0],
     id: `ll2-demo-queue-${index + 1}`,
     sourceId: `demo-queue-${index + 1}`,
@@ -2283,11 +2283,16 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
     });
   });
 
-  await page.goto('/watch?id=ll2-demo-queue-10');
+  await page.goto('/watch?id=ll2-demo-queue-12');
 
   const queue = page.getByRole('complementary', { name: 'Next up' });
-  await expect(queue.getByText('10 missions · scroll', { exact: true }))
+  await expect(queue.getByText('10 of 12 missions · scroll', { exact: true }))
     .toBeVisible();
+  const fullSchedule = queue.getByRole('link', {
+    name: 'View all 12 missions',
+  });
+  await expect(fullSchedule).toHaveAttribute('href', '/');
+  expect((await fullSchedule.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   const queueViewport = queue.locator('[data-watch-queue-scroll]');
   const queueMetrics = await queueViewport.evaluate((element) => ({
@@ -2327,7 +2332,7 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   }
 
   const finalMission = queue.getByRole('button', {
-    name: /Queue mission 10/i,
+    name: /Queue mission 12/i,
   });
   const firstMission = queue.getByRole('button').first();
   await expect(firstMission).toHaveAttribute('tabindex', '-1');
@@ -2345,9 +2350,9 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   ).toBeGreaterThan(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
-  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
+  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-12$/);
   await expect(
-    page.getByRole('heading', { level: 2, name: 'Queue mission 10' })
+    page.getByRole('heading', { level: 2, name: 'Queue mission 12' })
   ).toBeVisible();
   await expect(finalMission).toHaveAttribute('tabindex', '0');
 
@@ -2357,10 +2362,13 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-1$/);
   await expect(firstMission).toHaveAttribute('tabindex', '0');
 
+  const lastChronologicalMission = queue.getByRole('button', {
+    name: /Queue mission 10/i,
+  });
   await firstMission.press('End');
-  await expect(finalMission).toBeFocused();
+  await expect(lastChronologicalMission).toBeFocused();
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
-  await expect(finalMission).toHaveAttribute('tabindex', '0');
+  await expect(lastChronologicalMission).toHaveAttribute('tabindex', '0');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
