@@ -7,6 +7,25 @@ import { LAUNCH_INTEL, UPCOMING_LAUNCHES } from '../fixtures/launches';
 const launch = UPCOMING_LAUNCHES[0];
 
 describe('LaunchIntelDeck', () => {
+  it('identifies the mission intelligence loading state visibly and accessibly', () => {
+    render(<LaunchIntelDeck launch={launch} intel={null} loading />);
+
+    const region = screen.getByRole('region', {
+      name: 'Mission intelligence',
+    });
+    const description = screen.getByRole('status');
+
+    expect(region).toHaveAttribute('aria-busy', 'true');
+    expect(region).toHaveAttribute(
+      'aria-describedby',
+      'mission-intelligence-loading-description'
+    );
+    expect(screen.getByText('Signal acquisition')).toBeVisible();
+    expect(description).toHaveTextContent(
+      `Correlating verified public coverage for ${launch.name}.`
+    );
+  });
+
   it('includes the truthful coverage signal with exact source counts', () => {
     render(<LaunchIntelDeck launch={launch} intel={LAUNCH_INTEL} />);
 

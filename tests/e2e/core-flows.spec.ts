@@ -2896,8 +2896,17 @@ test('watch does not show intelligence from the previously selected mission', as
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' }),
   ).toBeVisible();
   await expect(
-    page.getByRole('region', { name: 'Loading mission intelligence' }),
+    page.getByRole('region', { name: 'Mission intelligence' }),
   ).toBeVisible();
+  await expect(page.getByText('Signal acquisition')).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({
+      hasText: 'Correlating verified public coverage for Polaris Relay.',
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Mission intelligence' }),
+  ).toHaveAttribute('aria-busy', 'true');
   await expect(page.getByText('Signals for Orbital Dawn.')).toHaveCount(0);
 
   await pendingRoute.fulfill({

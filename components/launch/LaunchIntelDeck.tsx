@@ -208,14 +208,41 @@ export default function LaunchIntelDeck({
       <section
         ref={regionRef}
         tabIndex={-1}
-        aria-label="Loading mission intelligence"
+        aria-labelledby="mission-intelligence-loading-title"
+        aria-describedby="mission-intelligence-loading-description"
         aria-busy="true"
         className={`surface-card holo-card signal-cold p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
       >
-        <div className="skeleton h-7 w-56 rounded" />
-        <div className="skeleton mt-5 h-16 rounded" />
-        <div className="skeleton mt-3 h-16 rounded" />
-        <div className="skeleton mt-3 h-16 rounded" />
+        <header className="flex items-start gap-3">
+          <Radio
+            aria-hidden="true"
+            size={20}
+            className="mt-0.5 shrink-0 text-[var(--console-cyan)]"
+          />
+          <div className="min-w-0">
+            <p className="data-label text-[var(--console-cyan)]">
+              Signal acquisition
+            </p>
+            <h2
+              id="mission-intelligence-loading-title"
+              className="section-title mt-2"
+            >
+              Mission intelligence
+            </h2>
+            <p
+              id="mission-intelligence-loading-description"
+              role="status"
+              className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]"
+            >
+              Correlating verified public coverage for {launch.name}.
+            </p>
+          </div>
+        </header>
+        <div aria-hidden="true" className="mt-5">
+          <div className="skeleton h-16 rounded" />
+          <div className="skeleton mt-3 h-16 rounded" />
+          <div className="skeleton mt-3 h-16 rounded" />
+        </div>
       </section>
     );
   }
