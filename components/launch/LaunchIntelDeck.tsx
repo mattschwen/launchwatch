@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ExternalLink,
@@ -24,8 +24,62 @@ interface LaunchIntelDeckProps {
   intel: LaunchIntel | null;
   loading?: boolean;
   error?: string | null;
+  retryAt?: number | null;
   onRetry?: () => void;
   className?: string;
+}
+
+function formatRetryDelay(seconds: number): string {
+  if (seconds >= 60) return `${Math.ceil(seconds / 60)}m`;
+  return `${seconds}s`;
+}
+
+function IntelligenceRetryButton({
+  loading,
+  retryAt,
+  onRetry,
+}: {
+  loading: boolean;
+  retryAt: number | null;
+  onRetry: () => void;
+}): React.ReactElement {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!retryAt) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(interval);
+  }, [retryAt]);
+
+  const retrySeconds = retryAt
+    ? Math.max(0, Math.ceil((retryAt - now) / 1_000))
+    : 0;
+  const waiting = retrySeconds > 0;
+  const unavailable = loading || waiting;
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (!unavailable) onRetry();
+      }}
+      aria-disabled={unavailable}
+      aria-busy={loading}
+      className={`action-button action-button-secondary mt-5 aria-disabled:opacity-60 ${
+        loading
+          ? 'aria-disabled:cursor-wait'
+          : waiting
+            ? 'aria-disabled:cursor-not-allowed'
+            : ''
+      }`}
+    >
+      {loading
+        ? 'Retrying coverage…'
+        : waiting
+          ? `Retry in ${formatRetryDelay(retrySeconds)}`
+          : 'Retry coverage'}
+    </button>
+  );
 }
 
 function formatPublishedAt(value: string | null | undefined): string {
@@ -123,6 +177,7 @@ export default function LaunchIntelDeck({
   intel,
   loading = false,
   error = null,
+  retryAt = null,
   onRetry,
   className = '',
 }: LaunchIntelDeckProps): React.ReactElement {
@@ -213,15 +268,12 @@ export default function LaunchIntelDeck({
               </p>
             )}
             {error && onRetry ? (
-              <button
-                type="button"
-                onClick={retryCoverage}
-                aria-disabled={loading}
-                aria-busy={loading}
-                className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
-              >
-                {loading ? 'Retrying coverage…' : 'Retry coverage'}
-              </button>
+              <IntelligenceRetryButton
+                key={retryAt ?? 'available'}
+                loading={loading}
+                retryAt={retryAt}
+                onRetry={retryCoverage}
+              />
             ) : null}
           </div>
         </div>

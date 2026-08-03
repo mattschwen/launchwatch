@@ -187,6 +187,9 @@ The optional expanded map remains a modal dialog. It must:
 - Initial synchronization keeps the real Watch heading and visible acquisition
   labels for coverage and the mission queue; loading geometry remains reserved
   and decorative placeholders stay hidden from assistive technology.
+- Intelligence rate limits expose the provider recovery window directly on the
+  retry command, keep it unavailable until that window opens, and preserve
+  keyboard focus when coverage is restored.
 
 ## History
 

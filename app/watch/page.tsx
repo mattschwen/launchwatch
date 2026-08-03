@@ -680,6 +680,7 @@ function WatchContent(): React.ReactElement {
     intel,
     loading: intelLoading,
     error: intelError,
+    retryAt: intelRetryAt,
     retry: retryIntel,
   } = useLaunchIntel(selectedLaunch, Boolean(selectedLaunch));
 
@@ -899,6 +900,7 @@ function WatchContent(): React.ReactElement {
             intel={intel}
             loading={intelLoading}
             error={intelError}
+            retryAt={intelRetryAt}
             onRetry={retryIntel}
           />
           <aside className="surface-card holo-card signal-warm p-5">

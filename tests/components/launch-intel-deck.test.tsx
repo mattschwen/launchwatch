@@ -99,6 +99,40 @@ describe('LaunchIntelDeck', () => {
     );
   });
 
+  it('keeps rate-limited recovery honest until the server window opens', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    const { rerender } = render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={null}
+        error="Too many intelligence requests. Try again later."
+        retryAt={Date.now() + 120_000}
+        onRetry={onRetry}
+      />
+    );
+
+    const waiting = screen.getByRole('button', { name: 'Retry in 2m' });
+    expect(waiting).toHaveAttribute('aria-disabled', 'true');
+    await user.click(waiting);
+    expect(onRetry).not.toHaveBeenCalled();
+
+    rerender(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={null}
+        error="Too many intelligence requests. Try again later."
+        retryAt={null}
+        onRetry={onRetry}
+      />
+    );
+
+    const available = screen.getByRole('button', { name: 'Retry coverage' });
+    expect(available).toHaveAttribute('aria-disabled', 'false');
+    await user.click(available);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it('uses the stream action treatment only for identified live coverage', () => {
     const { rerender } = render(
       <LaunchIntelDeck

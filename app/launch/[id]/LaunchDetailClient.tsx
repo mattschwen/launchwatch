@@ -76,6 +76,7 @@ export default function LaunchDetailClient({
     intel,
     loading: intelLoading,
     error: intelError,
+    retryAt: intelRetryAt,
     retry: retryIntel,
   } = useLaunchIntel(launch, true);
 
@@ -383,6 +384,7 @@ export default function LaunchDetailClient({
             intel={intel}
             loading={intelLoading}
             error={intelError}
+            retryAt={intelRetryAt}
             onRetry={retryIntel}
           />
 

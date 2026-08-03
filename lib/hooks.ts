@@ -52,6 +52,23 @@ function checkedMessage(payload: unknown, fallback: string): string {
       : fallback;
 }
 
+function retryAtFromResponse(response: Response): number | null {
+  if (response.status !== 429) return null;
+
+  const retryAfter = response.headers.get('Retry-After')?.trim();
+  if (!retryAfter) return null;
+
+  const delaySeconds = Number(retryAfter);
+  if (Number.isFinite(delaySeconds) && delaySeconds >= 0) {
+    return Date.now() + Math.ceil(delaySeconds * 1_000);
+  }
+
+  const retryDate = Date.parse(retryAfter);
+  return Number.isFinite(retryDate) && retryDate > Date.now()
+    ? retryDate
+    : null;
+}
+
 function extractLaunch(payload: unknown): Launch | null {
   if (!payload || typeof payload !== 'object') return null;
   const record = payload as Record<string, unknown>;
@@ -229,31 +246,21 @@ export function useLaunchIntel(
     intel: LaunchIntel | null;
     loading: boolean;
     error: string | null;
+    retryAt: number | null;
   }>({
     launchId: null,
     intel: null,
     loading: false,
     error: null,
+    retryAt: null,
   });
 
   useEffect(() => {
     if (!launchId || !enabled) {
-      setIntelState({
-        launchId: null,
-        intel: null,
-        loading: false,
-        error: null,
-      });
       return;
     }
 
     const controller = new AbortController();
-    setIntelState((current) => ({
-      launchId,
-      intel: current.launchId === launchId ? current.intel : null,
-      loading: true,
-      error: current.launchId === launchId ? current.error : null,
-    }));
 
     async function fetchIntel(): Promise<void> {
       try {
@@ -267,12 +274,18 @@ export function useLaunchIntel(
         );
         const payload: unknown = await response.json().catch(() => null);
         if (!response.ok) {
-          throw new Error(
-            checkedMessage(
+          if (controller.signal.aborted) return;
+          setIntelState((current) => ({
+            launchId,
+            intel: current.launchId === launchId ? current.intel : null,
+            loading: false,
+            error: checkedMessage(
               payload,
               `Mission intelligence unavailable (${response.status})`
-            )
-          );
+            ),
+            retryAt: retryAtFromResponse(response),
+          }));
+          return;
         }
 
         const record =
@@ -289,6 +302,7 @@ export function useLaunchIntel(
           intel: result,
           loading: false,
           error: null,
+          retryAt: null,
         });
       } catch (requestError) {
         if (controller.signal.aborted) return;
@@ -301,6 +315,7 @@ export function useLaunchIntel(
           intel: current.launchId === launchId ? current.intel : null,
           loading: false,
           error: message,
+          retryAt: null,
         }));
       }
     }
@@ -319,7 +334,20 @@ export function useLaunchIntel(
   const currentState =
     enabled && intelState.launchId === launchId ? intelState : null;
   const retry = (): void => {
-    if (!currentState?.error || currentState.loading) return;
+    if (
+      !currentState?.error ||
+      currentState.loading ||
+      (currentState.retryAt !== null && currentState.retryAt > Date.now())
+    ) {
+      return;
+    }
+    setIntelState((current) => ({
+      launchId,
+      intel: current.launchId === launchId ? current.intel : null,
+      loading: true,
+      error: current.launchId === launchId ? current.error : null,
+      retryAt: current.launchId === launchId ? current.retryAt : null,
+    }));
     setRetryVersion((current) => current + 1);
   };
 
@@ -329,6 +357,7 @@ export function useLaunchIntel(
       !currentState || currentState.loading
     ),
     error: currentState?.error ?? null,
+    retryAt: currentState?.retryAt ?? null,
     retry,
   };
 }

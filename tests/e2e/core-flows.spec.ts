@@ -2983,6 +2983,41 @@ test('mission intelligence recovers without losing keyboard context', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence honors the server recovery window', async ({
+  page,
+}) => {
+  let requestCount = 0;
+
+  await page.route('**/api/launch-intel**', async (route) => {
+    requestCount += 1;
+    await route.fulfill({
+      status: 429,
+      headers: { 'Retry-After': '600' },
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'Too many intelligence requests. Try again later.',
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+
+  const waiting = page.getByRole('button', { name: 'Retry in 10m' });
+  await expect(waiting).toBeVisible();
+  await expect(waiting).toHaveAttribute('aria-disabled', 'true');
+  await waiting.focus();
+  await waiting.press('Enter');
+  expect(requestCount).toBe(1);
+
+  const target = await waiting.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { height: bounds.height, width: bounds.width };
+  });
+  expect(target.height).toBeGreaterThanOrEqual(44);
+  expect(target.width).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission intelligence keeps generic search separate from stream leads', async ({
   page,
 }) => {
