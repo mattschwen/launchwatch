@@ -89,6 +89,30 @@ describe('FilterBar', () => {
     await waitFor(() => expect(search).toHaveFocus());
   });
 
+  it('treats whitespace-only search input as an inactive filter', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+    render(<FilterBar onFilterChange={onFilterChange} />);
+
+    const search = screen.getByRole('searchbox', {
+      name: 'Search launches',
+    });
+    const clear = screen.getByRole('button', {
+      name: 'Clear launch filters',
+    });
+
+    await user.type(search, '   ');
+
+    expect(search).toHaveValue('   ');
+    expect(clear).toBeDisabled();
+    expect(onFilterChange).toHaveBeenLastCalledWith({
+      search: '   ',
+      provider: 'all',
+      status: 'all',
+      sortBy: 'date-asc',
+    });
+  });
+
   it('keeps a selected provider visible when it is absent from the current feed', () => {
     render(
       <FilterBar

@@ -74,7 +74,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   well as an icon so its purpose remains clear on narrow screens.
 - Schedule search enforces the same 120-character boundary as its canonical
   URL state, preventing a visible filter from diverging from reload, share, or
-  mission-return context.
+  mission-return context. Whitespace-only search stays inactive across the
+  result count, URL, active-filter badge, and clear action.
 - Schedule and archive search cover the complete provider-backed mission
   profile—including description, program, orbit, vehicle, site, provider, and
   status—and allow terms to match across those fields.

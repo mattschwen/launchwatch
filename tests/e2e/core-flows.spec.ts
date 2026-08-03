@@ -1566,6 +1566,9 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     'SpaceX',
   ]);
   const search = page.getByRole('searchbox', { name: 'Search launches' });
+  const toolbarClear = page.getByRole('button', {
+    name: 'Clear launch filters',
+  });
   await search.focus();
   await page.keyboard.press('Tab');
   await expect(provider).toBeFocused();
@@ -1585,6 +1588,14 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   });
   expect(providerPlacement.fullyVisible).toBe(true);
   expect(providerPlacement.height).toBeGreaterThanOrEqual(44);
+
+  await search.fill('   ');
+  await expect(toolbarClear).toBeDisabled();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('2 missions');
+
   await provider.selectOption({ label: 'Demo Launch Alliance' });
   await expect(page).toHaveURL(/\/?provider=Demo\+Launch\+Alliance$/);
   await expect(
@@ -1623,9 +1634,6 @@ test('home schedule filters missions and opens a detail route', async ({ page })
 
   await search.fill('Polaris');
 
-  const toolbarClear = page.getByRole('button', {
-    name: 'Clear launch filters',
-  });
   await expect(toolbarClear).toHaveText('Clear filters');
   await expect(toolbarClear).toHaveCSS('white-space', 'nowrap');
   expect((await toolbarClear.boundingBox())?.height).toBe(44);

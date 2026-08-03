@@ -58,7 +58,7 @@ export default function FilterBar({
   };
 
   const active =
-    filters.search !== resetFilters.search ||
+    Boolean(filters.search.trim()) ||
     (showProvider && filters.provider !== resetFilters.provider) ||
     filters.status !== resetFilters.status ||
     filters.sortBy !== resetFilters.sortBy;
