@@ -103,6 +103,7 @@ export default function HomeContent(): React.ReactElement {
           refreshing={refreshing}
           error={error}
           partial={Boolean(meta?.partial)}
+          stale={Boolean(meta?.stale)}
           coverageLoading={
             needsCoverageEnrichment && featuredDetail.enriching
           }

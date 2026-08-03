@@ -538,6 +538,57 @@ test('shared chrome reports partial feed health on every route', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home identifies and recovers retained missions after refresh failure', async ({
+  page,
+}) => {
+  let failureEnabled = false;
+  await page.route('**/api/launches?type=all', (route) => {
+    if (!failureEnabled) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ launches: UPCOMING_LAUNCHES, meta: FEED_META }),
+      });
+    }
+
+    return route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Provider maintenance' }),
+    });
+  });
+
+  await page.goto('/');
+  await expect(page.getByText('Last-known mission · refresh failed')).toHaveCount(0);
+
+  failureEnabled = true;
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(hero).toHaveClass(/signal-warm/);
+
+  const schedule = page.locator(
+    'section[aria-labelledby="upcoming-launches-title"]'
+  );
+  await expect(schedule).toHaveClass(/signal-warm/);
+  await expect(
+    schedule.getByRole('status', { name: 'Upcoming launch results' })
+  ).toContainText('refresh failed; showing last-known schedule');
+  await expect(schedule).toContainText(
+    'Refresh failed. Showing the last-known mission schedule.'
+  );
+
+  const retry = schedule.getByRole('button', { name: 'Retry feed' });
+  await retry.click();
+  await expect(retry).toBeFocused();
+  await expect(retry).toHaveAttribute('aria-busy', 'false');
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('desktop ticker keeps the last known mission after refresh failure', async ({
   page,
 }) => {
@@ -2584,15 +2635,15 @@ test('watch does not show intelligence from the previously selected mission', as
 test('mission intelligence recovers without losing keyboard context', async ({
   page,
 }) => {
-  let requestCount = 0;
+  let retryStarted = false;
+  let retryRequestCount = 0;
   let resolveRetry: ((route: Route) => void) | undefined;
   const retryRequest = new Promise<Route>((resolve) => {
     resolveRetry = resolve;
   });
 
   await page.route('**/api/launch-intel**', async (route) => {
-    requestCount += 1;
-    if (requestCount === 1) {
+    if (!retryStarted) {
       await route.fulfill({
         status: 503,
         contentType: 'application/json',
@@ -2601,6 +2652,7 @@ test('mission intelligence recovers without losing keyboard context', async ({
       return;
     }
 
+    retryRequestCount += 1;
     resolveRetry?.(route);
   });
 
@@ -2612,6 +2664,7 @@ test('mission intelligence recovers without losing keyboard context', async ({
     page.getByRole('alert').filter({ hasText: 'Coverage signals could not be checked' })
   ).toContainText('Coverage provider maintenance');
   await retry.focus();
+  retryStarted = true;
   await retry.press('Enter');
 
   const pendingRoute = await retryRequest;
@@ -2620,7 +2673,7 @@ test('mission intelligence recovers without losing keyboard context', async ({
   await expect(retrying).toHaveAttribute('aria-disabled', 'true');
   await expect(retrying).toHaveAttribute('aria-busy', 'true');
   await retrying.press('Enter');
-  expect(requestCount).toBe(2);
+  expect(retryRequestCount).toBe(1);
 
   const target = await retrying.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
@@ -3534,7 +3587,8 @@ test('history loads licensed mission imagery only after archive expansion', asyn
 test('history retry reports progress and restores keyboard focus', async ({
   page,
 }) => {
-  let historyRequests = 0;
+  let retryStarted = false;
+  let retryRequests = 0;
   let releaseHistory: () => void = () => undefined;
   const historyGate = new Promise<void>((resolve) => {
     releaseHistory = resolve;
@@ -3562,8 +3616,7 @@ test('history retry reports progress and restores keyboard focus', async ({
       return;
     }
 
-    historyRequests += 1;
-    if (historyRequests === 1) {
+    if (!retryStarted) {
       await route.fulfill({
         status: 503,
         contentType: 'application/json',
@@ -3572,6 +3625,7 @@ test('history retry reports progress and restores keyboard focus', async ({
       return;
     }
 
+    retryRequests += 1;
     await historyGate;
     await route.fulfill({
       status: 200,
@@ -3594,8 +3648,9 @@ test('history retry reports progress and restores keyboard focus', async ({
     name: /Retry(?:ing)? archive/,
   });
   await retry.focus();
+  retryStarted = true;
   await retry.press('Enter');
-  await expect.poll(() => historyRequests).toBe(2);
+  await expect.poll(() => retryRequests).toBe(1);
 
   await expect(retry).toHaveText('Retrying archive');
   await expect(retry).toHaveAttribute('aria-disabled', 'true');
@@ -3606,7 +3661,7 @@ test('history retry reports progress and restores keyboard focus', async ({
   ).toBeGreaterThanOrEqual(44);
 
   await retry.press('Enter');
-  expect(historyRequests).toBe(2);
+  expect(retryRequests).toBe(1);
   releaseHistory();
 
   const search = page.getByRole('searchbox', { name: 'Search missions' });

@@ -21,6 +21,7 @@ interface HeroSectionProps {
   refreshing: boolean;
   error: string | null;
   partial: boolean;
+  stale?: boolean;
   coverageLoading?: boolean;
   coverageUnavailable?: boolean;
   refresh: () => Promise<void>;
@@ -37,6 +38,7 @@ export default function HeroSection({
   refreshing,
   error,
   partial,
+  stale = false,
   coverageLoading = false,
   coverageUnavailable = false,
   refresh,
@@ -166,7 +168,16 @@ export default function HeroSection({
     );
   }
 
-  const live = activeLaunch.isLive;
+  const retained = Boolean(error);
+  const retainedLive = activeLaunch.isLive && (retained || stale);
+  const live = activeLaunch.isLive && !retainedLive;
+  const feedNotice = retained
+    ? 'Last-known mission · refresh failed'
+    : stale
+      ? 'Last-known mission · stale cache'
+      : partial
+        ? 'Partial provider data'
+        : null;
   const critical =
     activeLaunch.status === 'failure' ||
     isCriticalLaunchStatusName(activeLaunch.statusName);
@@ -192,7 +203,7 @@ export default function HeroSection({
             ? 'signal-live'
             : critical
               ? 'signal-critical'
-              : partial
+              : partial || stale || retained
                 ? 'signal-warm'
                 : 'signal-nominal'
         } relative flex min-h-[27.5rem] overflow-hidden p-5 sm:p-7 lg:p-8`}
@@ -215,11 +226,15 @@ export default function HeroSection({
                   : 'text-[var(--console-green)]'
               }`}
             >
-              {live ? 'Live mission' : 'Next launch'}
+              {retainedLive
+                ? 'Last-known live mission'
+                : live
+                  ? 'Live mission'
+                  : 'Next launch'}
             </p>
-            {partial ? (
+            {feedNotice ? (
               <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--console-amber)]">
-                Partial provider data
+                {feedNotice}
               </span>
             ) : null}
           </div>
@@ -246,6 +261,22 @@ export default function HeroSection({
                 />
                 <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-magenta)]">
                   LIVE NOW
+                </p>
+              </div>
+            ) : retainedLive ? (
+              <div>
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="h-3 w-3 rounded-full bg-[var(--console-amber)]"
+                  />
+                  <p className="font-mono text-[clamp(1.65rem,4vw,3rem)] font-semibold tracking-[-0.04em] text-[var(--console-amber)]">
+                    COVERAGE UNCONFIRMED
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                  The last provider update marked this mission live, but the
+                  current feed cannot confirm its status.
                 </p>
               </div>
             ) : (

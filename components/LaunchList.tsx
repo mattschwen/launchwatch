@@ -40,6 +40,7 @@ export default function LaunchList({
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
+  const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const retryFocusPendingRef = useRef(false);
   const hasActiveFilters =
@@ -71,11 +72,12 @@ export default function LaunchList({
     }
 
     retryFocusPendingRef.current = false;
-    const frame = window.requestAnimationFrame(() =>
-      filterToggleRef.current?.focus(),
-    );
+    const frame = window.requestAnimationFrame(() => {
+      if (error) retainedRetryRef.current?.focus();
+      else filterToggleRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
-  }, [launches.length, refreshing]);
+  }, [error, launches.length, refreshing]);
 
   useEffect(() => {
     const query = serializeScheduleFilters(filters);
@@ -127,6 +129,10 @@ export default function LaunchList({
   const visibleLaunches = filtered.slice(0, visibleCount);
   const allResultsVisible =
     filtered.length > 0 && visibleLaunches.length === filtered.length;
+  const retainedSchedule = Boolean(
+    launches.length > 0 && (error || meta?.stale),
+  );
+  const degradedSchedule = Boolean(retainedSchedule || meta?.partial);
   const resultCountLabel =
     filtered.length > INITIAL_VISIBLE_COUNT && !allResultsVisible
       ? `Showing ${visibleLaunches.length} of ${filtered.length} missions`
@@ -197,7 +203,7 @@ export default function LaunchList({
     <section
       aria-labelledby="upcoming-launches-title"
       className={`surface-card holo-card ${
-        meta?.partial ? 'signal-warm' : 'signal-nominal'
+        degradedSchedule ? 'signal-warm' : 'signal-nominal'
       } overflow-hidden`}
     >
       <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
@@ -213,7 +219,13 @@ export default function LaunchList({
             className="mt-1 text-xs text-[var(--text-muted)]"
           >
             {resultCountLabel}
-            {meta?.partial ? ' · provider data is partial' : ''}
+            {error && launches.length > 0
+              ? ' · refresh failed; showing last-known schedule'
+              : meta?.stale
+                ? ' · showing stale provider cache'
+                : meta?.partial
+                  ? ' · provider data is partial'
+                  : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -243,6 +255,37 @@ export default function LaunchList({
           </button>
         </div>
       </header>
+
+      {retainedSchedule ? (
+        <div
+          role="status"
+          className="flex flex-col gap-3 border-b border-[var(--console-amber)]/25 bg-[var(--console-amber)]/[0.055] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        >
+          <p className="flex items-start gap-2 leading-5 text-[var(--text-secondary)]">
+            <AlertTriangle
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+              size={16}
+            />
+            <span>
+              <strong className="font-semibold text-[var(--console-amber)]">
+                {error ? 'Refresh failed.' : 'Provider cache is stale.'}
+              </strong>{' '}
+              Showing the last-known mission schedule.
+            </span>
+          </p>
+          <button
+            ref={retainedRetryRef}
+            type="button"
+            onClick={retrySchedule}
+            aria-disabled={refreshing}
+            aria-busy={refreshing}
+            className="action-button action-button-quiet w-full shrink-0 justify-center whitespace-nowrap text-[var(--console-amber)] aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-auto"
+          >
+            {refreshing ? 'Retrying feed' : 'Retry feed'}
+          </button>
+        </div>
+      ) : null}
 
       {filtersOpen ? (
         <div id="launch-filters" className="border-b border-[var(--border-subtle)] p-3 sm:p-4">

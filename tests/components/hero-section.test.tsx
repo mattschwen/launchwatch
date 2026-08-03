@@ -99,4 +99,46 @@ describe('HeroSection', () => {
       'text-[var(--console-magenta)]'
     );
   });
+
+  it('marks a retained mission as last-known after refresh failure', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[0]}
+        error="Provider maintenance"
+      />
+    );
+
+    expect(screen.getByText('Last-known mission · refresh failed')).toBeVisible();
+    expect(
+      screen
+        .getByRole('heading', { name: UPCOMING_LAUNCHES[0].name })
+        .closest('section')
+    ).toHaveClass('signal-warm');
+  });
+
+  it('does not present retained live coverage as current', () => {
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'In flight',
+      isLive: true,
+      webcastLive: true,
+    };
+
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={liveLaunch}
+        error="Provider maintenance"
+      />
+    );
+
+    expect(screen.getByText('Last-known live mission')).toBeVisible();
+    expect(screen.getByText('COVERAGE UNCONFIRMED')).toBeVisible();
+    expect(screen.queryByText('LIVE NOW')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: liveLaunch.name }).closest('section')
+    ).toHaveClass('signal-warm');
+  });
 });

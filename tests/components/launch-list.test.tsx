@@ -125,4 +125,36 @@ describe('LaunchList', () => {
     ).toHaveTextContent('12 missions');
     expect(screen.getByText('Schedule Mission 12')).toBeVisible();
   });
+
+  it('labels retained missions and keeps retry focus after another failure', async () => {
+    const user = userEvent.setup();
+    const refresh = vi.fn().mockResolvedValue(undefined);
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      loading: false,
+      refreshing: false,
+      error: 'Provider maintenance',
+      meta: FEED_META,
+      refresh,
+    });
+
+    render(<LaunchList />);
+
+    const schedule = screen
+      .getByRole('heading', { name: 'Upcoming launches' })
+      .closest('section');
+    expect(schedule).toHaveClass('signal-warm');
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' })
+    ).toHaveTextContent(
+      '2 missions · refresh failed; showing last-known schedule'
+    );
+    expect(screen.getByText('Showing the last-known mission schedule.')).toBeVisible();
+
+    const retry = screen.getByRole('button', { name: 'Retry feed' });
+    await user.click(retry);
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(retry).toHaveFocus();
+  });
 });

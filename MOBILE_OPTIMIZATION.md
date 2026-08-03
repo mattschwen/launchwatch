@@ -80,6 +80,11 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - When filters are active, the schedule disclosure keeps their total visibly
   counted while open or collapsed and includes that count in its accessible
   name, so hidden constraints never look like an unfiltered queue.
+- If a refresh fails after missions have loaded, the featured mission and
+  schedule switch to the amber retained-data treatment, identify their records
+  as last-known, and keep a touch-safe retry action available without discarding
+  the usable schedule. A retained live state is labeled coverage unconfirmed
+  instead of continuing to claim that the mission is live now.
 - A restored provider filter stays visibly selected and is labeled as absent
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
