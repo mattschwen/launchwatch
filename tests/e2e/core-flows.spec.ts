@@ -328,6 +328,44 @@ test('short landscape keeps mission telemetry clear of duplicate bottom chrome',
     .toBe('44px');
 });
 
+test('tablet watch commands stay clear of redundant bottom status chrome', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 844, height: 720 });
+  await page.goto('/watch');
+
+  const statusBar = page.getByRole('complementary', {
+    name: 'Mission status',
+  });
+  await expect(statusBar).toBeHidden();
+  await expect(
+    page.locator('header').getByRole('navigation', {
+      name: 'Primary navigation',
+    })
+  ).toBeVisible();
+
+  const commands = [
+    page.getByRole('button', { name: 'Briefing' }),
+    page.getByRole('button', { name: 'Calendar' }),
+    page.getByRole('button', { name: 'Share' }),
+  ];
+  const commandBounds = await Promise.all(
+    commands.map(async (command) => {
+      await expect(command).toBeVisible();
+      return command.boundingBox();
+    })
+  );
+  expect(commandBounds.every((bounds) => bounds?.height === 44)).toBe(true);
+  await expect
+    .poll(() =>
+      page.locator('.app-shell').evaluate((element) =>
+        getComputedStyle(element).paddingBottom
+      )
+    )
+    .toBe('0px');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('brand wordmark stays legible and tappable in the header', async ({ page }) => {
   await page.goto('/');
 
