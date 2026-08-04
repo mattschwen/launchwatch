@@ -34,13 +34,14 @@ const LaunchDataContext = createContext<LaunchDataContextValue | null>(null);
 function readLaunches(payload: unknown): {
   launches: Launch[];
   meta: LaunchFeedMeta | null;
+  valid: boolean;
 } {
   if (Array.isArray(payload)) {
-    return { launches: payload as Launch[], meta: null };
+    return { launches: payload as Launch[], meta: null, valid: true };
   }
 
   if (!payload || typeof payload !== 'object') {
-    return { launches: [], meta: null };
+    return { launches: [], meta: null, valid: false };
   }
 
   const record = payload as Record<string, unknown>;
@@ -54,15 +55,19 @@ function readLaunches(payload: unknown): {
     : Array.isArray(record.data)
       ? (record.data as Launch[])
       : Array.isArray(nestedData?.launches)
-        ? (nestedData.launches as Launch[])
-        : [];
+      ? (nestedData.launches as Launch[])
+      : [];
+  const valid =
+    Array.isArray(record.launches) ||
+    Array.isArray(record.data) ||
+    Array.isArray(nestedData?.launches);
 
   const meta =
     record.meta && typeof record.meta === 'object'
       ? (record.meta as LaunchFeedMeta)
       : null;
 
-  return { launches, meta };
+  return { launches, meta, valid };
 }
 
 function messageFromPayload(payload: unknown, fallback: string): string {
@@ -114,6 +119,9 @@ export function LaunchDataProvider({
         }
 
         const result = readLaunches(payload);
+        if (!result.valid) {
+          throw new Error('Launch feed response was incomplete');
+        }
         launchesRef.current = result.launches;
         setLaunches(result.launches);
         setMeta(result.meta);

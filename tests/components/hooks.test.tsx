@@ -55,6 +55,7 @@ function FeedRetryHarness(): React.ReactElement {
               ? error
               : `${launches.length} launches`}
       </p>
+      <p data-testid="feed-count">{launches.length}</p>
     </>
   );
 }
@@ -214,6 +215,31 @@ describe('LaunchDataProvider retries', () => {
     await waitFor(() =>
       expect(screen.getByTestId('feed-state')).toHaveTextContent('2 launches')
     );
+  });
+
+  it('retains settled missions when a successful response omits its launch collection', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ launches: UPCOMING_LAUNCHES }))
+      .mockResolvedValueOnce(
+        response({ meta: { generatedAt: '2035-07-26T12:00:00.000Z' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>
+    );
+
+    await expect(screen.findByText('2 launches')).resolves.toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await expect(
+      screen.findByText('Launch feed response was incomplete')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('feed-count')).toHaveTextContent('2');
   });
 });
 

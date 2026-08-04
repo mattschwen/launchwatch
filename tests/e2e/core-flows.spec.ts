@@ -762,6 +762,41 @@ test('home identifies and recovers retained missions after refresh failure', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home rejects incomplete successful refreshes without erasing retained missions', async ({
+  page,
+}) => {
+  let incompleteResponseEnabled = false;
+  await page.route('**/api/launches?type=all', (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        incompleteResponseEnabled
+          ? { meta: FEED_META }
+          : { launches: UPCOMING_LAUNCHES, meta: FEED_META }
+      ),
+    });
+  });
+
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: UPCOMING_LAUNCHES[0].name })
+  ).toBeVisible();
+
+  incompleteResponseEnabled = true;
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(hero).toContainText(UPCOMING_LAUNCHES[0].name);
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Partial feed' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('desktop ticker keeps the last known mission after refresh failure', async ({
   page,
 }) => {
