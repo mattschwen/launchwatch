@@ -151,8 +151,10 @@ export default function Footer(): React.ReactElement {
         <div className="flex min-w-0 flex-col gap-1">
           <p className="leading-5">All times UTC. Schedule times can change.</p>
           <nav
+            id="launch-data-sources"
+            tabIndex={-1}
             aria-label="Launch data sources"
-            className="flex flex-wrap items-center gap-2"
+            className="flex scroll-mt-20 flex-wrap items-center gap-2 rounded-[var(--radius-sm)] outline-none focus:ring-2 focus:ring-[var(--console-cyan)] focus:ring-offset-4 focus:ring-offset-[var(--surface-base)]"
           >
             <span className="data-label mr-0.5">Source feeds</span>
             <a

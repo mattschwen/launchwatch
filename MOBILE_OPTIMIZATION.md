@@ -45,6 +45,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   non-nominal status without displacing primary navigation. One persistent
   header live region announces feed-state transitions; repeated visual status
   readouts must not create duplicate assistive-technology announcements.
+- The visual feed-health readout is a 44-pixel shortcut to the footer's
+  provider breakdown. It moves focus with the viewport without motion and
+  keeps source provenance reachable from long routes.
 - The desktop mission ticker preserves provider date precision: minute- and
   hour-level targets keep quietly ticking at the available granularity without
   repeating the primary countdown animation, while day-and-coarser targets

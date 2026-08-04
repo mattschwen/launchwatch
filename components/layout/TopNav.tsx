@@ -55,6 +55,42 @@ const FEED_STATUS: Record<
   },
 };
 
+function revealProviderStatus(): void {
+  const sourceFeeds = document.getElementById('launch-data-sources');
+  if (!sourceFeeds) return;
+
+  const eventController = new AbortController();
+  const observer = new ResizeObserver(() => {
+    if (document.activeElement !== sourceFeeds) {
+      stopTracking();
+      return;
+    }
+    sourceFeeds.scrollIntoView({ behavior: 'auto', block: 'center' });
+  });
+  const stopTracking = (): void => {
+    observer.disconnect();
+    eventController.abort();
+    window.clearTimeout(timeoutId);
+  };
+
+  sourceFeeds.focus({ preventScroll: true });
+  sourceFeeds.scrollIntoView({ behavior: 'auto', block: 'center' });
+  observer.observe(document.body);
+  const cancelOptions = {
+    capture: true,
+    once: true,
+    signal: eventController.signal,
+  };
+  window.addEventListener('keydown', stopTracking, cancelOptions);
+  window.addEventListener('pointerdown', stopTracking, cancelOptions);
+  window.addEventListener('touchstart', stopTracking, cancelOptions);
+  window.addEventListener('wheel', stopTracking, {
+    ...cancelOptions,
+    passive: true,
+  });
+  const timeoutId = window.setTimeout(stopTracking, 5_000);
+}
+
 function TopNavContents({
   detailSource,
 }: {
@@ -72,6 +108,7 @@ function TopNavContents({
     stale: Boolean(meta?.stale),
   });
   const feedStatus = FEED_STATUS[feedHealth];
+  const feedStatusLabel = `${feedStatus.label} — view provider status`;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
@@ -135,15 +172,19 @@ function TopNavContents({
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
-          <span
-            className={`flex items-center gap-2 px-2 font-mono text-xs font-medium ${feedStatus.textClass}`}
+          <button
+            type="button"
+            onClick={revealProviderStatus}
+            aria-label={feedStatusLabel}
+            title="View provider status"
+            className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2 font-mono text-xs font-medium transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
           >
             <span
               aria-hidden="true"
               className={`h-2 w-2 rounded-full ${feedStatus.dotClass}`}
             />
             {feedStatus.label}
-          </span>
+          </button>
           <UTCClock showLabel className="hardware-clock px-2 py-1" />
         </div>
 
@@ -162,8 +203,12 @@ function TopNavContents({
             </Link>
           )}
           {feedHealth !== 'nominal' ? (
-            <span
-              className={`flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${feedStatus.textClass}`}
+            <button
+              type="button"
+              onClick={revealProviderStatus}
+              aria-label={feedStatusLabel}
+              title="View provider status"
+              className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
             >
               <span
                 aria-hidden="true"
@@ -172,7 +217,7 @@ function TopNavContents({
               <span className="hidden max-[359px]:inline min-[370px]:inline">
                 {feedStatus.compactLabel}
               </span>
-            </span>
+            </button>
           ) : null}
           <UTCClock
             showLabel={false}

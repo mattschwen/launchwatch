@@ -374,6 +374,13 @@ test('primary navigation follows the brand before mission content', async ({
   await watch.press('Tab');
   await expect(history).toBeFocused();
   await history.press('Tab');
+  const feedStatusShortcut = page
+    .locator('header')
+    .getByRole('button', { name: /view provider status/ });
+  if (await feedStatusShortcut.isVisible()) {
+    await expect(feedStatusShortcut).toBeFocused();
+    await feedStatusShortcut.press('Tab');
+  }
   await expect(mission).toBeFocused();
 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
@@ -693,6 +700,16 @@ test('shared chrome reports partial feed health on every route', async ({
   const sourceFeeds = page.getByRole('navigation', {
     name: 'Launch data sources',
   });
+  const feedStatusShortcut = page
+    .locator('header')
+    .getByRole('button', { name: 'Partial feed — view provider status' });
+  await expect(feedStatusShortcut).toBeVisible();
+  const shortcutBounds = await feedStatusShortcut.boundingBox();
+  expect(shortcutBounds?.height).toBeGreaterThanOrEqual(44);
+  expect(shortcutBounds?.width).toBeGreaterThanOrEqual(44);
+  await feedStatusShortcut.click();
+  await expect(sourceFeeds).toBeFocused();
+  await expect(sourceFeeds).toBeInViewport();
   await expect(
     sourceFeeds.getByRole('link', {
       name: 'SpaceX source — unavailable',
