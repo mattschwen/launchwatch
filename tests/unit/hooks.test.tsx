@@ -15,6 +15,28 @@ function intelResponse(intel: LaunchIntel): Response {
 }
 
 describe('useLaunchIntel', () => {
+  it('rejects an incomplete successful intelligence response', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ meta: { generatedAt: '2035-07-26T12:00:00.000Z' } }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    );
+
+    const { result } = renderHook(() =>
+      useLaunchIntel(UPCOMING_LAUNCHES[0]),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.intel).toBeNull();
+    expect(result.current.error).toBe(
+      'Mission intelligence response was incomplete',
+    );
+  });
+
   it('does not expose intelligence from a previously selected mission', async () => {
     let resolveSecondRequest: ((response: Response) => void) | undefined;
     const secondIntel: LaunchIntel = {

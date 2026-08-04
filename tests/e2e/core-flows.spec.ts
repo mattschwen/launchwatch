@@ -3086,6 +3086,49 @@ test('watch does not show intelligence from the previously selected mission', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence recovers from an incomplete successful response', async ({
+  page,
+}) => {
+  let requestCount = 0;
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await page.route('**/api/launch-intel**', async (route) => {
+    requestCount += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        requestCount === 1
+          ? { meta: { generatedAt: '2035-07-26T12:00:00.000Z' } }
+          : LAUNCH_INTEL,
+      ),
+    });
+  });
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(intelligence.getByRole('alert')).toContainText(
+    'Mission intelligence response was incomplete',
+  );
+  await expect(
+    intelligence.getByRole('button', { name: 'Retry coverage' }),
+  ).toBeVisible();
+  expect(pageErrors).toEqual([]);
+
+  await intelligence.getByRole('button', { name: 'Retry coverage' }).click();
+
+  await expect(
+    intelligence.getByRole('group', { name: 'Coverage signal' }),
+  ).toBeVisible();
+  expect(requestCount).toBe(2);
+  expect(pageErrors).toEqual([]);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission intelligence recovers without losing keyboard context', async ({
   page,
 }) => {

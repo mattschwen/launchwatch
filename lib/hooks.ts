@@ -89,6 +89,75 @@ function extractLaunch(payload: unknown): Launch | null {
   return typeof record.id === 'string' ? (record as unknown as Launch) : null;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function isLaunchIntel(value: unknown): value is LaunchIntel {
+  if (!isRecord(value)) return false;
+
+  const summary = value.summary;
+  const quickLinks = value.quickLinks;
+  const streamStates = ['live', 'upcoming', 'standby', 'search', 'none'];
+  const streamSources = [
+    'provided',
+    'youtube-api',
+    'provider-channel',
+    'search',
+  ];
+  const confidenceLevels = ['high', 'medium', 'low'];
+  const liveStates = ['live', 'upcoming', 'ended', 'unknown'];
+
+  return (
+    isRecord(summary) &&
+    streamStates.includes(String(summary.streamState)) &&
+    typeof summary.recommendedLabel === 'string' &&
+    isNullableString(summary.recommendedUrl) &&
+    typeof summary.rationale === 'string' &&
+    typeof summary.lastUpdated === 'string' &&
+    Array.isArray(value.streamCandidates) &&
+    value.streamCandidates.every(
+      (candidate) =>
+        isRecord(candidate) &&
+        typeof candidate.id === 'string' &&
+        typeof candidate.title === 'string' &&
+        typeof candidate.url === 'string' &&
+        typeof candidate.channelTitle === 'string' &&
+        streamSources.includes(String(candidate.source)) &&
+        confidenceLevels.includes(String(candidate.confidence)) &&
+        liveStates.includes(String(candidate.liveStatus)),
+    ) &&
+    Array.isArray(value.newsItems) &&
+    value.newsItems.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === 'string' &&
+        typeof item.title === 'string' &&
+        typeof item.url === 'string' &&
+        typeof item.source === 'string' &&
+        typeof item.publishedAt === 'string',
+    ) &&
+    Array.isArray(value.socialItems) &&
+    value.socialItems.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === 'string' &&
+        (item.platform === 'reddit' || item.platform === 'x') &&
+        typeof item.title === 'string' &&
+        typeof item.url === 'string',
+    ) &&
+    isRecord(quickLinks) &&
+    typeof quickLinks.youtubeSearch === 'string' &&
+    isNullableString(quickLinks.providerChannel) &&
+    typeof quickLinks.redditSearch === 'string' &&
+    typeof quickLinks.xSearch === 'string'
+  );
+}
+
 export function useLaunches() {
   const data = useLaunchData();
   return data;
@@ -292,10 +361,14 @@ export function useLaunchIntel(
           payload && typeof payload === 'object'
             ? (payload as Record<string, unknown>)
             : null;
-        const result =
+        const result: unknown =
           record?.data && typeof record.data === 'object'
-            ? (record.data as LaunchIntel)
-            : (payload as LaunchIntel);
+            ? record.data
+            : payload;
+
+        if (!isLaunchIntel(result)) {
+          throw new Error('Mission intelligence response was incomplete');
+        }
 
         setIntelState({
           launchId,
