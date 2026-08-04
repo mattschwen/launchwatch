@@ -195,6 +195,30 @@ describe('PastLaunches', () => {
     ).toBeInTheDocument();
   });
 
+  it('keeps an unavailable archive year visible as the selected filter', async () => {
+    render(
+      <PastLaunches
+        initialFilters={{
+          search: '',
+          provider: 'all',
+          year: '1999',
+          outcome: 'all',
+        }}
+      />
+    );
+
+    expect(
+      await screen.findByRole('status', { name: 'Archive results' })
+    ).toHaveTextContent('0 results');
+    const year = screen.getByRole('combobox', { name: 'Launch year' });
+    expect(year).toHaveValue('1999');
+    expect(
+      screen.getByRole('option', {
+        name: '1999 — not in current feed',
+      })
+    ).toBeInTheDocument();
+  });
+
   it('announces filtered results and clears all archive filters at once', async () => {
     const user = userEvent.setup();
     render(<PastLaunches />);

@@ -2082,7 +2082,7 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('provider filters stay visible when the selected source leaves the feed', async ({
+test('archive filters stay truthful when selected values leave the feed', async ({
   page,
 }) => {
   const missingProvider = 'Retired Provider';
@@ -2112,6 +2112,20 @@ test('provider filters stay visible when the selected source leaves the feed', a
       name: 'No archived missions match these filters.',
     })
   ).toBeVisible();
+
+  await page.goto('/history?year=1999');
+
+  const archiveYear = page.getByRole('combobox', { name: 'Launch year' });
+  await expect(archiveYear).toHaveValue('1999');
+  await expect(
+    archiveYear.getByRole('option', {
+      name: '1999 — not in current feed',
+    })
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('status', { name: 'Archive results' })
+  ).toHaveText('0 results');
+  await expect(page).toHaveURL(/\/history\?year=1999$/);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -3018,9 +3032,19 @@ test('trajectory and signal motion settles for reduced-motion users', async ({
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/watch');
   const trajectoryPath = page.locator('.trajectory-path-ascent');
-  await page
-    .getByRole('heading', { level: 2, name: 'Mission trajectory' })
-    .scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const heading = [...document.querySelectorAll('h2')].find(
+          (element) => element.textContent?.trim() === 'Mission trajectory'
+        );
+        if (!heading) return false;
+
+        heading.scrollIntoView({ block: 'center' });
+        return true;
+      })
+    )
+    .toBe(true);
   await expect(trajectoryPath).toHaveCount(1);
 
   const motion = await page.evaluate(() => {
