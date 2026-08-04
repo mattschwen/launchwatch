@@ -245,6 +245,7 @@ function MapToolbar({
         disabled={disabled}
         aria-disabled={zoomOutUnavailable}
         aria-label="Zoom map out"
+        tabIndex={zoomOutUnavailable ? -1 : undefined}
       >
         <Minus aria-hidden="true" size={16} />
       </button>
@@ -257,6 +258,7 @@ function MapToolbar({
         disabled={disabled}
         aria-disabled={zoomInUnavailable}
         aria-label="Zoom map in"
+        tabIndex={zoomInUnavailable ? -1 : undefined}
       >
         <Plus aria-hidden="true" size={16} />
       </button>

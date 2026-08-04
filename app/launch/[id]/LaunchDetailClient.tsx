@@ -397,6 +397,7 @@ export default function LaunchDetailClient({
                     aria-label="Previous timeline event"
                     aria-controls="launch-timeline-events"
                     aria-disabled={!timelineScroll.canMoveBackward}
+                    tabIndex={timelineScroll.canMoveBackward ? undefined : -1}
                     onClick={() => moveTimeline(-1)}
                     className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
                   >
@@ -407,6 +408,7 @@ export default function LaunchDetailClient({
                     aria-label="Next timeline event"
                     aria-controls="launch-timeline-events"
                     aria-disabled={!timelineScroll.canMoveForward}
+                    tabIndex={timelineScroll.canMoveForward ? undefined : -1}
                     onClick={() => moveTimeline(1)}
                     className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
                   >

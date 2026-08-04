@@ -158,7 +158,7 @@ describe('MissionTrajectory', () => {
     expect(map).toHaveAttribute('data-map-view', focusView);
   });
 
-  it('keeps keyboard focus when map zoom reaches either limit', async () => {
+  it('retains focus while removing unavailable map zoom from the tab sequence', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <MissionTrajectory launch={makeLaunch()} variant="detail" />
@@ -168,14 +168,17 @@ describe('MissionTrajectory', () => {
     const map = container.querySelector('[data-trajectory-map]');
 
     expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomOut).toHaveAttribute('tabindex', '-1');
     expect(zoomOut).not.toBeDisabled();
     expect(zoomIn).toHaveAttribute('aria-disabled', 'false');
+    expect(zoomIn).not.toHaveAttribute('tabindex');
 
     zoomIn.focus();
     await user.keyboard('{Enter}{Enter}');
 
     expect(zoomIn).toHaveFocus();
     expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomIn).toHaveAttribute('tabindex', '-1');
     expect(zoomIn).not.toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent(
       'Map zoom level 3 of 3.'
@@ -191,6 +194,7 @@ describe('MissionTrajectory', () => {
 
     expect(zoomOut).toHaveFocus();
     expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
+    expect(zoomOut).toHaveAttribute('tabindex', '-1');
     expect(zoomOut).not.toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent(
       'Map zoom level 1 of 3.'
