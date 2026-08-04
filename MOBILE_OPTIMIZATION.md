@@ -205,7 +205,9 @@ The optional expanded map remains a modal dialog. It must:
   allowing route metadata to overwrite a completed client-side selection.
 - The selected mission exposes a labeled, 44px share action. It prefers the
   platform share sheet and otherwise copies the canonical detail URL, with
-  visible recovery copy when both browser paths are unavailable.
+  a visible, selectable canonical detail URL when both browser paths are
+  unavailable. Recovery must never tell users to copy the Watch address,
+  which carries transient room state instead of the durable mission route.
 - Briefing, calendar, and sharing form a labeled three-command rail on narrow
   screens instead of mixing text actions with an ambiguous icon-only control.
   Every target remains at least 44px, and the compact calendar menu opens above

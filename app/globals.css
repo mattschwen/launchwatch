@@ -1305,6 +1305,34 @@ body::before {
   }
 }
 
+.compact-launch-actions > .share-recovery,
+.detail-launch-actions > .share-recovery {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 28rem;
+}
+
+@media (min-width: 640px) {
+  .compact-launch-actions:has(.share-recovery) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(28rem, 60vw);
+  }
+
+  .detail-launch-actions:has(.share-recovery) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(28rem, 100%);
+  }
+
+  .compact-launch-actions:has(.share-recovery) > *,
+  .compact-launch-actions:has(.share-recovery) > * > .action-button,
+  .detail-launch-actions:has(.share-recovery) > *,
+  .detail-launch-actions:has(.share-recovery) > * > .action-button {
+    width: 100%;
+  }
+}
+
 .action-button-primary {
   background: var(--console-green);
   color: #03100a;

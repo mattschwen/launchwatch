@@ -56,7 +56,22 @@ describe('ShareMissionButton', () => {
 
     expect(screen.getByRole('button', { name: 'Retry share' })).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Sharing is unavailable. Copy the page address from your browser.'
+      'Automatic sharing is unavailable. Select and copy the canonical link below.'
+    );
+    const manualLink = screen.getByRole('textbox', {
+      name: 'Canonical mission link',
+    });
+    expect(manualLink).toHaveValue(
+      'http://localhost:3000/launch/ll2-demo-orbital-dawn'
+    );
+
+    await user.click(manualLink);
+
+    expect(manualLink).toHaveFocus();
+    expect(manualLink).toHaveProperty('selectionStart', 0);
+    expect(manualLink).toHaveProperty(
+      'selectionEnd',
+      'http://localhost:3000/launch/ll2-demo-orbital-dawn'.length
     );
   });
 });

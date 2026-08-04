@@ -4860,6 +4860,78 @@ test('mission sharing copies canonical links from watch and completed details', 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission sharing exposes the canonical link when browser sharing is blocked', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async () => {
+        throw new DOMException('Share permission denied');
+      },
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException('Clipboard permission denied');
+        },
+      },
+    });
+  });
+
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+  const share = page.getByRole('button', { name: 'Share', exact: true });
+  await share.focus();
+  await share.press('Enter');
+
+  await expect(
+    page.getByRole('button', { name: 'Retry share' })
+  ).toBeFocused();
+  const recoveryStatus = page.getByText(
+    'Automatic sharing is unavailable. Select and copy the canonical link below.',
+    { exact: true }
+  );
+  await expect(recoveryStatus).toHaveAttribute('role', 'status');
+  const manualLink = page.getByRole('textbox', {
+    name: 'Canonical mission link',
+  });
+  const recovery = page.locator('[data-share-recovery="true"]');
+  const canonicalUrl = `${new URL(page.url()).origin}/launch/ll2-demo-orbital-dawn`;
+  await expect(manualLink).toHaveValue(canonicalUrl);
+  await manualLink.click();
+  await expect(manualLink).toBeFocused();
+  await expect
+    .poll(() =>
+      manualLink.evaluate((input) =>
+        input instanceof HTMLInputElement
+          ? input.value.slice(
+              input.selectionStart ?? 0,
+              input.selectionEnd ?? 0
+            )
+          : ''
+      )
+    )
+    .toBe(canonicalUrl);
+  expect((await manualLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  const [recoveryBounds, commandBounds, missionBounds] = await Promise.all([
+    recovery.boundingBox(),
+    page.locator('.compact-launch-actions').boundingBox(),
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' }).boundingBox(),
+  ]);
+  expect(recoveryBounds).not.toBeNull();
+  expect(commandBounds).not.toBeNull();
+  expect(missionBounds).not.toBeNull();
+  const commandRailOverlapsMissionHeading = !(
+    commandBounds!.x >= missionBounds!.x + missionBounds!.width ||
+    commandBounds!.x + commandBounds!.width <= missionBounds!.x ||
+    commandBounds!.y >= missionBounds!.y + missionBounds!.height ||
+    commandBounds!.y + commandBounds!.height <= missionBounds!.y
+  );
+  expect(commandRailOverlapsMissionHeading).toBe(false);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('upcoming detail keeps mission commands in a touch-safe mobile console', async ({
   page,
 }) => {

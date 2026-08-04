@@ -244,6 +244,51 @@ test('@a11y search-only mission intelligence has no serious WCAG A/AA violations
   ).toEqual([]);
 });
 
+test('@a11y blocked mission sharing has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async () => {
+        throw new DOMException('Share permission denied');
+      },
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new DOMException('Clipboard permission denied');
+        },
+      },
+    });
+  });
+
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+  await page.getByRole('button', { name: 'Share', exact: true }).click();
+  await expect(
+    page.getByRole('textbox', { name: 'Canonical mission link' })
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y coarse launch estimate has no serious WCAG A/AA violations', async ({
   page,
 }) => {

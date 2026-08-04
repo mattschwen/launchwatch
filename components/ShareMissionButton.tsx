@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
+  getCanonicalLaunchUrl,
   shareMission,
   type MissionShareResult,
 } from '@/lib/share';
@@ -24,7 +25,9 @@ export default function ShareMissionButton({
   compact?: boolean;
 }): React.ReactElement {
   const [state, setState] = useState<ShareState>('idle');
+  const [manualUrl, setManualUrl] = useState('');
   const descriptionId = useId();
+  const manualLinkId = useId();
   const resetTimeoutRef = useRef<number | undefined>(undefined);
   const sharing = state === 'sharing';
   const error = state === 'error';
@@ -57,7 +60,11 @@ export default function ShareMissionButton({
       window.clearTimeout(resetTimeoutRef.current);
     }
     setState('sharing');
-    const result = await shareMission(launch, window.location.origin);
+    const origin = window.location.origin;
+    const result = await shareMission(launch, origin);
+    if (result === 'error') {
+      setManualUrl(getCanonicalLaunchUrl(launch.id, origin));
+    }
     setState(result === 'cancelled' ? 'idle' : result);
     if (result === 'shared' || result === 'copied') {
       resetTimeoutRef.current = window.setTimeout(() => setState('idle'), 2200);
@@ -105,13 +112,36 @@ export default function ShareMissionButton({
             : ''}
       </span>
       {error ? (
-        <p
-          id={descriptionId}
-          role="status"
-          className="basis-full text-xs leading-5 text-[var(--console-red)]"
+        <div
+          data-share-recovery="true"
+          className="share-recovery col-span-full min-w-0 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_32%,var(--border-subtle))] bg-[var(--surface-accent)] p-3"
         >
-          Sharing is unavailable. Copy the page address from your browser.
-        </p>
+          <label
+            htmlFor={manualLinkId}
+            className="data-label text-[var(--console-amber)]"
+          >
+            Canonical mission link
+          </label>
+          <p
+            id={descriptionId}
+            role="status"
+            className="mt-1 text-xs leading-5 text-[var(--text-secondary)]"
+          >
+            Automatic sharing is unavailable. Select and copy the canonical
+            link below.
+          </p>
+          <input
+            id={manualLinkId}
+            type="url"
+            readOnly
+            spellCheck={false}
+            value={manualUrl}
+            aria-describedby={descriptionId}
+            onFocus={(event) => event.currentTarget.select()}
+            onClick={(event) => event.currentTarget.select()}
+            className="mt-3 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-base)] px-3 font-mono text-xs text-[var(--console-cyan)] outline-none selection:bg-[var(--console-cyan)] selection:text-black focus-visible:border-[var(--console-cyan)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--console-cyan)_34%,transparent)]"
+          />
+        </div>
       ) : null}
     </div>
   );
