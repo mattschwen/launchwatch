@@ -220,6 +220,64 @@ test('persistent bottom chrome keeps focused mission rows visible', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('route content hands off directly to the protected footer', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+
+  const shellSpacing = await page.evaluate(() => {
+    const main = document.querySelector('main');
+    const route = main?.lastElementChild;
+    const footer = document.querySelector('footer');
+    const mobileNav = document.querySelector<HTMLElement>(
+      'nav[aria-label="Primary navigation"].fixed',
+    );
+    const mainStyle = main ? getComputedStyle(main) : null;
+    const footerStyle = footer ? getComputedStyle(footer) : null;
+
+    return {
+      routeGap:
+        main && route
+          ? main.getBoundingClientRect().bottom -
+            route.getBoundingClientRect().bottom
+          : null,
+      mainPaddingBottom: mainStyle?.paddingBottom ?? null,
+      footerPaddingBottom: footerStyle?.paddingBottom ?? null,
+      mobileNavHeight: mobileNav?.getBoundingClientRect().height ?? 0,
+    };
+  });
+
+  expect(shellSpacing.routeGap).not.toBeNull();
+  expect(shellSpacing.routeGap!).toBeLessThanOrEqual(1);
+  expect(shellSpacing.mainPaddingBottom).toBe('0px');
+
+  if ((page.viewportSize()?.width ?? 0) < 768) {
+    expect(
+      Number.parseFloat(shellSpacing.footerPaddingBottom!),
+    ).toBeGreaterThanOrEqual(shellSpacing.mobileNavHeight - 1);
+
+    const sourceLink = page.getByRole('link', { name: 'Source', exact: true });
+    await sourceLink.focus();
+    await expect(sourceLink).toBeFocused();
+    await expect
+      .poll(async () =>
+        sourceLink.evaluate((element) => {
+          const mobileNav = document.querySelector<HTMLElement>(
+            'nav[aria-label="Primary navigation"].fixed',
+          );
+          return mobileNav
+            ? element.getBoundingClientRect().bottom <=
+                mobileNav.getBoundingClientRect().top
+            : false;
+        }),
+      )
+      .toBe(true);
+  }
+});
+
 test('brand wordmark stays legible and tappable in the header', async ({ page }) => {
   await page.goto('/');
 
@@ -3022,9 +3080,13 @@ test('mission intelligence honors the server recovery window', async ({
   const waiting = page.getByRole('button', { name: 'Retry in 10m' });
   await expect(waiting).toBeVisible();
   await expect(waiting).toHaveAttribute('aria-disabled', 'true');
+  await expect.poll(() => requestCount).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(100);
+  const requestCountBeforeAttempt = requestCount;
   await waiting.focus();
   await waiting.press('Enter');
-  expect(requestCount).toBe(1);
+  await page.waitForTimeout(100);
+  expect(requestCount).toBe(requestCountBeforeAttempt);
 
   const target = await waiting.evaluate((element) => {
     const bounds = element.getBoundingClientRect();

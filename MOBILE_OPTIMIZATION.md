@@ -23,6 +23,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   mission; retained live state is labeled unconfirmed instead of presented as
   current coverage.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
+- Route content hands off directly to the footer instead of reserving a second
+  fixed-navigation gap. The footer owns the bottom-navigation and safe-area
+  clearance, so its final controls remain visible without adding an empty band
+  between mission content and source status.
 - Mission details keep the originating Home, Watch, or History destination
   visibly and semantically current; direct canonical detail links default to
   Home context.

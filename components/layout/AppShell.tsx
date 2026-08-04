@@ -26,7 +26,7 @@ export default function AppShell({ children }: AppShellProps): React.ReactElemen
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 scroll-mt-20 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none md:pb-0"
+          className="flex-1 scroll-mt-20 outline-none"
         >
           {children}
         </main>
