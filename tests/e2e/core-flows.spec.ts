@@ -4624,6 +4624,59 @@ test('watch keeps a pending calendar explanation inside the mobile viewport', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('detail defers intelligence acquisition until the panel approaches the viewport', async ({
+  page,
+}) => {
+  let intelligenceRequests = 0;
+
+  await page.route('**/api/launch-intel**', async (route) => {
+    intelligenceRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(LAUNCH_INTEL),
+    });
+  });
+
+  for (const detail of [
+    {
+      path: '/launch/ll2-demo-orbital-dawn',
+      mission: 'Orbital Dawn',
+    },
+    {
+      path: '/launch/spacex-demo-return',
+      mission: 'Demo Return Flight',
+    },
+  ]) {
+    const requestBaseline = intelligenceRequests;
+    await page.goto(detail.path);
+    await expect(
+      page.getByRole('heading', { level: 1, name: detail.mission })
+    ).toBeVisible();
+    await page.waitForTimeout(250);
+    expect(intelligenceRequests).toBe(requestBaseline);
+
+    const standby = page.locator('[data-intelligence-standby="true"]');
+    await expect(standby).toHaveAccessibleName('Mission intelligence');
+    await expect(standby).toContainText('Acquisition on standby');
+    const standbyPosition = await standby.evaluate((element) => ({
+      top: element.getBoundingClientRect().top,
+      viewportHeight: window.innerHeight,
+    }));
+    expect(standbyPosition.top).toBeGreaterThan(standbyPosition.viewportHeight);
+
+    await standby.scrollIntoViewIfNeeded();
+    await expect.poll(() => intelligenceRequests).toBe(requestBaseline + 1);
+    await expect(
+      page
+        .getByRole('region', { name: 'Mission intelligence' })
+        .getByRole('link', { name: 'Search official coverage' })
+    ).toBeVisible();
+    expect(intelligenceRequests).toBe(requestBaseline + 1);
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  }
+});
+
 test('upcoming and historical details place one trajectory before mission support', async ({
   page,
 }) => {
@@ -4753,6 +4806,9 @@ test('upcoming and historical details place one trajectory before mission suppor
     await expect(
       page.getByRole('region', { name: 'Mission intelligence' })
     ).toBeVisible();
+    await page
+      .getByRole('region', { name: 'Mission intelligence' })
+      .scrollIntoViewIfNeeded();
     const intelligenceSearches = page
       .getByLabel('Mission intelligence searches')
       .getByRole('link');

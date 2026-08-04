@@ -264,6 +264,9 @@ The optional expanded map remains a modal dialog. It must:
 - Video and intelligence sections become a single column.
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support.
+- Rate-limited mission intelligence remains in an honest standby state until
+  its panel approaches the viewport, then begins acquisition early enough to
+  resolve before the user reaches its coverage actions.
 - Completed missions return to History—or the filtered archive that opened
   them—and omit future-only calendar actions. Active archive filters remain in
   the address so a filtered result set survives reloads and can be shared.

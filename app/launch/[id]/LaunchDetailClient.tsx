@@ -16,6 +16,7 @@ import {
   ExternalLink,
   MapPin,
   Orbit,
+  Radio,
   Rocket,
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
@@ -40,6 +41,54 @@ import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
 
 const TIMELINE_EVENT_WIDTH_PX = 176;
+const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
+
+function IntelligenceStandby({
+  launchName,
+}: {
+  launchName: string;
+}): React.ReactElement {
+  return (
+    <section
+      aria-labelledby="mission-intelligence-standby-title"
+      data-intelligence-standby="true"
+      className="surface-card holo-card signal-cold p-5 sm:p-6"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
+          <Radio aria-hidden="true" size={18} />
+        </span>
+        <div className="min-w-0">
+          <p className="data-label text-[var(--console-cyan)]">
+            Secondary signal
+          </p>
+          <h2
+            id="mission-intelligence-standby-title"
+            className="section-title mt-1 text-[1.2rem]"
+          >
+            Mission intelligence
+          </h2>
+        </div>
+      </div>
+      <div className="mt-5 flex items-center gap-2 border-y border-[var(--border-subtle)] py-3">
+        <span
+          aria-hidden="true"
+          className="h-2 w-2 shrink-0 rounded-full bg-[var(--console-cyan)]"
+        />
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)]">
+          Acquisition on standby
+        </p>
+      </div>
+      <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">
+        Coverage signals for{' '}
+        <strong className="font-semibold text-[var(--text-primary)]">
+          {launchName}
+        </strong>{' '}
+        will begin loading as this panel approaches the viewport.
+      </p>
+    </section>
+  );
+}
 
 function handleTimelineKeyDown(
   event: KeyboardEvent<HTMLOListElement>
@@ -72,13 +121,42 @@ export default function LaunchDetailClient({
     canMoveForward: false,
   });
   const timelineRef = useRef<HTMLOListElement>(null);
+  const intelligenceHostRef = useRef<HTMLDivElement>(null);
+  const [intelligenceEnabledLaunchId, setIntelligenceEnabledLaunchId] =
+    useState<string | null>(null);
+  const intelligenceEnabled = intelligenceEnabledLaunchId === launch.id;
   const {
     intel,
     loading: intelLoading,
     error: intelError,
     retryAt: intelRetryAt,
     retry: retryIntel,
-  } = useLaunchIntel(launch, true);
+  } = useLaunchIntel(launch, intelligenceEnabled);
+
+  useEffect(() => {
+    if (intelligenceEnabled) return;
+
+    const host = intelligenceHostRef.current;
+    if (!host || typeof IntersectionObserver === 'undefined') {
+      const timeout = window.setTimeout(
+        () => setIntelligenceEnabledLaunchId(launch.id),
+        0
+      );
+      return () => window.clearTimeout(timeout);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setIntelligenceEnabledLaunchId(launch.id);
+        observer.disconnect();
+      },
+      { rootMargin: `${INTELLIGENCE_PRELOAD_MARGIN_PX}px 0px` }
+    );
+    observer.observe(host);
+
+    return () => observer.disconnect();
+  }, [intelligenceEnabled, launch.id]);
 
   const completed = isCompletedLaunch(launch);
   const hasPlayableVideo = Boolean(
@@ -379,14 +457,20 @@ export default function LaunchDetailClient({
         ) : null}
 
         <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)]">
-          <LaunchIntelDeck
-            launch={launch}
-            intel={intel}
-            loading={intelLoading}
-            error={intelError}
-            retryAt={intelRetryAt}
-            onRetry={retryIntel}
-          />
+          <div ref={intelligenceHostRef}>
+            {intelligenceEnabled ? (
+              <LaunchIntelDeck
+                launch={launch}
+                intel={intel}
+                loading={intelLoading}
+                error={intelError}
+                retryAt={intelRetryAt}
+                onRetry={retryIntel}
+              />
+            ) : (
+              <IntelligenceStandby launchName={launch.name} />
+            )}
+          </div>
 
           <section
             aria-labelledby="watch-replay-title"
