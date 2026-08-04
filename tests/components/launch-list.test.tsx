@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import LaunchList from '@/components/LaunchList';
 import { useLaunches } from '@/lib/hooks';
 import { FEED_META, UPCOMING_LAUNCHES } from '../fixtures/launches';
@@ -8,6 +8,10 @@ import { FEED_META, UPCOMING_LAUNCHES } from '../fixtures/launches';
 vi.mock('@/lib/hooks', () => ({
   useLaunches: vi.fn(),
 }));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('LaunchList', () => {
   it('finds missions by profile and orbit metadata', async () => {
@@ -156,5 +160,33 @@ describe('LaunchList', () => {
     await user.click(retry);
     expect(refresh).toHaveBeenCalledOnce();
     expect(retry).toHaveFocus();
+  });
+
+  it('cancels the deferred retry scroll when the schedule unmounts', async () => {
+    const user = userEvent.setup();
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const frame = 73;
+    const requestFrame = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockReturnValue(frame);
+    const cancelFrame = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined);
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      loading: false,
+      refreshing: false,
+      error: 'Provider maintenance',
+      meta: FEED_META,
+      refresh,
+    });
+
+    const view = render(<LaunchList />);
+    await user.click(screen.getByRole('button', { name: 'Retry feed' }));
+
+    expect(requestFrame).toHaveBeenCalledOnce();
+    view.unmount();
+    expect(cancelFrame).toHaveBeenCalledWith(frame);
   });
 });

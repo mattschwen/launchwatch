@@ -45,6 +45,7 @@ export default function LaunchList({
   const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const retryFocusPendingRef = useRef(false);
+  const retryScrollFrameRef = useRef<number | null>(null);
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
@@ -92,14 +93,29 @@ export default function LaunchList({
     }
   }, [filters, onFiltersChange]);
 
+  useEffect(
+    () => () => {
+      if (retryScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(retryScrollFrameRef.current);
+      }
+    },
+    [],
+  );
+
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (refreshing) return;
     const retryButton = event.currentTarget;
     retryFocusPendingRef.current = true;
     void refresh();
-    window.requestAnimationFrame(() =>
-      retryButton.scrollIntoView({ block: 'nearest' }),
-    );
+    if (retryScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(retryScrollFrameRef.current);
+    }
+    retryScrollFrameRef.current = window.requestAnimationFrame(() => {
+      retryScrollFrameRef.current = null;
+      if (retryButton.isConnected) {
+        retryButton.scrollIntoView?.({ block: 'nearest' });
+      }
+    });
   };
 
   const clearFilters = (): void => {
