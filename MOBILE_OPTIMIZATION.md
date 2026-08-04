@@ -286,6 +286,10 @@ The optional expanded map remains a modal dialog. It must:
   browser scrolls them into view; this applies to the mobile navigation and
   desktop mission status bar. When a service-worker update is ready, measure
   its responsive card and temporarily add that dynamic clearance as well.
+- A waiting service-worker update keeps Update now as the primary action and
+  offers a touch-safe Later action for the current session. Postponing removes
+  the card, restores the interrupted keyboard focus, and leaves the same update
+  available again after the next reload.
 - Do not hide focus outlines.
 - Keep the active navigation item available through `aria-current`.
 - Connect disclosures to controlled regions with `aria-expanded` and `aria-controls`.

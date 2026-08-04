@@ -23,6 +23,7 @@ function isUnmodifiedPrimaryClick(event: MouseEvent): boolean {
 export default function RegisterServiceWorker(): React.ReactElement | null {
   const [updateState, setUpdateState] = useState<UpdateState>('idle');
   const updateCardRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const updateVisible = updateState !== 'idle';
 
   useEffect(() => {
@@ -41,6 +42,13 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
     let hadController = Boolean(navigator.serviceWorker.controller);
 
     const announceWaitingUpdate = (): void => {
+      if (!returnFocusRef.current?.isConnected) {
+        const activeElement = document.activeElement;
+        returnFocusRef.current =
+          activeElement instanceof HTMLElement && activeElement !== document.body
+            ? activeElement
+            : document.getElementById('main-content');
+      }
       setUpdateState((currentState) =>
         currentState === 'applying' ? currentState : 'available'
       );
@@ -245,6 +253,16 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
   }
 
   const applying = updateState === 'applying';
+  const postponeUpdate = (): void => {
+    if (applying) return;
+
+    setUpdateState('idle');
+    const returnTarget = returnFocusRef.current;
+    returnFocusRef.current = null;
+    window.requestAnimationFrame(() => {
+      if (returnTarget?.isConnected) returnTarget.focus();
+    });
+  };
 
   return (
     <aside
@@ -266,21 +284,35 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
         >
           {applying
             ? 'Applying the update. LaunchWatch will reload when it is ready.'
-            : 'A new version is ready. Update now to load the latest fixes.'}
+            : 'A new version is ready. Update now, or continue this session and install it later.'}
         </p>
       </div>
-      <button
-        type="button"
-        className="action-button action-button-primary w-full aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0 sm:w-fit"
-        aria-disabled={applying}
-        aria-busy={applying}
-        onClick={() => {
-          if (applying) return;
-          window.dispatchEvent(new CustomEvent(APPLY_UPDATE_EVENT));
-        }}
+      <div
+        role="group"
+        aria-label="Update options"
+        className="grid grid-cols-2 gap-2 sm:flex sm:items-center"
       >
-        {applying ? 'Updating…' : 'Update now'}
-      </button>
+        <button
+          type="button"
+          className="action-button action-button-primary w-full aria-disabled:cursor-wait aria-disabled:opacity-70 aria-disabled:hover:translate-y-0 sm:w-fit"
+          aria-disabled={applying}
+          aria-busy={applying}
+          onClick={() => {
+            if (applying) return;
+            window.dispatchEvent(new CustomEvent(APPLY_UPDATE_EVENT));
+          }}
+        >
+          {applying ? 'Updating…' : 'Update now'}
+        </button>
+        <button
+          type="button"
+          className="action-button action-button-secondary w-full aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-fit"
+          aria-disabled={applying}
+          onClick={postponeUpdate}
+        >
+          Later
+        </button>
+      </div>
     </aside>
   );
 }

@@ -73,6 +73,9 @@ describe('RegisterServiceWorker', () => {
     expect(
       await screen.findByRole('button', { name: 'Update now' })
     ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Later' })
+    ).toBeVisible();
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute(
         'data-pwa-update-visible',
@@ -95,12 +98,67 @@ describe('RegisterServiceWorker', () => {
     expect(applyingButton).toHaveAttribute('aria-disabled', 'true');
     expect(applyingButton).toHaveAttribute('aria-busy', 'true');
     expect(applyingButton).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Later' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
     await user.keyboard('{Enter}');
     expect(waitingWorker.postMessage).toHaveBeenCalledTimes(1);
     expect(registrationListeners.has('updatefound')).toBe(true);
     expect(workerListeners.has('controllerchange')).toBe(true);
 
     unmount();
+    expect(document.documentElement).not.toHaveAttribute(
+      'data-pwa-update-visible'
+    );
+    expect(
+      document.documentElement.style.getPropertyValue('--pwa-update-clearance')
+    ).toBe('');
+  });
+
+  it('postpones a waiting update and restores the interrupted workflow', async () => {
+    const user = userEvent.setup();
+    const waitingWorker = { postMessage: vi.fn() };
+    const registration = {
+      waiting: waitingWorker,
+      installing: null,
+      update: vi.fn().mockResolvedValue(undefined),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    const serviceWorker = {
+      controller: {},
+      register: vi.fn().mockResolvedValue(registration),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: serviceWorker,
+    });
+
+    const { default: RegisterServiceWorker } = await import('@/app/register-sw');
+    render(
+      <>
+        <button type="button">Continue mission</button>
+        <RegisterServiceWorker />
+      </>
+    );
+    const workflowControl = screen.getByRole('button', {
+      name: 'Continue mission',
+    });
+    workflowControl.focus();
+    window.dispatchEvent(new Event('load'));
+
+    const later = await screen.findByRole('button', { name: 'Later' });
+    later.focus();
+    await user.keyboard('{Enter}');
+
+    expect(
+      screen.queryByRole('complementary', { name: 'Mission control update' })
+    ).not.toBeInTheDocument();
+    expect(waitingWorker.postMessage).not.toHaveBeenCalled();
+    await waitFor(() => expect(workflowControl).toHaveFocus());
     expect(document.documentElement).not.toHaveAttribute(
       'data-pwa-update-visible'
     );
