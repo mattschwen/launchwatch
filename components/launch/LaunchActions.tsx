@@ -126,6 +126,7 @@ export default function LaunchActions({
 
       {showCalendar && !completed ? (
         <AddToCalendar
+          key={`calendar-${launch.id}`}
           launch={launch}
           variant={compact ? 'compact' : 'button'}
           menuPlacement={compact || detail ? 'top' : 'bottom'}

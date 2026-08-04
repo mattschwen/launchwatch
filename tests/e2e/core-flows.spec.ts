@@ -2311,6 +2311,13 @@ test('watch enriches the selected mission and switches the mission queue', async
   const polarisQueueItem = page
     .getByRole('complementary', { name: 'Next up' })
     .getByRole('button', { name: /Polaris Relay/i });
+  const selectedMission = page.locator('[data-watch-selected-mission]');
+  await selectedMission
+    .getByRole('button', { name: 'Calendar', exact: true })
+    .click();
+  await expect(
+    page.getByRole('group', { name: 'Calendar options' })
+  ).toBeVisible();
   await polarisQueueItem.focus();
   await expect(polarisQueueItem).toBeFocused();
   await polarisQueueItem.press('Enter');
@@ -2320,6 +2327,9 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
   ).toBeVisible();
   await expect(page).toHaveTitle('Polaris Relay | Watch | LaunchWatch');
+  await expect(
+    page.getByRole('group', { name: 'Calendar options' })
+  ).toHaveCount(0);
   await expect(
     page.locator('a[href="/watch?id=spacex-demo-polaris"]')
   ).toHaveCount(0);

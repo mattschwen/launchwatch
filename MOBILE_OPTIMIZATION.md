@@ -177,6 +177,9 @@ The optional expanded map remains a modal dialog. It must:
   reserved surface preserves layout stability and exposes a keyboard-operable
   load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
+- Mission selection also closes any open calendar options before the new
+  mission commands become active, so a transient action cannot silently switch
+  from one canonical launch to another while queue focus stays in place.
 - Browser and history context follow the selected mission as well: Watch uses a
   route-specific title while data is resolving, then names the active mission
   without leaking the transient selection query into its canonical URL or

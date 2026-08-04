@@ -114,4 +114,35 @@ describe('LaunchActions', () => {
       screen.getByRole('group', { name: 'Calendar options' })
     ).toHaveClass('bottom-full', 'left-0');
   });
+
+  it('closes transient calendar options when the canonical mission changes', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <LaunchActions
+        launch={UPCOMING_LAUNCHES[0]}
+        showPrimaryAction={false}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add to calendar' })
+    );
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' })
+    ).toBeVisible();
+
+    rerender(
+      <LaunchActions
+        launch={UPCOMING_LAUNCHES[1]}
+        showPrimaryAction={false}
+      />
+    );
+
+    expect(
+      screen.queryByRole('group', { name: 'Calendar options' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Add to calendar' })
+    ).toBeVisible();
+  });
 });

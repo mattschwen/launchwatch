@@ -294,6 +294,7 @@ export default function LaunchBriefingDrawer({
           ) : null}
           {launch.status === 'upcoming' || launch.status === 'tbd' ? (
             <AddToCalendar
+              key={`calendar-${launch.id}`}
               launch={launch}
               variant="icon"
               menuPlacement="top"
