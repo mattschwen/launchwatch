@@ -22,6 +22,12 @@ function launchDestination(launch: Launch): string {
   return `/launch/${encodeURIComponent(launch.id)}`;
 }
 
+function formatLaunchLeadTime(timeUntilLaunch: number): string {
+  const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
+  if (minutes < 1) return 'less than a minute';
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+}
+
 async function showViaServiceWorker(
   title: string,
   options: NotificationOptions
@@ -52,8 +58,12 @@ export async function showLaunchNotification(
 
   const title = `🚀 ${launch.name}`;
   const destination = launchDestination(launch);
+  const timingMessage =
+    timeUntilLaunch === 'NOW!'
+      ? 'Live now'
+      : `Launching in ${timeUntilLaunch}`;
   const options: NotificationOptions = {
-    body: `Launching in ${timeUntilLaunch}\n${launch.rocket} from ${launch.launchSite}`,
+    body: `${timingMessage}\n${launch.rocket} from ${launch.launchSite}`,
     icon: '/icon-192.png',
     badge: '/badge-96.png',
     tag: `launch-${launch.id}`,
@@ -111,12 +121,14 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
 
     // Notify for launches happening in 10 minutes
     if (timeUntilLaunch > 0 && timeUntilLaunch <= 10 * 60 * 1000) {
-      const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
       const notificationKey = `notified-10m-${launch.id}`;
 
       if (
         !hasBeenNotified(notificationKey) &&
-        (await showLaunchNotification(launch, `${minutes} minutes`))
+        (await showLaunchNotification(
+          launch,
+          formatLaunchLeadTime(timeUntilLaunch)
+        ))
       ) {
         markNotified(notificationKey);
       }
@@ -125,13 +137,15 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
 
     // Notify for launches happening in 1 hour
     if (timeUntilLaunch > 0 && timeUntilLaunch <= 60 * 60 * 1000) {
-      const minutes = Math.floor(timeUntilLaunch / (60 * 1000));
       const notificationKey = `notified-1h-${launch.id}`;
 
       // Check if we've already notified for this launch
       if (
         !hasBeenNotified(notificationKey) &&
-        (await showLaunchNotification(launch, `${minutes} minutes`))
+        (await showLaunchNotification(
+          launch,
+          formatLaunchLeadTime(timeUntilLaunch)
+        ))
       ) {
         markNotified(notificationKey);
       }
