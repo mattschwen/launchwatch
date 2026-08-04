@@ -103,6 +103,25 @@ function request(
   };
 }
 
+async function clickNotification(
+  harness: WorkerHarness,
+  url: string
+): Promise<void> {
+  let navigation: Promise<unknown> | undefined;
+
+  harness.handlers.get('notificationclick')?.({
+    action: 'view',
+    notification: {
+      close: vi.fn(),
+      data: { url },
+    },
+    waitUntil: (value: Promise<unknown>) => {
+      navigation = value;
+    },
+  });
+  await navigation;
+}
+
 describe('service worker lifecycle', () => {
   it('pre-caches only the explicit offline shell and install icons', async () => {
     const { handlers, cache, caches } = createHarness();
@@ -210,5 +229,74 @@ describe('service worker request policy', () => {
 
     await expect(response).resolves.toBe(cachedResponse);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('service worker notification navigation', () => {
+  it('focuses an already-open notification destination', async () => {
+    const harness = createHarness();
+    const { self } = harness;
+    const focus = vi.fn().mockResolvedValue(undefined);
+    self.clients.matchAll.mockResolvedValue([
+      { url: 'https://launchwatch.test/launch/ll2-demo', focus },
+    ]);
+
+    await clickNotification(harness, '/launch/ll2-demo');
+
+    expect(focus).toHaveBeenCalledOnce();
+    expect(self.clients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it('reuses an existing LaunchWatch window for a different mission route', async () => {
+    const harness = createHarness();
+    const { self } = harness;
+    const focus = vi.fn().mockResolvedValue(undefined);
+    const destinationClient = { focus };
+    const navigate = vi.fn().mockResolvedValue(destinationClient);
+    self.clients.matchAll.mockResolvedValue([
+      {
+        url: 'https://launchwatch.test/history',
+        focus: vi.fn(),
+        navigate,
+      },
+    ]);
+
+    await clickNotification(harness, '/launch/ll2-demo');
+
+    expect(navigate).toHaveBeenCalledWith(
+      'https://launchwatch.test/launch/ll2-demo'
+    );
+    expect(focus).toHaveBeenCalledOnce();
+    expect(self.clients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it('opens a new window when no existing LaunchWatch client can be reused', async () => {
+    const harness = createHarness();
+    const { self } = harness;
+    self.clients.matchAll.mockResolvedValue([]);
+
+    await clickNotification(harness, '/launch/ll2-demo');
+
+    expect(self.clients.openWindow).toHaveBeenCalledWith(
+      'https://launchwatch.test/launch/ll2-demo'
+    );
+  });
+
+  it('falls back to a new window when an existing client disappears', async () => {
+    const harness = createHarness();
+    const { self } = harness;
+    self.clients.matchAll.mockResolvedValue([
+      {
+        url: 'https://launchwatch.test/watch',
+        focus: vi.fn(),
+        navigate: vi.fn().mockRejectedValue(new Error('client closed')),
+      },
+    ]);
+
+    await clickNotification(harness, '/launch/ll2-demo');
+
+    expect(self.clients.openWindow).toHaveBeenCalledWith(
+      'https://launchwatch.test/launch/ll2-demo'
+    );
   });
 });

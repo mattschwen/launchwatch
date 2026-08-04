@@ -124,6 +124,43 @@ function safeNotificationUrl(value) {
   }
 }
 
+async function openNotificationDestination(safeUrl) {
+  const clients = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+  const exactClient = clients.find((client) => client.url === safeUrl);
+
+  if (exactClient) {
+    try {
+      return await exactClient.focus();
+    } catch {
+      return self.clients.openWindow(safeUrl);
+    }
+  }
+
+  const reusableClient = clients.find((client) => {
+    try {
+      return new URL(client.url).origin === self.location.origin;
+    } catch {
+      return false;
+    }
+  });
+
+  if (reusableClient && typeof reusableClient.navigate === 'function') {
+    try {
+      const destinationClient = await reusableClient.navigate(safeUrl);
+      if (destinationClient) {
+        return await destinationClient.focus();
+      }
+    } catch {
+      // A client can disappear between discovery and navigation.
+    }
+  }
+
+  return self.clients.openWindow(safeUrl);
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS))
@@ -235,15 +272,5 @@ self.addEventListener('notificationclick', (event) => {
 
   const safeUrl = safeNotificationUrl(event.notification.data?.url);
 
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
-      const existingClient = clients.find((client) => client.url === safeUrl);
-
-      if (existingClient) {
-        return existingClient.focus();
-      }
-
-      return self.clients.openWindow(safeUrl);
-    })
-  );
+  event.waitUntil(openNotificationDestination(safeUrl));
 });
