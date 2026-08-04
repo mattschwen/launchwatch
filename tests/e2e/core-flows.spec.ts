@@ -3429,6 +3429,39 @@ test('watch keeps the schedule usable when detail enrichment fails', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch preserves the settled mission after incomplete detail enrichment', async ({
+  page,
+}) => {
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: { id: 'll2-demo-orbital-dawn' },
+          canonicalId: 'll2-demo-orbital-dawn',
+        }),
+      })
+  );
+  await page.goto('/watch');
+
+  await expect(
+    page.getByRole('heading', { name: 'Stream status unavailable' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
+  await expect(
+    page.getByText(
+      'The mission schedule is available, but detailed provider coverage could not be checked. Search for current mission coverage while we retry.'
+    )
+  ).toBeVisible();
+  await expect(page.getByText('Mission response was incomplete')).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch offers a touch-safe recovery from an unavailable deep link', async ({
   page,
 }) => {

@@ -26,6 +26,7 @@ function HookHarness({
       <p data-testid="enrichment-state">
         {result.enriching ? 'Acquiring detail' : 'Detail settled'}
       </p>
+      <p data-testid="selected-error">{result.error ?? 'No error'}</p>
     </>
   );
 }
@@ -86,6 +87,61 @@ afterEach(() => {
 });
 
 describe('useLaunchById', () => {
+  it('keeps the feed mission when a successful detail response is incomplete', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('?type=all')) {
+          return Promise.resolve(response({ launches: UPCOMING_LAUNCHES }));
+        }
+        return Promise.resolve(
+          response({ launch: { id: UPCOMING_LAUNCHES[0].id } })
+        );
+      })
+    );
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={UPCOMING_LAUNCHES[0].id} />
+      </LaunchDataProvider>
+    );
+
+    await expect(
+      screen.findByText('Mission response was incomplete')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('selected-name')).toHaveTextContent(
+      UPCOMING_LAUNCHES[0].name
+    );
+    expect(screen.getByTestId('selected-stream')).toHaveTextContent('No stream');
+  });
+
+  it('keeps the requested mission when detail data returns another canonical ID', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('?type=all')) {
+          return Promise.resolve(response({ launches: UPCOMING_LAUNCHES }));
+        }
+        return Promise.resolve(response({ launch: UPCOMING_LAUNCHES[1] }));
+      })
+    );
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={UPCOMING_LAUNCHES[0].id} />
+      </LaunchDataProvider>
+    );
+
+    await expect(
+      screen.findByText('Mission response did not match the requested ID')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('selected-name')).toHaveTextContent(
+      UPCOMING_LAUNCHES[0].name
+    );
+  });
+
   it('replaces list data with canonical detail data without hiding the feed fallback', async () => {
     let resolveDetail: ((value: Response) => void) | undefined;
     const detailResponse = new Promise<Response>((resolve) => {
