@@ -2,7 +2,9 @@ import type { MouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   isNavItemActive,
+  RESET_HISTORY_FILTERS_EVENT,
   RESET_SCHEDULE_FILTERS_EVENT,
+  signalHistoryFilterReset,
   signalScheduleFilterReset,
 } from '@/components/layout/navigation';
 
@@ -79,5 +81,30 @@ describe('isNavItemActive', () => {
     expect(resetListener).not.toHaveBeenCalled();
     expect(window.location.search).toBe('?q=Polaris');
     window.removeEventListener(RESET_SCHEDULE_FILTERS_EVENT, resetListener);
+  });
+
+  it('commits a clean same-route History URL before signaling the filter reset', () => {
+    window.history.replaceState({}, '', '/history?q=Return');
+    const resetListener = vi.fn(() => {
+      expect(window.location.pathname).toBe('/history');
+      expect(window.location.search).toBe('');
+    });
+    const preventDefault = vi.fn();
+    window.addEventListener(RESET_HISTORY_FILTERS_EVENT, resetListener, {
+      once: true,
+    });
+
+    signalHistoryFilterReset({
+      defaultPrevented: false,
+      button: 0,
+      metaKey: false,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      preventDefault,
+    } as unknown as MouseEvent<HTMLElement>);
+
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(resetListener).toHaveBeenCalledOnce();
   });
 });

@@ -29,9 +29,11 @@ import {
 import {
   buildHistoryDetailHref,
   DEFAULT_HISTORY_FILTERS,
+  parseHistoryFilters,
   serializeHistoryFilters,
   type HistoryFilters,
 } from '@/lib/history-return';
+import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 
@@ -281,6 +283,7 @@ export default function PastLaunches({
   const searchRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
   const focusSearchAfterRetryRef = useRef(false);
+  const suppressNextUrlWriteRef = useRef(false);
   const id = useId();
 
   useEffect(() => {
@@ -357,6 +360,42 @@ export default function PastLaunches({
     provider !== DEFAULT_HISTORY_FILTERS.provider &&
     !providers.includes(provider);
 
+  useEffect(() => {
+    const applyNavigationFilters = (nextFilters: HistoryFilters): void => {
+      setSearch(nextFilters.search);
+      setProvider(nextFilters.provider);
+      setYear(nextFilters.year);
+      setOutcome(nextFilters.outcome);
+      setFiltersOpen(
+        nextFilters.provider !== DEFAULT_HISTORY_FILTERS.provider ||
+          nextFilters.year !== DEFAULT_HISTORY_FILTERS.year ||
+          nextFilters.outcome !== DEFAULT_HISTORY_FILTERS.outcome,
+      );
+      setVisibleCount(PAGE_SIZE);
+      setExpandedId(null);
+    };
+    const resetHistoryFilters = (): void => {
+      suppressNextUrlWriteRef.current = Boolean(
+        serializeHistoryFilters({ search, provider, year, outcome }),
+      );
+      applyNavigationFilters(DEFAULT_HISTORY_FILTERS);
+    };
+    const restoreHistoryFilters = (): void =>
+      applyNavigationFilters(
+        parseHistoryFilters(new URLSearchParams(window.location.search)),
+      );
+
+    window.addEventListener(RESET_HISTORY_FILTERS_EVENT, resetHistoryFilters);
+    window.addEventListener('popstate', restoreHistoryFilters);
+    return () => {
+      window.removeEventListener(
+        RESET_HISTORY_FILTERS_EVENT,
+        resetHistoryFilters,
+      );
+      window.removeEventListener('popstate', restoreHistoryFilters);
+    };
+  }, [outcome, provider, search, year]);
+
   const filtered = useMemo(() => {
     return launches.filter((launch) => {
       const matchesSearch = matchesLaunchSearch(launch, search);
@@ -389,6 +428,11 @@ export default function PastLaunches({
       : `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
 
   useEffect(() => {
+    if (suppressNextUrlWriteRef.current) {
+      suppressNextUrlWriteRef.current = false;
+      return;
+    }
+
     const query = serializeHistoryFilters({
       search,
       provider,

@@ -7,6 +7,7 @@ import { useLiveContext } from '@/lib/contexts';
 import {
   isNavItemActive,
   PRIMARY_NAV_ITEMS,
+  signalHistoryFilterReset,
   signalScheduleFilterReset,
 } from './navigation';
 
@@ -36,7 +37,11 @@ function MobileNavContents({
               key={link.href}
               href={link.href}
               onClick={
-                link.href === '/' ? signalScheduleFilterReset : undefined
+                link.href === '/'
+                  ? signalScheduleFilterReset
+                  : link.href === '/history'
+                    ? signalHistoryFilterReset
+                    : undefined
               }
               aria-current={isActive ? 'page' : undefined}
               className={`relative mx-0.5 flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] py-2 transition-colors ${

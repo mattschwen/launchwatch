@@ -231,6 +231,8 @@ The optional expanded map remains a modal dialog. It must:
   filters reopen from URL return context and remain visibly counted.
 - Search, provider, launch year, and outcome retain visible field labels as
   values change, so restored or shared archive filters remain self-identifying.
+- Activating the already-current History command resets archive filters and
+  results together, while Back and Forward restore the prior URL-bound context.
 - The archive exposes a labeled clear action only while filters are active, so
   its compact result toolbar never presents a disabled icon-only dead end.
 - Settled archive results keep a labeled, touch-safe refresh action at every

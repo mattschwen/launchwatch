@@ -9,6 +9,7 @@ import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
 import {
   isNavItemActive,
   PRIMARY_NAV_ITEMS,
+  signalHistoryFilterReset,
   signalScheduleFilterReset,
 } from './navigation';
 
@@ -153,7 +154,11 @@ function TopNavContents({
                 key={link.href}
                 href={link.href}
                 onClick={
-                  link.href === '/' ? signalScheduleFilterReset : undefined
+                  link.href === '/'
+                    ? signalScheduleFilterReset
+                    : link.href === '/history'
+                      ? signalHistoryFilterReset
+                      : undefined
                 }
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative flex min-h-11 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${

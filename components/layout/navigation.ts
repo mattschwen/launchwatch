@@ -3,9 +3,13 @@ import type { MouseEvent } from 'react';
 
 export const RESET_SCHEDULE_FILTERS_EVENT =
   'launchwatch:reset-schedule-filters';
+export const RESET_HISTORY_FILTERS_EVENT =
+  'launchwatch:reset-history-filters';
 
-export function signalScheduleFilterReset(
+function signalFilteredRouteReset(
   event: MouseEvent<HTMLElement>,
+  pathname: string,
+  eventName: string,
 ): void {
   if (
     event.defaultPrevented ||
@@ -19,14 +23,26 @@ export function signalScheduleFilterReset(
   }
 
   if (
-    window.location.pathname === '/' &&
+    window.location.pathname === pathname &&
     (window.location.search || window.location.hash)
   ) {
     event.preventDefault();
-    window.history.pushState(window.history.state, '', '/');
+    window.history.pushState(window.history.state, '', pathname);
   }
 
-  window.dispatchEvent(new Event(RESET_SCHEDULE_FILTERS_EVENT));
+  window.dispatchEvent(new Event(eventName));
+}
+
+export function signalScheduleFilterReset(
+  event: MouseEvent<HTMLElement>,
+): void {
+  signalFilteredRouteReset(event, '/', RESET_SCHEDULE_FILTERS_EVENT);
+}
+
+export function signalHistoryFilterReset(
+  event: MouseEvent<HTMLElement>,
+): void {
+  signalFilteredRouteReset(event, '/history', RESET_HISTORY_FILTERS_EVENT);
 }
 
 export interface PrimaryNavItem {

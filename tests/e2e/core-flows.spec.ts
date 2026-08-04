@@ -3927,6 +3927,40 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history navigation clears same-route archive context', async ({ page }) => {
+  await page.goto('/history?q=Return');
+
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
+  const archiveResults = page.getByRole('status', {
+    name: 'Archive results',
+  });
+  await expect(search).toHaveValue('Return');
+  await expect(archiveResults).toHaveText('1 result');
+
+  const navigation = page
+    .getByRole('navigation', { name: 'Primary navigation' })
+    .filter({ visible: true });
+  const historyLink = navigation.getByRole('link', { name: 'History' });
+  await historyLink.focus();
+  await historyLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(search).toHaveValue('');
+  await expect(archiveResults).toHaveText('2 results');
+  await expect(historyLink).toBeFocused();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/history\?q=Return$/);
+  await expect(search).toHaveValue('Return');
+  await expect(archiveResults).toHaveText('1 result');
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(search).toHaveValue('');
+  await expect(archiveResults).toHaveText('2 results');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('schedule and archive search across mission profile data', async ({
   page,
 }) => {
