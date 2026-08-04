@@ -190,6 +190,9 @@ The optional expanded map remains a modal dialog. It must:
   reserved surface preserves layout stability and exposes a keyboard-operable
   load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
+- Activating the already-current Watch command returns to the live-or-next
+  default mission and a clean `/watch` URL; Back and Forward restore the prior
+  mission selection without remounting the Watch room.
 - Keyboard and pointer mission selection synchronizes that same-document URL
   immediately, so rapid queue commands cannot leave the visible mission and
   address bar on different canonical IDs in optimized production builds.

@@ -1101,6 +1101,36 @@ test('watch mission details return to the same selected mission', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch navigation clears same-route mission selection', async ({ page }) => {
+  await page.goto('/watch');
+
+  const selectedMission = page.locator('[data-watch-selected-mission]');
+  await page.getByRole('button', { name: /Polaris Relay/ }).click();
+  await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
+  await expect(selectedMission).toContainText('Polaris Relay');
+
+  const navigation = page
+    .getByRole('navigation', { name: 'Primary navigation' })
+    .filter({ visible: true });
+  const watchLink = navigation.getByRole('link', { name: 'Watch' });
+  await watchLink.focus();
+  await watchLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/watch$/);
+  await expect(selectedMission).toContainText('Orbital Dawn');
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
+  await expect(watchLink).toBeFocused();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
+  await expect(selectedMission).toContainText('Polaris Relay');
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/watch$/);
+  await expect(selectedMission).toContainText('Orbital Dawn');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission details keep their parent surface current in primary navigation', async ({
   page,
 }) => {

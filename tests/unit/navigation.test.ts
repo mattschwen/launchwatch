@@ -4,8 +4,10 @@ import {
   isNavItemActive,
   RESET_HISTORY_FILTERS_EVENT,
   RESET_SCHEDULE_FILTERS_EVENT,
+  RESET_WATCH_SELECTION_EVENT,
   signalHistoryFilterReset,
   signalScheduleFilterReset,
+  signalWatchSelectionReset,
 } from '@/components/layout/navigation';
 
 describe('isNavItemActive', () => {
@@ -81,6 +83,31 @@ describe('isNavItemActive', () => {
     expect(resetListener).not.toHaveBeenCalled();
     expect(window.location.search).toBe('?q=Polaris');
     window.removeEventListener(RESET_SCHEDULE_FILTERS_EVENT, resetListener);
+  });
+
+  it('commits a clean same-route Watch URL before signaling the mission reset', () => {
+    window.history.replaceState({}, '', '/watch?id=spacex-demo-polaris');
+    const resetListener = vi.fn(() => {
+      expect(window.location.pathname).toBe('/watch');
+      expect(window.location.search).toBe('');
+    });
+    const preventDefault = vi.fn();
+    window.addEventListener(RESET_WATCH_SELECTION_EVENT, resetListener, {
+      once: true,
+    });
+
+    signalWatchSelectionReset({
+      defaultPrevented: false,
+      button: 0,
+      metaKey: false,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      preventDefault,
+    } as unknown as MouseEvent<HTMLElement>);
+
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(resetListener).toHaveBeenCalledOnce();
   });
 
   it('commits a clean same-route History URL before signaling the filter reset', () => {

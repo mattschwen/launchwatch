@@ -3,6 +3,8 @@ import type { MouseEvent } from 'react';
 
 export const RESET_SCHEDULE_FILTERS_EVENT =
   'launchwatch:reset-schedule-filters';
+export const RESET_WATCH_SELECTION_EVENT =
+  'launchwatch:reset-watch-selection';
 export const RESET_HISTORY_FILTERS_EVENT =
   'launchwatch:reset-history-filters';
 
@@ -37,6 +39,12 @@ export function signalScheduleFilterReset(
   event: MouseEvent<HTMLElement>,
 ): void {
   signalFilteredRouteReset(event, '/', RESET_SCHEDULE_FILTERS_EVENT);
+}
+
+export function signalWatchSelectionReset(
+  event: MouseEvent<HTMLElement>,
+): void {
+  signalFilteredRouteReset(event, '/watch', RESET_WATCH_SELECTION_EVENT);
 }
 
 export function signalHistoryFilterReset(

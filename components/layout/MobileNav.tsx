@@ -9,6 +9,7 @@ import {
   PRIMARY_NAV_ITEMS,
   signalHistoryFilterReset,
   signalScheduleFilterReset,
+  signalWatchSelectionReset,
 } from './navigation';
 
 function MobileNavContents({
@@ -39,6 +40,8 @@ function MobileNavContents({
               onClick={
                 link.href === '/'
                   ? signalScheduleFilterReset
+                  : link.href === '/watch'
+                    ? signalWatchSelectionReset
                   : link.href === '/history'
                     ? signalHistoryFilterReset
                     : undefined

@@ -11,6 +11,7 @@ import {
   PRIMARY_NAV_ITEMS,
   signalHistoryFilterReset,
   signalScheduleFilterReset,
+  signalWatchSelectionReset,
 } from './navigation';
 
 const FEED_STATUS: Record<
@@ -156,6 +157,8 @@ function TopNavContents({
                 onClick={
                   link.href === '/'
                     ? signalScheduleFilterReset
+                    : link.href === '/watch'
+                      ? signalWatchSelectionReset
                     : link.href === '/history'
                       ? signalHistoryFilterReset
                       : undefined

@@ -28,6 +28,7 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
+import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
@@ -724,6 +725,13 @@ function WatchContent(): React.ReactElement {
   useEffect(() => {
     setSelectedMissionId(requestedId);
   }, [requestedId]);
+
+  useEffect(() => {
+    const resetSelection = (): void => setSelectedMissionId(null);
+    window.addEventListener(RESET_WATCH_SELECTION_EVENT, resetSelection);
+    return () =>
+      window.removeEventListener(RESET_WATCH_SELECTION_EVENT, resetSelection);
+  }, []);
 
   useEffect(() => {
     if (!selectedLaunch) return;
