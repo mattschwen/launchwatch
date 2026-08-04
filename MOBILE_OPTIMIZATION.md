@@ -249,6 +249,8 @@ The optional expanded map remains a modal dialog. It must:
 - At the desktop split-layout boundary, every T-minus cell remains fully contained
   inside the telemetry card; the visual scale adapts to the narrower side rail
   without shrinking the mobile countdown or clipping digits and unit labels.
+- At the 320px reflow boundary, countdown cells reduce only their horizontal
+  inset so every digit and unit label remains complete without shrinking type.
 - Upcoming mission actions form a stable two-by-two command console on narrow
   screens instead of wrapping into uneven single-control rows. The calendar
   menu opens above its trigger and stays clear of persistent navigation.

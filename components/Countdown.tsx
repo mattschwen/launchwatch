@@ -174,7 +174,7 @@ export default function Countdown({
         {units.map((unit) => (
           <span
             key={unit.label}
-            className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] sm:px-2 sm:py-2.5 ${
+            className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] max-[359px]:px-1 sm:px-2 sm:py-2.5 ${
               estimated
                 ? 'border-[color-mix(in_srgb,var(--console-amber)_25%,transparent)] bg-[linear-gradient(180deg,rgba(244,185,95,0.075),rgba(7,11,18,0.72))]'
                 : 'border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))]'

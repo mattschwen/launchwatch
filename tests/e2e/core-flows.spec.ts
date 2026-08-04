@@ -4811,6 +4811,44 @@ test('detail defers intelligence acquisition until the panel approaches the view
   }
 });
 
+test('narrow mission telemetry keeps every countdown label readable', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const telemetry = page.getByRole('region', {
+    name: 'Mission telemetry',
+  });
+  await expect(telemetry).toBeVisible();
+
+  const countdownLayout = await telemetry.locator('time').evaluate((element) => ({
+    display: (() => {
+      const display = element.querySelector<HTMLElement>('.countdown-display');
+      return {
+        clientWidth: display?.clientWidth ?? 0,
+        scrollWidth: display?.scrollWidth ?? 0,
+      };
+    })(),
+    units: [
+      ...element.querySelectorAll<HTMLElement>('.countdown-unit'),
+    ].map((unit) => ({
+      clientWidth: unit.clientWidth,
+      scrollWidth: unit.scrollWidth,
+    })),
+  }));
+
+  expect(countdownLayout.display.scrollWidth).toBeLessThanOrEqual(
+    countdownLayout.display.clientWidth + 1
+  );
+  expect(
+    countdownLayout.units.every(
+      (unit) => unit.scrollWidth <= unit.clientWidth + 1
+    )
+  ).toBe(true);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('upcoming and historical details place one trajectory before mission support', async ({
   page,
 }) => {
