@@ -108,8 +108,8 @@ export default function LaunchList({
       return;
     }
 
-    retryFocusPendingRef.current = false;
     const frame = window.requestAnimationFrame(() => {
+      retryFocusPendingRef.current = false;
       if (error) retainedRetryRef.current?.focus();
       else filterToggleRef.current?.focus();
     });

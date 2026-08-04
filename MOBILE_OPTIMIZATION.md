@@ -96,6 +96,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   as last-known, and keep a touch-safe retry action available without discarding
   the usable schedule. A retained live state is labeled coverage unconfirmed
   instead of continuing to claim that the mission is live now.
+- Schedule recovery holds its pending keyboard-focus handoff through
+  enrichment rerenders, so the restored mission or schedule command receives
+  focus only after its final frame is available.
 - A successful response containing any incomplete mission record is treated as
   a failed refresh, preserving the complete last-known schedule rather than
   replacing it with a partial or unusable mission collection.
@@ -104,8 +107,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
 - Global Home commands clear same-route schedule filters and restore the full
-  mission queue while leaving browser Back and Forward navigation able to
-  recover the prior filtered context.
+  mission queue, commit the clean URL before the client state changes, and
+  leave browser Back and Forward navigation able to recover the prior filtered
+  context without waiting for a server route transition.
 - The featured mission keeps its optional licensed vehicle or mission visual
   behind a touch-safe disclosure after the schedule and mobile trajectory
   disclosure. Opening it must preserve the caption and full-image action
@@ -186,6 +190,9 @@ The optional expanded map remains a modal dialog. It must:
   reserved surface preserves layout stability and exposes a keyboard-operable
   load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
+- Keyboard and pointer mission selection synchronizes that same-document URL
+  immediately, so rapid queue commands cannot leave the visible mission and
+  address bar on different canonical IDs in optimized production builds.
 - Mission selection also closes any open calendar options before the new
   mission commands become active, so a transient action cannot silently switch
   from one canonical launch to another while queue focus stays in place.

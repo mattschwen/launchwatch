@@ -18,6 +18,14 @@ export function signalScheduleFilterReset(
     return;
   }
 
+  if (
+    window.location.pathname === '/' &&
+    (window.location.search || window.location.hash)
+  ) {
+    event.preventDefault();
+    window.history.pushState(window.history.state, '', '/');
+  }
+
   window.dispatchEvent(new Event(RESET_SCHEDULE_FILTERS_EVENT));
 }
 

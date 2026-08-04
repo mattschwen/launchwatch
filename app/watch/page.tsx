@@ -12,7 +12,7 @@ import {
 } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowRight,
@@ -673,7 +673,6 @@ function MissionQueue({
 }
 
 function WatchContent(): React.ReactElement {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedId = searchParams.get('id');
   const {
@@ -686,6 +685,7 @@ function WatchContent(): React.ReactElement {
   } = useLaunches();
   const { liveLaunches } = useLiveLaunches();
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [selectedMissionId, setSelectedMissionId] = useState(requestedId);
   const selectedMissionRef = useRef<HTMLDivElement>(null);
   const missionLinkRef = useRef<HTMLAnchorElement>(null);
   const retryFocusPendingRef = useRef(false);
@@ -700,7 +700,7 @@ function WatchContent(): React.ReactElement {
   }, [launches, liveLaunches]);
 
   const fallbackLaunch = liveLaunches[0] ?? queue[0] ?? null;
-  const selectedId = requestedId ?? fallbackLaunch?.id ?? null;
+  const selectedId = selectedMissionId ?? fallbackLaunch?.id ?? null;
   const selected = useLaunchById(selectedId);
   const requestedUnavailable = Boolean(
     requestedId &&
@@ -720,6 +720,10 @@ function WatchContent(): React.ReactElement {
     retryAt: intelRetryAt,
     retry: retryIntel,
   } = useLaunchIntel(selectedLaunch, Boolean(selectedLaunch));
+
+  useEffect(() => {
+    setSelectedMissionId(requestedId);
+  }, [requestedId]);
 
   useEffect(() => {
     if (!selectedLaunch) return;
@@ -742,15 +746,20 @@ function WatchContent(): React.ReactElement {
   useEffect(() => {
     if (!selectedLaunch || !retryFocusPendingRef.current) return;
 
-    retryFocusPendingRef.current = false;
-    const frame = window.requestAnimationFrame(() =>
-      missionLinkRef.current?.focus(),
-    );
+    const frame = window.requestAnimationFrame(() => {
+      retryFocusPendingRef.current = false;
+      missionLinkRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [selectedLaunch]);
 
   const selectLaunch = (id: string, revealMission = false): void => {
-    router.replace(`/watch?id=${encodeURIComponent(id)}`, { scroll: false });
+    setSelectedMissionId(id);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `/watch?id=${encodeURIComponent(id)}`,
+    );
 
     if (
       revealMission &&

@@ -57,10 +57,10 @@ export default function HeroSection({
       return;
     }
 
-    retryFocusPendingRef.current = false;
-    const frame = window.requestAnimationFrame(() =>
-      missionLinkRef.current?.focus(),
-    );
+    const frame = window.requestAnimationFrame(() => {
+      retryFocusPendingRef.current = false;
+      missionLinkRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [activeLaunch, refreshing]);
 
