@@ -297,6 +297,33 @@ describe('PastLaunches', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('reports an incomplete initial response instead of a false empty archive', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ meta: FEED_META }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'The archive could not be synchronized.',
+      })
+    ).toBeVisible();
+    expect(
+      screen.getByText('Launch archive response was incomplete')
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', {
+        name: 'No archived missions are available.',
+      })
+    ).not.toBeInTheDocument();
+  });
+
   it('announces pagination progress and preserves focus after the final batch', async () => {
     const user = userEvent.setup();
     const launches = Array.from({ length: 21 }, (_, index) => {
@@ -401,6 +428,35 @@ describe('PastLaunches', () => {
     expect(refresh).toHaveAccessibleName('Refresh archive');
     expect(refresh).toHaveFocus();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('retains settled records when a successful refresh omits its launch collection', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(successfulResponse)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ meta: FEED_META }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Refresh archive' }));
+
+    expect(
+      await screen.findByText('Archive refresh failed.', { exact: false })
+    ).toBeVisible();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(
+      screen.queryByRole('heading', {
+        name: 'No archived missions are available.',
+      })
+    ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('keeps partial provider guidance on the single archive refresh command', async () => {

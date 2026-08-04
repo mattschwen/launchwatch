@@ -4284,6 +4284,45 @@ test('history refresh retains settled records through failure and recovery', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history rejects incomplete successful refreshes without erasing settled records', async ({
+  page,
+}) => {
+  let incompleteResponseEnabled = false;
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        incompleteResponseEnabled
+          ? { meta: FEED_META }
+          : { launches: HISTORICAL_LAUNCHES, meta: FEED_META }
+      ),
+    })
+  );
+
+  await page.goto('/history');
+  const mission = page.getByText('Demo Return Flight');
+  await expect(mission).toBeVisible();
+
+  const refresh = page.getByRole('button', { name: 'Refresh archive' });
+  await refresh.focus();
+  incompleteResponseEnabled = true;
+  await refresh.press('Enter');
+
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Archive refresh failed.' })
+  ).toBeVisible();
+  await expect(mission).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'No archived missions are available.',
+    })
+  ).toHaveCount(0);
+  await expect(refresh).toBeFocused();
+  expect((await refresh.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history partial provider state keeps one recovery command', async ({
   page,
 }) => {

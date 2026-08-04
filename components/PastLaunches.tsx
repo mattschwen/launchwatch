@@ -40,9 +40,10 @@ const PAGE_SIZE = 10;
 function readHistoryPayload(payload: unknown): {
   launches: Launch[];
   meta: LaunchFeedMeta | null;
+  valid: boolean;
 } {
   if (!payload || typeof payload !== 'object') {
-    return { launches: [], meta: null };
+    return { launches: [], meta: null, valid: false };
   }
   const record = payload as Record<string, unknown>;
   const nested =
@@ -56,9 +57,14 @@ function readHistoryPayload(payload: unknown): {
       : Array.isArray(nested?.launches)
         ? (nested.launches as Launch[])
         : [];
+  const valid =
+    Array.isArray(record.launches) ||
+    Array.isArray(record.data) ||
+    Array.isArray(nested?.launches);
 
   return {
     launches,
+    valid,
     meta:
       record.meta && typeof record.meta === 'object'
         ? (record.meta as LaunchFeedMeta)
@@ -302,6 +308,9 @@ export default function PastLaunches({
         }
 
         const result = readHistoryPayload(payload);
+        if (!result.valid) {
+          throw new Error('Launch archive response was incomplete');
+        }
         setLaunches(result.launches);
         setMeta(result.meta);
         setError(null);
