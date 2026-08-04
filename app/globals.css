@@ -1528,6 +1528,18 @@ select:focus {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Short landscape viewports already expose feed health and UTC in the top
+   navigation. Give the constrained height back to primary mission content. */
+@media (min-width: 48rem) and (max-height: 31rem) {
+  .app-shell {
+    padding-bottom: 0;
+  }
+
+  .system-status-bar {
+    display: none;
+  }
+}
+
 .skip-link {
   transform: translateY(-5rem);
   transition: transform 180ms var(--ease-out-quart);

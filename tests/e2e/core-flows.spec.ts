@@ -278,6 +278,56 @@ test('route content hands off directly to the protected footer', async ({
   }
 });
 
+test('short landscape keeps mission telemetry clear of duplicate bottom chrome', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(
+    hero.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('complementary', { name: 'Mission status' })
+  ).toBeHidden();
+  await expect(
+    page.locator('header').getByRole('navigation', {
+      name: 'Primary navigation',
+    })
+  ).toBeVisible();
+
+  const constrainedLayout = await page.evaluate(() => ({
+    shellPaddingBottom: getComputedStyle(
+      document.querySelector<HTMLElement>('.app-shell')!
+    ).paddingBottom,
+    dateBottom: document
+      .querySelector<HTMLElement>(
+        'section[aria-labelledby="featured-launch-title"] .compact-hero-telemetry > div:first-child'
+      )
+      ?.getBoundingClientRect().bottom,
+  }));
+  expect(constrainedLayout.shellPaddingBottom).toBe('0px');
+  expect(constrainedLayout.dateBottom).toBeDefined();
+  expect(constrainedLayout.dateBottom!).toBeLessThanOrEqual(390);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.setViewportSize({ width: 1180, height: 820 });
+  const statusBar = page.getByRole('complementary', {
+    name: 'Mission status',
+  });
+  await expect(statusBar).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('.app-shell').evaluate((element) =>
+        getComputedStyle(element).paddingBottom
+      )
+    )
+    .toBe('44px');
+});
+
 test('brand wordmark stays legible and tappable in the header', async ({ page }) => {
   await page.goto('/');
 

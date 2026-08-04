@@ -21,7 +21,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   condition and a persistent link to the live or next mission. If a refresh
   fails after a successful load, the link remains available as an amber last-known
   mission; retained live state is labeled unconfirmed instead of presented as
-  current coverage.
+  current coverage. Short landscape viewports keep the equivalent feed condition
+  and UTC readout in the top navigation, and release the duplicate bottom bar so
+  it cannot cover primary mission telemetry.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
 - Route content hands off directly to the footer instead of reserving a second
   fixed-navigation gap. The footer owns the bottom-navigation and safe-area

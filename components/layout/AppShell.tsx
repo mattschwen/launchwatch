@@ -14,7 +14,7 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps): React.ReactElement {
   return (
     <LiveProvider>
-      <div className="relative z-10 flex min-h-screen flex-col md:pb-11">
+      <div className="app-shell relative z-10 flex min-h-screen flex-col md:pb-11">
         <a
           href="#main-content"
           className="skip-link fixed left-4 top-3 z-[100] inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-[var(--shadow-elevated)]"
