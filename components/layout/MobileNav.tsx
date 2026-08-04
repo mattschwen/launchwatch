@@ -4,7 +4,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useLiveContext } from '@/lib/contexts';
-import { isNavItemActive, PRIMARY_NAV_ITEMS } from './navigation';
+import {
+  isNavItemActive,
+  PRIMARY_NAV_ITEMS,
+  signalScheduleFilterReset,
+} from './navigation';
 
 function MobileNavContents({
   detailSource,
@@ -31,6 +35,9 @@ function MobileNavContents({
             <Link
               key={link.href}
               href={link.href}
+              onClick={
+                link.href === '/' ? signalScheduleFilterReset : undefined
+              }
               aria-current={isActive ? 'page' : undefined}
               className={`relative mx-0.5 flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] py-2 transition-colors ${
                 isActive

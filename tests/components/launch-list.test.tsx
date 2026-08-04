@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import LaunchList from '@/components/LaunchList';
@@ -75,6 +75,42 @@ describe('LaunchList', () => {
       name: 'Filter, 2 active',
     });
     expect(collapsedFilters).toHaveTextContent('2');
+    expect(
+      screen.queryByRole('searchbox', { name: 'Search launches' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reconciles filters when history navigation changes the URL context', () => {
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(
+      <LaunchList
+        initialFilters={{
+          search: 'Polaris',
+          provider: 'all',
+          status: 'all',
+          sortBy: 'date-asc',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('1 mission');
+
+    window.history.pushState(null, '', '/');
+    act(() => window.dispatchEvent(new PopStateEvent('popstate')));
+
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('2 missions');
     expect(
       screen.queryByRole('searchbox', { name: 'Search launches' }),
     ).not.toBeInTheDocument();

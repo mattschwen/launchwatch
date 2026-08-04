@@ -20,8 +20,10 @@ import FilterBar, {
 } from './FilterBar';
 import {
   buildScheduleDetailHref,
+  parseScheduleFilters,
   serializeScheduleFilters,
 } from '@/lib/schedule-return';
+import { RESET_SCHEDULE_FILTERS_EVENT } from './layout/navigation';
 
 const INITIAL_VISIBLE_COUNT = 5;
 
@@ -46,6 +48,7 @@ export default function LaunchList({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const retryFocusPendingRef = useRef(false);
   const retryScrollFrameRef = useRef<number | null>(null);
+  const suppressNextUrlWriteRef = useRef(false);
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
@@ -67,6 +70,37 @@ export default function LaunchList({
   );
 
   useEffect(() => {
+    const applyNavigationFilters = (nextFilters: FilterOptions): void => {
+      setFilters({ ...nextFilters });
+      setFilterSeed({ ...nextFilters });
+      setFiltersOpen(Boolean(serializeScheduleFilters(nextFilters)));
+      setVisibleCount(INITIAL_VISIBLE_COUNT);
+      setFilterResetKey((value) => value + 1);
+    };
+    const resetScheduleFilters = (): void => {
+      suppressNextUrlWriteRef.current = true;
+      applyNavigationFilters(DEFAULT_FILTERS);
+    };
+    const restoreScheduleFilters = (): void =>
+      applyNavigationFilters(
+        parseScheduleFilters(new URLSearchParams(window.location.search)),
+      );
+
+    window.addEventListener(
+      RESET_SCHEDULE_FILTERS_EVENT,
+      resetScheduleFilters,
+    );
+    window.addEventListener('popstate', restoreScheduleFilters);
+    return () => {
+      window.removeEventListener(
+        RESET_SCHEDULE_FILTERS_EVENT,
+        resetScheduleFilters,
+      );
+      window.removeEventListener('popstate', restoreScheduleFilters);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!retryFocusPendingRef.current || refreshing) return;
 
     if (launches.length === 0) {
@@ -84,6 +118,11 @@ export default function LaunchList({
 
   useEffect(() => {
     onFiltersChange?.(filters);
+    if (suppressNextUrlWriteRef.current) {
+      suppressNextUrlWriteRef.current = false;
+      return;
+    }
+
     const query = serializeScheduleFilters(filters);
     const nextUrl = query ? `/?${query}` : '/';
     const currentUrl = `${window.location.pathname}${window.location.search}`;

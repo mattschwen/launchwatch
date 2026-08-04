@@ -6,7 +6,11 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
 import { useLaunchData, useLiveContext } from '@/lib/contexts';
 import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
-import { isNavItemActive, PRIMARY_NAV_ITEMS } from './navigation';
+import {
+  isNavItemActive,
+  PRIMARY_NAV_ITEMS,
+  signalScheduleFilterReset,
+} from './navigation';
 
 const FEED_STATUS: Record<
   FeedHealth,
@@ -125,6 +129,7 @@ function TopNavContents({
         <Link
           href="/"
           aria-label="LaunchWatch home"
+          onClick={signalScheduleFilterReset}
           className="group flex min-h-11 flex-shrink-0 items-center"
         >
           <span className="display-title text-[1.25rem] tracking-[-0.035em] text-[var(--text-primary)] transition-colors group-hover:text-white sm:text-[1.3rem]">
@@ -147,6 +152,9 @@ function TopNavContents({
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={
+                  link.href === '/' ? signalScheduleFilterReset : undefined
+                }
                 aria-current={isActive ? 'page' : undefined}
                 className={`relative flex min-h-11 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
                   isActive

@@ -103,6 +103,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
+- Global Home commands clear same-route schedule filters and restore the full
+  mission queue while leaving browser Back and Forward navigation able to
+  recover the prior filtered context.
 - The featured mission keeps its optional licensed vehicle or mission visual
   behind a touch-safe disclosure after the schedule and mobile trajectory
   disclosure. Opening it must preserve the caption and full-image action

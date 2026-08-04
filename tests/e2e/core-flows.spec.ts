@@ -1987,6 +1987,46 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home brand navigation clears same-route schedule context', async ({
+  page,
+}) => {
+  await page.goto('/?q=Polaris');
+
+  const resultStatus = page.getByRole('status', {
+    name: 'Upcoming launch results',
+  });
+  await expect(resultStatus).toHaveText('1 mission');
+  await expect(
+    page.getByRole('searchbox', { name: 'Search launches' }),
+  ).toHaveValue('Polaris');
+
+  const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
+  await homeLink.focus();
+  await homeLink.press('Enter');
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(resultStatus).toHaveText('2 missions');
+  await expect(
+    page.getByRole('searchbox', { name: 'Search launches' }),
+  ).toHaveCount(0);
+  await expect(homeLink).toBeFocused();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\?q=Polaris$/);
+  await expect(resultStatus).toHaveText('1 mission');
+  await expect(
+    page.getByRole('searchbox', { name: 'Search launches' }),
+  ).toHaveValue('Polaris');
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(resultStatus).toHaveText('2 missions');
+  await expect(
+    page.getByRole('searchbox', { name: 'Search launches' }),
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home reveals a large mission queue in honest, touch-safe batches', async ({
   page,
 }) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Globe2 } from 'lucide-react';
@@ -56,10 +56,7 @@ function TrajectoryLoadingState(): React.ReactElement {
 
 function HomeWithReturnContext(): React.ReactElement {
   const searchParams = useSearchParams();
-  const initialFilters = useMemo(
-    () => parseScheduleFilters(searchParams),
-    [searchParams],
-  );
+  const initialFilters = parseScheduleFilters(searchParams);
 
   return <HomeExperience initialFilters={initialFilters} />;
 }
