@@ -232,7 +232,11 @@ function readSpaceXDocs(payload: unknown): SpaceXLaunch[] {
     throw new ProviderFetchError('SpaceX returned an invalid launches payload');
   }
 
-  return payload.docs.filter(isSpaceXLaunch);
+  if (!payload.docs.every(isSpaceXLaunch)) {
+    throw new ProviderFetchError('SpaceX returned an invalid launch record');
+  }
+
+  return payload.docs;
 }
 
 function readLL2Results(payload: unknown): LL2Launch[] {
@@ -240,7 +244,13 @@ function readLL2Results(payload: unknown): LL2Launch[] {
     throw new ProviderFetchError('Launch Library 2 returned an invalid launches payload');
   }
 
-  return payload.results.filter(isLL2Launch);
+  if (!payload.results.every(isLL2Launch)) {
+    throw new ProviderFetchError(
+      'Launch Library 2 returned an invalid launch record',
+    );
+  }
+
+  return payload.results;
 }
 
 function getLL2Headers(): HeadersInit {

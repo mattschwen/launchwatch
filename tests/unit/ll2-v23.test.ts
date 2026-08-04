@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  getAllUpcomingLaunchesResult,
   getLL2UpcomingLaunches,
   getLaunchByIdResult,
   normalizeLL2Launch,
@@ -188,6 +189,27 @@ describe('Launch Library 2.3 adapter', () => {
       expect.objectContaining({
         headers: {},
       }),
+    );
+  });
+
+  it('reports a malformed provider list as degraded instead of a healthy empty schedule', async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      jsonResponse(
+        url.includes('api.spacexdata.com')
+          ? { docs: [] }
+          : { count: 1, results: [{ id: 'incomplete-launch' }] },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getAllUpcomingLaunchesResult();
+
+    expect(result.data).toEqual([]);
+    expect(result.meta.partial).toBe(true);
+    expect(result.meta.providers.spacex.state).toBe('ok');
+    expect(result.meta.providers.ll2.state).toBe('error');
+    expect(result.meta.providers.ll2.error).toBe(
+      'Launch Library 2 returned an invalid launch record',
     );
   });
 
