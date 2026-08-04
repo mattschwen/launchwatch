@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { Launch, LaunchIntel, RocketFact } from './types';
 import { useLaunchData } from './contexts';
+import { isLaunch } from './launch-contract';
 
 const clockListeners = new Set<() => void>();
 let clockInterval: ReturnType<typeof setInterval> | null = null;
@@ -95,39 +96,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
-}
-
-function isLaunch(value: unknown): value is Launch {
-  if (!isRecord(value)) return false;
-
-  const statuses = ['upcoming', 'live', 'success', 'failure', 'tbd'];
-  const sources = ['spacex', 'll2'];
-  const timeline = value.timeline;
-
-  return (
-    typeof value.id === 'string' &&
-    typeof value.name === 'string' &&
-    typeof value.date === 'string' &&
-    typeof value.dateUnix === 'number' &&
-    Number.isFinite(value.dateUnix) &&
-    typeof value.rocket === 'string' &&
-    typeof value.launchSite === 'string' &&
-    statuses.includes(String(value.status)) &&
-    isNullableString(value.livestream) &&
-    isNullableString(value.description) &&
-    typeof value.isLive === 'boolean' &&
-    sources.includes(String(value.source)) &&
-    (timeline === undefined ||
-      timeline === null ||
-      (Array.isArray(timeline) &&
-        timeline.every(
-          (event) =>
-            isRecord(event) &&
-            typeof event.type === 'string' &&
-            typeof event.relativeTime === 'string' &&
-            typeof event.description === 'string',
-        )))
-  );
 }
 
 function isLaunchIntel(value: unknown): value is LaunchIntel {

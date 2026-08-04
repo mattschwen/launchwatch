@@ -902,6 +902,44 @@ test('home rejects incomplete successful refreshes without erasing retained miss
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home rejects incomplete mission records without erasing retained missions', async ({
+  page,
+}) => {
+  let incompleteRecordEnabled = false;
+  await page.route('**/api/launches?type=all', (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: incompleteRecordEnabled
+          ? [{ id: UPCOMING_LAUNCHES[0].id }]
+          : UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: UPCOMING_LAUNCHES[0].name })
+  ).toBeVisible();
+
+  incompleteRecordEnabled = true;
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(hero).toContainText(UPCOMING_LAUNCHES[0].name);
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Partial feed' })
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Upcoming launches' }))
+    .toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('desktop ticker keeps the last known mission after refresh failure', async ({
   page,
 }) => {

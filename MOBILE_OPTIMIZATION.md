@@ -96,6 +96,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   as last-known, and keep a touch-safe retry action available without discarding
   the usable schedule. A retained live state is labeled coverage unconfirmed
   instead of continuing to claim that the mission is live now.
+- A successful response containing any incomplete mission record is treated as
+  a failed refresh, preserving the complete last-known schedule rather than
+  replacing it with a partial or unusable mission collection.
 - A restored provider filter stays visibly selected and is labeled as absent
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return

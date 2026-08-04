@@ -12,6 +12,7 @@ import {
 } from 'react';
 import type { Launch } from './types';
 import { checkAndNotify, clearOldNotificationFlags } from './notifications';
+import { isLaunch } from './launch-contract';
 
 export interface LaunchFeedMeta {
   generatedAt?: string;
@@ -58,9 +59,10 @@ function readLaunches(payload: unknown): {
       ? (nestedData.launches as Launch[])
       : [];
   const valid =
-    Array.isArray(record.launches) ||
-    Array.isArray(record.data) ||
-    Array.isArray(nestedData?.launches);
+    (Array.isArray(record.launches) ||
+      Array.isArray(record.data) ||
+      Array.isArray(nestedData?.launches)) &&
+    launches.every(isLaunch);
 
   const meta =
     record.meta && typeof record.meta === 'object'
