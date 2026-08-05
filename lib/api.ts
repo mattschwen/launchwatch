@@ -760,8 +760,12 @@ function inferProvider(launch: LL2Launch): { name: string; logo: string | null }
   return { name: 'Unknown', logo: null };
 }
 
-function mapLaunchStatus(abbrev: string): Launch['status'] {
-  switch (abbrev) {
+function mapLaunchStatus(
+  status: Pick<LL2Launch['status'], 'id' | 'abbrev'>,
+): Launch['status'] {
+  if (status.id === 9 || status.abbrev === 'Deployed') return 'success';
+
+  switch (status.abbrev) {
     case 'Go':
       return 'upcoming';
     case 'Success':
@@ -932,7 +936,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
   }));
   const latitude = coordinate(launch.pad.latitude);
   const longitude = coordinate(launch.pad.longitude);
-  const sourceStatus = mapLaunchStatus(launch.status.abbrev);
+  const sourceStatus = mapLaunchStatus(launch.status);
   const isLive =
     Boolean(launch.webcast_live) ||
     sourceStatus === 'live' ||

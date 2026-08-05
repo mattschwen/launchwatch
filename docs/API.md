@@ -127,7 +127,8 @@ CDN policy: 2 minutes fresh, 4 minutes stale-while-revalidate.
 Returns completed launches across connected providers in reverse chronological
 order. In-flight provider records are excluded even after their reported T-0
 has passed, and non-terminal records remain excluded while a valid provider
-launch window is still open.
+launch window is still open. Launch Library 2's `Deployed` status is normalized
+to `success` because the provider defines it as confirmed payload deployment.
 
 - `limit` is optional and defaults to `50`.
 - Valid values are integers from `1` through `100`.

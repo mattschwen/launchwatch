@@ -93,6 +93,8 @@ Watch, intelligence, calendar, or notification references.
   mistaken for exact launch times;
 - keeps non-terminal missions scheduled through a valid provider launch-window
   end, preventing an open-window launch from entering History at nominal T-0;
+- maps Launch Library 2's confirmed payload-deployment state to the shared
+  successful terminal outcome instead of leaving the mission unresolved;
 - ranks detailed provider broadcasts by source trust, live state, and provider
   priority so official coverage remains the primary mission action;
 - excludes non-live broadcasts whose declared end precedes the launch window,

@@ -193,6 +193,23 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('normalizes confirmed payload deployment as a successful outcome', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      status: {
+        id: 9,
+        name: 'Payload Deployed',
+        abbrev: 'Deployed',
+        description: 'Deployment of the payload(s) has been confirmed.',
+      },
+    });
+
+    expect(normalized).toMatchObject({
+      status: 'success',
+      statusName: 'Payload Deployed',
+    });
+  });
+
   it('accepts a normal-mode list payload and requests the supported list mode', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({ count: 1, next: null, previous: null, results: [NORMAL_LIST_LAUNCH] }),

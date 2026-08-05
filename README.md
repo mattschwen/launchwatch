@@ -143,6 +143,8 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   alerts remain pending until T-0 is precise enough.
 - Non-terminal missions remain in the active schedule through a valid provider
   launch-window end instead of moving to History at the nominal target instant.
+- Launch Library 2's confirmed payload-deployment state is normalized as a
+  successful terminal outcome, so completed missions do not appear unresolved.
 - Provider broadcasts whose declared end precedes the launch window are not
   promoted as mission coverage; the UI uses its honest standby/search state
   until a temporally relevant stream is available.
