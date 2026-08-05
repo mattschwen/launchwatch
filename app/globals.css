@@ -1097,16 +1097,25 @@ body::before {
 .stream-surface {
   position: relative;
   overflow: hidden;
-  border-color: color-mix(in srgb, var(--console-magenta) 34%, var(--border-subtle));
+  --stream-signal: var(--panel-signal, var(--console-cyan));
+  border-color: color-mix(in srgb, var(--stream-signal) 34%, var(--border-subtle));
   background:
-    radial-gradient(circle at 50% 20%, rgba(255, 79, 216, 0.09), transparent 38%),
+    radial-gradient(
+      circle at 50% 20%,
+      color-mix(in srgb, var(--stream-signal) 9%, transparent),
+      transparent 38%
+    ),
     linear-gradient(rgba(88, 230, 255, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 79, 216, 0.026) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--stream-signal) 2.6%, transparent) 1px,
+      transparent 1px
+    ),
     var(--surface-base);
   background-size: auto, 34px 34px, 34px 34px, auto;
   box-shadow:
     var(--shadow-panel),
-    inset 0 0 64px rgba(255, 79, 216, 0.035);
+    inset 0 0 64px color-mix(in srgb, var(--stream-signal) 3.5%, transparent);
 }
 
 .video-signal-frame {

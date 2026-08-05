@@ -2603,6 +2603,27 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(
     scheduledCoverage.getByRole('link', { name: 'Open provider stream' })
   ).toHaveClass(/action-button-secondary/);
+  const scheduledSurface = scheduledCoverage.locator('.stream-surface');
+  await expect(scheduledSurface).toHaveClass(/signal-cold/);
+  const scheduledSurfaceColors = await scheduledSurface.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    const probe = document.createElement('span');
+    probe.style.color = styles.getPropertyValue('--console-magenta').trim();
+    document.body.append(probe);
+    const liveSignal = getComputedStyle(probe).color
+      .match(/\d+/g)
+      ?.slice(0, 3)
+      .join(', ');
+    probe.remove();
+    return {
+      background: styles.backgroundImage,
+      liveSignal,
+    };
+  });
+  expect(scheduledSurfaceColors.liveSignal).toBeTruthy();
+  expect(scheduledSurfaceColors.background).not.toContain(
+    scheduledSurfaceColors.liveSignal!
+  );
   await expect(scheduledCoverage.locator('.video-signal-frame')).toHaveCount(0);
   await expect(
     page.locator('a[href="/watch?id=ll2-demo-orbital-dawn"]')

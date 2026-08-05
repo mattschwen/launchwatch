@@ -413,7 +413,7 @@ function WatchStage({
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,79,216,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
+        className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,196,92,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
       />
       <Rocket
         aria-hidden="true"
@@ -437,7 +437,7 @@ function WatchStage({
         ) : (
           <Radio
             aria-hidden="true"
-            className="mx-auto text-[var(--console-magenta)]"
+            className="mx-auto text-[var(--console-amber)]"
             size={34}
           />
         )}

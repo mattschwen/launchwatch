@@ -24,7 +24,7 @@ export default function VideoPlayer({
   if (!url) {
     return (
       <div
-        className={`stream-surface flex aspect-video w-full flex-col items-center justify-center gap-3 ${className}`}
+        className={`stream-surface signal-warm flex aspect-video w-full flex-col items-center justify-center gap-3 ${className}`}
       >
         <Tv
           aria-hidden="true"
@@ -42,7 +42,9 @@ export default function VideoPlayer({
   if (!videoId) {
     return (
       <div
-        className={`stream-surface flex aspect-video w-full flex-col items-center justify-center gap-4 px-5 text-center ${className}`}
+        className={`stream-surface ${
+          live ? 'signal-live' : 'signal-cold'
+        } flex aspect-video w-full flex-col items-center justify-center gap-4 px-5 text-center ${className}`}
       >
         <Tv
           aria-hidden="true"
@@ -81,8 +83,8 @@ export default function VideoPlayer({
       <div
         className={`stream-surface relative flex aspect-video w-full items-center justify-center overflow-hidden ${
           live
-            ? 'bg-[radial-gradient(circle_at_center,rgba(255,79,216,0.1),transparent_34%),var(--surface-base)]'
-            : 'bg-[radial-gradient(circle_at_center,rgba(88,230,255,0.08),transparent_34%),var(--surface-base)]'
+            ? 'signal-live'
+            : 'signal-cold'
         } ${className}`}
       >
         <div
