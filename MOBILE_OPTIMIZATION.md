@@ -137,6 +137,11 @@ The optional expanded map remains a modal dialog. It must:
 ## Watch
 
 - Video preserves its aspect ratio without forcing horizontal overflow.
+- If a refresh fails after Watch has loaded missions, the room keeps the
+  last-known queue and coverage link available but replaces every live claim,
+  pulse, and autoplay treatment with an amber unconfirmed state. The retained
+  notice exposes a touch-safe retry, holds its focus while retrying, and moves
+  focus to the recovered mission when the feed is current again.
 - When no verified stream is available, the route presents the next mission,
   countdown, provider fallback, and one eligible mission visual instead of an
   empty stage. A verified stream remains the primary visual.

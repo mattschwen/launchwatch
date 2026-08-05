@@ -6,6 +6,7 @@ interface StatusBadgeProps {
   status: Launch['status'];
   statusName?: string | null;
   className?: string;
+  unconfirmed?: boolean;
 }
 
 const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green' | 'magenta' | 'red' | 'amber'; textClass: string; bgClass: string; borderClass: string; spinning: boolean }> = {
@@ -51,13 +52,24 @@ const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green
   },
 };
 
-export default function StatusBadge({ status, statusName, className = '' }: StatusBadgeProps): React.ReactElement {
+export default function StatusBadge({
+  status,
+  statusName,
+  className = '',
+  unconfirmed = false,
+}: StatusBadgeProps): React.ReactElement {
   const criticalOverride =
     status !== 'live' && isCriticalLaunchStatusName(statusName);
-  const config = criticalOverride
+  const config = unconfirmed
+    ? statusConfig.tbd
+    : criticalOverride
     ? statusConfig.failure
     : statusConfig[status];
-  const displayLabel = statusName && status !== 'live' ? statusName.toUpperCase() : config.label;
+  const displayLabel = unconfirmed
+    ? 'STATUS UNCONFIRMED'
+    : statusName && status !== 'live'
+      ? statusName.toUpperCase()
+      : config.label;
 
   return (
     <span

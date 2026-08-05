@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LaunchDataProvider } from '@/lib/contexts';
+import { LaunchDataProvider, useLiveContext } from '@/lib/contexts';
 import { useLaunchById, useLaunchIntel, useLaunches } from '@/lib/hooks';
 import { LAUNCH_INTEL, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
@@ -44,6 +44,7 @@ function response(body: unknown): Response {
 
 function FeedRetryHarness(): React.ReactElement {
   const { launches, loading, refreshing, error, refresh } = useLaunches();
+  const { liveCount } = useLiveContext();
 
   return (
     <>
@@ -60,6 +61,7 @@ function FeedRetryHarness(): React.ReactElement {
               : `${launches.length} launches`}
       </p>
       <p data-testid="feed-count">{launches.length}</p>
+      <p data-testid="live-count">{liveCount}</p>
     </>
   );
 }
@@ -296,6 +298,43 @@ describe('useLaunchById', () => {
 });
 
 describe('LaunchDataProvider retries', () => {
+  it('stops claiming retained live state after a refresh failure', async () => {
+    const user = userEvent.setup();
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'Live',
+      isLive: true,
+      webcastLive: true,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ launches: [liveLaunch] }))
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'Provider maintenance' }),
+      } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('live-count')).toHaveTextContent('1')
+    );
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await expect(
+      screen.findByText('Provider maintenance')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('feed-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('live-count')).toHaveTextContent('0');
+  });
+
   it('reports a retry after the initial request fails and suppresses duplicates', async () => {
     const user = userEvent.setup();
     let resolveRetry: ((value: Response) => void) | undefined;

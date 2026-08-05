@@ -207,8 +207,11 @@ interface LiveContextValue {
 }
 
 export function useLiveContext(): LiveContextValue {
-  const { launches } = useLaunchData();
-  const liveCount = launches.filter((launch) => launch.isLive).length;
+  const { launches, error, meta } = useLaunchData();
+  const feedCanConfirmLiveState = !error && !meta?.stale;
+  const liveCount = feedCanConfirmLiveState
+    ? launches.filter((launch) => launch.isLive).length
+    : 0;
   return { hasLiveLaunches: liveCount > 0, liveCount };
 }
 

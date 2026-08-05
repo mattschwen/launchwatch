@@ -3319,6 +3319,125 @@ test('watch schedule retry reports progress and restores keyboard focus', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch marks retained live coverage unconfirmed until refresh recovers', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const liveLaunch = {
+    ...UPCOMING_LAUNCHES[1],
+    status: 'live' as const,
+    statusName: 'Live',
+    isLive: true,
+    webcastLive: true,
+  };
+  let feedRequests = 0;
+  let recoverFeed = false;
+
+  await page.unroute('**/api/launches**');
+  await page.route('**/api/launches**', async (route) => {
+    const url = new URL(route.request().url());
+
+    if (url.pathname === '/api/launches') {
+      feedRequests += 1;
+      if (feedRequests > 1 && !recoverFeed) {
+        await route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Provider maintenance' }),
+        });
+        return;
+      }
+
+      if (recoverFeed) {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launches: [liveLaunch, UPCOMING_LAUNCHES[0]],
+          meta: FEED_META,
+        }),
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch:
+          decodeURIComponent(url.pathname.replace('/api/launches/', '')) ===
+          liveLaunch.id
+            ? liveLaunch
+            : UPCOMING_LAUNCHES[0],
+        canonicalId: decodeURIComponent(
+          url.pathname.replace('/api/launches/', ''),
+        ),
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/watch');
+  await expect(
+    page.getByRole('region', { name: 'Mission coverage live' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  const retainedNotice = page.getByRole('status').filter({
+    hasText:
+      'Refresh failed. Showing the last-known mission schedule. Live coverage is unconfirmed until the feed recovers.',
+  });
+  await expect(retainedNotice).toBeVisible();
+  const unconfirmedCoverage = page.getByRole('region', {
+    name: 'Mission coverage status unconfirmed',
+  });
+  await expect(unconfirmedCoverage).toBeVisible();
+  await expect(unconfirmedCoverage.locator('iframe')).toHaveCount(0);
+  await expect(page.getByText('Schedule status unconfirmed')).toBeVisible();
+  await expect(page.locator('.route-masthead')).toHaveClass(/signal-warm/);
+  await expect(page.locator('.route-masthead')).not.toHaveClass(/signal-live/);
+  await expect(page.getByText('LIVE', { exact: true })).toHaveCount(0);
+
+  const retry = retainedNotice.locator('button');
+  await expect(retry).toHaveAccessibleName('Retry feed');
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  recoverFeed = true;
+  await retry.focus();
+  await retry.press('Enter');
+  await expect(retry).toBeFocused();
+  await expect(retry).toHaveAccessibleName('Retrying feed');
+  await expect(retry).toHaveAttribute('aria-busy', 'true');
+
+  const missionLink = page
+    .getByRole('heading', { level: 2, name: liveLaunch.name })
+    .locator('xpath=ancestor::a[1]');
+  await expect(missionLink).toBeFocused();
+  await expect(retainedNotice).toHaveCount(0);
+  await expect(
+    page.getByRole('region', { name: 'Mission coverage live' }),
+  ).toBeVisible();
+  await expect(page.locator('.route-masthead')).toHaveClass(/signal-live/);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(
+    consoleErrors.filter(
+      (message) =>
+        message !==
+        'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+    ),
+  ).toEqual([]);
+  expect(consoleErrors).toHaveLength(1);
+  expect(pageErrors).toEqual([]);
+});
+
 test('watch archive navigation is touch-safe and keyboard-operable', async ({
   page,
 }) => {

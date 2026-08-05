@@ -11,6 +11,15 @@ describe('StatusBadge', () => {
     );
   });
 
+  it('replaces a retained live claim with an amber unconfirmed state', () => {
+    render(<StatusBadge status="live" statusName="Live" unconfirmed />);
+
+    expect(screen.getByText('STATUS UNCONFIRMED')).toHaveClass(
+      'text-[var(--console-amber)]'
+    );
+    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+  });
+
   it('does not claim a generic scheduled mission is go for launch', () => {
     render(<StatusBadge status="upcoming" />);
 

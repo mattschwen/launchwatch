@@ -331,6 +331,7 @@ function WatchStage({
   detailHref,
   detailLoading,
   detailRetrying,
+  coverageUnconfirmed,
   coverageRegionRef,
   onRetryDetails,
   streamLookupError,
@@ -339,13 +340,14 @@ function WatchStage({
   detailHref: string;
   detailLoading: boolean;
   detailRetrying: boolean;
+  coverageUnconfirmed: boolean;
   coverageRegionRef: React.RefObject<HTMLDivElement | null>;
   onRetryDetails: () => void;
   streamLookupError?: string | null;
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
   const hasProviderChannel = fallback.streamState === 'standby';
-  const liveCoverage = launch.isLive;
+  const liveCoverage = launch.isLive && !coverageUnconfirmed;
   const fallbackDescription = detailLoading
     ? 'Checking canonical mission details for an official stream. The schedule and safe provider fallback remain available.'
     : streamLookupError
@@ -358,6 +360,8 @@ function WatchStage({
   const coverageLabel = launch.livestream
     ? liveCoverage
       ? 'Mission coverage live'
+      : coverageUnconfirmed && launch.isLive
+        ? 'Mission coverage status unconfirmed'
       : 'Mission coverage scheduled'
     : detailLoading
       ? 'Mission coverage check in progress'
@@ -373,7 +377,11 @@ function WatchStage({
         aria-label={coverageLabel}
         tabIndex={-1}
         className={`rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] ${
-          liveCoverage ? 'signal-live' : 'signal-cold'
+          liveCoverage
+            ? 'signal-live'
+            : coverageUnconfirmed && launch.isLive
+              ? 'signal-warm'
+              : 'signal-cold'
         }`}
       >
         <div
@@ -386,7 +394,7 @@ function WatchStage({
           <VideoPlayer
             url={launch.livestream}
             title={launch.name}
-            autoplay={launch.isLive}
+            autoplay={liveCoverage}
             live={liveCoverage}
             className="rounded-none"
           />
@@ -590,10 +598,12 @@ function WatchMissionVisual({
 function MissionQueue({
   launches,
   selectedId,
+  coverageUnconfirmed,
   onSelect,
 }: {
   launches: Launch[];
   selectedId: string | null;
+  coverageUnconfirmed: boolean;
   onSelect: (id: string, revealMission?: boolean) => void;
 }): React.ReactElement {
   const queuedLaunches = getVisibleQueue(launches, selectedId);
@@ -727,8 +737,10 @@ function MissionQueue({
                 onKeyDown={(event) => handleQueueKeyDown(event, index)}
                 className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
                   selected
-                    ? launch.isLive
+                    ? launch.isLive && !coverageUnconfirmed
                       ? 'bg-[var(--surface-live)] shadow-[inset_3px_0_0_var(--console-magenta)]'
+                      : launch.isLive
+                        ? 'bg-[var(--console-amber)]/[0.055] shadow-[inset_3px_0_0_var(--console-amber)]'
                       : 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-cyan)]'
                     : 'hover:bg-[var(--surface-subtle)]'
                 }`}
@@ -737,7 +749,9 @@ function MissionQueue({
                   aria-hidden="true"
                   className={`h-2 w-2 shrink-0 rounded-full ${
                     launch.isLive
-                      ? 'status-dot-live bg-[var(--console-magenta)]'
+                      ? coverageUnconfirmed
+                        ? 'bg-[var(--console-amber)]'
+                        : 'status-dot-live bg-[var(--console-magenta)]'
                       : launch.status === 'failure' ||
                           isCriticalLaunchStatusName(launch.statusName)
                         ? 'bg-[var(--console-red)]'
@@ -799,7 +813,9 @@ function WatchContent(): React.ReactElement {
   const selectedMissionRef = useRef<HTMLDivElement>(null);
   const missionLinkRef = useRef<HTMLAnchorElement>(null);
   const coverageRegionRef = useRef<HTMLDivElement>(null);
+  const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const retryFocusPendingRef = useRef(false);
+  const retainedRetryFocusPendingRef = useRef(false);
   const detailRetryFocusPendingRef = useRef(false);
 
   const queue = useMemo(() => {
@@ -822,7 +838,17 @@ function WatchContent(): React.ReactElement {
   );
   const selectedLaunch =
     selected.launch ?? (requestedUnavailable ? fallbackLaunch : null);
-  const hasLiveCoverage = liveLaunches.length > 0;
+  const retainedSchedule = Boolean(
+    queue.length > 0 && (error || meta?.stale),
+  );
+  const coverageUnconfirmed = Boolean(error || meta?.stale);
+  const hasLiveCoverage = liveLaunches.length > 0 && !coverageUnconfirmed;
+  const selectedLiveCoverage = Boolean(
+    selectedLaunch?.isLive && !coverageUnconfirmed,
+  );
+  const degradedSchedule = Boolean(
+    retainedSchedule || meta?.partial,
+  );
   const selectedDetailHref = selectedLaunch
     ? `/launch/${encodeURIComponent(selectedLaunch.id)}?from=watch`
     : '';
@@ -878,6 +904,17 @@ function WatchContent(): React.ReactElement {
   }, [selectedLaunch]);
 
   useEffect(() => {
+    if (!retainedRetryFocusPendingRef.current || refreshing) return;
+
+    retainedRetryFocusPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      if (error) retainedRetryRef.current?.focus();
+      else missionLinkRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, refreshing]);
+
+  useEffect(() => {
     if (!detailRetryFocusPendingRef.current || selected.enriching) return;
 
     detailRetryFocusPendingRef.current = false;
@@ -913,6 +950,12 @@ function WatchContent(): React.ReactElement {
   const retrySchedule = (): void => {
     if (refreshing) return;
     retryFocusPendingRef.current = true;
+    void refresh();
+  };
+
+  const retryRetainedSchedule = (): void => {
+    if (refreshing) return;
+    retainedRetryFocusPendingRef.current = true;
     void refresh();
   };
 
@@ -984,7 +1027,11 @@ function WatchContent(): React.ReactElement {
 
         <div
           className={`route-masthead mb-6 flex flex-wrap items-center justify-between gap-3 pb-2 ${
-            hasLiveCoverage ? 'signal-live' : 'signal-cold'
+            hasLiveCoverage
+              ? 'signal-live'
+              : degradedSchedule
+                ? 'signal-warm'
+                : 'signal-cold'
           }`}
         >
           <div>
@@ -1003,15 +1050,61 @@ function WatchContent(): React.ReactElement {
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               {hasLiveCoverage
                 ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
+                : coverageUnconfirmed && liveLaunches.length > 0
+                  ? `${liveLaunches.length} last-known live mission${liveLaunches.length === 1 ? '' : 's'} · coverage unconfirmed`
                 : 'Provider streams and launch windows'}
-              {meta?.partial ? ' · partial provider data' : ''}
+              {meta?.partial && !coverageUnconfirmed
+                ? ' · partial provider data'
+                : ''}
             </p>
           </div>
           <StatusBadge
             status={selectedLaunch.status}
             statusName={selectedLaunch.statusName}
+            unconfirmed={Boolean(
+              selectedLaunch.isLive && coverageUnconfirmed,
+            )}
           />
         </div>
+
+        {retainedSchedule ? (
+          <div
+            role="status"
+            className="mb-4 flex flex-col gap-3 rounded-[var(--radius-sm)] border border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.055] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="flex items-start gap-2 leading-5 text-[var(--text-secondary)]">
+              <AlertTriangle
+                aria-hidden="true"
+                className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+                size={16}
+              />
+              <span>
+                <strong className="font-semibold text-[var(--console-amber)]">
+                  {error ? 'Refresh failed.' : 'Provider cache is stale.'}
+                </strong>{' '}
+                Showing the last-known mission schedule.
+                {liveLaunches.length > 0
+                  ? ' Live coverage is unconfirmed until the feed recovers.'
+                  : ' Mission timing may have changed.'}
+              </span>
+            </p>
+            <button
+              ref={retainedRetryRef}
+              type="button"
+              onClick={retryRetainedSchedule}
+              aria-disabled={refreshing}
+              aria-busy={refreshing}
+              className="action-button action-button-quiet w-full shrink-0 justify-center whitespace-nowrap text-[var(--console-amber)] aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-auto"
+            >
+              <RefreshCw
+                aria-hidden="true"
+                size={15}
+                className={refreshing ? 'animate-spin' : ''}
+              />
+              {refreshing ? 'Retrying feed' : 'Retry feed'}
+            </button>
+          </div>
+        ) : null}
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div
@@ -1024,6 +1117,7 @@ function WatchContent(): React.ReactElement {
               detailHref={selectedDetailHref}
               detailLoading={selected.enriching}
               detailRetrying={selected.retrying}
+              coverageUnconfirmed={coverageUnconfirmed}
               coverageRegionRef={coverageRegionRef}
               onRetryDetails={retryMissionDetails}
               streamLookupError={selected.launch ? selected.error : null}
@@ -1031,8 +1125,10 @@ function WatchContent(): React.ReactElement {
 
             <section
               className={`surface-card holo-card mt-4 p-5 sm:p-6 ${
-                selectedLaunch.isLive
+                selectedLiveCoverage
                   ? 'signal-live'
+                  : selectedLaunch.isLive && coverageUnconfirmed
+                    ? 'signal-warm'
                   : 'signal-cold'
               }`}
             >
@@ -1085,6 +1181,7 @@ function WatchContent(): React.ReactElement {
             <MissionQueue
               launches={queue}
               selectedId={selectedLaunch.id}
+              coverageUnconfirmed={coverageUnconfirmed}
               onSelect={selectLaunch}
             />
 
@@ -1111,7 +1208,7 @@ function WatchContent(): React.ReactElement {
             <h2 className="section-title text-[1.15rem]">Source & status</h2>
             <div
               className={`mt-4 flex items-center gap-2 text-sm ${
-                meta?.partial
+                degradedSchedule
                   ? 'text-[var(--console-amber)]'
                   : 'text-[var(--console-green)]'
               }`}
@@ -1119,12 +1216,16 @@ function WatchContent(): React.ReactElement {
               <span
                 aria-hidden="true"
                 className={`h-2 w-2 rounded-full ${
-                  meta?.partial
+                  degradedSchedule
                     ? 'bg-[var(--console-amber)]'
                     : 'bg-[var(--console-green)]'
                 }`}
               />
-              {meta?.partial ? 'Schedule partially available' : 'Schedule online'}
+              {retainedSchedule
+                ? 'Schedule status unconfirmed'
+                : meta?.partial
+                  ? 'Schedule partially available'
+                  : 'Schedule online'}
             </div>
             <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
               Schedules and stream links are aggregated from official providers.
