@@ -76,7 +76,10 @@ Provider `state` is one of:
 
 ### `GET /api/launches?type=all`
 
-Returns merged, normalized, deduplicated upcoming launches from SpaceX and Launch Library 2 for the current three-month window.
+Returns merged, normalized, deduplicated upcoming launches from SpaceX and
+Launch Library 2 for the current three-month window. A non-terminal launch with
+a valid provider window remains scheduled until that window ends, even after
+its nominal target instant passes.
 
 ```json
 {
@@ -123,7 +126,8 @@ CDN policy: 2 minutes fresh, 4 minutes stale-while-revalidate.
 
 Returns completed launches across connected providers in reverse chronological
 order. In-flight provider records are excluded even after their reported T-0
-has passed.
+has passed, and non-terminal records remain excluded while a valid provider
+launch window is still open.
 
 - `limit` is optional and defaults to `50`.
 - Valid values are integers from `1` through `100`.

@@ -170,6 +170,24 @@ function jsonResponse(payload: unknown): Response {
   } as Response;
 }
 
+function windowFixture(
+  id: string,
+  now: number,
+  netOffsetMinutes: number,
+  endOffsetMinutes: number,
+): LL2Launch {
+  return {
+    ...NORMAL_LIST_LAUNCH,
+    id,
+    name: `${id} mission`,
+    net: new Date(now + netOffsetMinutes * 60 * 1000).toISOString(),
+    window_start: new Date(
+      now + (netOffsetMinutes - 30) * 60 * 1000,
+    ).toISOString(),
+    window_end: new Date(now + endOffsetMinutes * 60 * 1000).toISOString(),
+  };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -212,6 +230,56 @@ describe('Launch Library 2.3 adapter', () => {
     expect(result.meta.providers.ll2.error).toBe(
       'Launch Library 2 returned an invalid launch record',
     );
+  });
+
+  it('keeps non-terminal missions scheduled until their provider window closes', async () => {
+    const now = Date.now();
+    const openWindowLaunch = windowFixture(
+      'open-window-fixture',
+      now,
+      -30,
+      90,
+    );
+    const closedWindowLaunch = windowFixture(
+      'closed-window-fixture',
+      now,
+      -180,
+      -120,
+    );
+    const completedWindowLaunch = {
+      ...windowFixture('completed-window-fixture', now, -15, 120),
+      status: {
+        id: 3,
+        name: 'Launch Successful',
+        abbrev: 'Success',
+      },
+    } satisfies LL2Launch;
+    const fetchMock = vi.fn(async (url: string) =>
+      jsonResponse(
+        url.includes('api.spacexdata.com')
+          ? { docs: [] }
+          : {
+              count: 3,
+              results: [
+                closedWindowLaunch,
+                completedWindowLaunch,
+                openWindowLaunch,
+              ],
+            },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const upcoming = await getAllUpcomingLaunchesResult();
+    const history = await getPastLaunchesResult(99);
+
+    expect(upcoming.data.map((launch) => launch.id)).toEqual([
+      'll2-open-window-fixture',
+    ]);
+    expect(history.data.map((launch) => launch.id)).toEqual([
+      'll2-completed-window-fixture',
+      'll2-closed-window-fixture',
+    ]);
   });
 
   it('keeps an in-flight provider record out of completed launch history', async () => {

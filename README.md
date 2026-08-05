@@ -141,6 +141,8 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   reducing it to one target instant. Coarse day, month, quarter, and year
   targets render as estimates instead of exact countdowns; calendar export and
   alerts remain pending until T-0 is precise enough.
+- Non-terminal missions remain in the active schedule through a valid provider
+  launch-window end instead of moving to History at the nominal target instant.
 - Provider broadcasts whose declared end precedes the launch window are not
   promoted as mission coverage; the UI uses its honest standby/search state
   until a temporally relevant stream is available.

@@ -1057,6 +1057,20 @@ function dedupeLaunches(launches: Launch[]): Launch[] {
   return deduped;
 }
 
+function launchScheduleEndUnix(launch: Launch): number {
+  if (launch.status === 'success' || launch.status === 'failure') {
+    return launch.dateUnix;
+  }
+
+  const windowEndUnix = launch.windowEnd
+    ? new Date(launch.windowEnd).getTime() / 1000
+    : Number.NaN;
+
+  return Number.isFinite(windowEndUnix)
+    ? Math.max(launch.dateUnix, windowEndUnix)
+    : launch.dateUnix;
+}
+
 export async function getAllUpcomingLaunchesResult(): Promise<LaunchFeedResult<Launch[]>> {
   return withInFlightDedupe('feed:upcoming', async () => {
     const [spacex, ll2] = await Promise.all([
@@ -1073,7 +1087,7 @@ export async function getAllUpcomingLaunchesResult(): Promise<LaunchFeedResult<L
     ])
       .filter((launch) => (
         Number.isFinite(launch.dateUnix) &&
-        (launch.isLive || launch.dateUnix >= nowUnix) &&
+        (launch.isLive || launchScheduleEndUnix(launch) >= nowUnix) &&
         launch.dateUnix <= threeMonthsUnix
       ))
       .sort((left, right) => left.dateUnix - right.dateUnix);
@@ -1105,7 +1119,7 @@ export async function getPastLaunchesResult(limit: number = 50): Promise<LaunchF
       .filter((launch) => (
         Number.isFinite(launch.dateUnix) &&
         !launch.isLive &&
-        launch.dateUnix < nowUnix
+        launchScheduleEndUnix(launch) < nowUnix
       ))
       .sort((left, right) => right.dateUnix - left.dateUnix)
       .slice(0, boundedLimit);

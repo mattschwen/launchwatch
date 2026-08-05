@@ -91,6 +91,8 @@ Watch, intelligence, calendar, or notification references.
   metadata without inferring rights from a URL;
 - preserves provider launch-date precision so boundary timestamps are not
   mistaken for exact launch times;
+- keeps non-terminal missions scheduled through a valid provider launch-window
+  end, preventing an open-window launch from entering History at nominal T-0;
 - ranks detailed provider broadcasts by source trust, live state, and provider
   priority so official coverage remains the primary mission action;
 - excludes non-live broadcasts whose declared end precedes the launch window,
@@ -104,7 +106,8 @@ Watch, intelligence, calendar, or notification references.
 
 The historical feed requests previous missions from SpaceX and Launch Library
 2, de-duplicates equivalent provider records, and excludes any record whose
-normalized coverage state is still live. It is served through
+normalized coverage state is still live or whose non-terminal provider launch
+window remains open. It is served through
 `/api/launches?type=history`; browser components never call providers directly.
 
 ## API Contracts
