@@ -20,6 +20,7 @@ import {
   formatLaunchPrecisionLabel,
   hasCalendarReadyLaunchTime,
 } from '@/lib/format';
+import { checkAndNotify } from '@/lib/notifications';
 
 interface AddToCalendarProps {
   launch: Launch;
@@ -29,11 +30,42 @@ interface AddToCalendarProps {
 }
 
 type CopyState = 'idle' | 'copying' | 'success' | 'error';
+type MenuAlignment = NonNullable<AddToCalendarProps['menuAlign']>;
 type AlertState =
   | NotificationPermission
   | 'requesting'
   | 'unsupported'
   | 'error';
+
+function resolveMenuAlignment(
+  trigger: DOMRect,
+  preferred: MenuAlignment
+): MenuAlignment {
+  const viewportWidth = window.innerWidth;
+  const rootFontSize =
+    Number.parseFloat(
+      window.getComputedStyle(document.documentElement).fontSize
+    ) || 16;
+  const menuWidth = Math.min(rootFontSize * 14, viewportWidth - 16);
+  const gutter = Math.min(8, Math.max(0, (viewportWidth - menuWidth) / 2));
+  const positions: Record<MenuAlignment, number> = {
+    left: trigger.left,
+    center: trigger.left + trigger.width / 2 - menuWidth / 2,
+    right: trigger.right - menuWidth,
+  };
+  const candidates: MenuAlignment[] = [preferred, 'center', 'right', 'left'];
+
+  return (
+    candidates.find((alignment, index) => {
+      if (candidates.indexOf(alignment) !== index) return false;
+      const left = positions[alignment];
+      return (
+        left >= gutter - 0.5 &&
+        left + menuWidth <= viewportWidth - gutter + 0.5
+      );
+    }) ?? preferred
+  );
+}
 
 export default function AddToCalendar({
   launch,
@@ -44,6 +76,8 @@ export default function AddToCalendar({
   const [open, setOpen] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const [alertState, setAlertState] = useState<AlertState>('unsupported');
+  const [resolvedMenuAlign, setResolvedMenuAlign] =
+    useState<MenuAlignment>(menuAlign);
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -113,7 +147,11 @@ export default function AddToCalendar({
 
     setAlertState('requesting');
     try {
-      setAlertState(await window.Notification.requestPermission());
+      const permission = await window.Notification.requestPermission();
+      if (permission === 'granted') {
+        await checkAndNotify([launch]);
+      }
+      setAlertState(permission);
     } catch {
       setAlertState('error');
     }
@@ -227,6 +265,14 @@ export default function AddToCalendar({
                 ? 'unsupported'
                 : window.Notification.permission
             );
+            if (triggerRef.current) {
+              setResolvedMenuAlign(
+                resolveMenuAlignment(
+                  triggerRef.current.getBoundingClientRect(),
+                  variant === 'compact' ? 'center' : menuAlign
+                )
+              );
+            }
           }
           setOpen((value) => !value);
         }}
@@ -246,10 +292,10 @@ export default function AddToCalendar({
           id={menuId}
           role="group"
           aria-label="Calendar options"
-          className={`panel absolute z-[70] w-56 rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
-            menuAlign === 'center' || variant === 'compact'
+          className={`panel absolute z-[70] w-[min(14rem,calc(100vw-1rem))] rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
+            resolvedMenuAlign === 'center'
               ? 'left-1/2 -translate-x-1/2'
-              : menuAlign === 'left'
+              : resolvedMenuAlign === 'left'
                 ? 'left-0'
               : 'right-0'
           } ${

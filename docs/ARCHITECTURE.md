@@ -131,7 +131,9 @@ See [`API.md`](API.md) for request and response examples.
 - refreshes every two minutes;
 - revalidates a stale feed when the tab becomes visible or the browser reconnects;
 - exposes `loading`, `refreshing`, `error`, `meta`, and `refresh`;
-- feeds notification checks from the same normalized launch set.
+- feeds notification checks from the same normalized launch set;
+- checks the selected mission immediately when notification permission is
+  granted, instead of waiting for the next two-minute feed refresh.
 
 `useLaunches`, `useLiveLaunches`, and `useNextLaunch` are selectors over this
 shared state. `useLaunchById` preserves the shared feed record while it calls

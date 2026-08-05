@@ -5,12 +5,21 @@ import AddToCalendar from '@/components/AddToCalendar';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 const originalNotification = window.Notification;
+const originalServiceWorker = Object.getOwnPropertyDescriptor(
+  navigator,
+  'serviceWorker'
+);
 
 afterEach(() => {
   Object.defineProperty(window, 'Notification', {
     configurable: true,
     value: originalNotification,
   });
+  if (originalServiceWorker) {
+    Object.defineProperty(navigator, 'serviceWorker', originalServiceWorker);
+  } else {
+    Reflect.deleteProperty(navigator, 'serviceWorker');
+  }
   vi.restoreAllMocks();
 });
 
@@ -69,6 +78,38 @@ describe('AddToCalendar', () => {
     ).toHaveClass('left-1/2', '-translate-x-1/2');
   });
 
+  it('centers ready calendar options over an icon command', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(393);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      bottom: 835,
+      height: 44,
+      left: 175.5,
+      right: 219.5,
+      top: 791,
+      width: 44,
+      x: 175.5,
+      y: 791,
+      toJSON: () => ({}),
+    });
+    const { container } = render(
+      <AddToCalendar
+        launch={UPCOMING_LAUNCHES[0]}
+        variant="icon"
+        menuPlacement="top"
+        menuAlign="right"
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add launch to calendar' })
+    );
+
+    expect(
+      container.querySelector('[aria-label="Calendar options"]')
+    ).toHaveClass('left-1/2', '-translate-x-1/2');
+  });
+
   it('makes browser launch alerts reachable with honest permission states', async () => {
     const user = userEvent.setup();
     let resolvePermission: ((value: NotificationPermission) => void) | undefined;
@@ -117,6 +158,64 @@ describe('AddToCalendar', () => {
         'Browser launch alerts enabled while LaunchWatch is open.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('checks the selected mission immediately after alerts are enabled', async () => {
+    const user = userEvent.setup();
+    let permission: NotificationPermission = 'default';
+    const notification = vi.fn();
+    Object.defineProperty(notification, 'permission', {
+      configurable: true,
+      get: () => permission,
+    });
+    Object.defineProperty(notification, 'requestPermission', {
+      configurable: true,
+      value: vi.fn().mockImplementation(async () => {
+        permission = 'granted';
+        return permission;
+      }),
+    });
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: notification,
+    });
+    const showNotification = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: vi.fn().mockResolvedValue({ showNotification }),
+      },
+    });
+
+    render(
+      <AddToCalendar
+        launch={{
+          ...UPCOMING_LAUNCHES[0],
+          date: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          datePrecision: { name: 'Minute', abbrev: 'MIN' },
+        }}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add to calendar' })
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Enable browser launch alerts' })
+    );
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Alerts enabled while app is open',
+      })
+    ).toBeVisible();
+    expect(showNotification).toHaveBeenCalledOnce();
+    expect(showNotification).toHaveBeenCalledWith(
+      '🚀 Orbital Dawn',
+      expect.objectContaining({
+        body: expect.stringMatching(/^Launching in [45] minutes\n/),
+      })
+    );
   });
 
   it('reports a failed alert prompt and supports a denied retry', async () => {
