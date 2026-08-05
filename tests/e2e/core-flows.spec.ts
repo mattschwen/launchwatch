@@ -3276,19 +3276,25 @@ test('watch does not show intelligence from the previously selected mission', as
 test('mission intelligence recovers from an incomplete successful response', async ({
   page,
 }) => {
-  let requestCount = 0;
+  let retryStarted = false;
+  let incompleteRequestCount = 0;
+  let recoveryRequestCount = 0;
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.route('**/api/launch-intel**', async (route) => {
-    requestCount += 1;
+    if (retryStarted) {
+      recoveryRequestCount += 1;
+    } else {
+      incompleteRequestCount += 1;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(
-        requestCount === 1
-          ? { meta: { generatedAt: '2035-07-26T12:00:00.000Z' } }
-          : LAUNCH_INTEL,
+        retryStarted
+          ? LAUNCH_INTEL
+          : { meta: { generatedAt: '2035-07-26T12:00:00.000Z' } },
       ),
     });
   });
@@ -3304,14 +3310,16 @@ test('mission intelligence recovers from an incomplete successful response', asy
   await expect(
     intelligence.getByRole('button', { name: 'Retry coverage' }),
   ).toBeVisible();
+  expect(incompleteRequestCount).toBeGreaterThan(0);
   expect(pageErrors).toEqual([]);
 
+  retryStarted = true;
   await intelligence.getByRole('button', { name: 'Retry coverage' }).click();
 
   await expect(
     intelligence.getByRole('group', { name: 'Coverage signal' }),
   ).toBeVisible();
-  expect(requestCount).toBe(2);
+  expect(recoveryRequestCount).toBe(1);
   expect(pageErrors).toEqual([]);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
@@ -4115,6 +4123,7 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   await page.goto('/history');
 
   const search = page.getByRole('searchbox', { name: 'Search missions' });
+  const archiveCoverage = page.getByLabel(/Archive feed coverage:/);
   const filterToggle = page.getByRole('button', {
     name: 'Show archive filters',
   });
@@ -4129,6 +4138,10 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
 
   await expect(searchLabel).toHaveText('Search missions');
   await expect(searchLabel).toBeVisible();
+  await expect(archiveCoverage).toContainText('Feed window');
+  await expect(archiveCoverage).toContainText('Nov 5, 2024');
+  await expect(archiveCoverage).toContainText('Apr 14, 2025');
+  await expect(archiveCoverage.locator('time')).toHaveCount(2);
 
   if (!mobile) {
     await expect(filterToggle).toBeHidden();
@@ -4150,6 +4163,12 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   const firstMissionBounds = await firstMission.boundingBox();
   expect(firstMissionBounds).not.toBeNull();
   expect(firstMissionBounds!.y).toBeLessThan(page.viewportSize()!.height);
+  const coverageBounds = await archiveCoverage.boundingBox();
+  expect(coverageBounds).not.toBeNull();
+  expect(coverageBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(coverageBounds!.x + coverageBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width
+  );
 
   await filterToggle.focus();
   await filterToggle.press('Enter');
@@ -4696,6 +4715,49 @@ test('history partial provider state keeps one recovery command', async ({
   await expect(
     page.getByRole('button', { name: /Demo Return Flight/ })
   ).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history identifies the bounded 100-mission feed window', async ({
+  page,
+}) => {
+  const launches = Array.from({ length: 100 }, (_, index) => {
+    const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
+    return {
+      ...launch,
+      id: `${launch.id}-window-${index}`,
+      sourceId: `${launch.sourceId}-window-${index}`,
+      name: `Archive Window Mission ${index + 1}`,
+    };
+  });
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+
+  await page.goto('/history');
+
+  const coverage = page.getByLabel(
+    /Archive feed coverage: latest 100 missions/
+  );
+  await expect(coverage).toBeVisible();
+  await expect(coverage).toContainText('Latest 100 missions');
+  await expect(coverage).toContainText('Nov 5, 2024');
+  await expect(coverage).toContainText('Apr 14, 2025');
+  await expect(coverage.locator('time')).toHaveCount(2);
+  const placement = await coverage.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      left: bounds.left,
+      right: bounds.right,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  expect(placement.left).toBeGreaterThanOrEqual(0);
+  expect(placement.right).toBeLessThanOrEqual(placement.viewportWidth);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

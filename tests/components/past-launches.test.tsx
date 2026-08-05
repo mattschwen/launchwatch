@@ -79,6 +79,32 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('makes the bounded archive feed window visible before filtering', async () => {
+    const launches = Array.from({ length: 100 }, (_, index) => ({
+      ...HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length],
+      id: `archive-window-${index}`,
+      sourceId: `archive-window-${index}`,
+    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ launches, meta: FEED_META }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    const coverage = await screen.findByLabelText(
+      /Archive feed coverage: latest 100 missions/
+    );
+    expect(coverage).toHaveTextContent('Latest 100 missions');
+    expect(coverage).toHaveTextContent('Nov 5, 2024');
+    expect(coverage).toHaveTextContent('Apr 14, 2025');
+    expect(coverage.querySelectorAll('time')).toHaveLength(2);
+  });
+
   it('finds archived missions by briefing and orbit metadata', async () => {
     const user = userEvent.setup();
     render(<PastLaunches />);

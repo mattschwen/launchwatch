@@ -22,6 +22,7 @@ import type { Launch, LaunchFeedMeta } from '@/lib/types';
 import {
   formatLaunchValue,
   formatLaunchDate,
+  formatLaunchDay,
   launchOutcomeLabel,
   matchesLaunchSearch,
   shortenLaunchSite,
@@ -38,6 +39,7 @@ import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 
 const PAGE_SIZE = 10;
+const HISTORY_LIMIT = 100;
 
 function readHistoryPayload(payload: unknown): {
   launches: Launch[];
@@ -292,11 +294,14 @@ export default function PastLaunches({
     async function fetchHistory(): Promise<void> {
       try {
         setLoading(true);
-        const response = await fetch('/api/launches?type=history&limit=100', {
-          signal: controller.signal,
-          cache: 'no-store',
-          headers: { Accept: 'application/json' },
-        });
+        const response = await fetch(
+          `/api/launches?type=history&limit=${HISTORY_LIMIT}`,
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+          }
+        );
         const payload: unknown = await response.json().catch(() => null);
         if (!response.ok) {
           const message =
@@ -356,6 +361,27 @@ export default function PastLaunches({
         .sort((a, b) => b - a),
     [launches]
   );
+  const archiveCoverage = useMemo(() => {
+    let oldest: Launch | null = null;
+    let newest: Launch | null = null;
+    let oldestTime = Number.POSITIVE_INFINITY;
+    let newestTime = Number.NEGATIVE_INFINITY;
+
+    for (const launch of launches) {
+      const time = new Date(launch.date).getTime();
+      if (!Number.isFinite(time)) continue;
+      if (time < oldestTime) {
+        oldest = launch;
+        oldestTime = time;
+      }
+      if (time > newestTime) {
+        newest = launch;
+        newestTime = time;
+      }
+    }
+
+    return oldest && newest ? { oldest, newest } : null;
+  }, [launches]);
   const selectedProviderMissing =
     provider !== DEFAULT_HISTORY_FILTERS.provider &&
     !providers.includes(provider);
@@ -703,15 +729,43 @@ export default function PastLaunches({
           </div>
 
           <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
-            <p
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-label="Archive results"
-              className="text-sm text-[var(--text-muted)]"
-            >
-              {resultCountLabel}
-            </p>
+            <div className="min-w-0">
+              <p
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                aria-label="Archive results"
+                className="text-sm text-[var(--text-muted)]"
+              >
+                {resultCountLabel}
+              </p>
+              {archiveCoverage ? (
+                <p
+                  aria-label={`Archive feed coverage: ${
+                    launches.length === HISTORY_LIMIT
+                      ? `latest ${HISTORY_LIMIT} missions`
+                      : 'current feed window'
+                  }, ${formatLaunchDay(
+                    archiveCoverage.oldest.date
+                  )} through ${formatLaunchDay(archiveCoverage.newest.date)}`}
+                  className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--text-muted)]"
+                >
+                  <span className="text-[var(--console-amber)]">
+                    {launches.length === HISTORY_LIMIT
+                      ? `Latest ${HISTORY_LIMIT} missions`
+                      : 'Feed window'}
+                  </span>
+                  <span aria-hidden="true">{'//'}</span>
+                  <time dateTime={archiveCoverage.oldest.date}>
+                    {formatLaunchDay(archiveCoverage.oldest.date)}
+                  </time>
+                  <span aria-hidden="true">—</span>
+                  <time dateTime={archiveCoverage.newest.date}>
+                    {formatLaunchDay(archiveCoverage.newest.date)}
+                  </time>
+                </p>
+              ) : null}
+            </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
