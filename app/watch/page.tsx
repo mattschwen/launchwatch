@@ -233,7 +233,7 @@ function WatchLoadingState({
       aria-label="Synchronizing watch room"
       aria-busy="true"
     >
-      <div className="route-masthead signal-live mb-6 pb-2">
+      <div className="route-masthead signal-cold mb-6 pb-2">
         <p className="data-label text-[var(--console-cyan)]">
           Launch network / provider handshake
         </p>
@@ -344,6 +344,7 @@ function WatchStage({
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
   const hasProviderChannel = fallback.streamState === 'standby';
+  const liveCoverage = launch.isLive;
   const fallbackDescription = detailLoading
     ? 'Checking canonical mission details for an official stream. The schedule and safe provider fallback remain available.'
     : streamLookupError
@@ -354,7 +355,9 @@ function WatchStage({
       ? 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
       : 'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.';
   const coverageLabel = launch.livestream
-    ? 'Mission coverage ready'
+    ? liveCoverage
+      ? 'Mission coverage live'
+      : 'Mission coverage scheduled'
     : detailLoading
       ? 'Mission coverage check in progress'
       : streamLookupError
@@ -368,13 +371,22 @@ function WatchStage({
         role="region"
         aria-label={coverageLabel}
         tabIndex={-1}
-        className="rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)]"
+        className={`rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] ${
+          liveCoverage ? 'signal-live' : 'signal-cold'
+        }`}
       >
-        <div className="video-signal-frame holo-card signal-live relative overflow-hidden rounded-[var(--radius-md)] border bg-black">
+        <div
+          className={`holo-card relative overflow-hidden rounded-[var(--radius-md)] border bg-black ${
+            liveCoverage
+              ? 'video-signal-frame'
+              : 'border-[var(--border-strong)]'
+          }`}
+        >
           <VideoPlayer
             url={launch.livestream}
             title={launch.name}
             autoplay={launch.isLive}
+            live={liveCoverage}
             className="rounded-none"
           />
         </div>
@@ -777,6 +789,7 @@ function WatchContent(): React.ReactElement {
   );
   const selectedLaunch =
     selected.launch ?? (requestedUnavailable ? fallbackLaunch : null);
+  const hasLiveCoverage = liveLaunches.length > 0;
   const selectedDetailHref = selectedLaunch
     ? `/launch/${encodeURIComponent(selectedLaunch.id)}?from=watch`
     : '';
@@ -936,16 +949,26 @@ function WatchContent(): React.ReactElement {
           </div>
         ) : null}
 
-        <div className="route-masthead signal-live mb-6 flex flex-wrap items-center justify-between gap-3 pb-2">
+        <div
+          className={`route-masthead mb-6 flex flex-wrap items-center justify-between gap-3 pb-2 ${
+            hasLiveCoverage ? 'signal-live' : 'signal-cold'
+          }`}
+        >
           <div>
-            <p className="data-label text-[var(--console-magenta)]">
+            <p
+              className={`data-label ${
+                hasLiveCoverage
+                  ? 'text-[var(--console-magenta)]'
+                  : 'text-[var(--console-cyan)]'
+              }`}
+            >
               Launch network / active console
             </p>
             <h1 className="section-title mt-1 text-[clamp(1.55rem,4vw,2.4rem)]">
               Watch room
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {liveLaunches.length > 0
+              {hasLiveCoverage
                 ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
                 : 'Provider streams and launch windows'}
               {meta?.partial ? ' · partial provider data' : ''}
@@ -975,7 +998,7 @@ function WatchContent(): React.ReactElement {
 
             <section
               className={`surface-card holo-card mt-4 p-5 sm:p-6 ${
-                selectedLaunch.isLive || selectedLaunch.livestream
+                selectedLaunch.isLive
                   ? 'signal-live'
                   : 'signal-cold'
               }`}

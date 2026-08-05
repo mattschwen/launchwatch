@@ -143,6 +143,9 @@ The optional expanded map remains a modal dialog. It must:
 - The coverage stage owns Watch's single primary stream or provider action;
   the selected-mission summary keeps briefing and calendar tools without a
   redundant self-link or duplicate fallback.
+- Scheduled provider coverage and completed replays keep the cyan secondary
+  signal treatment. Magenta live framing and actions are reserved for a
+  provider-confirmed active broadcast.
 - The mission queue follows the selected mission summary and actions on smaller
   screens, ahead of secondary vehicle imagery, and becomes a side rail on larger
   screens. Long queues use a bounded four-row-height viewport on smaller screens

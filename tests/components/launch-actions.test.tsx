@@ -33,12 +33,37 @@ describe('LaunchActions', () => {
       />
     );
 
-    expect(
-      screen.getByRole('link', { name: 'Watch mission' })
-    ).toHaveAttribute('href', '/watch?id=ll2-demo-orbital-dawn');
+    const scheduledCoverage = screen.getByRole('link', {
+      name: 'Watch mission',
+    });
+    expect(scheduledCoverage).toHaveAttribute(
+      'href',
+      '/watch?id=ll2-demo-orbital-dawn'
+    );
+    expect(scheduledCoverage).toHaveClass('action-button-secondary');
+    expect(scheduledCoverage).not.toHaveClass('action-button-stream');
     expect(
       screen.queryByRole('status', { name: 'Checking official coverage' })
     ).not.toBeInTheDocument();
+  });
+
+  it('reserves the live action treatment for an active broadcast', () => {
+    render(
+      <LaunchActions
+        launch={{
+          ...UPCOMING_LAUNCHES[1],
+          isLive: true,
+          webcastLive: true,
+          status: 'live',
+        }}
+        featured
+        showCalendar={false}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: 'Watch live' })).toHaveClass(
+      'action-button-stream'
+    );
   });
 
   it('labels the search fallback when canonical coverage cannot be checked', () => {

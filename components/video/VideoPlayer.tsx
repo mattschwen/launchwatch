@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   title?: string;
   className?: string;
   autoplay?: boolean;
+  live?: boolean;
 }
 
 export default function VideoPlayer({
@@ -16,6 +17,7 @@ export default function VideoPlayer({
   title,
   className = '',
   autoplay = false,
+  live = false,
 }: VideoPlayerProps): React.ReactElement {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
 
@@ -45,7 +47,11 @@ export default function VideoPlayer({
         <Tv
           aria-hidden="true"
           size={32}
-          className="text-[var(--console-magenta)]"
+          className={
+            live
+              ? 'text-[var(--console-magenta)]'
+              : 'text-[var(--console-cyan)]'
+          }
         />
         <p className="text-sm text-[var(--text-secondary)]">
           This provider stream opens in a separate window.
@@ -54,7 +60,9 @@ export default function VideoPlayer({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="action-button action-button-stream"
+          className={`action-button ${
+            live ? 'action-button-stream' : 'action-button-secondary'
+          }`}
         >
           <ExternalLink aria-hidden="true" size={16} />
           Open provider stream
@@ -71,7 +79,11 @@ export default function VideoPlayer({
   if (!loaded) {
     return (
       <div
-        className={`stream-surface relative flex aspect-video w-full items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_center,rgba(255,79,216,0.1),transparent_34%),var(--surface-base)] ${className}`}
+        className={`stream-surface relative flex aspect-video w-full items-center justify-center overflow-hidden ${
+          live
+            ? 'bg-[radial-gradient(circle_at_center,rgba(255,79,216,0.1),transparent_34%),var(--surface-base)]'
+            : 'bg-[radial-gradient(circle_at_center,rgba(88,230,255,0.08),transparent_34%),var(--surface-base)]'
+        } ${className}`}
       >
         <div
           aria-hidden="true"
@@ -80,7 +92,9 @@ export default function VideoPlayer({
         <button
           type="button"
           onClick={() => setLoadedUrl(url)}
-          className="action-button action-button-stream relative"
+          className={`action-button relative ${
+            live ? 'action-button-stream' : 'action-button-secondary'
+          }`}
           aria-label={`Load video for ${title || 'this launch'}`}
         >
           <Play aria-hidden="true" size={17} fill="currentColor" />

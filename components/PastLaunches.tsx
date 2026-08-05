@@ -246,7 +246,7 @@ function HistoryRow({
               {launch.livestream ? (
                 <Link
                   href={`/watch?id=${encodeURIComponent(launch.id)}`}
-                  className="action-button action-button-stream"
+                  className="action-button action-button-secondary"
                 >
                   Watch replay
                 </Link>

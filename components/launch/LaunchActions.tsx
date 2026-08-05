@@ -88,7 +88,11 @@ export default function LaunchActions({
         ) : launch.livestream ? (
           <Link
             href={`/watch?id=${encodeURIComponent(launch.id)}`}
-            className="action-button action-button-stream"
+            className={`action-button ${
+              launch.isLive
+                ? 'action-button-stream'
+                : 'action-button-secondary'
+            }`}
           >
             <Play aria-hidden="true" size={17} fill="currentColor" />
             {primaryLabel}

@@ -514,7 +514,11 @@ export default function LaunchDetailClient({
           <section
             aria-labelledby="watch-replay-title"
             className={`surface-card holo-card ${
-              launch.livestream ? 'signal-live' : 'signal-warm'
+              launch.isLive
+                ? 'signal-live'
+                : launch.livestream
+                  ? 'signal-cold'
+                  : 'signal-warm'
             } p-5`}
           >
             <h2 id="watch-replay-title" className="section-title text-[1.2rem]">
@@ -528,15 +532,18 @@ export default function LaunchDetailClient({
             </h2>
             <div
               className={`mt-4 overflow-hidden rounded-[var(--radius-sm)] border ${
-                launch.livestream
+                launch.isLive
                   ? 'video-signal-frame border-[var(--console-magenta)]'
-                  : 'border-[var(--border-subtle)]'
+                  : launch.livestream
+                    ? 'border-[var(--border-strong)]'
+                    : 'border-[var(--border-subtle)]'
               }`}
             >
               <VideoPlayer
                 url={launch.livestream}
                 title={launch.name}
                 autoplay={launch.isLive}
+                live={launch.isLive}
                 className="rounded-none"
               />
             </div>
@@ -545,7 +552,11 @@ export default function LaunchDetailClient({
                 href={launch.livestream}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--console-magenta)] hover:underline"
+                className={`mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium hover:underline ${
+                  launch.isLive
+                    ? 'text-[var(--console-magenta)]'
+                    : 'text-[var(--console-cyan)]'
+                }`}
               >
                 {hasPlayableVideo
                   ? 'Open official provider video'

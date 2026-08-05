@@ -2545,6 +2545,15 @@ test('watch enriches the selected mission and switches the mission queue', async
     'href',
     'https://x.com/i/broadcasts/demo-orbital-dawn'
   );
+  const scheduledCoverage = page.getByRole('region', {
+    name: 'Mission coverage scheduled',
+  });
+  await expect(scheduledCoverage).toHaveClass(/signal-cold/);
+  await expect(scheduledCoverage).not.toHaveClass(/signal-live/);
+  await expect(
+    scheduledCoverage.getByRole('link', { name: 'Open provider stream' })
+  ).toHaveClass(/action-button-secondary/);
+  await expect(scheduledCoverage.locator('.video-signal-frame')).toHaveCount(0);
   await expect(
     page.locator('a[href="/watch?id=ll2-demo-orbital-dawn"]')
   ).toHaveCount(0);
@@ -3837,7 +3846,7 @@ test('watch recovers failed detail enrichment without reloading the schedule', a
     page.getByRole('link', { name: 'Open provider stream' })
   ).toBeVisible();
   await expect(
-    page.getByRole('region', { name: 'Mission coverage ready' })
+    page.getByRole('region', { name: 'Mission coverage scheduled' })
   ).toBeFocused();
   expect(detailRequests).toBe(initialDetailRequests + 1);
   await expect(
