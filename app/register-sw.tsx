@@ -108,9 +108,18 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
     };
 
     const checkForUpdates = (): void => {
-      if (document.visibilityState === 'visible' && navigator.onLine) {
-        void registration?.update().catch(() => {
+      const currentRegistration = registration;
+      if (
+        document.visibilityState === 'visible' &&
+        navigator.onLine &&
+        currentRegistration
+      ) {
+        void currentRegistration.update().catch(() => {
           // A failed update check should not interrupt the active application.
+        }).finally(() => {
+          if (!disposed && currentRegistration.waiting) {
+            announceWaitingUpdate();
+          }
         });
       }
     };
@@ -284,7 +293,7 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
         >
           {applying
             ? 'Applying the update. LaunchWatch will reload when it is ready.'
-            : 'A new version is ready. Update now, or continue this session and install it later.'}
+            : 'A new version is ready. Update now, or continue and be reminded when you return.'}
         </p>
       </div>
       <div

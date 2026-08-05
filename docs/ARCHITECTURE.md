@@ -252,7 +252,9 @@ The service worker is deliberately narrow:
 - explicit shell icons and the offline document are pre-cached;
 - only content-hashed `/_next/static/*` assets use cache-first storage;
 - version changes remove old LaunchWatch caches;
-- production clients check hourly and apply waiting updates explicitly.
+- production clients check hourly and apply waiting updates explicitly;
+- a postponed waiting update is offered again when the client returns visible
+  and online, while keeping the interrupted workflow focused.
 
 This policy prevents an installed PWA from pinning stale app shells or launch data.
 

@@ -116,7 +116,7 @@ describe('RegisterServiceWorker', () => {
     ).toBe('');
   });
 
-  it('postpones a waiting update and restores the interrupted workflow', async () => {
+  it('postpones a waiting update, restores focus, and offers it again after returning', async () => {
     const user = userEvent.setup();
     const waitingWorker = { postMessage: vi.fn() };
     const registration = {
@@ -165,5 +165,17 @@ describe('RegisterServiceWorker', () => {
     expect(
       document.documentElement.style.getPropertyValue('--pwa-update-clearance')
     ).toBe('');
+
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    await waitFor(() => expect(registration.update).toHaveBeenCalledOnce());
+    expect(
+      await screen.findByRole('button', { name: 'Update now' })
+    ).toBeVisible();
+    expect(workflowControl).toHaveFocus();
   });
 });
