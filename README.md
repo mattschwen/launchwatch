@@ -43,7 +43,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Provider-sourced vehicle and mission imagery with visible creator and license
   attribution, a full-resolution action, and truthful unavailable states
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
-  once the provider confirms a minute-level launch target
+  once the provider confirms a minute-level launch target; provider retargets
+  re-arm the alert thresholds for the new confirmed time
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available

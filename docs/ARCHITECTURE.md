@@ -165,6 +165,12 @@ the schedule. `useLaunchIntel` sends only the selected canonical ID.
 
 History has a separate server endpoint because its retention window and provider scope differ from the upcoming feed.
 
+Opt-in browser alerts are deduplicated by canonical mission, alert threshold,
+and confirmed target minute. A repeated feed refresh cannot duplicate the same
+alert, while a provider retarget re-arms the one-hour and ten-minute alert
+thresholds for the mission's new confirmed time. Existing pre-target-aware
+flags are migrated in place so an app update does not replay an alert.
+
 ## UX Responsibilities
 
 - **Home** establishes one visual priority: live mission first, otherwise next launch. Its primary mission summary exposes a valid provider launch window beside the target time instead of reducing a range to one instant. Upcoming missions use readable rows and progressive loading. The map appears beside the hero on wide screens and behind an explicit disclosure on narrower screens.

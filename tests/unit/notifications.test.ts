@@ -121,4 +121,67 @@ describe('launch notification precision', () => {
       );
     },
   );
+
+  it('re-arms a launch threshold after the provider retargets the mission', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
+    const showNotification = installGrantedNotifications();
+    const firstTarget = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2026-08-05T12:30:00.000Z',
+      datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    };
+
+    await checkAndNotify([firstTarget]);
+    await checkAndNotify([firstTarget]);
+
+    expect(showNotification).toHaveBeenCalledOnce();
+
+    vi.setSystemTime(new Date('2026-08-05T13:30:00.000Z'));
+    const retargetedLaunch = {
+      ...firstTarget,
+      date: '2026-08-05T14:00:00.000Z',
+    };
+
+    await checkAndNotify([retargetedLaunch]);
+    await checkAndNotify([retargetedLaunch]);
+
+    expect(showNotification).toHaveBeenCalledTimes(2);
+    expect(showNotification).toHaveBeenLastCalledWith(
+      '🚀 Orbital Dawn',
+      expect.objectContaining({
+        body:
+          'Launching in 30 minutes\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station',
+      }),
+    );
+  });
+
+  it('migrates a legacy alert flag without replaying the current target', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
+    const showNotification = installGrantedNotifications();
+    const notificationKey =
+      'notified-1h-ll2-demo-orbital-dawn';
+    localStorage.setItem(notificationKey, 'true');
+    const currentTarget = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2026-08-05T12:30:00.000Z',
+      datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    };
+
+    await checkAndNotify([currentTarget]);
+
+    expect(showNotification).not.toHaveBeenCalled();
+    expect(localStorage.getItem(notificationKey)).not.toBe('true');
+
+    vi.setSystemTime(new Date('2026-08-05T13:30:00.000Z'));
+    await checkAndNotify([
+      {
+        ...currentTarget,
+        date: '2026-08-05T14:00:00.000Z',
+      },
+    ]);
+
+    expect(showNotification).toHaveBeenCalledOnce();
+  });
 });

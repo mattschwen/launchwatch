@@ -1,21 +1,38 @@
 import { Launch } from './types';
 import { hasCalendarReadyLaunchTime } from './format';
 
-function markNotified(notificationKey: string): void {
+function markNotified(notificationKey: string, targetMinute?: string): void {
   try {
-    localStorage.setItem(notificationKey, 'true');
+    localStorage.setItem(notificationKey, targetMinute ?? 'true');
     localStorage.setItem(`${notificationKey}-timestamp`, Date.now().toString());
   } catch {
     // Notification delivery must not fail because storage is unavailable.
   }
 }
 
-function hasBeenNotified(notificationKey: string): boolean {
+function hasBeenNotified(
+  notificationKey: string,
+  targetMinute?: string,
+): boolean {
   try {
-    return Boolean(localStorage.getItem(notificationKey));
+    const storedTarget = localStorage.getItem(notificationKey);
+    if (!storedTarget) return false;
+    if (!targetMinute) return true;
+
+    if (storedTarget === 'true') {
+      // Preserve a pre-target-aware alert without suppressing later retargets.
+      localStorage.setItem(notificationKey, targetMinute);
+      return true;
+    }
+
+    return storedTarget === targetMinute;
   } catch {
     return false;
   }
+}
+
+function launchTargetMinute(launchTime: number): string {
+  return String(Math.floor(launchTime / (60 * 1000)));
 }
 
 function launchDestination(launch: Launch): string {
@@ -105,6 +122,7 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
 
     const launchTime = new Date(launch.date).getTime();
     const timeUntilLaunch = launchTime - now;
+    const targetMinute = launchTargetMinute(launchTime);
 
     // Notify for live launches
     if (launch.isLive) {
@@ -124,13 +142,13 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
       const notificationKey = `notified-10m-${launch.id}`;
 
       if (
-        !hasBeenNotified(notificationKey) &&
+        !hasBeenNotified(notificationKey, targetMinute) &&
         (await showLaunchNotification(
           launch,
           formatLaunchLeadTime(timeUntilLaunch)
         ))
       ) {
-        markNotified(notificationKey);
+        markNotified(notificationKey, targetMinute);
       }
       continue;
     }
@@ -141,13 +159,13 @@ export async function checkAndNotify(launches: Launch[]): Promise<void> {
 
       // Check if we've already notified for this launch
       if (
-        !hasBeenNotified(notificationKey) &&
+        !hasBeenNotified(notificationKey, targetMinute) &&
         (await showLaunchNotification(
           launch,
           formatLaunchLeadTime(timeUntilLaunch)
         ))
       ) {
-        markNotified(notificationKey);
+        markNotified(notificationKey, targetMinute);
       }
     }
   }
