@@ -165,7 +165,9 @@ All routes provide loading, empty, unavailable, and retry states. Coarse launch
 targets use stable date estimates rather than ticking countdowns, and calendar
 or alert actions stay disabled until the provider supplies at least minute-level
 precision. Primary controls meet a minimum 44-pixel touch target and remain
-keyboard accessible.
+keyboard accessible. Mission briefings keep the first eight provider timeline
+events compact while reporting and revealing every additional event on demand;
+the expanded state resets when the briefing closes.
 
 ## Visual Provenance Boundary
 

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
   CalendarDays,
+  ChevronDown,
   ExternalLink,
   MapPin,
   Orbit,
@@ -32,6 +33,7 @@ interface LaunchBriefingDrawerProps {
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const INITIAL_TIMELINE_EVENTS = 8;
 
 export default function LaunchBriefingDrawer({
   launch,
@@ -44,10 +46,17 @@ export default function LaunchBriefingDrawer({
   const closeRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const [expandedTimelineId, setExpandedTimelineId] = useState<string | null>(
+    null
+  );
+  const closeDrawer = useCallback((): void => {
+    setExpandedTimelineId(null);
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+    onCloseRef.current = closeDrawer;
+  }, [closeDrawer]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,7 +133,7 @@ export default function LaunchBriefingDrawer({
       data-launch-briefing-dialog
       className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm"
       onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
+        if (event.currentTarget === event.target) closeDrawer();
       }}
     >
       <div
@@ -147,7 +156,7 @@ export default function LaunchBriefingDrawer({
           <button
             ref={closeRef}
             type="button"
-            onClick={onClose}
+            onClick={closeDrawer}
             aria-label="Close mission briefing"
             className="icon-button shrink-0"
           >
@@ -251,8 +260,14 @@ export default function LaunchBriefingDrawer({
               >
                 Launch timeline
               </h3>
-              <ol className="mt-3 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]">
-                {launch.timeline.slice(0, 8).map((event) => (
+              <ol
+                id={`${titleId}-timeline-events`}
+                className="mt-3 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]"
+              >
+                {(expandedTimelineId === launch.id
+                  ? launch.timeline
+                  : launch.timeline.slice(0, INITIAL_TIMELINE_EVENTS)
+                ).map((event) => (
                   <li
                     key={`${event.relativeTime}-${event.type}`}
                     className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 py-3"
@@ -271,6 +286,37 @@ export default function LaunchBriefingDrawer({
                   </li>
                 ))}
               </ol>
+              {launch.timeline.length > INITIAL_TIMELINE_EVENTS ? (
+                <button
+                  type="button"
+                  aria-expanded={expandedTimelineId === launch.id}
+                  aria-controls={`${titleId}-timeline-events`}
+                  aria-label={
+                    expandedTimelineId === launch.id
+                      ? `Show first ${INITIAL_TIMELINE_EVENTS} timeline events`
+                      : `Show all ${launch.timeline.length} timeline events`
+                  }
+                  onClick={() =>
+                    setExpandedTimelineId((current) =>
+                      current === launch.id ? null : launch.id
+                    )
+                  }
+                  className="flex min-h-11 w-full items-center justify-center gap-2 border-x border-b border-[var(--border-subtle)] px-4 py-2 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+                >
+                  {expandedTimelineId === launch.id
+                    ? `Show first ${INITIAL_TIMELINE_EVENTS} events`
+                    : `Reveal ${
+                        launch.timeline.length - INITIAL_TIMELINE_EVENTS
+                      } more events`}
+                  <ChevronDown
+                    aria-hidden="true"
+                    size={15}
+                    className={`transition-transform ${
+                      expandedTimelineId === launch.id ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              ) : null}
             </section>
           ) : null}
         </div>
@@ -278,7 +324,7 @@ export default function LaunchBriefingDrawer({
         <footer className="relative z-10 flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 px-5 py-4 sm:px-6">
           <Link
             href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
-            onClick={onClose}
+            onClick={closeDrawer}
             className="action-button action-button-primary"
           >
             View full mission
@@ -286,7 +332,7 @@ export default function LaunchBriefingDrawer({
           {launch.livestream ? (
             <Link
               href={`/watch?id=${encodeURIComponent(launch.id)}`}
-              onClick={onClose}
+              onClick={closeDrawer}
               className="action-button action-button-secondary"
             >
               Watch mission

@@ -191,6 +191,24 @@ function ll2Launch({
       },
       {
         type: {
+          name: 'Orbit insertion',
+          abbrev: 'INSERT',
+          description: 'The upper stage enters the initial deployment orbit.',
+        },
+        relative_time: 'P0DT0H8M45S',
+        description: 'The upper stage enters the initial deployment orbit.',
+      },
+      {
+        type: {
+          name: 'Coast phase',
+          abbrev: 'COAST',
+          description: 'The mission enters its payload deployment coast.',
+        },
+        relative_time: 'P0DT0H12M',
+        description: 'The mission enters its payload deployment coast.',
+      },
+      {
+        type: {
           name: 'Payload deployment',
           abbrev: 'DEPLOY',
           description: 'The payload deploys into its target orbit.',

@@ -98,6 +98,16 @@ export const UPCOMING_LAUNCHES: Launch[] = [
         description: 'The payload fairing separates after ascent.',
       },
       {
+        type: 'Orbit insertion',
+        relativeTime: 'T+00:08:45',
+        description: 'The upper stage enters the initial deployment orbit.',
+      },
+      {
+        type: 'Coast phase',
+        relativeTime: 'T+00:12:00',
+        description: 'The mission enters its payload deployment coast.',
+      },
+      {
         type: 'Payload deployment',
         relativeTime: 'T+00:54:12',
         description: 'The payload deploys into its target orbit.',

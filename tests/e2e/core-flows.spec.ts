@@ -5736,6 +5736,32 @@ test('upcoming and historical details place one trajectory before mission suppor
         briefing.getByText('T−02:35:00', { exact: true })
       ).toBeVisible();
       await expect(briefing).not.toContainText('-P0D');
+      const briefingTimeline = briefing.getByRole('region', {
+        name: 'Launch timeline',
+      });
+      await expect(briefingTimeline.getByRole('listitem')).toHaveCount(8);
+      await expect(
+        briefingTimeline.getByText('Payload deployment', { exact: true })
+      ).toHaveCount(0);
+      const revealTimeline = briefingTimeline.getByRole('button', {
+        name: 'Show all 10 timeline events',
+      });
+      await revealTimeline.focus();
+      await expect(revealTimeline).toBeFocused();
+      expect((await revealTimeline.boundingBox())?.height).toBeGreaterThanOrEqual(
+        44
+      );
+      await revealTimeline.press('Enter');
+      await expect(briefingTimeline.getByRole('listitem')).toHaveCount(10);
+      await expect(
+        briefingTimeline.getByText('Payload deployment', { exact: true })
+      ).toBeVisible();
+      await expect(
+        briefingTimeline.getByRole('button', {
+          name: 'Show first 8 timeline events',
+        })
+      ).toHaveAttribute('aria-expanded', 'true');
+      expect(await expectNoHorizontalOverflow(page)).toBe(true);
       await briefing
         .getByRole('button', { name: 'Close mission briefing' })
         .click();
