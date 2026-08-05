@@ -4703,6 +4703,73 @@ test('history loads licensed mission imagery only after archive expansion', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history reveals replay coverage from canonical mission details', async ({
+  page,
+}) => {
+  const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+    index === 0
+      ? { ...launch, livestream: null, livestreams: null }
+      : launch
+  );
+  let releaseDetail: () => void = () => undefined;
+  const detailGate = new Promise<void>((resolve) => {
+    releaseDetail = resolve;
+  });
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: summaryLaunches, meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/spacex-demo-return', async (route) => {
+    await detailGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: HISTORICAL_LAUNCHES[0],
+        canonicalId: HISTORICAL_LAUNCHES[0].id,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/history');
+
+  const mission = page
+    .locator('article')
+    .filter({ hasText: 'Demo Return Flight' });
+  const disclosure = mission.getByRole('button', {
+    name: /Demo Return Flight/i,
+  });
+  await disclosure.focus();
+  await disclosure.press('Enter');
+
+  const checking = mission.getByRole('button', {
+    name: 'Checking replay coverage',
+  });
+  await expect(checking).toBeVisible();
+  await expect(checking).toHaveAttribute('aria-disabled', 'true');
+  await expect(checking).toHaveAttribute('aria-busy', 'true');
+  expect((await checking.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(
+    mission.getByRole('link', { name: 'Watch replay' })
+  ).toHaveCount(0);
+
+  releaseDetail();
+
+  const replay = mission.getByRole('link', { name: 'Watch replay' });
+  await expect(replay).toHaveAttribute(
+    'href',
+    '/watch?id=spacex-demo-return'
+  );
+  await replay.focus();
+  await expect(replay).toBeFocused();
+  expect((await replay.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history retry reports progress and restores keyboard focus', async ({
   page,
 }) => {

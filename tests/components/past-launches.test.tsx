@@ -79,6 +79,132 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('checks canonical mission details for replay coverage on demand', async () => {
+    const user = userEvent.setup();
+    const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+      index === 0
+        ? { ...launch, livestream: null, livestreams: null }
+        : launch
+    );
+    let releaseDetail: (() => void) | undefined;
+    const detailGate = new Promise<void>((resolve) => {
+      releaseDetail = resolve;
+    });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('type=history')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ launches: summaryLaunches, meta: FEED_META }),
+        } as Response;
+      }
+
+      await detailGate;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launch: HISTORICAL_LAUNCHES[0],
+          canonicalId: HISTORICAL_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      } as Response;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole('link', { name: 'Watch replay' })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Demo Return Flight/i }));
+
+    expect(
+      screen.getByRole('status', { name: 'Checking replay coverage' })
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    releaseDetail?.();
+
+    expect(
+      await screen.findByRole('link', { name: 'Watch replay' })
+    ).toHaveAttribute('href', '/watch?id=spacex-demo-return');
+  });
+
+  it('retries a failed replay check without losing keyboard focus', async () => {
+    const user = userEvent.setup();
+    const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+      index === 0
+        ? { ...launch, livestream: null, livestreams: null }
+        : launch
+    );
+    let detailRequests = 0;
+    let releaseRetry: (() => void) | undefined;
+    const retryGate = new Promise<void>((resolve) => {
+      releaseRetry = resolve;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('type=history')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ launches: summaryLaunches, meta: FEED_META }),
+          } as Response;
+        }
+
+        detailRequests += 1;
+        if (detailRequests === 1) {
+          return {
+            ok: false,
+            status: 503,
+            json: async () => ({ error: 'Replay provider maintenance' }),
+          } as Response;
+        }
+
+        await retryGate;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            launch: HISTORICAL_LAUNCHES[0],
+            canonicalId: HISTORICAL_LAUNCHES[0].id,
+            meta: FEED_META,
+          }),
+        } as Response;
+      })
+    );
+
+    render(<PastLaunches />);
+    await screen.findByText('Demo Return Flight');
+    await user.click(screen.getByRole('button', { name: /Demo Return Flight/i }));
+
+    const retry = await screen.findByRole('button', {
+      name: 'Retry replay check',
+    });
+    retry.focus();
+    await user.keyboard('{Enter}');
+
+    const checking = screen.getByRole('button', {
+      name: 'Checking replay coverage',
+    });
+    await waitFor(() => expect(checking).toHaveFocus());
+    expect(checking).toHaveAttribute('aria-disabled', 'true');
+    expect(checking).toHaveAttribute('aria-busy', 'true');
+    expect(detailRequests).toBe(2);
+
+    releaseRetry?.();
+
+    const replay = await screen.findByRole('link', { name: 'Watch replay' });
+    await waitFor(() => expect(replay).toHaveFocus());
+  });
+
   it('makes the bounded archive feed window visible before filtering', async () => {
     const launches = Array.from({ length: 100 }, (_, index) => {
       const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];

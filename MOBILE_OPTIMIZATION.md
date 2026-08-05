@@ -261,7 +261,10 @@ The optional expanded map remains a modal dialog. It must:
   records.
 - Licensed imagery loads only inside an expanded row so the collapsed archive
   remains compact and scan-efficient.
-- Replay and detail links use canonical `spacex-*` IDs.
+- When a compact archive record omits replay coverage, expansion checks only
+  that canonical mission detail and keeps a 44-pixel checking, retry, or
+  confirmed-replay control in the row without inflating the archive feed.
+- Replay and detail links use canonical provider-qualified IDs.
 - Every detail link retains History as its originating surface. Active archive
   filters travel only as bounded return context, so the explicit return action
   restores the same filtered result set without accepting an arbitrary

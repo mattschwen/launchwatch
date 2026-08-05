@@ -74,6 +74,19 @@ function readHistoryPayload(payload: unknown): {
   };
 }
 
+function readHistoryDetailPayload(payload: unknown, launchId: string): Launch | null {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const record = payload as Record<string, unknown>;
+  const nested =
+    record.data && typeof record.data === 'object' && !Array.isArray(record.data)
+      ? (record.data as Record<string, unknown>)
+      : null;
+  const candidate = record.launch ?? nested?.launch ?? record.data;
+
+  return isLaunch(candidate) && candidate.id === launchId ? candidate : null;
+}
+
 function HistoryRow({
   launch,
   expanded,
@@ -87,6 +100,129 @@ function HistoryRow({
 }): React.ReactElement {
   const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const outcome = launchOutcomeLabel(launch);
+  const [detailState, setDetailState] = useState<{
+    launch: Launch | null;
+    loading: boolean;
+    error: string | null;
+    notFound: boolean;
+  }>({ launch: null, loading: false, error: null, notFound: false });
+  const [detailRequestVersion, setDetailRequestVersion] = useState(0);
+  const replayLinkRef = useRef<HTMLAnchorElement>(null);
+  const replayCheckingRef = useRef<HTMLButtonElement>(null);
+  const focusReplayAfterRetryRef = useRef(false);
+  const replayLaunch = detailState.launch ?? launch;
+  const needsReplayDetail = !launch.livestream;
+
+  useEffect(() => {
+    if (
+      !expanded ||
+      !needsReplayDetail ||
+      detailState.launch
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setDetailState((current) => ({
+      ...current,
+      loading: true,
+      error: null,
+      notFound: false,
+    }));
+
+    async function fetchReplayDetail(): Promise<void> {
+      try {
+        const response = await fetch(
+          `/api/launches/${encodeURIComponent(launch.id)}`,
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+          },
+        );
+        const payload: unknown = await response.json().catch(() => null);
+
+        if (response.status === 404) {
+          if (!controller.signal.aborted) {
+            setDetailState({
+              launch: null,
+              loading: false,
+              error: null,
+              notFound: true,
+            });
+          }
+          return;
+        }
+        if (!response.ok) {
+          const message =
+            payload && typeof payload === 'object'
+              ? (payload as Record<string, unknown>).error
+              : null;
+          throw new Error(
+            typeof message === 'string'
+              ? message
+              : `Replay coverage unavailable (${response.status})`,
+          );
+        }
+
+        const detailLaunch = readHistoryDetailPayload(payload, launch.id);
+        if (!detailLaunch) {
+          throw new Error('Mission replay response was incomplete');
+        }
+        if (!controller.signal.aborted) {
+          setDetailState({
+            launch: detailLaunch,
+            loading: false,
+            error: null,
+            notFound: false,
+          });
+        }
+      } catch (requestError) {
+        if (controller.signal.aborted) return;
+        setDetailState({
+          launch: null,
+          loading: false,
+          error:
+            requestError instanceof Error
+              ? requestError.message
+              : 'Unable to check replay coverage',
+          notFound: false,
+        });
+      }
+    }
+
+    void fetchReplayDetail();
+    return () => controller.abort();
+  }, [
+    detailRequestVersion,
+    detailState.launch,
+    expanded,
+    launch.id,
+    needsReplayDetail,
+  ]);
+
+  useEffect(() => {
+    if (!focusReplayAfterRetryRef.current || !replayLaunch.livestream) return;
+
+    focusReplayAfterRetryRef.current = false;
+    const frame = window.requestAnimationFrame(() => replayLinkRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [replayLaunch.livestream]);
+
+  useEffect(() => {
+    if (!focusReplayAfterRetryRef.current || !detailState.loading) return;
+
+    const frame = window.requestAnimationFrame(() =>
+      replayCheckingRef.current?.focus()
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [detailState.loading]);
+
+  const retryReplayDetail = (): void => {
+    if (detailState.loading) return;
+    focusReplayAfterRetryRef.current = true;
+    setDetailRequestVersion((version) => version + 1);
+  };
 
   return (
     <article
@@ -241,13 +377,53 @@ function HistoryRow({
           <div className="min-w-0 space-y-3">
             <MissionVisual launch={launch} compact />
             <div className="flex flex-wrap content-start gap-2 lg:justify-end">
-              {launch.livestream ? (
+              {replayLaunch.livestream ? (
                 <Link
+                  ref={replayLinkRef}
                   href={`/watch?id=${encodeURIComponent(launch.id)}`}
                   className="action-button action-button-secondary"
                 >
                   Watch replay
                 </Link>
+              ) : detailState.loading ? (
+                <>
+                  <span
+                    role="status"
+                    aria-label="Checking replay coverage"
+                    className="sr-only"
+                  >
+                    Checking replay coverage
+                  </span>
+                  <button
+                    ref={replayCheckingRef}
+                    type="button"
+                    aria-label="Checking replay coverage"
+                    aria-disabled="true"
+                    aria-busy="true"
+                    onClick={retryReplayDetail}
+                    className="action-button action-button-quiet text-[var(--console-cyan)] aria-disabled:cursor-wait aria-disabled:opacity-70"
+                  >
+                    <RefreshCw
+                      aria-hidden="true"
+                      size={15}
+                      className="animate-spin"
+                    />
+                    Checking replay
+                  </button>
+                </>
+              ) : detailState.error ? (
+                <button
+                  type="button"
+                  onClick={retryReplayDetail}
+                  className="action-button action-button-quiet text-[var(--console-amber)]"
+                >
+                  <RefreshCw aria-hidden="true" size={15} />
+                  Retry replay check
+                </button>
+              ) : detailState.notFound || detailState.launch ? (
+                <span className="inline-flex min-h-11 items-center px-3 font-mono text-xs text-[var(--text-muted)]">
+                  Replay not confirmed
+                </span>
               ) : null}
             </div>
           </div>
