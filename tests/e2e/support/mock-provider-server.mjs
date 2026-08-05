@@ -77,6 +77,9 @@ function ll2Launch({
   description,
 }) {
   const launchDate = dateFromNow(daysFromNow);
+  // Keep the synthetic two-hour window on one UTC day so layout tests do not
+  // change shape based on the wall-clock hour when the suite starts.
+  launchDate.setUTCHours(12, 0, 0, 0);
 
   return {
     id,

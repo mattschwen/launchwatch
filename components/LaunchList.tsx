@@ -409,18 +409,21 @@ export default function LaunchList({
                 key={launch.id}
                 className="mission-row"
                 style={{
-                  '--row-signal': launch.isLive
-                    ? 'var(--console-magenta)'
-                    : launch.status === 'failure' ||
-                        isCriticalLaunchStatusName(launch.statusName)
-                      ? 'var(--console-red)'
-                      : launch.status === 'tbd'
-                        ? 'var(--console-amber)'
-                        : 'var(--console-green)',
+                  '--row-signal': retainedSchedule && launch.isLive
+                    ? 'var(--console-amber)'
+                    : launch.isLive
+                      ? 'var(--console-magenta)'
+                      : launch.status === 'failure' ||
+                          isCriticalLaunchStatusName(launch.statusName)
+                        ? 'var(--console-red)'
+                        : launch.status === 'tbd'
+                          ? 'var(--console-amber)'
+                          : 'var(--console-green)',
                 } as React.CSSProperties}
               >
                 <LaunchCard
                   launch={launch}
+                  coverageUnconfirmed={retainedSchedule}
                   detailHref={buildScheduleDetailHref(launch.id, filters)}
                 />
               </div>

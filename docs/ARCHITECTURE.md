@@ -180,6 +180,10 @@ flags are migrated in place so an app update does not replay an alert.
   but live state is no longer authoritative: global chrome, the Watch masthead,
   coverage stage, mission badge, and queue remove live claims and autoplay until
   a focus-stable retry restores a current feed.
+- **Retained global mission data** remains linked from the desktop status bar
+  after either a refresh failure or a successful stale-cache response, but the
+  Home schedule and ticker use the amber unconfirmed treatment and suppress
+  live claims until the shared feed is current again.
 - **History** provides search, provider/year/outcome filters, expandable visual summaries, and stable links to details and available replays. When a compact archive record does not include coverage, expansion checks that one canonical detail route on demand and reports checking, unavailable, or confirmed-replay state without inflating the 100-record archive request. Its controls expose the current feed's oldest and newest records, and identify when the 100-mission response cap is full, so archive searches never imply unbounded retention.
 - **Detail** resolves current and completed missions with the same layout and actions, keeps valid provider launch windows visible in the primary mission summary, presents one eligible vehicle or mission visual before telemetry and trajectory, then adapts countdown, timeline, video, and return navigation to mission state. Horizontally scrollable provider timelines expose their currently readable event range and total as the viewport changes.
 

@@ -61,7 +61,7 @@ function NextLaunchStatus({
 }
 
 export default function LaunchTicker(): React.ReactElement | null {
-  const { launches, loading, error } = useLaunches();
+  const { launches, loading, error, meta } = useLaunches();
 
   if (loading) {
     return (
@@ -91,7 +91,10 @@ export default function LaunchTicker(): React.ReactElement | null {
 
   return (
     <div className="mx-5 flex min-w-0 flex-1 justify-center overflow-hidden">
-      <NextLaunchStatus launch={primaryLaunch} retained={Boolean(error)} />
+      <NextLaunchStatus
+        launch={primaryLaunch}
+        retained={Boolean(error || meta?.stale)}
+      />
     </div>
   );
 }

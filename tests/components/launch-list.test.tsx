@@ -198,6 +198,34 @@ describe('LaunchList', () => {
     expect(retry).toHaveFocus();
   });
 
+  it('suppresses live claims for missions from a stale provider cache', () => {
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'In Flight',
+      isLive: true,
+      webcastLive: true,
+    };
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: [liveLaunch],
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: { ...FEED_META, stale: true },
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    const missionRow = screen.getByText('Orbital Dawn').closest('.mission-row');
+    expect(missionRow).toHaveStyle('--row-signal: var(--console-amber)');
+    expect(screen.getByText('Coverage unconfirmed').parentElement).toHaveClass(
+      'text-[var(--console-amber)]'
+    );
+    expect(screen.queryByText('Live now')).not.toBeInTheDocument();
+    expect(missionRow?.querySelector('.status-dot-live')).not.toBeInTheDocument();
+  });
+
   it('cancels the deferred retry scroll when the schedule unmounts', async () => {
     const user = userEvent.setup();
     const refresh = vi.fn().mockResolvedValue(undefined);

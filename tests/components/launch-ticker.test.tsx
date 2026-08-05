@@ -168,4 +168,41 @@ describe('LaunchTicker', () => {
       '/watch?id=ll2-demo-orbital-dawn'
     );
   });
+
+  it('does not present stale cached live state as confirmed coverage', async () => {
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'In Flight',
+      isLive: true,
+      webcastLive: true,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          launches: [liveLaunch],
+          meta: { ...FEED_META, stale: true },
+        })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <LaunchTicker />
+      </LaunchDataProvider>
+    );
+
+    const missionLink = await screen.findByRole('link', {
+      name: /Orbital Dawn/,
+    });
+    expect(missionLink).toHaveTextContent('LAST KNOWN');
+    expect(missionLink).toHaveTextContent('Coverage unconfirmed');
+    expect(missionLink).not.toHaveTextContent('LIVE');
+    expect(missionLink).not.toHaveTextContent('In progress');
+    expect(missionLink).toHaveAttribute(
+      'href',
+      '/watch?id=ll2-demo-orbital-dawn'
+    );
+  });
 });

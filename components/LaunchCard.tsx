@@ -14,43 +14,52 @@ interface LaunchCardProps {
   variant?: 'upcoming' | 'history' | 'compact';
   showCalendar?: boolean;
   detailHref?: string;
+  coverageUnconfirmed?: boolean;
 }
 
 export default function LaunchCard({
   launch,
   variant = 'upcoming',
   detailHref,
+  coverageUnconfirmed = false,
 }: LaunchCardProps): React.ReactElement {
   const history = variant === 'history';
+  const liveUnconfirmed = !history && launch.isLive && coverageUnconfirmed;
   const [siteName, ...siteLocality] = shortenLaunchSite(
     launch.launchSite,
   ).split(',');
   const statusLabel = history
     ? launchOutcomeLabel(launch)
-    : launch.isLive
-      ? 'Live now'
-      : launch.status === 'tbd'
-        ? 'TBC'
-        : launch.statusName || 'Go for launch';
+    : liveUnconfirmed
+      ? 'Coverage unconfirmed'
+      : launch.isLive
+        ? 'Live now'
+        : launch.status === 'tbd'
+          ? 'TBC'
+          : launch.statusName || 'Go for launch';
   const critical =
     launch.status === 'failure' ||
     isCriticalLaunchStatusName(launch.statusName);
   const statusClass =
     critical
       ? 'text-[var(--console-red)]'
-      : launch.isLive
-        ? 'text-[var(--console-magenta)]'
-        : launch.status === 'tbd'
-          ? 'text-[var(--console-amber)]'
-          : 'text-[var(--console-green)]';
+      : liveUnconfirmed
+        ? 'text-[var(--console-amber)]'
+        : launch.isLive
+          ? 'text-[var(--console-magenta)]'
+          : launch.status === 'tbd'
+            ? 'text-[var(--console-amber)]'
+            : 'text-[var(--console-green)]';
   const statusDotClass =
     critical
       ? 'bg-[var(--console-red)]'
-      : launch.isLive
-        ? 'status-dot-live bg-[var(--console-magenta)]'
-        : launch.status === 'tbd'
-          ? 'bg-[var(--console-amber)]'
-          : 'bg-[var(--console-green)]';
+      : liveUnconfirmed
+        ? 'bg-[var(--console-amber)]'
+        : launch.isLive
+          ? 'status-dot-live bg-[var(--console-magenta)]'
+          : launch.status === 'tbd'
+            ? 'bg-[var(--console-amber)]'
+            : 'bg-[var(--console-green)]';
   const launchTime = formatLaunchTime(launch.date, launch.datePrecision);
 
   return (

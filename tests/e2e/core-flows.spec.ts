@@ -1090,6 +1090,63 @@ test('desktop ticker keeps the last known mission after refresh failure', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('desktop ticker marks stale cached live coverage as unconfirmed', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name.startsWith('mobile'),
+    'The mission ticker is desktop system-bar navigation.'
+  );
+
+  const staleLiveLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    status: 'live',
+    statusName: 'In Flight',
+    isLive: true,
+    webcastLive: true,
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [staleLiveLaunch],
+        meta: { ...FEED_META, stale: true },
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const statusBar = page.getByRole('complementary', {
+    name: 'Mission status',
+  });
+  const missionLink = statusBar.getByRole('link', { name: /Orbital Dawn/ });
+  await expect(statusBar).toContainText('STALE CACHE');
+  await expect(missionLink).toContainText('LAST KNOWN');
+  await expect(missionLink).toContainText('Coverage unconfirmed');
+  await expect(missionLink).not.toContainText('LIVE');
+  await expect(missionLink).not.toContainText('In progress');
+  await expect(missionLink).toHaveAttribute(
+    'href',
+    '/watch?id=ll2-demo-orbital-dawn'
+  );
+  const schedule = page.locator(
+    'section[aria-labelledby="upcoming-launches-title"]'
+  );
+  await expect(schedule.getByText('Coverage unconfirmed')).toBeVisible();
+  await expect(schedule.getByText('Live now')).toHaveCount(0);
+  await expect(schedule.locator('.status-dot-live')).toHaveCount(0);
+  await missionLink.focus();
+  await expect(missionLink).toBeFocused();
+  expect(
+    await missionLink.evaluate(
+      (element) => element.getBoundingClientRect().height
+    )
+  ).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('primary mission title links are touch-safe and keyboard-focusable', async ({
   page,
 }) => {
