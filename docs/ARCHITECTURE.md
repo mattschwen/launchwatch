@@ -93,6 +93,9 @@ Watch, intelligence, calendar, or notification references.
   mistaken for exact launch times;
 - ranks detailed provider broadcasts by source trust, live state, and provider
   priority so official coverage remains the primary mission action;
+- excludes non-live broadcasts whose declared end precedes the launch window,
+  preventing stale provider links from replacing the honest standby/search
+  state;
 - accepts provider coverage only as credential-free HTTPS URLs and parses
   YouTube IDs from recognized YouTube hosts, so malformed records fall back to
   safe stream search instead of becoming executable or misleading actions;

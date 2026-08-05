@@ -141,6 +141,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   reducing it to one target instant. Coarse day, month, quarter, and year
   targets render as estimates instead of exact countdowns; calendar export and
   alerts remain pending until T-0 is precise enough.
+- Provider broadcasts whose declared end precedes the launch window are not
+  promoted as mission coverage; the UI uses its honest standby/search state
+  until a temporally relevant stream is available.
 - Visual metadata is normalized with its provider record. The UI displays only
   supported image origins with explicit, meaningful attribution, an explicit reusable
   license, and an explicit `singleUse: false` clearance. Unknown-rights images

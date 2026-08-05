@@ -265,7 +265,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `datePrecision` | Optional provider precision (`name`, `abbrev`, and description) used to distinguish exact T-0 values from day/month/quarter/year estimates |
 | `rocket`, `launchSite`, `location` | Vehicle and pad data |
 | `status`, `statusName`, `isLive` | Normalized mission state |
-| `livestream`, `livestreams` | Verified provider video candidates |
+| `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window |
 | `description`, `missionType`, `orbit`, `program` | Mission context |
 | `image`, `missionPatch`, `videoThumbnail` | Optional media |
 | `rocketImageUrl`, `launchImageUrl`, `padMapImage`, `providerLogo` | Backward-compatible optional media URLs |

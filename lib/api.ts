@@ -656,6 +656,24 @@ function ll2RocketFamily(launch: LL2Launch): string | null {
   return family?.name || null;
 }
 
+function canCoverLaunchWindow(
+  launch: LL2Launch,
+  video: LL2Video,
+): boolean {
+  if (video.live || launch.webcast_live || !video.end_time) return true;
+
+  const coverageEnd = new Date(video.end_time).getTime();
+  const launchWindowStart = new Date(
+    launch.window_start || launch.net
+  ).getTime();
+
+  return (
+    !Number.isFinite(coverageEnd) ||
+    !Number.isFinite(launchWindowStart) ||
+    coverageEnd >= launchWindowStart
+  );
+}
+
 function ll2Videos(launch: LL2Launch): LL2Video[] {
   const candidates = [
     ...(Array.isArray(launch.vid_urls) ? launch.vid_urls : []),
@@ -667,7 +685,9 @@ function ll2Videos(launch: LL2Launch): LL2Video[] {
   return candidates
     .flatMap((candidate, index) => {
       const url = safeProviderCoverageUrl(candidate?.url);
-      return url ? [{ candidate: { ...candidate, url }, index }] : [];
+      return url && canCoverLaunchWindow(launch, candidate)
+        ? [{ candidate: { ...candidate, url }, index }]
+        : [];
     })
     .sort((left, right) => {
       const trust = (video: LL2Video): number => {

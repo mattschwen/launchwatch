@@ -378,6 +378,45 @@ describe('Launch Library 2.3 adapter', () => {
     ]);
   });
 
+  it('does not promote coverage scheduled to end before the launch window', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      webcast_live: false,
+      vid_urls: [
+        {
+          priority: 20,
+          source: 'x.com',
+          publisher: 'SpaceX',
+          title: 'Expired official webcast',
+          url: 'https://x.com/i/broadcasts/expired123',
+          type: { name: 'Official Webcast' },
+          start_time: '2035-07-28T18:00:00Z',
+          end_time: '2035-07-28T23:00:00Z',
+          live: false,
+        },
+        {
+          priority: 10,
+          source: 'youtube.com',
+          publisher: 'SpaceX',
+          title: 'Current official webcast',
+          url: 'https://www.youtube.com/watch?v=current123',
+          type: { name: 'Official Webcast' },
+          start_time: '2035-07-29T01:50:00Z',
+          end_time: '2035-07-29T07:50:00Z',
+          live: false,
+        },
+      ],
+    });
+
+    expect(normalized.livestream).toBe(
+      'https://www.youtube.com/watch?v=current123'
+    );
+    expect(normalized.livestreams?.map((stream) => stream.url)).toEqual([
+      'https://www.youtube.com/watch?v=current123',
+    ]);
+    expect(normalized.isLive).toBe(false);
+  });
+
   it('drops unsafe coverage URLs before deriving live state', () => {
     const normalized = normalizeLL2Launch({
       ...DETAILED_LAUNCH,
