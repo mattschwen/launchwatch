@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   AlertTriangle,
+  ChevronDown,
   ExternalLink,
   MessageCircle,
   Newspaper,
@@ -18,6 +19,9 @@ import type {
   LaunchSocialItem,
   LaunchStreamCandidate,
 } from '@/lib/types';
+
+const INITIAL_STREAM_LEADS = 4;
+const INITIAL_COMMUNITY_SIGNALS = 4;
 
 interface LaunchIntelDeckProps {
   launch: Launch;
@@ -183,6 +187,17 @@ export default function LaunchIntelDeck({
 }: LaunchIntelDeckProps): React.ReactElement {
   const regionRef = useRef<HTMLElement>(null);
   const recoveryPendingRef = useRef(false);
+  const streamListId = `${useId()}-stream-leads`;
+  const socialListId = `${useId()}-community-signals`;
+  const [expandedSignals, setExpandedSignals] = useState<{
+    launchId: string | null;
+    social: boolean;
+    streams: boolean;
+  }>({ launchId: null, social: false, streams: false });
+  const streamsExpanded =
+    expandedSignals.launchId === launch.id && expandedSignals.streams;
+  const socialExpanded =
+    expandedSignals.launchId === launch.id && expandedSignals.social;
 
   useEffect(() => {
     recoveryPendingRef.current = false;
@@ -308,11 +323,18 @@ export default function LaunchIntelDeck({
     );
   }
 
-  const streams = intel.streamCandidates
-    .filter((candidate) => candidate.source !== 'search')
-    .slice(0, 4);
+  const streamLeads = intel.streamCandidates.filter(
+    (candidate) => candidate.source !== 'search'
+  );
+  const streams = streamsExpanded
+    ? streamLeads
+    : streamLeads.slice(0, INITIAL_STREAM_LEADS);
   const news = intel.newsItems.slice(0, 5);
-  const social = intel.socialItems.slice(0, 4);
+  const social = socialExpanded
+    ? intel.socialItems
+    : intel.socialItems.slice(0, INITIAL_COMMUNITY_SIGNALS);
+  const hiddenStreamCount = streamLeads.length - INITIAL_STREAM_LEADS;
+  const hiddenSocialCount = intel.socialItems.length - INITIAL_COMMUNITY_SIGNALS;
   const publicRationale = publicLaunchIntelRationale(
     intel.summary.rationale
   );
@@ -379,13 +401,50 @@ export default function LaunchIntelDeck({
               Stream leads
             </h3>
             <span className="ml-auto font-mono text-xs text-[var(--text-muted)]">
-              {streams.length}
+              {streamLeads.length}
             </span>
           </div>
-          {streams.length ? (
-            streams.map((candidate) => (
-              <StreamRow key={candidate.id} candidate={candidate} />
-            ))
+          {streamLeads.length ? (
+            <>
+              <div id={streamListId}>
+                {streams.map((candidate) => (
+                  <StreamRow key={candidate.id} candidate={candidate} />
+                ))}
+              </div>
+              {hiddenStreamCount > 0 ? (
+                <button
+                  type="button"
+                  aria-expanded={streamsExpanded}
+                  aria-controls={streamListId}
+                  aria-label={
+                    streamsExpanded
+                      ? 'Show fewer stream leads'
+                      : `Show all ${streamLeads.length} stream leads`
+                  }
+                  onClick={() =>
+                    setExpandedSignals((current) => ({
+                      launchId: launch.id,
+                      social:
+                        current.launchId === launch.id && current.social,
+                      streams:
+                        current.launchId === launch.id
+                          ? !current.streams
+                          : true,
+                    }))
+                  }
+                  className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[var(--border-subtle)] px-4 py-2 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+                >
+                  {streamsExpanded
+                    ? 'Show fewer leads'
+                    : `Reveal ${hiddenStreamCount} more`}
+                  <ChevronDown
+                    aria-hidden="true"
+                    size={15}
+                    className={`transition-transform ${streamsExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              ) : null}
+            </>
           ) : (
             <p className="px-4 py-6 text-sm leading-6 text-[var(--text-muted)]">
               No verified broadcast has been ranked yet. Use the search action
@@ -430,14 +489,45 @@ export default function LaunchIntelDeck({
               Community signal
             </h3>
             <span className="ml-auto font-mono text-xs text-[var(--text-muted)]">
-              {social.length}
+              {intel.socialItems.length}
             </span>
           </div>
-          <div className="grid sm:grid-cols-2">
+          <div id={socialListId} className="grid sm:grid-cols-2">
             {social.map((item) => (
               <SocialRow key={item.id} item={item} />
             ))}
           </div>
+          {hiddenSocialCount > 0 ? (
+            <button
+              type="button"
+              aria-expanded={socialExpanded}
+              aria-controls={socialListId}
+              aria-label={
+                socialExpanded
+                  ? 'Show fewer community signals'
+                  : `Show all ${intel.socialItems.length} community signals`
+              }
+              onClick={() =>
+                setExpandedSignals((current) => ({
+                  launchId: launch.id,
+                  social:
+                    current.launchId === launch.id ? !current.social : true,
+                  streams:
+                    current.launchId === launch.id && current.streams,
+                }))
+              }
+              className="flex min-h-11 w-full items-center justify-center gap-2 border-t border-[var(--border-subtle)] px-4 py-2 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+            >
+              {socialExpanded
+                ? 'Show fewer signals'
+                : `Reveal ${hiddenSocialCount} more`}
+              <ChevronDown
+                aria-hidden="true"
+                size={15}
+                className={`transition-transform ${socialExpanded ? 'rotate-180' : ''}`}
+              />
+            </button>
+          ) : null}
         </div>
       ) : null}
 

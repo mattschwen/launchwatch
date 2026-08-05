@@ -150,7 +150,7 @@ History has a separate server endpoint because its retention window and provider
 ## UX Responsibilities
 
 - **Home** establishes one visual priority: live mission first, otherwise next launch. Upcoming missions use readable rows and progressive loading. The map appears beside the hero on wide screens and behind an explicit disclosure on narrower screens.
-- **Watch** uses the first live mission or next scheduled mission. Without a verified stream, it presents mission context, a countdown, a provider-channel fallback, and eligible mission imagery instead of an empty player.
+- **Watch** uses the first live mission or next scheduled mission. Without a verified stream, it presents mission context, a countdown, a provider-channel fallback, and eligible mission imagery instead of an empty player. Mission intelligence keeps its highest-ranked stream and community signals compact initially, reports the complete returned counts, and exposes every additional signal through keyboard- and touch-safe disclosures.
 - **History** provides search, provider/year/outcome filters, expandable visual summaries, and stable links to details and available replays. Its controls expose the current feed's oldest and newest records, and identify when the 100-mission response cap is full, so archive searches never imply unbounded retention.
 - **Detail** resolves current and completed missions with the same layout and actions, presents one eligible vehicle or mission visual before telemetry and trajectory, then adapts countdown, timeline, video, and return navigation to mission state.
 

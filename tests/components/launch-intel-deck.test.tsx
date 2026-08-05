@@ -232,6 +232,69 @@ describe('LaunchIntelDeck', () => {
     expect(channel).not.toHaveClass('truncate');
   });
 
+  it('lets users inspect every ranked stream and community signal', async () => {
+    const user = userEvent.setup();
+    const streamCandidates = Array.from({ length: 5 }, (_, index) => ({
+      id: `stream-${index + 1}`,
+      title: `Ranked stream ${index + 1}`,
+      url: `https://www.youtube.com/watch?v=stream-${index + 1}`,
+      channelTitle: `Channel ${index + 1}`,
+      source: 'youtube-api' as const,
+      confidence: 'high' as const,
+      liveStatus: 'upcoming' as const,
+    }));
+    const socialItems = Array.from({ length: 6 }, (_, index) => ({
+      id: `social-${index + 1}`,
+      platform: 'reddit' as const,
+      title: `Community signal ${index + 1}`,
+      url: `https://www.reddit.com/r/space/comments/social-${index + 1}`,
+      publishedAt: '2035-07-26T12:00:00.000Z',
+      author: `observer-${index + 1}`,
+      community: 'r/space',
+      note: null,
+    }));
+
+    const { rerender } = render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{ ...LAUNCH_INTEL, streamCandidates, socialItems }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /Ranked stream 4/ })).toBeVisible();
+    expect(screen.queryByRole('link', { name: /Ranked stream 5/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Community signal 4/ })).toBeVisible();
+    expect(screen.queryByRole('link', { name: /Community signal 5/ })).toBeNull();
+
+    const showStreams = screen.getByRole('button', {
+      name: 'Show all 5 stream leads',
+    });
+    expect(showStreams).toHaveAttribute('aria-expanded', 'false');
+    await user.click(showStreams);
+    expect(screen.getByRole('link', { name: /Ranked stream 5/ })).toBeVisible();
+    expect(showStreams).toHaveAttribute('aria-expanded', 'true');
+    expect(showStreams).toHaveAccessibleName('Show fewer stream leads');
+
+    const showSocial = screen.getByRole('button', {
+      name: 'Show all 6 community signals',
+    });
+    await user.click(showSocial);
+    expect(screen.getByRole('link', { name: /Community signal 6/ })).toBeVisible();
+    expect(showSocial).toHaveAccessibleName('Show fewer community signals');
+
+    rerender(
+      <LaunchIntelDeck
+        launch={UPCOMING_LAUNCHES[1]}
+        intel={{ ...LAUNCH_INTEL, streamCandidates, socialItems }}
+      />
+    );
+    expect(screen.queryByRole('link', { name: /Ranked stream 5/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Community signal 6/ })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Show all 5 stream leads' })
+    ).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('presents a generic search as a fallback instead of a stream lead', () => {
     render(
       <LaunchIntelDeck

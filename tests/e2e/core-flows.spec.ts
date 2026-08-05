@@ -3595,6 +3595,96 @@ test('mission intelligence keeps complete stream identities contained', async ({
   await expect(channel).toBeVisible();
 });
 
+test('mission intelligence reveals every ranked signal on demand', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const streamCandidates = Array.from({ length: 5 }, (_, index) => ({
+    id: `ranked-stream-${index + 1}`,
+    title: `Ranked mission stream ${index + 1}`,
+    url: `https://www.youtube.com/watch?v=ranked-stream-${index + 1}`,
+    channelTitle: `Official channel ${index + 1}`,
+    source: 'youtube-api',
+    confidence: 'high',
+    liveStatus: 'upcoming',
+  }));
+  const socialItems = Array.from({ length: 6 }, (_, index) => ({
+    id: `community-signal-${index + 1}`,
+    platform: 'reddit',
+    title: `Community mission signal ${index + 1}`,
+    url: `https://www.reddit.com/r/space/comments/community-signal-${index + 1}`,
+    publishedAt: '2035-07-26T12:00:00.000Z',
+    author: `observer-${index + 1}`,
+    community: 'r/space',
+    note: null,
+  }));
+
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        streamCandidates,
+        socialItems,
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  const lastStream = intelligence.getByRole('link', {
+    name: /Ranked mission stream 5/,
+  });
+  const lastSocial = intelligence.getByRole('link', {
+    name: /Community mission signal 6/,
+  });
+  const showStreams = intelligence.getByRole('button', {
+    name: 'Show all 5 stream leads',
+  });
+
+  await expect(lastStream).toHaveCount(0);
+  await expect(lastSocial).toHaveCount(0);
+  await showStreams.scrollIntoViewIfNeeded();
+  await showStreams.focus();
+  await showStreams.press('Enter');
+  const hideStreams = intelligence.getByRole('button', {
+    name: 'Show fewer stream leads',
+  });
+  await expect(hideStreams).toBeFocused();
+  await expect(hideStreams).toHaveAttribute('aria-expanded', 'true');
+  await expect(lastStream).toBeVisible();
+  expect((await hideStreams.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  const showSocial = intelligence.getByRole('button', {
+    name: 'Show all 6 community signals',
+  });
+  await showSocial.scrollIntoViewIfNeeded();
+  await showSocial.focus();
+  await showSocial.press('Enter');
+  const hideSocial = intelligence.getByRole('button', {
+    name: 'Show fewer community signals',
+  });
+  await expect(hideSocial).toBeFocused();
+  await expect(lastSocial).toBeVisible();
+  expect((await hideSocial.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await hideSocial.press('Enter');
+  await expect(showSocial).toBeFocused();
+  await expect(lastSocial).toHaveCount(0);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('watch recovers failed detail enrichment without reloading the schedule', async ({
   page,
 }) => {
