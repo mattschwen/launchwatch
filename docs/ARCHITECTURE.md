@@ -198,7 +198,10 @@ boundary instead of allowing an ineligible launch photo to mask a reusable
 mission image. Unsupported or incomplete records
 produce a missing or rights-unverified state instead of an image request.
 That same policy gate supplies launch-detail social metadata, preventing hidden
-or single-use imagery from bypassing the visible UI rules.
+or single-use imagery from bypassing the visible UI rules. Canonical mission
+details publish the same mission-specific title, description, URL, image, and
+attribution across Open Graph and Twitter cards so the share action cannot
+produce a mixed generic/mission preview.
 
 CC BY-NC assets are eligible only while LaunchWatch remains an informational,
 noncommercial experience. A commercial or monetized release must audit and

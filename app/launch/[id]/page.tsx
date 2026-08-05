@@ -24,6 +24,18 @@ interface LaunchDetailPageProps {
 
 const resolveLaunch = cache(async (id: string) => getLaunchByIdResult(id));
 
+function socialDescription(name: string, description: string | null): string {
+  const plainText = description
+    ?.replace(/^\s*[*+-]\s+/gm, '• ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return (
+    plainText ||
+    `${name} launch details, schedule, provider coverage, and mission intelligence.`
+  ).slice(0, 180);
+}
+
 export async function generateMetadata({
   params,
 }: LaunchDetailPageProps): Promise<Metadata> {
@@ -48,21 +60,27 @@ export async function generateMetadata({
   }
 
   const launch = result.data;
-  const description =
-    launch.description?.trim().slice(0, 180) ||
-    `${launch.name} launch details, schedule, provider coverage, and mission intelligence.`;
+  const description = socialDescription(launch.name, launch.description);
   const image = getLaunchVisualMetadata(launch);
+  const canonicalPath = `/launch/${encodeURIComponent(parsed.canonicalId)}`;
 
   return {
     title: `${launch.name} | LaunchWatch`,
     description,
     alternates: {
-      canonical: `/launch/${encodeURIComponent(parsed.canonicalId)}`,
+      canonical: canonicalPath,
     },
     openGraph: {
       title: launch.name,
       description,
       type: 'article',
+      url: canonicalPath,
+      ...(image ? { images: [image] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: launch.name,
+      description,
       ...(image ? { images: [image] } : {}),
     },
   };

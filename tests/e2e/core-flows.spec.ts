@@ -53,6 +53,56 @@ test('shared routes publish the branded LaunchWatch social preview', async ({
   expect((await imageResponse.body()).byteLength).toBeGreaterThan(20_000);
 });
 
+test('mission details publish a consistent canonical social preview', async ({
+  page,
+}) => {
+  await page.goto('/launch/ll2-demo-orbital-dawn?from=watch');
+
+  const canonicalUrl =
+    'https://www.launchwatch.io/launch/ll2-demo-orbital-dawn';
+  const description = await page
+    .locator('meta[name="description"]')
+    .getAttribute('content');
+  expect(description).toBe(
+    'A communications payload mission opening a new low-Earth-orbit relay corridor. Mission objectives: • Deploy the relay payload • Validate the communications link'
+  );
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'Orbital Dawn'
+  );
+  await expect(
+    page.locator('meta[property="og:description"]')
+  ).toHaveAttribute('content', description!);
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute(
+    'content',
+    'Orbital Dawn'
+  );
+  await expect(
+    page.locator('meta[name="twitter:description"]')
+  ).toHaveAttribute('content', description!);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image'
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    /\/icon-512\.png$/
+  );
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+    'content',
+    /\/icon-512\.png$/
+  );
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {
