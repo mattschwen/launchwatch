@@ -3,6 +3,7 @@ import {
   getAllUpcomingLaunchesResult,
   getLL2UpcomingLaunches,
   getLaunchByIdResult,
+  getPastLaunchesResult,
   normalizeLL2Launch,
 } from '@/lib/api';
 import type { LL2Launch } from '@/lib/types';
@@ -211,6 +212,46 @@ describe('Launch Library 2.3 adapter', () => {
     expect(result.meta.providers.ll2.error).toBe(
       'Launch Library 2 returned an invalid launch record',
     );
+  });
+
+  it('keeps an in-flight provider record out of completed launch history', async () => {
+    const completedLaunch = {
+      ...NORMAL_LIST_LAUNCH,
+      id: 'completed-history-fixture',
+      name: 'Completed History Fixture',
+      net: '2024-07-29T02:00:00Z',
+      status: {
+        id: 3,
+        name: 'Launch Successful',
+        abbrev: 'Success',
+      },
+    } satisfies LL2Launch;
+    const liveLaunch = {
+      ...NORMAL_LIST_LAUNCH,
+      id: 'active-history-fixture',
+      name: 'Active History Fixture',
+      net: '2024-07-30T02:00:00Z',
+      status: {
+        id: 6,
+        name: 'In Flight',
+        abbrev: 'In Flight',
+      },
+      webcast_live: true,
+    } satisfies LL2Launch;
+    const fetchMock = vi.fn(async (url: string) =>
+      jsonResponse(
+        url.includes('api.spacexdata.com')
+          ? { docs: [] }
+          : { count: 2, results: [liveLaunch, completedLaunch] },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await getPastLaunchesResult(100);
+
+    expect(result.data.map((launch) => launch.id)).toEqual([
+      'll2-completed-history-fixture',
+    ]);
   });
 
   it('requests detailed launch data and normalizes 2.3 media, streams, and timeline fields', async () => {

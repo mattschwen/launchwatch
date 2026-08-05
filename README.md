@@ -26,7 +26,7 @@ surface remains consistent everywhere else.
 
 - **Home** highlights the live or next launch with a licensed vehicle reference when one is available, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
 - **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, licensed imagery when video is unavailable, queue, countdown, selected-mission trajectory, and truthful coverage signal.
-- **History** loads completed SpaceX missions through the internal server API and supports search, provider, year, outcome, expandable visual summaries, replay links, and mission details.
+- **History** loads completed missions across connected providers through the internal server API and supports search, provider, year, outcome, expandable visual summaries, replay links, and mission details. In-flight records stay on Home and Watch until provider coverage is no longer live.
 - **Mission detail** resolves both upcoming and historical launches by canonical ID and combines a licensed vehicle or mission visual, status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence.
 
 The desktop and mobile navigation both expose Home, Watch, and History. The first-visit synchronization message is a short, dismissible status toast; it never blocks the application.
@@ -122,7 +122,7 @@ Use the canonical value for `/launch/[id]`, `/watch?id=...`, `/api/launches/[id]
 | `/api/launches?type=all` | Merged upcoming launch feed |
 | `/api/launches?type=live` | Launches currently in the live window |
 | `/api/launches?type=next` | Next upcoming launch |
-| `/api/launches?type=history&limit=50` | Completed SpaceX launches; limit `1–100` |
+| `/api/launches?type=history&limit=50` | Completed launches across connected providers; limit `1–100` |
 | `/api/launches/[id]` | One current or historical launch |
 | `/api/launch-intel?id=[id]` | Stream, coverage, and community intelligence for one launch |
 

@@ -99,7 +99,10 @@ Watch, intelligence, calendar, or notification references.
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 
-The historical feed currently requests completed SpaceX launches. It is served through `/api/launches?type=history`; browser components never call SpaceX directly.
+The historical feed requests previous missions from SpaceX and Launch Library
+2, de-duplicates equivalent provider records, and excludes any record whose
+normalized coverage state is still live. It is served through
+`/api/launches?type=history`; browser components never call providers directly.
 
 ## API Contracts
 

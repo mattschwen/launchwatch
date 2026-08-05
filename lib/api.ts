@@ -1084,6 +1084,7 @@ export async function getPastLaunchesResult(limit: number = 50): Promise<LaunchF
     ])
       .filter((launch) => (
         Number.isFinite(launch.dateUnix) &&
+        !launch.isLive &&
         launch.dateUnix < nowUnix
       ))
       .sort((left, right) => right.dateUnix - left.dateUnix)

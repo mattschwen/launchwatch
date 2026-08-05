@@ -121,12 +121,14 @@ CDN policy: 2 minutes fresh, 4 minutes stale-while-revalidate.
 
 ### `GET /api/launches?type=history&limit=50`
 
-Returns completed SpaceX launches in reverse chronological order.
+Returns completed launches across connected providers in reverse chronological
+order. In-flight provider records are excluded even after their reported T-0
+has passed.
 
 - `limit` is optional and defaults to `50`.
 - Valid values are integers from `1` through `100`.
-- Launches use canonical `spacex-*` IDs.
-- Launch Library 2 appears as `not-requested` in provider metadata.
+- Launches use canonical provider-qualified IDs such as `spacex-*` and `ll2-*`.
+- Provider metadata reports SpaceX and Launch Library 2 independently.
 
 ```json
 {
