@@ -4926,6 +4926,51 @@ test('history rejects incomplete successful refreshes without erasing settled re
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history rejects invalid successful refreshes without erasing settled records', async ({
+  page,
+}) => {
+  let invalidResponseEnabled = false;
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: invalidResponseEnabled
+          ? [
+              {
+                ...HISTORICAL_LAUNCHES[0],
+                id: 'demo-return',
+                sourceId: 'demo-return',
+              },
+            ]
+          : HISTORICAL_LAUNCHES,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/history');
+  const mission = page.getByText('Demo Return Flight');
+  await expect(mission).toBeVisible();
+
+  const refresh = page.getByRole('button', { name: 'Refresh archive' });
+  await refresh.focus();
+  invalidResponseEnabled = true;
+  await refresh.press('Enter');
+
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Archive refresh failed.' })
+  ).toBeVisible();
+  await expect(mission).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View mission' }).first()).toHaveAttribute(
+    'href',
+    '/launch/spacex-demo-return?from=history'
+  );
+  await expect(refresh).toBeFocused();
+  expect((await refresh.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history partial provider state keeps one recovery command', async ({
   page,
 }) => {

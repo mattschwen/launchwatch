@@ -80,11 +80,14 @@ describe('PastLaunches', () => {
   });
 
   it('makes the bounded archive feed window visible before filtering', async () => {
-    const launches = Array.from({ length: 100 }, (_, index) => ({
-      ...HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length],
-      id: `archive-window-${index}`,
-      sourceId: `archive-window-${index}`,
-    }));
+    const launches = Array.from({ length: 100 }, (_, index) => {
+      const launch = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
+      return {
+        ...launch,
+        id: `${launch.id}-archive-window-${index}`,
+        sourceId: `${launch.sourceId}-archive-window-${index}`,
+      };
+    });
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -374,6 +377,40 @@ describe('PastLaunches', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('rejects noncanonical archive records instead of emitting invalid mission links', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: [
+            {
+              ...HISTORICAL_LAUNCHES[0],
+              id: 'demo-return',
+              sourceId: 'demo-return',
+            },
+          ],
+          meta: FEED_META,
+        }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'The archive could not be synchronized.',
+      })
+    ).toBeVisible();
+    expect(
+      screen.getByText('Launch archive response was incomplete')
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: 'View mission' })
+    ).not.toBeInTheDocument();
+  });
+
   it('announces pagination progress and preserves focus after the final batch', async () => {
     const user = userEvent.setup();
     const launches = Array.from({ length: 21 }, (_, index) => {
@@ -506,6 +543,42 @@ describe('PastLaunches', () => {
         name: 'No archived missions are available.',
       })
     ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains settled records when a successful refresh contains an invalid launch collection', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(successfulResponse)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: [
+            {
+              ...HISTORICAL_LAUNCHES[0],
+              id: 'demo-return',
+              sourceId: 'demo-return',
+            },
+          ],
+          meta: FEED_META,
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Refresh archive' }));
+
+    expect(
+      await screen.findByText('Archive refresh failed.', { exact: false })
+    ).toBeVisible();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(
+      screen.getAllByRole('link', { name: 'View mission' })[0]
+    ).toHaveAttribute('href', '/launch/spacex-demo-return?from=history');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

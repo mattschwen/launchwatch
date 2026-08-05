@@ -37,6 +37,7 @@ import {
 import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
+import { isLaunch } from '@/lib/launch-contract';
 
 const PAGE_SIZE = 10;
 const HISTORY_LIMIT = 100;
@@ -54,20 +55,17 @@ function readHistoryPayload(payload: unknown): {
     record.data && typeof record.data === 'object' && !Array.isArray(record.data)
       ? (record.data as Record<string, unknown>)
       : null;
-  const launches = Array.isArray(record.launches)
-    ? (record.launches as Launch[])
+  const collection = Array.isArray(record.launches)
+    ? record.launches
     : Array.isArray(record.data)
-      ? (record.data as Launch[])
+      ? record.data
       : Array.isArray(nested?.launches)
-        ? (nested.launches as Launch[])
-        : [];
-  const valid =
-    Array.isArray(record.launches) ||
-    Array.isArray(record.data) ||
-    Array.isArray(nested?.launches);
+        ? nested.launches
+        : null;
+  const valid = collection !== null && collection.every(isLaunch);
 
   return {
-    launches,
+    launches: valid ? collection : [],
     valid,
     meta:
       record.meta && typeof record.meta === 'object'
