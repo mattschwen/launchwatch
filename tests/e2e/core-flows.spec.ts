@@ -2711,8 +2711,13 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   await page.goto('/watch?id=ll2-demo-queue-12');
 
   const queue = page.getByRole('complementary', { name: 'Next up' });
-  await expect(queue.getByText('10 of 12 missions · scroll', { exact: true }))
+  await expect(queue.getByText('9 next + selected · 12 total', { exact: true }))
     .toBeVisible();
+  const queueGap = queue.getByRole('separator', {
+    name: '2 missions omitted before selected mission 12 of 12',
+  });
+  await expect(queueGap).toContainText('2 missions omitted');
+  await expect(queueGap).toContainText('Selected 12 of 12');
   const fullSchedule = queue.getByRole('link', {
     name: 'View all 12 missions',
   });
@@ -2786,6 +2791,7 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   await expect(firstMission).toBeFocused();
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-1$/);
   await expect(firstMission).toHaveAttribute('tabindex', '0');
+  await expect(queueGap).toHaveCount(0);
 
   const lastChronologicalMission = queue.getByRole('button', {
     name: /Queue mission 10/i,

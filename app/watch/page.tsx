@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Fragment,
   Suspense,
   useEffect,
   useId,
@@ -601,13 +602,27 @@ function MissionQueue({
   const selectedIndex = queuedLaunches.findIndex(
     (launch) => launch.id === selectedId
   );
+  const selectedFeedIndex = launches.findIndex(
+    (launch) => launch.id === selectedId
+  );
+  const selectedMissionAppended =
+    selectedFeedIndex >= MAX_VISIBLE_QUEUE_MISSIONS &&
+    queuedLaunches.at(-1)?.id === selectedId;
+  const omittedBeforeSelected = selectedMissionAppended
+    ? selectedFeedIndex - (MAX_VISIBLE_QUEUE_MISSIONS - 1)
+    : 0;
+  const omittedMissionLabel = `${omittedBeforeSelected} mission${
+    omittedBeforeSelected === 1 ? '' : 's'
+  } omitted`;
   const tabStopIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const queueTruncated = launches.length > queuedLaunches.length;
-  const queueLabel = `${queuedLaunches.length}${
-    queueTruncated ? ` of ${launches.length}` : ''
-  } mission${
-    queuedLaunches.length === 1 ? '' : 's'
-  }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
+  const queueLabel = selectedMissionAppended
+    ? `${MAX_VISIBLE_QUEUE_MISSIONS - 1} next + selected · ${launches.length} total`
+    : `${queuedLaunches.length}${
+        queueTruncated ? ` of ${launches.length}` : ''
+      } mission${
+        queuedLaunches.length === 1 ? '' : 's'
+      }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -676,61 +691,79 @@ function MissionQueue({
       >
         <p id="watch-queue-instructions" className="sr-only">
           Use the Up and Down arrow keys to move between missions. Use Home or
-          End to jump to the first or last mission.
+          End to jump to the first or last visible mission.
+          {selectedMissionAppended
+            ? ` The first ${MAX_VISIBLE_QUEUE_MISSIONS - 1} missions are followed by the selected mission at position ${selectedFeedIndex + 1} of ${launches.length}.`
+            : ''}
         </p>
         {queuedLaunches.map((launch, index) => {
           const selected = launch.id === selectedId;
           return (
-            <button
-              key={launch.id}
-              ref={(element) => {
-                optionRefs.current[index] = element;
-              }}
-              type="button"
-              aria-pressed={selected}
-              tabIndex={index === tabStopIndex ? 0 : -1}
-              onClick={(event: MouseEvent<HTMLButtonElement>) =>
-                onSelect(launch.id, event.detail > 0)
-              }
-              onKeyDown={(event) => handleQueueKeyDown(event, index)}
-              className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
-                selected
-                  ? launch.isLive
-                    ? 'bg-[var(--surface-live)] shadow-[inset_3px_0_0_var(--console-magenta)]'
-                    : 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-cyan)]'
-                  : 'hover:bg-[var(--surface-subtle)]'
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  launch.isLive
-                    ? 'status-dot-live bg-[var(--console-magenta)]'
-                    : launch.status === 'failure' ||
-                        isCriticalLaunchStatusName(launch.statusName)
-                      ? 'bg-[var(--console-red)]'
-                      : launch.status === 'tbd'
-                      ? 'bg-[var(--console-amber)]'
-                      : 'bg-[var(--console-green)]'
+            <Fragment key={launch.id}>
+              {selectedMissionAppended && index === selectedIndex ? (
+                <div
+                  role="separator"
+                  aria-label={`${omittedMissionLabel} before selected mission ${selectedFeedIndex + 1} of ${launches.length}`}
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-y border-dashed border-[var(--console-cyan)]/25 bg-[var(--console-cyan)]/[0.035] px-4 py-2.5"
+                >
+                  <span className="data-label text-[var(--text-muted)]">
+                    {omittedMissionLabel}
+                  </span>
+                  <span className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--console-cyan)]">
+                    Selected {selectedFeedIndex + 1} of {launches.length}
+                  </span>
+                </div>
+              ) : null}
+              <button
+                ref={(element) => {
+                  optionRefs.current[index] = element;
+                }}
+                type="button"
+                aria-pressed={selected}
+                tabIndex={index === tabStopIndex ? 0 : -1}
+                onClick={(event: MouseEvent<HTMLButtonElement>) =>
+                  onSelect(launch.id, event.detail > 0)
+                }
+                onKeyDown={(event) => handleQueueKeyDown(event, index)}
+                className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
+                  selected
+                    ? launch.isLive
+                      ? 'bg-[var(--surface-live)] shadow-[inset_3px_0_0_var(--console-magenta)]'
+                      : 'bg-[var(--surface-accent)] shadow-[inset_3px_0_0_var(--console-cyan)]'
+                    : 'hover:bg-[var(--surface-subtle)]'
                 }`}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
-                  {launch.name}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    launch.isLive
+                      ? 'status-dot-live bg-[var(--console-magenta)]'
+                      : launch.status === 'failure' ||
+                          isCriticalLaunchStatusName(launch.statusName)
+                        ? 'bg-[var(--console-red)]'
+                        : launch.status === 'tbd'
+                        ? 'bg-[var(--console-amber)]'
+                        : 'bg-[var(--console-green)]'
+                  }`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
+                    {launch.name}
+                  </span>
+                  <span className="mt-1 block text-xs leading-4 text-[var(--text-muted)]">
+                    {formatLaunchDate(launch.date, launch.datePrecision)}
+                  </span>
+                  <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--console-cyan)]">
+                    {launch.provider || launch.rocket}
+                  </span>
                 </span>
-                <span className="mt-1 block text-xs leading-4 text-[var(--text-muted)]">
-                  {formatLaunchDate(launch.date, launch.datePrecision)}
-                </span>
-                <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--console-cyan)]">
-                  {launch.provider || launch.rocket}
-                </span>
-              </span>
-              <ArrowRight
-                aria-hidden="true"
-                size={16}
-                className="shrink-0 text-[var(--text-muted)]"
-              />
-            </button>
+                <ArrowRight
+                  aria-hidden="true"
+                  size={16}
+                  className="shrink-0 text-[var(--text-muted)]"
+                />
+              </button>
+            </Fragment>
           );
         })}
       </div>

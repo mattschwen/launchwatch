@@ -170,7 +170,9 @@ The optional expanded map remains a modal dialog. It must:
   the Tab order while every item stays directly touch and pointer operable. A
   deep-linked selection outside the first ten missions replaces the final bounded
   row and is revealed inside the rail without moving focus or scrolling the page
-  away from its primary coverage context.
+  away from its primary coverage context. A visible, announced handoff identifies
+  the omitted range and the selected mission's true provider-feed position, so the
+  compact rail never implies those nonadjacent missions are consecutive.
 - Touch and pointer selection on narrow layouts returns the viewport to the
   updated mission console so the new coverage and summary are immediately
   visible. Keyboard selection retains queue focus and keeps the queue in view
