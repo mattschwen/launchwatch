@@ -19,6 +19,9 @@ function HookHarness({
       <button type="button" onClick={() => setId(UPCOMING_LAUNCHES[1].id)}>
         Select second
       </button>
+      <button type="button" onClick={result.retry}>
+        Retry detail
+      </button>
       <p data-testid="selected-name">{result.launch?.name ?? 'Loading'}</p>
       <p data-testid="selected-stream">
         {result.launch?.livestream ?? 'No stream'}
@@ -231,6 +234,64 @@ describe('useLaunchById', () => {
     await expect(
       screen.findByText(detailedSecond.name)
     ).resolves.toBeVisible();
+  });
+
+  it('retries failed detail enrichment without discarding the feed mission', async () => {
+    const user = userEvent.setup();
+    let resolveRetry: ((value: Response) => void) | undefined;
+    const retryResponse = new Promise<Response>((resolve) => {
+      resolveRetry = resolve;
+    });
+    const detailedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      livestream: 'https://x.com/i/broadcasts/orbital-dawn-recovered',
+    };
+    let detailRequests = 0;
+    const fetchMock = vi.fn((input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes('?type=all')) {
+        return Promise.resolve(response({ launches: UPCOMING_LAUNCHES }));
+      }
+
+      detailRequests += 1;
+      if (detailRequests === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 503,
+          json: async () => ({ error: 'Detailed provider data unavailable' }),
+        } as Response);
+      }
+      return retryResponse;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={UPCOMING_LAUNCHES[0].id} />
+      </LaunchDataProvider>
+    );
+
+    await expect(
+      screen.findByText('Detailed provider data unavailable')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('selected-name')).toHaveTextContent(
+      UPCOMING_LAUNCHES[0].name
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Retry detail' }));
+    expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+      'Acquiring detail'
+    );
+    await user.click(screen.getByRole('button', { name: 'Retry detail' }));
+    expect(detailRequests).toBe(2);
+
+    resolveRetry?.(response({ launch: detailedLaunch }));
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-stream')).toHaveTextContent(
+        detailedLaunch.livestream
+      )
+    );
+    expect(detailRequests).toBe(2);
   });
 });
 

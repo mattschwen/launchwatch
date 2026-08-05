@@ -3587,17 +3587,41 @@ test('mission intelligence keeps complete stream identities contained', async ({
   await expect(channel).toBeVisible();
 });
 
-test('watch keeps the schedule usable when detail enrichment fails', async ({
+test('watch recovers failed detail enrichment without reloading the schedule', async ({
   page,
 }) => {
+  let detailRequests = 0;
+  let recoveryEnabled = false;
+  let releaseRetry: (() => void) | undefined;
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
   await page.route(
     '**/api/launches/ll2-demo-orbital-dawn',
-    (route) =>
-      route.fulfill({
-        status: 503,
+    async (route) => {
+      detailRequests += 1;
+      if (!recoveryEnabled) {
+        return route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Detailed provider data unavailable' }),
+        });
+      }
+
+      await retryGate;
+      return route.fulfill({
+        status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ error: 'Detailed provider data unavailable' }),
-      })
+        body: JSON.stringify({
+          launch: {
+            ...UPCOMING_LAUNCHES[0],
+            livestream: 'https://x.com/i/broadcasts/recovered-orbital-dawn',
+          },
+          canonicalId: UPCOMING_LAUNCHES[0].id,
+          meta: FEED_META,
+        }),
+      });
+    }
   );
   await page.goto('/watch');
 
@@ -3610,6 +3634,28 @@ test('watch keeps the schedule usable when detail enrichment fails', async ({
   await expect(
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
+  const retry = page.getByRole('button', {
+    name: /^Retry(?:ing)? mission details$/,
+  });
+  const initialDetailRequests = detailRequests;
+  await retry.focus();
+  await expect(retry).toBeFocused();
+  recoveryEnabled = true;
+  await retry.click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Checking stream status' })
+  ).toBeVisible();
+  await expect(retry).toHaveAttribute('aria-disabled', 'true');
+  await expect(retry).toHaveAttribute('aria-busy', 'true');
+  releaseRetry?.();
+  await expect(
+    page.getByRole('link', { name: 'Open provider stream' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Mission coverage ready' })
+  ).toBeFocused();
+  expect(detailRequests).toBe(initialDetailRequests + 1);
   await expect(
     page.getByRole('heading', { name: 'No live stream right now' })
   ).toHaveCount(0);
@@ -3642,7 +3688,7 @@ test('watch preserves the settled mission after incomplete detail enrichment', a
   await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   await expect(
     page.getByText(
-      'The mission schedule is available, but detailed provider coverage could not be checked. Search for current mission coverage while we retry.'
+      'The mission schedule is available, but detailed provider coverage could not be checked. Search for current coverage or retry mission details.'
     )
   ).toBeVisible();
   await expect(page.getByText('Mission response was incomplete')).toHaveCount(0);

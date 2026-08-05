@@ -205,6 +205,7 @@ export function useNextLaunch() {
 
 export function useLaunchById(id: string | null | undefined) {
   const { launches, loading: feedLoading } = useLaunchData();
+  const [retryVersion, setRetryVersion] = useState(0);
   const feedLaunch = useMemo(
     () => (id ? launches.find((launch) => launch.id === id) ?? null : null),
     [id, launches]
@@ -215,6 +216,7 @@ export function useLaunchById(id: string | null | undefined) {
     loading: boolean;
     error: string | null;
     notFound: boolean;
+    retrying: boolean;
   } | null>(null);
   const currentRemote = remote?.id === id ? remote : null;
   const launch = currentRemote?.launch ?? feedLaunch;
@@ -226,13 +228,14 @@ export function useLaunchById(id: string | null | undefined) {
     }
 
     const controller = new AbortController();
-    setRemote({
+    setRemote((current) => ({
       id,
       launch: null,
       loading: true,
       error: null,
       notFound: false,
-    });
+      retrying: Boolean(current?.id === id && current.retrying),
+    }));
 
     async function fetchLaunch(): Promise<void> {
       try {
@@ -251,6 +254,7 @@ export function useLaunchById(id: string | null | undefined) {
             loading: false,
             error: null,
             notFound: true,
+            retrying: false,
           });
           return;
         }
@@ -274,6 +278,7 @@ export function useLaunchById(id: string | null | undefined) {
           loading: false,
           error: null,
           notFound: false,
+          retrying: false,
         });
       } catch (requestError) {
         if (controller.signal.aborted) return;
@@ -286,13 +291,28 @@ export function useLaunchById(id: string | null | undefined) {
               ? requestError.message
               : 'Unable to load this mission',
           notFound: false,
+          retrying: false,
         });
       }
     }
 
     void fetchLaunch();
     return () => controller.abort();
-  }, [id]);
+  }, [id, retryVersion]);
+
+  const retry = (): void => {
+    if (!id || currentRemote?.loading || !currentRemote?.error) return;
+
+    setRemote((current) => ({
+      id,
+      launch: current?.id === id ? current.launch : null,
+      loading: true,
+      error: current?.id === id ? current.error : null,
+      notFound: false,
+      retrying: true,
+    }));
+    setRetryVersion((current) => current + 1);
+  };
 
   return {
     launch,
@@ -306,6 +326,8 @@ export function useLaunchById(id: string | null | undefined) {
       (feedLoading || !currentRemote || currentRemote.loading),
     error: currentRemote?.error ?? null,
     notFound: currentRemote?.notFound ?? false,
+    retrying: currentRemote?.retrying ?? false,
+    retry,
   };
 }
 

@@ -18,7 +18,9 @@ import {
   ArrowRight,
   ChevronDown,
   ExternalLink,
+  LoaderCircle,
   Radio,
+  RefreshCw,
   Rocket,
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
@@ -325,37 +327,68 @@ function WatchLoadingState({
 function WatchStage({
   launch,
   detailHref,
+  detailLoading,
+  detailRetrying,
+  coverageRegionRef,
+  onRetryDetails,
   streamLookupError,
 }: {
   launch: Launch;
   detailHref: string;
+  detailLoading: boolean;
+  detailRetrying: boolean;
+  coverageRegionRef: React.RefObject<HTMLDivElement | null>;
+  onRetryDetails: () => void;
   streamLookupError?: string | null;
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
   const hasProviderChannel = fallback.streamState === 'standby';
-  const fallbackDescription = streamLookupError
+  const fallbackDescription = detailLoading
+    ? 'Checking canonical mission details for an official stream. The schedule and safe provider fallback remain available.'
+    : streamLookupError
     ? hasProviderChannel
-      ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the official provider channel while we retry.'
-      : 'The mission schedule is available, but detailed provider coverage could not be checked. Search for current mission coverage while we retry.'
+      ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the official provider channel or retry mission details.'
+      : 'The mission schedule is available, but detailed provider coverage could not be checked. Search for current coverage or retry mission details.'
     : hasProviderChannel
       ? 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
       : 'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.';
+  const coverageLabel = launch.livestream
+    ? 'Mission coverage ready'
+    : detailLoading
+      ? 'Mission coverage check in progress'
+      : streamLookupError
+        ? 'Mission coverage unavailable'
+        : 'Mission coverage standby';
 
   if (launch.livestream) {
     return (
-      <div className="video-signal-frame holo-card signal-live relative overflow-hidden rounded-[var(--radius-md)] border bg-black">
-        <VideoPlayer
-          url={launch.livestream}
-          title={launch.name}
-          autoplay={launch.isLive}
-          className="rounded-none"
-        />
+      <div
+        ref={coverageRegionRef}
+        role="region"
+        aria-label={coverageLabel}
+        tabIndex={-1}
+        className="rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)]"
+      >
+        <div className="video-signal-frame holo-card signal-live relative overflow-hidden rounded-[var(--radius-md)] border bg-black">
+          <VideoPlayer
+            url={launch.livestream}
+            title={launch.name}
+            autoplay={launch.isLive}
+            className="rounded-none"
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="stream-surface holo-card signal-warm relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-5 text-center sm:aspect-video">
+    <section
+      ref={coverageRegionRef}
+      role="region"
+      aria-label={coverageLabel}
+      tabIndex={-1}
+      className="stream-surface holo-card signal-warm relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-5 text-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] sm:aspect-video"
+    >
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,79,216,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
@@ -367,7 +400,13 @@ function WatchStage({
         className="absolute bottom-[-0.6rem] right-[7%] text-[var(--border-strong)]"
       />
       <div className="relative max-w-xl">
-        {streamLookupError ? (
+        {detailLoading ? (
+          <LoaderCircle
+            aria-hidden="true"
+            className="mx-auto animate-spin text-[var(--console-cyan)]"
+            size={34}
+          />
+        ) : streamLookupError ? (
           <AlertTriangle
             aria-hidden="true"
             className="mx-auto text-[var(--console-amber)]"
@@ -381,7 +420,9 @@ function WatchStage({
           />
         )}
         <h2 className="mt-5 text-[clamp(1.65rem,4vw,2.5rem)] font-bold tracking-[-0.035em] text-[var(--text-primary)]">
-          {streamLookupError
+          {detailLoading
+            ? 'Checking stream status'
+            : streamLookupError
             ? 'Stream status unavailable'
             : 'No live stream right now'}
         </h2>
@@ -403,17 +444,39 @@ function WatchStage({
             compact
           />
         </div>
-        {fallback.recommendedUrl ? (
-          <a
-            href={fallback.recommendedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-button action-button-secondary mt-6"
-          >
-            <ExternalLink aria-hidden="true" size={16} />
-            {hasProviderChannel ? 'Open provider channel' : 'Search for stream'}
-          </a>
-        ) : null}
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {fallback.recommendedUrl ? (
+            <a
+              href={fallback.recommendedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`action-button ${
+                streamLookupError
+                  ? 'action-button-quiet'
+                  : 'action-button-secondary'
+              }`}
+            >
+              <ExternalLink aria-hidden="true" size={16} />
+              {hasProviderChannel ? 'Open provider channel' : 'Search for stream'}
+            </a>
+          ) : null}
+          {streamLookupError || detailRetrying ? (
+            <button
+              type="button"
+              onClick={onRetryDetails}
+              aria-disabled={detailRetrying}
+              aria-busy={detailRetrying}
+              className="action-button action-button-secondary aria-disabled:cursor-wait aria-disabled:opacity-60"
+            >
+              <RefreshCw
+                aria-hidden="true"
+                size={16}
+                className={detailRetrying ? 'animate-spin' : ''}
+              />
+              {detailRetrying ? 'Retrying mission details' : 'Retry mission details'}
+            </button>
+          ) : null}
+        </div>
       </div>
     </section>
   );
@@ -689,7 +752,9 @@ function WatchContent(): React.ReactElement {
   const [selectedMissionId, setSelectedMissionId] = useState(requestedId);
   const selectedMissionRef = useRef<HTMLDivElement>(null);
   const missionLinkRef = useRef<HTMLAnchorElement>(null);
+  const coverageRegionRef = useRef<HTMLDivElement>(null);
   const retryFocusPendingRef = useRef(false);
+  const detailRetryFocusPendingRef = useRef(false);
 
   const queue = useMemo(() => {
     const byId = new Map<string, Launch>();
@@ -727,6 +792,10 @@ function WatchContent(): React.ReactElement {
   }, [requestedId]);
 
   useEffect(() => {
+    detailRetryFocusPendingRef.current = false;
+  }, [selectedId]);
+
+  useEffect(() => {
     const resetSelection = (): void => setSelectedMissionId(null);
     window.addEventListener(RESET_WATCH_SELECTION_EVENT, resetSelection);
     return () =>
@@ -761,6 +830,16 @@ function WatchContent(): React.ReactElement {
     return () => window.cancelAnimationFrame(frame);
   }, [selectedLaunch]);
 
+  useEffect(() => {
+    if (!detailRetryFocusPendingRef.current || selected.enriching) return;
+
+    detailRetryFocusPendingRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      coverageRegionRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [selected.enriching]);
+
   const selectLaunch = (id: string, revealMission = false): void => {
     setSelectedMissionId(id);
     window.history.replaceState(
@@ -788,6 +867,12 @@ function WatchContent(): React.ReactElement {
     if (refreshing) return;
     retryFocusPendingRef.current = true;
     void refresh();
+  };
+
+  const retryMissionDetails = (): void => {
+    if (selected.retrying || !selected.error) return;
+    detailRetryFocusPendingRef.current = true;
+    selected.retry();
   };
 
   const loading =
@@ -880,6 +965,10 @@ function WatchContent(): React.ReactElement {
             <WatchStage
               launch={selectedLaunch}
               detailHref={selectedDetailHref}
+              detailLoading={selected.enriching}
+              detailRetrying={selected.retrying}
+              coverageRegionRef={coverageRegionRef}
+              onRetryDetails={retryMissionDetails}
               streamLookupError={selected.launch ? selected.error : null}
             />
 

@@ -140,8 +140,10 @@ shared state. `useLaunchById` preserves the shared feed record while it calls
 `/api/launches/[id]`, exposes the in-progress enrichment state, and then replaces
 the record with canonical detail. This lets Watch resolve streams, Home acquire
 richer visual provenance only when the feed has no eligible image, and completed
-missions or launches outside the current window resolve. `useLaunchIntel` sends
-only the selected canonical ID.
+missions or launches outside the current window resolve. A failed detail check
+keeps the shared feed mission visible and can be retried in place; Watch reports
+the checking, failed, retrying, and recovered coverage states without reloading
+the schedule. `useLaunchIntel` sends only the selected canonical ID.
 
 History has a separate server endpoint because its retention window and provider scope differ from the upcoming feed.
 
