@@ -117,6 +117,26 @@ describe('HeroSection', () => {
     ).toHaveAttribute('href', detailHref);
   });
 
+  it('keeps the provider launch window visible beside the target time', () => {
+    const { rerender } = render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[0]}
+      />
+    );
+
+    expect(screen.getByText('Launch window')).toBeVisible();
+    expect(screen.getByText('14:30–16:30 UTC')).toBeVisible();
+
+    rerender(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[1]}
+      />
+    );
+    expect(screen.queryByRole('note', { name: /Launch window/ })).toBeNull();
+  });
+
   it('marks a retained mission as last-known after refresh failure', () => {
     render(
       <HeroSection

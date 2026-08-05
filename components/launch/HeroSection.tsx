@@ -14,6 +14,7 @@ import {
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchActions from './LaunchActions';
+import LaunchWindow from './LaunchWindow';
 
 interface HeroSectionProps {
   activeLaunch: Launch | null;
@@ -257,40 +258,46 @@ export default function HeroSection({
             </h1>
           </Link>
 
-          <div className="my-5 border-b border-[var(--border-subtle)] pb-5 pt-1">
-            {live ? (
-              <div className="flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="status-dot-live h-3 w-3 rounded-full bg-[var(--console-magenta)] text-[var(--console-magenta)]"
-                />
-                <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-magenta)]">
-                  LIVE NOW
-                </p>
-              </div>
-            ) : retainedLive ? (
-              <div>
+          <div className="my-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-5 pt-1 md:max-lg:flex-row md:max-lg:items-end md:max-lg:justify-between">
+            <div className="min-w-0 flex-1">
+              {live ? (
                 <div className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="h-3 w-3 rounded-full bg-[var(--console-amber)]"
+                    className="status-dot-live h-3 w-3 rounded-full bg-[var(--console-magenta)] text-[var(--console-magenta)]"
                   />
-                  <p className="font-mono text-[clamp(1.65rem,4vw,3rem)] font-semibold tracking-[-0.04em] text-[var(--console-amber)]">
-                    COVERAGE UNCONFIRMED
+                  <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-magenta)]">
+                    LIVE NOW
                   </p>
                 </div>
-                <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-                  The last provider update marked this mission live, but the
-                  current feed cannot confirm its status.
-                </p>
-              </div>
-            ) : (
-              <Countdown
-                targetDate={activeLaunch.date}
-                precision={activeLaunch.datePrecision}
-                featured
-              />
-            )}
+              ) : retainedLive ? (
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="h-3 w-3 rounded-full bg-[var(--console-amber)]"
+                    />
+                    <p className="font-mono text-[clamp(1.65rem,4vw,3rem)] font-semibold tracking-[-0.04em] text-[var(--console-amber)]">
+                      COVERAGE UNCONFIRMED
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
+                    The last provider update marked this mission live, but the
+                    current feed cannot confirm its status.
+                  </p>
+                </div>
+              ) : (
+                <Countdown
+                  targetDate={activeLaunch.date}
+                  precision={activeLaunch.datePrecision}
+                  featured
+                />
+              )}
+            </div>
+            <LaunchWindow
+              launch={activeLaunch}
+              className="shrink-0 self-start md:max-lg:max-w-[45%] md:max-lg:self-end"
+            />
           </div>
 
           <dl className="compact-hero-telemetry grid grid-cols-2 gap-y-5">

@@ -25,6 +25,7 @@ import MissionDescription from '@/components/MissionDescription';
 import MissionTrajectory from '@/components/MissionTrajectory';
 import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
+import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
@@ -340,6 +341,7 @@ export default function LaunchDetailClient({
               />
               {formatLaunchDate(launch.date, launch.datePrecision)}
             </p>
+            <LaunchWindow launch={launch} className="mt-3" />
 
             {launch.description ? (
               <MissionDescription

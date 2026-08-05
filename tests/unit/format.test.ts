@@ -6,6 +6,7 @@ import {
   formatLaunchTarget,
   formatLaunchTime,
   formatLaunchWindow,
+  formatLaunchWindowTimes,
   formatTimelineOffset,
   formatLaunchValue,
   formatRelativeDate,
@@ -89,6 +90,20 @@ describe('launch formatting', () => {
         windowEnd: '2035-07-28T16:30:00.000Z',
       })
     ).toBeNull();
+  });
+
+  it('keeps same-day launch windows compact for mission summaries', () => {
+    expect(formatLaunchWindowTimes(UPCOMING_LAUNCHES[0])).toBe(
+      '14:30–16:30 UTC'
+    );
+    expect(
+      formatLaunchWindowTimes({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T23:30:00.000Z',
+        date: '2035-07-29T00:00:00.000Z',
+        windowEnd: '2035-07-29T00:30:00.000Z',
+      })
+    ).toBe('Jul 28, 2035, 23:30 UTC – Jul 29, 2035, 00:30 UTC');
   });
 
   it('formats provider timeline durations as scannable mission offsets', () => {

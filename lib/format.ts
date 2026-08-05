@@ -332,6 +332,22 @@ export function formatLaunchWindow(
   )}`;
 }
 
+export function formatLaunchWindowTimes(
+  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>
+): string | null {
+  const bounds = getLaunchWindowBounds(launch);
+  if (!bounds) return null;
+
+  const sameUtcDay =
+    bounds.start.getUTCFullYear() === bounds.end.getUTCFullYear() &&
+    bounds.start.getUTCMonth() === bounds.end.getUTCMonth() &&
+    bounds.start.getUTCDate() === bounds.end.getUTCDate();
+
+  return sameUtcDay
+    ? `${UTC_TIME.format(bounds.start)}–${UTC_TIME.format(bounds.end)} UTC`
+    : formatLaunchWindow(launch);
+}
+
 export function formatRelativeDate(date: string): string {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return 'Date unavailable';

@@ -1281,6 +1281,42 @@ test('featured mission telemetry stays legible in the split layout', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('primary mission summaries keep the provider launch window visible', async ({
+  page,
+}) => {
+  const routes = [
+    '/',
+    '/watch?id=ll2-demo-orbital-dawn',
+    '/launch/ll2-demo-orbital-dawn',
+  ];
+
+  for (const route of routes) {
+    await page.goto(route);
+    await expect(
+      page.getByRole('heading', { name: 'Orbital Dawn' }).first()
+    ).toBeVisible();
+
+    const launchWindow = page.getByRole('note', {
+      name: /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC$/,
+    });
+    await expect(launchWindow).toBeVisible();
+    await expect(launchWindow).toHaveAccessibleName(
+      /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC$/
+    );
+
+    const geometry = await launchWindow.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        left: bounds.left,
+        right: bounds.right,
+        viewportWidth: window.innerWidth,
+      };
+    });
+    expect(geometry.left).toBeGreaterThanOrEqual(0);
+    expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+  }
+});
+
 test('home keeps the schedule ahead of optional licensed mission imagery', async ({
   page,
 }) => {

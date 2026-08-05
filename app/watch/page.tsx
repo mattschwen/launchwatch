@@ -28,6 +28,7 @@ import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import MissionDescription from '@/components/MissionDescription';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
+import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
@@ -1000,6 +1001,10 @@ function WatchContent(): React.ReactElement {
                       selectedLaunch.datePrecision
                     )}
                   </p>
+                  <LaunchWindow
+                    launch={selectedLaunch}
+                    className="mt-2"
+                  />
                 </div>
                 <LaunchActions
                   launch={selectedLaunch}

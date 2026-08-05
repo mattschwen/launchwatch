@@ -136,9 +136,11 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   canonical launch detail record to acquire richer vehicle-image provenance;
   the server caches the result under the existing detail policy.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
-- Provider date precision is normalized with each mission. Coarse day, month,
-  quarter, and year targets render as estimates instead of exact countdowns;
-  calendar export and alerts remain pending until T-0 is precise enough.
+- Provider date precision and valid launch windows are normalized with each
+  mission. Primary mission summaries retain a supplied window instead of
+  reducing it to one target instant. Coarse day, month, quarter, and year
+  targets render as estimates instead of exact countdowns; calendar export and
+  alerts remain pending until T-0 is precise enough.
 - Visual metadata is normalized with its provider record. The UI displays only
   supported image origins with explicit, meaningful attribution, an explicit reusable
   license, and an explicit `singleUse: false` clearance. Unknown-rights images
