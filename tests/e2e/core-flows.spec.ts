@@ -5660,8 +5660,13 @@ test('upcoming and historical details place one trajectory before mission suppor
       await expect(timelineEvents).toHaveAttribute('tabindex', '0');
       await expect(timelineEvents).toHaveAttribute(
         'aria-describedby',
-        'launch-timeline-instructions'
+        'launch-timeline-instructions launch-timeline-position'
       );
+      const timelinePosition = timeline.getByRole('status', {
+        name: 'Timeline position',
+      });
+      await expect(timelinePosition).toHaveText(/Events 1–\d+ of 10/);
+      const initialTimelinePosition = await timelinePosition.textContent();
 
       const previousEvent = timeline.getByRole('button', {
         name: 'Previous timeline event',
@@ -5690,6 +5695,9 @@ test('upcoming and historical details place one trajectory before mission suppor
       await expect(previousEvent).not.toHaveAttribute('disabled');
       await expect(previousEvent).not.toHaveAttribute('tabindex');
       await expect(nextEvent).toBeFocused();
+      await expect(timelinePosition).not.toHaveText(
+        initialTimelinePosition ?? ''
+      );
 
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const timelineScrollWidth = await timelineEvents.evaluate((element) => ({
@@ -5708,6 +5716,7 @@ test('upcoming and historical details place one trajectory before mission suppor
       await expect(nextEvent).toHaveAttribute('aria-disabled', 'true');
       await expect(nextEvent).toHaveAttribute('tabindex', '-1');
       await expect(nextEvent).toBeFocused();
+      await expect(timelinePosition).toHaveText(/Events \d+–10 of 10/);
       const terminalScrollLeft = await timelineEvents.evaluate(
         (element) => element.scrollLeft
       );

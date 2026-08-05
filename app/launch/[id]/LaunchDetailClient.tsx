@@ -120,6 +120,8 @@ export default function LaunchDetailClient({
   const [timelineScroll, setTimelineScroll] = useState({
     canMoveBackward: false,
     canMoveForward: false,
+    firstVisible: 1,
+    lastVisible: 1,
   });
   const timelineRef = useRef<HTMLOListElement>(null);
   const intelligenceHostRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,7 @@ export default function LaunchDetailClient({
   }, [intelligenceEnabled, launch.id]);
 
   const completed = isCompletedLaunch(launch);
+  const timelineEventCount = launch.timeline?.length ?? 0;
   const hasPlayableVideo = Boolean(
     launch.livestream && extractYouTubeId(launch.livestream)
   );
@@ -263,13 +266,34 @@ export default function LaunchDetailClient({
     );
     const canMoveBackward = timeline.scrollLeft > 1;
     const canMoveForward = timeline.scrollLeft < maxScrollLeft - 1;
+    const timelineBounds = timeline.getBoundingClientRect();
+    const visibleIndexes = [...timeline.children].flatMap((child, index) => {
+      const bounds = child.getBoundingClientRect();
+      const visibleWidth = Math.max(
+        0,
+        Math.min(bounds.right, timelineBounds.right) -
+          Math.max(bounds.left, timelineBounds.left)
+      );
+      return visibleWidth >= bounds.width / 2
+        ? [index]
+        : [];
+    });
+    const fallbackIndex = Math.min(
+      Math.max(0, timelineEventCount - 1),
+      Math.max(0, Math.round(timeline.scrollLeft / TIMELINE_EVENT_WIDTH_PX))
+    );
+    const firstVisible = (visibleIndexes[0] ?? fallbackIndex) + 1;
+    const lastVisible =
+      (visibleIndexes[visibleIndexes.length - 1] ?? fallbackIndex) + 1;
     setTimelineScroll((current) =>
       current.canMoveBackward === canMoveBackward &&
-      current.canMoveForward === canMoveForward
+      current.canMoveForward === canMoveForward &&
+      current.firstVisible === firstVisible &&
+      current.lastVisible === lastVisible
         ? current
-        : { canMoveBackward, canMoveForward }
+        : { canMoveBackward, canMoveForward, firstVisible, lastVisible }
     );
-  }, []);
+  }, [timelineEventCount]);
 
   useEffect(() => {
     const timeline = timelineRef.current;
@@ -386,8 +410,17 @@ export default function LaunchDetailClient({
                 Launch timeline
               </h2>
               <div className="flex items-center gap-2">
-                <span className="data-label mr-1">
-                  {launch.timeline.length} events
+                <span
+                  id="launch-timeline-position"
+                  role="status"
+                  aria-label="Timeline position"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="data-label mr-1"
+                >
+                  {timelineScroll.firstVisible === timelineScroll.lastVisible
+                    ? `Event ${timelineScroll.firstVisible} of ${launch.timeline.length}`
+                    : `Events ${timelineScroll.firstVisible}–${timelineScroll.lastVisible} of ${launch.timeline.length}`}
                 </span>
                 <div
                   role="group"
@@ -398,6 +431,7 @@ export default function LaunchDetailClient({
                     type="button"
                     aria-label="Previous timeline event"
                     aria-controls="launch-timeline-events"
+                    aria-describedby="launch-timeline-position"
                     aria-disabled={!timelineScroll.canMoveBackward}
                     tabIndex={timelineScroll.canMoveBackward ? undefined : -1}
                     onClick={() => moveTimeline(-1)}
@@ -409,6 +443,7 @@ export default function LaunchDetailClient({
                     type="button"
                     aria-label="Next timeline event"
                     aria-controls="launch-timeline-events"
+                    aria-describedby="launch-timeline-position"
                     aria-disabled={!timelineScroll.canMoveForward}
                     tabIndex={timelineScroll.canMoveForward ? undefined : -1}
                     onClick={() => moveTimeline(1)}
@@ -426,7 +461,7 @@ export default function LaunchDetailClient({
             <ol
               ref={timelineRef}
               id="launch-timeline-events"
-              aria-describedby="launch-timeline-instructions"
+              aria-describedby="launch-timeline-instructions launch-timeline-position"
               tabIndex={0}
               onKeyDown={handleTimelineKeyDown}
               onScroll={updateTimelineControls}

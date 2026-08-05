@@ -292,6 +292,8 @@ The optional expanded map remains a modal dialog. It must:
 - Timeline events use compact `T−`/`T+` mission offsets and scroll within
   their own region when necessary. Touch-safe previous/next controls expose
   one-event movement without replacing direct scrolling or arrow-key access.
+  A responsive live readout reports the substantially visible event range and
+  total after button, keyboard, touch, or resized-viewport movement.
   Unavailable boundary directions leave the sequential tab order while keeping
   truthful disabled semantics. A control already in use retains focus when it
   reaches the first or final event, then leaves the next Tab press for a usable
