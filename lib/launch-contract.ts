@@ -1,4 +1,5 @@
 import type { Launch } from './types';
+import { parseLaunchId } from './launch-id';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -14,9 +15,20 @@ export function isLaunch(value: unknown): value is Launch {
   const statuses = ['upcoming', 'live', 'success', 'failure', 'tbd'];
   const sources = ['spacex', 'll2'];
   const timeline = value.timeline;
+  const parsedId =
+    typeof value.id === 'string' ? parseLaunchId(value.id) : null;
+  const sourceId = value.sourceId;
+  const canonicalIdentity = Boolean(
+    parsedId &&
+      !parsedId.legacy &&
+      parsedId.source === value.source &&
+      (sourceId === undefined ||
+        sourceId === null ||
+        sourceId === parsedId.sourceId),
+  );
 
   return (
-    typeof value.id === 'string' &&
+    canonicalIdentity &&
     typeof value.name === 'string' &&
     typeof value.date === 'string' &&
     typeof value.dateUnix === 'number' &&

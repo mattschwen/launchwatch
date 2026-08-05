@@ -69,6 +69,13 @@ ll2-<Launch Library 2 source ID>
 
 `parseLaunchId` validates IDs and converts the old `past-<SpaceX-id>` form to `spacex-<SpaceX-id>` for compatibility. That legacy form must not be emitted by new code.
 
+The same shared parser protects the browser response boundary. A successful
+feed or detail payload is accepted only when its ID is canonical, its provider
+prefix matches `source`, and any supplied `sourceId` matches the native portion
+of that ID. An identity-invalid refresh is treated as incomplete data, so the
+last known-good mission set remains visible instead of generating broken detail,
+Watch, intelligence, calendar, or notification references.
+
 ## Provider and Normalization Layer
 
 `lib/api.ts` is server-only application infrastructure even though its normalized types are shared:

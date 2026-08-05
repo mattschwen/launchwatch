@@ -940,6 +940,53 @@ test('home rejects incomplete mission records without erasing retained missions'
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home rejects noncanonical mission identity without erasing retained missions', async ({
+  page,
+}) => {
+  let malformedIdentityEnabled = false;
+  await page.route('**/api/launches?type=all', (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: malformedIdentityEnabled
+          ? [
+              {
+                ...UPCOMING_LAUNCHES[0],
+                id: 'demo-orbital-dawn',
+              },
+            ]
+          : UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+  const mission = page.getByRole('heading', {
+    level: 1,
+    name: UPCOMING_LAUNCHES[0].name,
+  });
+  await expect(mission).toBeVisible();
+
+  malformedIdentityEnabled = true;
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(mission).toBeVisible();
+  await expect(mission.locator('..')).toHaveAttribute(
+    'href',
+    '/launch/ll2-demo-orbital-dawn'
+  );
+  await expect(
+    page.locator('a[href="/launch/demo-orbital-dawn"]')
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('desktop ticker keeps the last known mission after refresh failure', async ({
   page,
 }) => {
@@ -2096,16 +2143,19 @@ test('home brand navigation clears same-route schedule context', async ({
 test('home reveals a large mission queue in honest, touch-safe batches', async ({
   page,
 }) => {
-  const launches = Array.from({ length: 12 }, (_, index) => ({
-    ...UPCOMING_LAUNCHES[index % UPCOMING_LAUNCHES.length],
-    id:
-      index === 0
-        ? UPCOMING_LAUNCHES[0].id
-        : `schedule-mission-${index + 1}`,
-    sourceId: `schedule-mission-${index + 1}`,
-    name: `Schedule Mission ${index + 1}`,
-    dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
-  }));
+  const launches = Array.from({ length: 12 }, (_, index) => {
+    const template =
+      UPCOMING_LAUNCHES[index % UPCOMING_LAUNCHES.length];
+    const sourceId = `schedule-mission-${index + 1}`;
+
+    return {
+      ...template,
+      id: `${template.source}-${sourceId}`,
+      sourceId,
+      name: `Schedule Mission ${index + 1}`,
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
+    };
+  });
 
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({
