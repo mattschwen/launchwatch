@@ -107,6 +107,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
+- A schedule detail return reveals the progressive batch containing the
+  selected mission, scrolls it clear of persistent chrome, and returns keyboard
+  focus to its link.
 - Global Home commands clear same-route schedule filters and restore the full
   mission queue, commit the clean URL before the client state changes, and
   leave browser Back and Forward navigation able to recover the prior filtered
@@ -251,6 +254,8 @@ The optional expanded map remains a modal dialog. It must:
 - Chronology reverses only the current bounded archive response, explicitly
   offering newest-first or oldest-first scanning without implying access beyond
   the labeled feed window. It survives mission-detail return navigation.
+- An archive detail return restores the progressive batch containing the
+  selected mission and returns keyboard focus to its View mission action.
 - Activating the already-current History command resets archive filters and
   results together, while Back and Forward restore the prior URL-bound context.
 - The archive exposes a labeled clear action only while filters are active, so

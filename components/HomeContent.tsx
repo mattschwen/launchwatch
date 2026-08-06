@@ -16,6 +16,7 @@ import { selectLaunchVisual } from '@/lib/launch-visual';
 import {
   buildScheduleDetailHref,
   parseScheduleFilters,
+  readScheduleReturnFocus,
 } from '@/lib/schedule-return';
 
 const MissionTrajectory = dynamic(
@@ -57,14 +58,22 @@ function TrajectoryLoadingState(): React.ReactElement {
 function HomeWithReturnContext(): React.ReactElement {
   const searchParams = useSearchParams();
   const initialFilters = parseScheduleFilters(searchParams);
+  const returnFocusId = readScheduleReturnFocus(searchParams);
 
-  return <HomeExperience initialFilters={initialFilters} />;
+  return (
+    <HomeExperience
+      initialFilters={initialFilters}
+      returnFocusId={returnFocusId}
+    />
+  );
 }
 
 function HomeExperience({
   initialFilters,
+  returnFocusId = null,
 }: {
   initialFilters: FilterOptions;
+  returnFocusId?: string | null;
 }): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
@@ -137,6 +146,7 @@ function HomeExperience({
         <LaunchList
           initialFilters={initialFilters}
           onFiltersChange={setScheduleFilters}
+          returnFocusId={returnFocusId}
         />
       </div>
 

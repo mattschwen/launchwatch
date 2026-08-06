@@ -4,6 +4,7 @@ import {
   buildHistoryReturnHref,
   DEFAULT_HISTORY_FILTERS,
   parseHistoryFilters,
+  readHistoryReturnFocus,
   readHistoryReturnQuery,
   serializeHistoryFilters,
 } from '@/lib/history-return';
@@ -66,6 +67,25 @@ describe('history return context', () => {
     expect(buildHistoryReturnHref(query!)).toBe(
       '/history?q=Return+flight&provider=SpaceX',
     );
+  });
+
+  it('round-trips only canonical mission focus for result restoration', () => {
+    expect(
+      buildHistoryReturnHref('sort=date-asc', 'spacex-demo-return'),
+    ).toBe('/history?sort=date-asc&focus=spacex-demo-return');
+    expect(
+      readHistoryReturnFocus(
+        new URLSearchParams('focus=spacex-demo-return'),
+      ),
+    ).toBe('spacex-demo-return');
+    expect(
+      readHistoryReturnFocus(
+        new URLSearchParams('focus=one&focus=two'),
+      ),
+    ).toBeNull();
+    expect(
+      readHistoryReturnFocus(new URLSearchParams('focus=past-demo')),
+    ).toBeNull();
   });
 
   it('preserves a bounded archive chronology preference', () => {

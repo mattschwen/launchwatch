@@ -1,6 +1,9 @@
 import { Archive } from 'lucide-react';
 import PastLaunches from '@/components/PastLaunches';
-import { parseHistoryFilters } from '@/lib/history-return';
+import {
+  parseHistoryFilters,
+  readHistoryReturnFocus,
+} from '@/lib/history-return';
 
 export const metadata = {
   title: 'Launch History | LaunchWatch',
@@ -15,7 +18,9 @@ export default async function HistoryPage({
     Record<string, string | string[] | undefined>
   >;
 }): Promise<React.ReactElement> {
-  const initialFilters = parseHistoryFilters(await searchParams);
+  const resolvedSearchParams = await searchParams;
+  const initialFilters = parseHistoryFilters(resolvedSearchParams);
+  const returnFocusId = readHistoryReturnFocus(resolvedSearchParams);
 
   return (
     <div className="page-container py-5 sm:py-7 lg:py-9">
@@ -40,7 +45,10 @@ export default async function HistoryPage({
         <p className="data-label">Source: public providers</p>
       </header>
 
-      <PastLaunches initialFilters={initialFilters} />
+      <PastLaunches
+        initialFilters={initialFilters}
+        returnFocusId={returnFocusId}
+      />
     </div>
   );
 }

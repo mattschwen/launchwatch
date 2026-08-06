@@ -30,9 +30,11 @@ const INITIAL_VISIBLE_COUNT = 5;
 export default function LaunchList({
   initialFilters = DEFAULT_FILTERS,
   onFiltersChange,
+  returnFocusId = null,
 }: {
   initialFilters?: FilterOptions;
   onFiltersChange?: (filters: FilterOptions) => void;
+  returnFocusId?: string | null;
 }): React.ReactElement {
   const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
@@ -46,6 +48,8 @@ export default function LaunchList({
   const loadMoreRef = useRef<HTMLButtonElement>(null);
   const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const returnMissionLinkRef = useRef<HTMLAnchorElement>(null);
+  const returnFocusHandledRef = useRef(false);
   const retryFocusPendingRef = useRef(false);
   const retryScrollFrameRef = useRef<number | null>(null);
   const suppressNextUrlWriteRef = useRef(false);
@@ -195,6 +199,38 @@ export default function LaunchList({
     filtered.length > INITIAL_VISIBLE_COUNT && !allResultsVisible
       ? `Showing ${visibleLaunches.length} of ${filtered.length} missions`
       : `${filtered.length} mission${filtered.length === 1 ? '' : 's'}`;
+
+  useEffect(() => {
+    if (
+      loading ||
+      !returnFocusId ||
+      returnFocusHandledRef.current
+    ) {
+      return;
+    }
+
+    const resultIndex = filtered.findIndex(
+      (launch) => launch.id === returnFocusId,
+    );
+    if (resultIndex < 0) return;
+
+    let focusFrame: number | null = null;
+    const revealFrame = window.requestAnimationFrame(() => {
+      returnFocusHandledRef.current = true;
+      setVisibleCount(
+        Math.ceil((resultIndex + 1) / INITIAL_VISIBLE_COUNT) *
+          INITIAL_VISIBLE_COUNT,
+      );
+      focusFrame = window.requestAnimationFrame(() => {
+        returnMissionLinkRef.current?.focus();
+        returnMissionLinkRef.current?.scrollIntoView?.({ block: 'nearest' });
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(revealFrame);
+      if (focusFrame !== null) window.cancelAnimationFrame(focusFrame);
+    };
+  }, [filtered, loading, returnFocusId]);
 
   if (loading && launches.length === 0) {
     return (
@@ -425,6 +461,11 @@ export default function LaunchList({
                   launch={launch}
                   coverageUnconfirmed={retainedSchedule}
                   detailHref={buildScheduleDetailHref(launch.id, filters)}
+                  linkRef={
+                    launch.id === returnFocusId
+                      ? returnMissionLinkRef
+                      : undefined
+                  }
                 />
               </div>
             ))}

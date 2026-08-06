@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type Ref,
 } from 'react';
 import Link from 'next/link';
 import {
@@ -92,11 +93,13 @@ function HistoryRow({
   expanded,
   onToggle,
   detailHref,
+  detailLinkRef,
 }: {
   launch: Launch;
   expanded: boolean;
   onToggle: () => void;
   detailHref: string;
+  detailLinkRef?: Ref<HTMLAnchorElement>;
 }): React.ReactElement {
   const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const outcome = launchOutcomeLabel(launch);
@@ -330,6 +333,7 @@ function HistoryRow({
         </button>
 
         <Link
+          ref={detailLinkRef}
           href={detailHref}
           className="action-button action-button-quiet justify-self-start xl:justify-self-end"
         >
@@ -435,8 +439,10 @@ function HistoryRow({
 
 export default function PastLaunches({
   initialFilters = DEFAULT_HISTORY_FILTERS,
+  returnFocusId = null,
 }: {
   initialFilters?: HistoryFilters;
+  returnFocusId?: string | null;
 }): React.ReactElement {
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -460,6 +466,8 @@ export default function PastLaunches({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
+  const returnMissionLinkRef = useRef<HTMLAnchorElement>(null);
+  const returnFocusHandledRef = useRef(false);
   const focusSearchAfterRetryRef = useRef(false);
   const suppressNextUrlWriteRef = useRef(false);
   const id = useId();
@@ -647,6 +655,37 @@ export default function PastLaunches({
     filtered.length > PAGE_SIZE && !allResultsVisible
       ? `Showing ${visibleLaunches.length} of ${filtered.length} results`
       : `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
+
+  useEffect(() => {
+    if (
+      loading ||
+      !returnFocusId ||
+      returnFocusHandledRef.current
+    ) {
+      return;
+    }
+
+    const resultIndex = filtered.findIndex(
+      (launch) => launch.id === returnFocusId,
+    );
+    if (resultIndex < 0) return;
+
+    let focusFrame: number | null = null;
+    const revealFrame = window.requestAnimationFrame(() => {
+      returnFocusHandledRef.current = true;
+      setVisibleCount(
+        Math.ceil((resultIndex + 1) / PAGE_SIZE) * PAGE_SIZE,
+      );
+      focusFrame = window.requestAnimationFrame(() => {
+        returnMissionLinkRef.current?.focus();
+        returnMissionLinkRef.current?.scrollIntoView?.({ block: 'nearest' });
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(revealFrame);
+      if (focusFrame !== null) window.cancelAnimationFrame(focusFrame);
+    };
+  }, [filtered, loading, returnFocusId]);
 
   useEffect(() => {
     if (suppressNextUrlWriteRef.current) {
@@ -1098,6 +1137,11 @@ export default function PastLaunches({
                   outcome,
                   sortBy,
                 })}
+                detailLinkRef={
+                  launch.id === returnFocusId
+                    ? returnMissionLinkRef
+                    : undefined
+                }
                 onToggle={() =>
                   setExpandedId((current) =>
                     current === launch.id ? null : launch.id

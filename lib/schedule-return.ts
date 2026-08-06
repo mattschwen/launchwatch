@@ -1,3 +1,5 @@
+import { parseLaunchId } from '@/lib/launch-id';
+
 export interface ScheduleFilters {
   search: string;
   provider: string;
@@ -102,12 +104,11 @@ export function buildScheduleDetailHref(
 ): string {
   const schedule = serializeScheduleFilters(filters);
   const base = `/launch/${encodeURIComponent(launchId)}`;
-  if (!schedule) return base;
+  const params = new URLSearchParams({ from: 'home' });
 
-  return `${base}?${new URLSearchParams({
-    from: 'home',
-    schedule,
-  }).toString()}`;
+  if (schedule) params.set('schedule', schedule);
+
+  return `${base}?${params.toString()}`;
 }
 
 export function readScheduleReturnQuery(
@@ -120,6 +121,29 @@ export function readScheduleReturnQuery(
   return query || null;
 }
 
-export function buildScheduleReturnHref(query: string): string {
-  return `/?${query}`;
+export function readScheduleReturnFocus(
+  params: SearchParamRecord | URLSearchParams,
+): string | null {
+  const value =
+    params instanceof URLSearchParams
+      ? params.getAll('focus').length === 1
+        ? params.get('focus')
+        : null
+      : singleValue(params.focus);
+  const parsed = value ? parseLaunchId(value) : null;
+
+  return parsed?.legacy ? null : parsed?.canonicalId ?? null;
+}
+
+export function buildScheduleReturnHref(
+  query: string | null,
+  focusId?: string | null,
+): string {
+  const params = new URLSearchParams(query ?? '');
+  const focus = focusId ? parseLaunchId(focusId) : null;
+
+  if (focus && !focus.legacy) params.set('focus', focus.canonicalId);
+
+  const serialized = params.toString();
+  return serialized ? `/?${serialized}` : '/';
 }

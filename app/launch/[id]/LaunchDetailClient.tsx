@@ -111,12 +111,16 @@ export default function LaunchDetailClient({
   launch,
   returnToWatch = false,
   historyReturnHref = null,
+  historyReturnFiltered = false,
   scheduleReturnHref = null,
+  scheduleReturnFiltered = false,
 }: {
   launch: Launch;
   returnToWatch?: boolean;
   historyReturnHref?: string | null;
+  historyReturnFiltered?: boolean;
   scheduleReturnHref?: string | null;
+  scheduleReturnFiltered?: boolean;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
   const completed = isCompletedLaunch(launch);
@@ -191,9 +195,13 @@ export default function LaunchDetailClient({
   const returnLabel = returnToWatch
     ? 'Back to watch room'
     : historyReturnHref
-      ? 'Back to filtered archive'
+      ? historyReturnFiltered
+        ? 'Back to filtered archive'
+        : 'Back to history'
       : scheduleReturnHref
-        ? 'Back to filtered schedule'
+        ? scheduleReturnFiltered
+          ? 'Back to filtered schedule'
+          : 'Back to launches'
         : completed
           ? 'Back to history'
           : 'Back to launches';

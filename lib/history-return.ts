@@ -1,3 +1,5 @@
+import { parseLaunchId } from '@/lib/launch-id';
+
 export interface HistoryFilters {
   search: string;
   provider: string;
@@ -128,6 +130,29 @@ export function readHistoryReturnQuery(
   return query || null;
 }
 
-export function buildHistoryReturnHref(query: string): string {
-  return `/history?${query}`;
+export function readHistoryReturnFocus(
+  params: SearchParamRecord | URLSearchParams,
+): string | null {
+  const value =
+    params instanceof URLSearchParams
+      ? params.getAll('focus').length === 1
+        ? params.get('focus')
+        : null
+      : singleValue(params.focus);
+  const parsed = value ? parseLaunchId(value) : null;
+
+  return parsed?.legacy ? null : parsed?.canonicalId ?? null;
+}
+
+export function buildHistoryReturnHref(
+  query: string | null,
+  focusId?: string | null,
+): string {
+  const params = new URLSearchParams(query ?? '');
+  const focus = focusId ? parseLaunchId(focusId) : null;
+
+  if (focus && !focus.legacy) params.set('focus', focus.canonicalId);
+
+  const serialized = params.toString();
+  return serialized ? `/history?${serialized}` : '/history';
 }

@@ -92,42 +92,51 @@ export default async function LaunchDetailPage({
 }: LaunchDetailPageProps): Promise<React.ReactElement> {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
-  const returnToWatch = resolvedSearchParams.from === 'watch';
-  const historyReturnQuery =
-    !returnToWatch && resolvedSearchParams.from === 'history'
-      ? readHistoryReturnQuery(resolvedSearchParams.history)
-      : null;
-  const historyReturnHref = historyReturnQuery
-    ? buildHistoryReturnHref(historyReturnQuery)
-    : null;
-  const scheduleReturnQuery =
-    !returnToWatch &&
-    !historyReturnQuery &&
-    resolvedSearchParams.from === 'home'
-      ? readScheduleReturnQuery(resolvedSearchParams.schedule)
-      : null;
-  const scheduleReturnHref = scheduleReturnQuery
-    ? buildScheduleReturnHref(scheduleReturnQuery)
-    : null;
   const parsed = parseLaunchId(id);
   if (!parsed) notFound();
 
+  const returnToWatch = resolvedSearchParams.from === 'watch';
+  const returnFromHistory =
+    !returnToWatch && resolvedSearchParams.from === 'history';
+  const historyReturnQuery =
+    returnFromHistory
+      ? readHistoryReturnQuery(resolvedSearchParams.history)
+      : null;
+  const historyReturnHref = returnFromHistory
+    ? buildHistoryReturnHref(historyReturnQuery, parsed.canonicalId)
+    : null;
+  const returnFromSchedule =
+    !returnToWatch &&
+    !returnFromHistory &&
+    resolvedSearchParams.from === 'home';
+  const scheduleReturnQuery =
+    returnFromSchedule
+      ? readScheduleReturnQuery(resolvedSearchParams.schedule)
+      : null;
+  const scheduleReturnHref = returnFromSchedule
+    ? buildScheduleReturnHref(scheduleReturnQuery, parsed.canonicalId)
+    : null;
+
   if (parsed.legacy) {
+    const redirectParams = new URLSearchParams();
+    if (returnToWatch) {
+      redirectParams.set('from', 'watch');
+    } else if (returnFromHistory) {
+      redirectParams.set('from', 'history');
+      if (historyReturnQuery) {
+        redirectParams.set('history', historyReturnQuery);
+      }
+    } else if (returnFromSchedule) {
+      redirectParams.set('from', 'home');
+      if (scheduleReturnQuery) {
+        redirectParams.set('schedule', scheduleReturnQuery);
+      }
+    }
+    const redirectQuery = redirectParams.toString();
+
     permanentRedirect(
       `/launch/${encodeURIComponent(parsed.canonicalId)}${
-        returnToWatch
-          ? '?from=watch'
-          : historyReturnQuery
-            ? `?${new URLSearchParams({
-                from: 'history',
-                history: historyReturnQuery,
-              }).toString()}`
-            : scheduleReturnQuery
-              ? `?${new URLSearchParams({
-                  from: 'home',
-                  schedule: scheduleReturnQuery,
-                }).toString()}`
-            : ''
+        redirectQuery ? `?${redirectQuery}` : ''
       }`
     );
   }
@@ -143,7 +152,9 @@ export default async function LaunchDetailPage({
       launch={result.data}
       returnToWatch={returnToWatch}
       historyReturnHref={historyReturnHref}
+      historyReturnFiltered={Boolean(historyReturnQuery)}
       scheduleReturnHref={scheduleReturnHref}
+      scheduleReturnFiltered={Boolean(scheduleReturnQuery)}
     />
   );
 }

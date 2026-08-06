@@ -4,6 +4,7 @@ import {
   buildScheduleReturnHref,
   DEFAULT_SCHEDULE_FILTERS,
   parseScheduleFilters,
+  readScheduleReturnFocus,
   readScheduleReturnQuery,
   SCHEDULE_SEARCH_MAX_LENGTH,
   serializeScheduleFilters,
@@ -58,6 +59,13 @@ describe('schedule return context', () => {
 
   it('builds a detail link and validated schedule return link', () => {
     expect(
+      buildScheduleDetailHref(
+        'll2-demo-orbital-dawn',
+        DEFAULT_SCHEDULE_FILTERS,
+      ),
+    ).toBe('/launch/ll2-demo-orbital-dawn?from=home');
+
+    expect(
       buildScheduleDetailHref('spacex/demo', {
         ...DEFAULT_SCHEDULE_FILTERS,
         search: 'Polaris Relay',
@@ -74,6 +82,25 @@ describe('schedule return context', () => {
     expect(buildScheduleReturnHref(query!)).toBe(
       '/?q=Polaris+Relay&provider=SpaceX',
     );
+  });
+
+  it('round-trips only canonical mission focus for result restoration', () => {
+    expect(
+      buildScheduleReturnHref('q=Polaris', 'll2-demo-orbital-dawn'),
+    ).toBe('/?q=Polaris&focus=ll2-demo-orbital-dawn');
+    expect(
+      readScheduleReturnFocus(
+        new URLSearchParams('focus=ll2-demo-orbital-dawn'),
+      ),
+    ).toBe('ll2-demo-orbital-dawn');
+    expect(
+      readScheduleReturnFocus(
+        new URLSearchParams('focus=one&focus=two'),
+      ),
+    ).toBeNull();
+    expect(
+      readScheduleReturnFocus(new URLSearchParams('focus=past-demo')),
+    ).toBeNull();
   });
 
   it('rejects oversized or empty nested return state', () => {

@@ -1130,7 +1130,7 @@ test('home rejects noncanonical mission identity without erasing retained missio
   await expect(mission).toBeVisible();
   await expect(mission.locator('..')).toHaveAttribute(
     'href',
-    '/launch/ll2-demo-orbital-dawn'
+    '/launch/ll2-demo-orbital-dawn?from=home'
   );
   await expect(
     page.locator('a[href="/launch/demo-orbital-dawn"]')
@@ -1449,7 +1449,10 @@ test('unfiltered archive missions retain History navigation context', async ({
   await expect(currentHistory).toBeFocused();
 
   const returnLink = page.getByRole('link', { name: 'Back to history' });
-  await expect(returnLink).toHaveAttribute('href', '/history');
+  await expect(returnLink).toHaveAttribute(
+    'href',
+    '/history?focus=spacex-demo-return',
+  );
   await returnLink.focus();
   await expect(returnLink).toBeFocused();
   expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
@@ -2410,6 +2413,50 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   });
   await expect(allLoaded).toBeFocused();
   await expect(allLoaded).toHaveAttribute('aria-disabled', 'true');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('schedule detail return restores the revealed mission result', async ({
+  page,
+}) => {
+  const launches = Array.from({ length: 12 }, (_, index) => {
+    const template = UPCOMING_LAUNCHES[index % UPCOMING_LAUNCHES.length];
+    const restoreTarget = index === 7;
+    const source = restoreTarget ? 'll2' : template.source;
+    const sourceId = restoreTarget
+      ? 'demo-orbital-dawn'
+      : `schedule-return-${index + 1}`;
+
+    return {
+      ...template,
+      id: `${source}-${sourceId}`,
+      source,
+      sourceId,
+      name: `Schedule Return Mission ${index + 1}`,
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
+    };
+  });
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  await schedule.getByRole('button', { name: 'Load 5 more' }).click();
+  const target = schedule.getByRole('link', {
+    name: /Schedule Return Mission 8/,
+  });
+  await expect(target).toBeVisible();
+  await target.click();
+
+  await page.getByRole('link', { name: 'Back to launches' }).click();
+  await expect(schedule.locator('#upcoming-launch-results article')).toHaveCount(10);
+  await expect(target).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -4569,7 +4616,10 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   const returnLink = page.getByRole('link', {
     name: 'Back to filtered archive',
   });
-  await expect(returnLink).toHaveAttribute('href', '/history?q=Return');
+  await expect(returnLink).toHaveAttribute(
+    'href',
+    '/history?q=Return&focus=spacex-demo-return',
+  );
   await returnLink.focus();
   await returnLink.press('Enter');
 
@@ -4778,7 +4828,7 @@ test('history chronology reverses the visible feed window and survives detail re
   });
   await expect(returnLink).toHaveAttribute(
     'href',
-    '/history?sort=date-asc',
+    '/history?sort=date-asc&focus=ll2-demo-pathfinder',
   );
   await returnLink.click();
   await expect(chronology).toHaveValue('date-asc');
@@ -4837,7 +4887,10 @@ test('home schedule filters survive mission detail navigation', async ({
   const featuredReturnLink = page.getByRole('link', {
     name: 'Back to filtered schedule',
   });
-  await expect(featuredReturnLink).toHaveAttribute('href', '/?q=Polaris');
+  await expect(featuredReturnLink).toHaveAttribute(
+    'href',
+    '/?q=Polaris&focus=ll2-demo-orbital-dawn',
+  );
   await featuredReturnLink.press('Enter');
   await expect(page).toHaveURL(/\/?q=Polaris$/);
   await expect(search).toHaveValue('Polaris');
@@ -4859,7 +4912,10 @@ test('home schedule filters survive mission detail navigation', async ({
   const returnLink = page.getByRole('link', {
     name: 'Back to filtered schedule',
   });
-  await expect(returnLink).toHaveAttribute('href', '/?q=Polaris');
+  await expect(returnLink).toHaveAttribute(
+    'href',
+    '/?q=Polaris&focus=spacex-demo-polaris',
+  );
   expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   await returnLink.focus();
@@ -5543,6 +5599,54 @@ test('history pagination reports progress and keeps terminal focus visible', asy
   await loadMore.press('Enter');
   await expect(page.locator('article')).toHaveCount(21);
   await expect(loadMore).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('archive detail return restores the revealed mission result', async ({
+  page,
+}) => {
+  const launches = Array.from({ length: 21 }, (_, index) => {
+    const template = HISTORICAL_LAUNCHES[index % HISTORICAL_LAUNCHES.length];
+    const restoreTarget = index === 15;
+    const source = restoreTarget ? 'spacex' : template.source;
+    const sourceId = restoreTarget
+      ? 'demo-return'
+      : `archive-return-${index + 1}`;
+    const dateUnix = HISTORICAL_LAUNCHES[0].dateUnix - index;
+
+    return {
+      ...template,
+      id: `${source}-${sourceId}`,
+      source,
+      sourceId,
+      name: `Archive Return Mission ${index + 1}`,
+      dateUnix,
+      date: new Date(dateUnix * 1000).toISOString(),
+    };
+  });
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+
+  await page.goto('/history');
+  const archive = page.getByRole('region', {
+    name: 'Archived launch results',
+  });
+  await archive.getByRole('button', { name: 'Load 10 more' }).click();
+  const targetRow = archive.locator('article').filter({
+    hasText: 'Archive Return Mission 16',
+  });
+  const target = targetRow.getByRole('link', { name: 'View mission' });
+  await expect(target).toBeVisible();
+  await target.click();
+
+  await page.getByRole('link', { name: 'Back to history' }).click();
+  await expect(archive.locator('article')).toHaveCount(20);
+  await expect(target).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
