@@ -5074,6 +5074,47 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history uses scannable archive columns at desktop workspace widths', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name.startsWith('mobile'));
+
+  await page.goto('/history');
+
+  const archive = page.getByRole('region', {
+    name: 'Archived launch results',
+  });
+  const firstRow = archive.locator('article').first();
+  const actualLaunchDateHeader = archive.getByText('Actual launch date', {
+    exact: true,
+  });
+
+  await expect(actualLaunchDateHeader).toBeVisible();
+  await expect(firstRow.getByText('Date (UTC)', { exact: true })).toBeHidden();
+
+  const layout = await firstRow.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const row = element.firstElementChild;
+    return {
+      height: Math.round(bounds.height),
+      columns: row ? getComputedStyle(row).gridTemplateColumns : '',
+    };
+  });
+
+  expect(layout.height).toBeLessThanOrEqual(80);
+  expect(layout.columns.split(' ').length).toBe(6);
+
+  const rowDisclosure = firstRow.getByRole('button');
+  const missionLink = firstRow.getByRole('link', { name: 'View mission' });
+  await rowDisclosure.focus();
+  await expect(rowDisclosure).toBeFocused();
+  expect((await rowDisclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await missionLink.focus();
+  await expect(missionLink).toBeFocused();
+  expect((await missionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history chronology reverses the visible feed window and survives detail return', async ({
   page,
 }) => {

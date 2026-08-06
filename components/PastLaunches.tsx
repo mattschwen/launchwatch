@@ -251,13 +251,13 @@ function HistoryRow({
               : 'var(--console-amber)',
       } as CSSProperties}
     >
-      <div className="grid items-center gap-3 px-3 py-3 sm:px-4 xl:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
+      <div className="grid items-center gap-3 px-3 py-3 sm:px-4 min-[1120px]:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
         <button
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
           onClick={onToggle}
-          className="group min-h-11 min-w-0 text-left xl:col-span-5 xl:grid xl:grid-cols-subgrid xl:items-center"
+          className="group min-h-11 min-w-0 text-left min-[1120px]:col-span-5 min-[1120px]:grid min-[1120px]:grid-cols-subgrid min-[1120px]:items-center"
         >
           <span className="flex min-w-0 items-center gap-3">
             <ChevronDown
@@ -276,7 +276,7 @@ function HistoryRow({
               </span>
             </span>
           </span>
-          <span className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--border-subtle)] pt-3 sm:grid-cols-4 xl:hidden">
+          <span className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--border-subtle)] pt-3 sm:grid-cols-4 min-[1120px]:hidden">
             <span className="min-w-0">
               <span className="data-label block">Date (UTC)</span>
               <span className="mt-1 block text-xs text-[var(--text-secondary)]">
@@ -309,18 +309,18 @@ function HistoryRow({
               </span>
             </span>
           </span>
-          <span className="hidden text-sm text-[var(--text-secondary)] xl:block">
+          <span className="hidden text-sm text-[var(--text-secondary)] min-[1120px]:block">
             {formatLaunchDate(launch.date, launch.datePrecision)}
           </span>
-          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] xl:block">
+          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] min-[1120px]:block">
             {launch.rocket}
           </span>
-          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] xl:block">
+          <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] min-[1120px]:block">
             {getLaunchSiteDisplay(launch).label}
           </span>
           <span
             data-history-outcome={launch.status}
-            className={`hidden items-center gap-2 font-mono text-xs xl:flex ${outcomeTone}`}
+            className={`hidden items-center gap-2 font-mono text-xs min-[1120px]:flex ${outcomeTone}`}
           >
             <span
               aria-hidden="true"
@@ -333,7 +333,7 @@ function HistoryRow({
         <Link
           ref={detailLinkRef}
           href={detailHref}
-          className="action-button action-button-quiet justify-self-start xl:justify-self-end"
+          className="action-button action-button-quiet justify-self-start min-[1120px]:justify-self-end"
         >
           View mission
         </Link>
@@ -771,13 +771,13 @@ export default function PastLaunches({
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="grid min-h-20 gap-3 border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 xl:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] xl:items-center"
+              className="grid min-h-20 gap-3 border-b border-[var(--border-subtle)] px-4 py-3 last:border-b-0 min-[1120px]:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] min-[1120px]:items-center"
             >
               <div className="min-w-0 space-y-2">
                 <div className="skeleton h-4 w-[min(22rem,82%)] rounded" />
                 <div className="skeleton h-3 w-[min(15rem,58%)] rounded" />
               </div>
-              <div className="grid grid-cols-2 gap-3 xl:contents">
+              <div className="grid grid-cols-2 gap-3 min-[1120px]:contents">
                 <div className="skeleton h-4 rounded" />
                 <div className="skeleton h-4 rounded" />
                 <div className="skeleton h-4 rounded" />
@@ -1079,7 +1079,7 @@ export default function PastLaunches({
         </div>
       ) : null}
 
-      <div className="hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 xl:grid">
+      <div className="hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 min-[1120px]:grid">
         {['Mission', 'Actual launch date', 'Vehicle', 'Site', 'Outcome', 'Actions'].map(
           (label) => (
             <span key={label} className="data-label">
