@@ -207,9 +207,10 @@ The optional expanded map remains a modal dialog. It must:
 - Activating the already-current Watch command returns to the live-or-next
   default mission and a clean `/watch` URL; Back and Forward restore the prior
   mission selection without remounting the Watch room.
-- Keyboard and pointer mission selection synchronizes that same-document URL
-  immediately, so rapid queue commands cannot leave the visible mission and
-  address bar on different canonical IDs in optimized production builds.
+- Pointer clicks and keyboard activation add the canonical mission selection to
+  browser history, so Back and Forward restore missions compared in Watch.
+  Directional-key roving still synchronizes the same-document URL immediately
+  but replaces the current entry, avoiding a history step for every arrow key.
 - Mission selection also closes any open calendar options before the new
   mission commands become active, so a transient action cannot silently switch
   from one canonical launch to another while queue focus stays in place.

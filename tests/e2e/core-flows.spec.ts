@@ -2969,6 +2969,20 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(polarisQueueItem).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
+  await page.goBack();
+  await expect(page).toHaveURL(/\/watch$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
+
+  await page.goForward();
+  await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
+  ).toBeVisible();
+  await expect(page).toHaveTitle('Polaris Relay | Watch | LaunchWatch');
+
   await page.goto('/history');
   await expect(page).toHaveTitle('Launch History | LaunchWatch');
 });

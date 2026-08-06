@@ -606,7 +606,11 @@ function MissionQueue({
   launches: Launch[];
   selectedId: string | null;
   coverageUnconfirmed: boolean;
-  onSelect: (id: string, revealMission?: boolean) => void;
+  onSelect: (
+    id: string,
+    revealMission?: boolean,
+    historyMode?: 'push' | 'replace',
+  ) => void;
 }): React.ReactElement {
   const queuedLaunches = getVisibleQueue(launches, selectedId);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -734,7 +738,7 @@ function MissionQueue({
                 aria-pressed={selected}
                 tabIndex={index === tabStopIndex ? 0 : -1}
                 onClick={(event: MouseEvent<HTMLButtonElement>) =>
-                  onSelect(launch.id, event.detail > 0)
+                  onSelect(launch.id, event.detail > 0, 'push')
                 }
                 onKeyDown={(event) => handleQueueKeyDown(event, index)}
                 className={`flex min-h-[5.2rem] w-full items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 ${
@@ -870,6 +874,17 @@ function WatchContent(): React.ReactElement {
   }, [requestedId]);
 
   useEffect(() => {
+    const restoreSelection = (): void => {
+      const params = new URLSearchParams(window.location.search);
+      const ids = params.getAll('id');
+      setSelectedMissionId(ids.length === 1 ? ids[0] : null);
+    };
+
+    window.addEventListener('popstate', restoreSelection);
+    return () => window.removeEventListener('popstate', restoreSelection);
+  }, []);
+
+  useEffect(() => {
     detailRetryFocusPendingRef.current = false;
   }, [selectedId]);
 
@@ -929,13 +944,21 @@ function WatchContent(): React.ReactElement {
     return () => window.cancelAnimationFrame(frame);
   }, [selected.enriching]);
 
-  const selectLaunch = (id: string, revealMission = false): void => {
+  const selectLaunch = (
+    id: string,
+    revealMission = false,
+    historyMode: 'push' | 'replace' = 'replace',
+  ): void => {
     setSelectedMissionId(id);
-    window.history.replaceState(
-      window.history.state,
-      '',
-      `/watch?id=${encodeURIComponent(id)}`,
-    );
+    const nextUrl = `/watch?id=${encodeURIComponent(id)}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    if (currentUrl !== nextUrl) {
+      if (historyMode === 'push') {
+        window.history.pushState(window.history.state, '', nextUrl);
+      } else {
+        window.history.replaceState(window.history.state, '', nextUrl);
+      }
+    }
 
     if (
       revealMission &&
