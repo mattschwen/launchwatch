@@ -35,11 +35,17 @@ test('first visit confirms synchronization without covering the active route', a
 
   const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
   await expect(toast).toBeVisible();
-  await expect(toast.getByRole('status')).toHaveText(
+  await expect(toast.getByRole('status')).toHaveAccessibleName(
     'Partial provider schedule loaded'
   );
   const geometry = await toast.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
+    const header = document
+      .querySelector<HTMLElement>('header')
+      ?.getBoundingClientRect();
+    const main = document
+      .querySelector<HTMLElement>('#main-content')
+      ?.getBoundingClientRect();
     const heading = document
       .querySelector<HTMLElement>('#main-content h1')
       ?.getBoundingClientRect();
@@ -60,17 +66,37 @@ test('first visit confirms synchronization without covering the active route', a
         bounds.right <= window.innerWidth &&
         bounds.top >= 0 &&
         bounds.bottom <= window.innerHeight,
+      containedInHeader: Boolean(
+        header &&
+          bounds.top >= header.top &&
+          bounds.bottom <= header.bottom + 1
+      ),
       coversHeading: intersects(heading),
       coversPrimaryAction: intersects(primaryAction),
+      coversMainContent: Boolean(main && bounds.bottom > main.top + 1),
     };
   });
   expect(geometry).toEqual({
     withinViewport: true,
+    containedInHeader: true,
     coversHeading: false,
     coversPrimaryAction: false,
+    coversMainContent: false,
   });
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
+  const feedStatusShortcuts = page.locator(
+    'header button[aria-label="Partial feed — view provider status"]'
+  );
+  await expect
+    .poll(() =>
+      feedStatusShortcuts.evaluateAll((elements) =>
+        elements.every(
+          (element) => getComputedStyle(element).visibility === 'hidden'
+        )
+      )
+    )
+    .toBe(true);
   const dismiss = toast.getByRole('button', {
     name: 'Dismiss system status',
   });
@@ -78,6 +104,12 @@ test('first visit confirms synchronization without covering the active route', a
   await dismiss.focus();
   await dismiss.press('Enter');
   await expect(toast).toHaveCount(0);
+  await expect(page.locator('#main-content')).toBeFocused();
+  await expect(
+    page.locator(
+      'header .header-instruments:visible button[aria-label="Partial feed — view provider status"]'
+    )
+  ).toBeVisible();
   await expect(
     page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
   ).toBeVisible();

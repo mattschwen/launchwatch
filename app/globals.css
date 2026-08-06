@@ -471,6 +471,12 @@ body::before {
 }
 
 .animate-fade-in { animation: fade-in 0.42s var(--ease-out-quart); }
+.header-instruments {
+  visibility: visible;
+}
+html[data-boot-status='visible'] .header-instruments {
+  visibility: hidden;
+}
 .animate-slide-in { animation: slide-in 0.42s var(--ease-out-quart); }
 .animate-glow { animation: glow 2s ease-in-out infinite; }
 .animate-stagger-in { animation: stagger-in 0.38s var(--ease-out-quart) both; }

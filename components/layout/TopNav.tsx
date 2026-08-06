@@ -186,7 +186,7 @@ function TopNavContents({
           })}
         </nav>
 
-        <div className="ml-auto hidden items-center gap-2 md:flex">
+        <div className="header-instruments ml-auto hidden items-center gap-2 md:flex">
           <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
           <button
             type="button"
@@ -204,7 +204,7 @@ function TopNavContents({
           <UTCClock showLabel className="hardware-clock px-2 py-1" />
         </div>
 
-        <div className="ml-auto flex min-w-0 items-center gap-1 md:hidden">
+        <div className="header-instruments ml-auto flex min-w-0 items-center gap-1 md:hidden">
           {hasLiveLaunches && (
             <Link
               href="/watch"

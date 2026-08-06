@@ -33,7 +33,7 @@ describe('MissionBootSequence', () => {
     render(<MissionBootSequence />);
 
     const message = await screen.findByRole('status');
-    expect(message).toHaveTextContent('Launch schedule synchronized');
+    expect(message).toHaveAccessibleName('Launch schedule synchronized');
     expect(
       screen.getByRole('complementary', { name: 'MISSION CONTROL' })
     ).toBeVisible();
@@ -51,7 +51,7 @@ describe('MissionBootSequence', () => {
     readyFeed({ ...FEED_META, partial: true });
     const { unmount } = render(<MissionBootSequence />);
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
+    expect(await screen.findByRole('status')).toHaveAccessibleName(
       'Partial provider schedule loaded'
     );
 
@@ -60,7 +60,7 @@ describe('MissionBootSequence', () => {
     readyFeed({ ...FEED_META, stale: true });
     render(<MissionBootSequence />);
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
+    expect(await screen.findByRole('status')).toHaveAccessibleName(
       'Retained provider schedule loaded'
     );
   });

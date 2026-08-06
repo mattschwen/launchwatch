@@ -378,7 +378,10 @@ The optional expanded map remains a modal dialog. It must:
 - Avoid dense all-uppercase labels for primary reading content.
 - Preserve provider-supplied paragraphs and bullet lists in mission narratives;
   do not collapse structured briefing copy into one dense text block.
-- The first-visit synchronization status is a small dismissible toast and must never cover the page or delay interaction.
+- The first-visit synchronization status is a compact dismissible header ribbon.
+  It temporarily replaces redundant feed/clock instruments, never covers the
+  page or changes header height, keeps its compact label readable at 320px,
+  and returns keyboard focus to the active route when dismissed.
 
 ## PWA and Offline Behavior
 
