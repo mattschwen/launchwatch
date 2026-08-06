@@ -73,13 +73,36 @@ describe('Countdown', () => {
     );
   });
 
-  it('keeps the compact countdown format unchanged', () => {
+  it('keeps compact shorthand visual while exposing the full countdown', () => {
     const { container } = render(
       <Countdown targetDate="2035-07-28T14:30:00.000Z" compact />
     );
 
     expect(screen.getByText('T−2d 03h')).toBeVisible();
+    expect(screen.getByText(
+      '2 days, 3 hours, 4 minutes, 5 seconds until launch'
+    )).toHaveClass('sr-only', 'countdown-spoken');
+    expect(screen.getByText('T−2d 03h')).toHaveAttribute(
+      'aria-hidden',
+      'true'
+    );
     expect(container.querySelector('.countdown-display')).not.toBeInTheDocument();
+  });
+
+  it('uses singular countdown units when each value is one', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 1,
+      hours: 1,
+      minutes: 1,
+      seconds: 1,
+      total: 90061,
+    });
+
+    render(<Countdown targetDate="2035-07-28T14:30:00.000Z" />);
+
+    expect(
+      screen.getByText('1 day, 1 hour, 1 minute, 1 second until launch')
+    ).toHaveClass('sr-only', 'countdown-spoken');
   });
 
   it('shows a stable estimate instead of a false countdown for coarse dates', () => {

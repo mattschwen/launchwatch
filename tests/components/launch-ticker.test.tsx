@@ -126,6 +126,37 @@ describe('LaunchTicker', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('gives the exact compact ticker a natural-language countdown name', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({ launches: UPCOMING_LAUNCHES, meta: FEED_META })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <LaunchTicker />
+      </LaunchDataProvider>
+    );
+
+    const missionLink = await screen.findByRole('link', {
+      name: /Orbital Dawn.*\d+ days?, \d+ hours?, \d+ minutes?, \d+ seconds? until launch/i,
+    });
+    const tickerCountdown = missionLink.querySelector('time');
+    const spokenCountdown = tickerCountdown?.querySelector(
+      '.countdown-spoken'
+    );
+
+    expect(missionLink).toHaveTextContent(/T−\d+d \d+h/);
+    expect(spokenCountdown).toHaveTextContent(
+      /\d+ days?, \d+ hours?, \d+ minutes?, \d+ seconds? until launch/
+    );
+    expect(tickerCountdown?.querySelector('[aria-hidden="true"]')).toHaveTextContent(
+      /T−\d+d \d+h/
+    );
+  });
+
   it('keeps the last successful mission reachable after a refresh failure', async () => {
     const fetchMock = vi
       .fn()

@@ -52,7 +52,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - The desktop mission ticker preserves provider date precision: minute- and
   hour-level targets keep quietly ticking at the available granularity without
   repeating the primary countdown animation, while day-and-coarser targets
-  remain stable estimates.
+  remain stable estimates. Its compact `T−` shorthand stays visual; assistive
+  technology receives the complete duration with correctly singular or plural
+  units.
 - Live state may add an indicator to Watch but must not change the navigation order.
 
 ## Home

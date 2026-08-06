@@ -19,6 +19,40 @@ interface CountdownProps {
   precision?: LaunchDatePrecision | null;
 }
 
+function formatCountdownUnit(
+  value: number,
+  unit: 'day' | 'hour' | 'minute' | 'second',
+): string {
+  return `${value} ${unit}${value === 1 ? '' : 's'}`;
+}
+
+function formatSpokenCountdown({
+  days,
+  hours,
+  minutes,
+  seconds,
+  estimated,
+  precisionLabel,
+}: {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  estimated: boolean;
+  precisionLabel: string;
+}): string {
+  const duration = [
+    formatCountdownUnit(days, 'day'),
+    formatCountdownUnit(hours, 'hour'),
+    formatCountdownUnit(minutes, 'minute'),
+    formatCountdownUnit(seconds, 'second'),
+  ].join(', ');
+
+  return estimated
+    ? `Estimated countdown: ${duration} until the provider target. ${precisionLabel}.`
+    : `${duration} until launch`;
+}
+
 export default function Countdown({
   targetDate,
   animated = true,
@@ -32,6 +66,14 @@ export default function Countdown({
   const exact = hasExactLaunchTime(precision);
   const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
   const estimated = !exact && hasCountdownTarget(precision);
+  const spokenCountdown = formatSpokenCountdown({
+    days,
+    hours,
+    minutes,
+    seconds,
+    estimated,
+    precisionLabel,
+  });
 
   if (!hasCountdownTarget(precision)) {
     const target = formatLaunchTarget(targetDate, precision);
@@ -105,19 +147,15 @@ export default function Countdown({
         } ${className}`}
         suppressHydrationWarning
       >
-        {estimated ? (
-          <span
-            className="countdown-spoken sr-only"
-            suppressHydrationWarning
-          >
-            Estimated countdown: {days} days, {hours} hours, {minutes}{' '}
-            minutes, {seconds} seconds until the provider target.{' '}
-            {precisionLabel}.
-          </span>
-        ) : null}
+        <span
+          className="countdown-spoken sr-only"
+          suppressHydrationWarning
+        >
+          {spokenCountdown}
+        </span>
         <span
           key={animated && estimated ? seconds : 'steady'}
-          aria-hidden={estimated ? 'true' : undefined}
+          aria-hidden="true"
           className={
             animated && estimated
               ? 'countdown-compact-tick inline-block'
@@ -147,11 +185,7 @@ export default function Countdown({
       suppressHydrationWarning
     >
       <span className="countdown-spoken sr-only" suppressHydrationWarning>
-        {estimated ? 'Estimated countdown: ' : ''}
-        {days} days, {hours} hours, {minutes} minutes, {seconds} seconds until{' '}
-        {estimated
-          ? `the provider target. ${precisionLabel}.`
-          : 'launch'}
+        {spokenCountdown}
       </span>
       <span
         aria-hidden="true"

@@ -1338,6 +1338,10 @@ test('desktop ticker keeps the last known mission after refresh failure', async 
   });
   const missionLink = statusBar.getByRole('link', { name: /Orbital Dawn/ });
   await expect(missionLink).toContainText('NEXT');
+  await expect(missionLink).toHaveAccessibleName(
+    /NEXT Orbital Dawn \d+ days?, \d+ hours?, \d+ minutes?, \d+ seconds? until launch/i
+  );
+  await expect(missionLink).not.toHaveAccessibleName(/T−/);
 
   await page.getByRole('button', { name: 'Refresh now' }).click();
 
