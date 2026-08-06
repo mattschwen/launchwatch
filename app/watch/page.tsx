@@ -61,7 +61,7 @@ const MissionTrajectory = dynamic(
       <div
         role="status"
         aria-busy="true"
-        className="skeleton min-h-[55rem] rounded-[var(--radius-md)] sm:min-h-[52rem]"
+        className="skeleton min-h-[21rem] rounded-[var(--radius-md)] sm:min-h-[52rem]"
       >
         <span className="sr-only">Loading mission trajectory</span>
       </div>
@@ -178,7 +178,7 @@ function DeferredWatchTrajectory({
         <section
           aria-labelledby="watch-trajectory-pending-title"
           data-trajectory-pending="true"
-          className="surface-card holo-card signal-cold flex min-h-[55rem] flex-col overflow-hidden p-5 sm:min-h-[52rem] sm:p-6"
+          className="surface-card holo-card signal-cold flex min-h-[21rem] flex-col overflow-hidden p-5 sm:min-h-[52rem] sm:p-6"
         >
           <div className="max-w-xl">
             <p className="data-label text-[var(--console-cyan)]">
@@ -208,7 +208,11 @@ function DeferredWatchTrajectory({
               Load mission trajectory
             </button>
           </div>
-          <div aria-hidden="true" className="mt-8 w-full">
+          <div
+            aria-hidden="true"
+            data-trajectory-placeholder="true"
+            className="mt-8 hidden w-full sm:block"
+          >
             <div className="skeleton h-[20rem] rounded-[var(--radius-sm)] sm:h-[22rem]" />
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {Array.from({ length: 4 }, (_, index) => (

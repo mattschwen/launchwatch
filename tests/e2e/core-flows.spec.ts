@@ -3657,6 +3657,15 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
     return;
   }
 
+  if (!mobile) {
+    expect((await pendingTrajectory.boundingBox())?.height).toBeGreaterThanOrEqual(
+      800
+    );
+    await expect(
+      pendingTrajectory.locator('[data-trajectory-placeholder="true"]')
+    ).toBeVisible();
+  }
+
   await trajectoryState.scrollIntoViewIfNeeded();
   await expect(trajectoryMap).toHaveCount(1);
 
@@ -3674,11 +3683,19 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
   await expect(pendingTrajectory).toBeVisible();
   await expect(trajectoryMap).toHaveCount(0);
 
+  const pendingBounds = await pendingTrajectory.boundingBox();
+  expect(pendingBounds).not.toBeNull();
+  expect(pendingBounds!.height).toBeLessThanOrEqual(380);
+  await expect(
+    pendingTrajectory.locator('[data-trajectory-placeholder="true"]')
+  ).toBeHidden();
+
   const loadButton = page.getByRole('button', {
     name: 'Load mission trajectory',
   });
   await loadButton.focus();
   await expect(loadButton).toBeFocused();
+  expect((await loadButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(pendingTrajectory).toBeVisible();
 
   await loadButton.press('Enter');

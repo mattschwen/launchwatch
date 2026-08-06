@@ -204,8 +204,9 @@ The optional expanded map remains a modal dialog. It must:
   action, suppress duplicate retries, and move keyboard focus to the restored
   intelligence region after recovery.
 - The secondary trajectory is deferred until it approaches the viewport. Its
-  reserved surface preserves layout stability and exposes a keyboard-operable
-  load action before the interactive map controls.
+  mobile command state stays compact instead of reserving an unloaded map-sized
+  skeleton, while wider screens retain the larger preload preview. Both expose
+  a keyboard-operable load action before the interactive map controls.
 - Mission selection updates the canonical `?id=` URL without a full navigation.
 - Activating the already-current Watch command returns to the live-or-next
   default mission and a clean `/watch` URL; Back and Forward restore the prior
