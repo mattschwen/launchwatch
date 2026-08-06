@@ -5116,6 +5116,16 @@ test('history uses scannable archive columns at desktop workspace widths', async
   await missionLink.focus();
   await expect(missionLink).toBeFocused();
   expect((await missionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(missionLink).toHaveCSS('white-space', 'nowrap');
+  expect(
+    await missionLink.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return new Set(
+        [...range.getClientRects()].map((rect) => Math.round(rect.top)),
+      ).size;
+    }),
+  ).toBe(1);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

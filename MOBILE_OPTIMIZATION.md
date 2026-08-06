@@ -280,7 +280,8 @@ The optional expanded map remains a modal dialog. It must:
   ellipses, before exposing secondary metadata and the View Mission action.
 - At 1120 pixels and wider, the archive switches to its labeled six-column
   mission table so laptop-sized workspaces can scan dates, vehicles, sites,
-  and outcomes without retaining the taller compact-card treatment.
+  and outcomes without retaining the taller compact-card treatment. Its
+  primary View Mission action stays on one line inside the fixed action column.
 - Vehicle and launch-site telemetry also wraps within its responsive grid so
   compact rows never silently remove the identifying end of a provider value.
 - Expanded summaries remain in normal document flow.
