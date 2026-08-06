@@ -12,6 +12,9 @@ LaunchWatch targets Vercel. Every release should be validated locally, deployed 
   - `NASA_API_KEY`
   - `YOUTUBE_DATA_API_KEY`
   - `YOUTUBE_DAILY_LOOKUP_BUDGET` (optional integer, defaults to `25`)
+  - `XAI_API_KEY`
+  - `XAI_MODEL` (optional, defaults to `grok-4.3`)
+  - `XAI_DAILY_LOOKUP_BUDGET` (optional integer, defaults to `4`, maximum `24`)
   - `X_BEARER_TOKEN`, or:
     - `X_ACCESS_TOKEN`
     - `X_ACCESS_TOKEN_SECRET`
@@ -22,6 +25,12 @@ The app remains usable without keys. Credentials improve provider limits or
 enable optional enrichment. The YouTube lookup budget caps quota-expensive
 verification work per warm server runtime; production edge/platform rate
 limiting remains the outer protection layer.
+
+xAI never supplies canonical launch facts. It is a fallback for official
+`@SpaceX` updates only when the direct X integration has no official match and
+the mission is within the bounded launch window. One search uses at most two
+agent turns and 600 output tokens, results are cached for six hours, and the
+daily per-runtime budget can be set to `0` for an immediate cost kill switch.
 
 `SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` are optional server-only
 integration overrides for deterministic tests or controlled provider mirrors.
@@ -81,6 +90,8 @@ Key handling rules:
 - keep every provider secret server-only;
 - never commit `.env.local`;
 - use either `X_BEARER_TOKEN` or all four OAuth 1.0a values;
+- keep `XAI_API_KEY` server-only and set `XAI_DAILY_LOOKUP_BUDGET=0` before
+  rotating or investigating unexpected usage;
 - rotate any key that was previously exposed through a `NEXT_PUBLIC_` name;
 - verify provider-specific restrictions before production promotion.
 

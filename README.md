@@ -95,6 +95,11 @@ YOUTUBE_DATA_API_KEY=your_youtube_data_api_key
 # Optional per-runtime safety budget for quota-expensive YouTube lookups.
 YOUTUBE_DAILY_LOOKUP_BUDGET=25
 
+# Optional cost-bounded fallback for recent official @SpaceX updates.
+XAI_API_KEY=your_xai_api_key
+XAI_MODEL=grok-4.3
+XAI_DAILY_LOOKUP_BUDGET=4
+
 # Use either the bearer token or the complete OAuth 1.0a set.
 X_BEARER_TOKEN=your_x_api_bearer_token
 X_ACCESS_TOKEN=your_x_access_token
@@ -104,6 +109,13 @@ X_CONSUMER_KEY_SECRET=your_x_consumer_key_secret
 ```
 
 Do not prefix secrets with `NEXT_PUBLIC_`; that makes them eligible for client bundles. Migrate legacy `NEXT_PUBLIC_LL2_API_KEY`, `NEXT_PUBLIC_NASA_API_KEY`, and `NEXT_PUBLIC_YOUTUBE_API_KEY` values to `LL2_API_KEY`, `NASA_API_KEY`, and `YOUTUBE_DATA_API_KEY`.
+
+Launch facts always come from SpaceX or Launch Library 2. xAI is used only as
+a fallback for recent official `@SpaceX` posts when no direct official X signal
+was found, a SpaceX mission is within 72 hours of launch or 12 hours after it,
+and the per-runtime daily lookup budget remains. Results are cached for six
+hours, limited to one two-turn search and three validated status links, and
+fail closed without affecting the launch feed.
 
 For deterministic browser tests or a controlled provider mirror,
 `SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` can override the server-only

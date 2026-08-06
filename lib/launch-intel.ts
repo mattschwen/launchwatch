@@ -22,6 +22,7 @@ import {
   STREAM_VERIFICATION_UNAVAILABLE_RATIONALE,
 } from './launch-intel-copy';
 import { TTLCache } from './ttl-cache';
+import { getXaiSpaceXUpdates } from './xai-launch-intel';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_DATA_API_KEY || '';
 const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN || '';
@@ -1026,6 +1027,29 @@ export async function getLaunchIntel(launch: Launch): Promise<LaunchIntel> {
       xCache.getOrLoad(socialKey, () => fetchXItems(launch)),
     ]);
 
+    const hasOfficialSpaceXSignal = xItems.some(
+      (item) => item.community?.toLowerCase() === '@spacex',
+    );
+    const xaiItems = await getXaiSpaceXUpdates(
+      launch,
+      hasOfficialSpaceXSignal,
+    );
+    const socialItems = [...xItems, ...xaiItems, ...redditItems]
+      .filter(
+        (item, index, items) =>
+          items.findIndex(
+            (candidate) =>
+              candidate.platform === item.platform &&
+              candidate.url === item.url,
+          ) === index,
+      )
+      .filter((item) => isMissionSpecificCoverage(launch, item.title))
+      .sort((a, b) => {
+        const left = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+        const right = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+        return right - left;
+      });
+
     const publicStreamCandidates = streamCandidates.map((candidate) => ({
       ...candidate,
       note: publicLaunchIntelRationale(candidate.note),
@@ -1035,11 +1059,7 @@ export async function getLaunchIntel(launch: Launch): Promise<LaunchIntel> {
       summary: summarizeStreamCandidates(publicStreamCandidates),
       streamCandidates: publicStreamCandidates,
       newsItems,
-      socialItems: [...xItems, ...redditItems].sort((a, b) => {
-        const left = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-        const right = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-        return right - left;
-      }),
+      socialItems,
       quickLinks: {
         youtubeSearch: generateYouTubeSearchUrl(launch),
         providerChannel: getProviderYouTubeChannel(launch),

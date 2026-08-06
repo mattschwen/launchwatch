@@ -289,10 +289,18 @@ All credentials use server-only names:
 - `LL2_API_KEY`
 - `NASA_API_KEY`
 - `YOUTUBE_DATA_API_KEY`
+- `XAI_API_KEY`
 - `X_BEARER_TOKEN`, or the complete X OAuth 1.0a credential set
 
 `YOUTUBE_DAILY_LOOKUP_BUDGET` is a non-secret quota guard (default `25`) that
 caps cold YouTube verification lookups per warm server runtime.
+
+`XAI_MODEL` (default `grok-4.3`) and `XAI_DAILY_LOOKUP_BUDGET` (default `4`,
+maximum `24`) control optional xAI enrichment. xAI never replaces canonical
+provider facts: it searches only the official `@SpaceX` account near T-0 after
+direct official X results are absent. A six-hour persistent cache, two-turn
+request cap, strict response schema, and canonical status-URL validation bound
+cost and trust. Set the daily budget to `0` as an immediate kill switch.
 
 Launch Library requests always use the supported production API at
 `https://ll.thespacedevs.com/2.3.0`; an optional `LL2_API_KEY` only adds the
