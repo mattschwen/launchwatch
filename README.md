@@ -24,8 +24,8 @@ surface remains consistent everywhere else.
 
 ## Product Surfaces
 
-- **Home** highlights the live or next launch with a licensed vehicle reference when one is available, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
-- **Watch** selects a live mission when one exists and otherwise presents the next scheduled mission, its provider fallback, licensed imagery when video is unavailable, queue, countdown, selected-mission trajectory, and truthful coverage signal.
+- **Home** highlights a mission with active coverage or the next launch with a licensed vehicle reference when one is available, exposes the primary watch and briefing actions, lists upcoming missions in compact rows, and defers the mission map on smaller screens.
+- **Watch** selects a mission with active coverage when one exists and otherwise presents the next scheduled mission, its provider fallback, licensed imagery when video is unavailable, queue, countdown, selected-mission trajectory, and truthful coverage signal.
 - **History** loads completed missions across connected providers through the internal server API and supports search, provider, year, confirmed or unconfirmed outcome, expandable visual summaries, replay links, and mission details. Past-window records without a terminal provider result stay visibly amber instead of implying success. In-flight records stay on Home and Watch until provider coverage is no longer live.
 - **Mission detail** resolves both upcoming and historical launches by canonical ID and combines a licensed vehicle or mission visual, status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence.
 
@@ -49,6 +49,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available
   records rather than synthetic strength percentages
+- Live provider coverage remains distinct from vehicle flight state: a
+  prelaunch broadcast keeps the mission countdown visible until the provider
+  explicitly reports the mission in flight
 - Reduced-motion-safe trajectory drawing, hardware LEDs, holographic surfaces,
   grid texture, and scanlines
 - Partial, stale, offline, empty, error, and retry states

@@ -9,6 +9,7 @@ import {
   formatLaunchDay,
   formatPrimaryMissionName,
   formatLaunchTime,
+  getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -175,6 +176,8 @@ export default function HeroSection({
   const retained = Boolean(error);
   const retainedLive = activeLaunch.isLive && (retained || stale);
   const live = activeLaunch.isLive && !retainedLive;
+  const liveSignal = getLaunchLiveSignal(activeLaunch);
+  const missionInFlight = liveSignal === 'mission';
   const feedNotice = retained
     ? 'Last-known mission · refresh failed'
     : stale
@@ -232,9 +235,11 @@ export default function HeroSection({
               }`}
             >
               {retainedLive
-                ? 'Last-known live mission'
+                ? 'Last-known live coverage'
                 : live
-                  ? 'Live mission'
+                  ? missionInFlight
+                    ? 'Mission in flight'
+                    : 'Coverage live'
                   : 'Next launch'}
             </p>
             {feedNotice ? (
@@ -262,15 +267,33 @@ export default function HeroSection({
 
           <div className="my-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-5 pt-1 md:max-lg:flex-row md:max-lg:items-end md:max-lg:justify-between">
             <div className="min-w-0 flex-1">
-              {live ? (
+              {live && missionInFlight ? (
                 <div className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
                     className="status-dot-live h-3 w-3 rounded-full bg-[var(--console-magenta)] text-[var(--console-magenta)]"
                   />
                   <p className="font-mono text-[clamp(2rem,5vw,4rem)] font-semibold tracking-[-0.04em] text-[var(--console-magenta)]">
-                    LIVE NOW
+                    IN FLIGHT
                   </p>
+                </div>
+              ) : live ? (
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="status-dot-live h-2.5 w-2.5 rounded-full bg-[var(--console-magenta)]"
+                    />
+                    <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-[var(--console-magenta)]">
+                      Coverage live
+                    </p>
+                  </div>
+                  <Countdown
+                    targetDate={activeLaunch.date}
+                    precision={activeLaunch.datePrecision}
+                    featured
+                    completedLabel="Launch window open"
+                  />
                 </div>
               ) : retainedLive ? (
                 <div>
@@ -284,8 +307,8 @@ export default function HeroSection({
                     </p>
                   </div>
                   <p className="mt-2 text-sm leading-5 text-[var(--text-secondary)]">
-                    The last provider update marked this mission live, but the
-                    current feed cannot confirm its status.
+                    The last provider update marked coverage live, but the
+                    current feed cannot confirm the broadcast or mission state.
                   </p>
                 </div>
               ) : (

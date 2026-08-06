@@ -278,6 +278,66 @@ test('primary mission headings remove a redundant provider vehicle prefix', asyn
   expect(browserErrors).toEqual([]);
 });
 
+test('prelaunch coverage stays distinct from mission flight state', async ({
+  page,
+}) => {
+  const coverageLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    status: 'live' as const,
+    statusName: 'Go for Launch',
+    isLive: true,
+    webcastLive: true,
+    livestream: 'https://x.com/i/broadcasts/coverage-live',
+    livestreams: [
+      {
+        url: 'https://x.com/i/broadcasts/coverage-live',
+        title: 'Official prelaunch coverage',
+        isLive: true,
+      },
+    ],
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [coverageLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: coverageLaunch,
+          canonicalId: coverageLaunch.id,
+          meta: FEED_META,
+        }),
+      })
+  );
+
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero.getByText('Coverage live').first()).toBeVisible();
+  await expect(hero.getByText('LIVE NOW')).toHaveCount(0);
+  await expect(hero.locator('time')).toBeVisible();
+  await expect(
+    page.locator('section[aria-labelledby="upcoming-launches-title"]')
+      .getByText('Coverage live')
+  ).toBeVisible();
+
+  await page.goto('/watch');
+
+  await expect(page.getByText('1 live broadcast')).toBeVisible();
+  await expect(page.getByText('COVERAGE LIVE', { exact: true })).toBeVisible();
+  await expect(page.getByText('1 mission live')).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {
@@ -1022,7 +1082,7 @@ test('narrow mobile chrome keeps concurrent live and degraded states readable', 
 
   const header = page.locator('header.sticky:visible');
   await expect(
-    header.getByRole('link', { name: '1 live launches' })
+    header.getByRole('link', { name: '1 active live signal' })
   ).toContainText('LIVE');
   await expect(header.getByText('Partial', { exact: true })).toBeVisible();
   await expect(header.locator('.hardware-clock:visible')).toHaveCount(0);

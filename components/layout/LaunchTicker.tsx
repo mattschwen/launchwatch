@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Countdown from '@/components/Countdown';
 import { useLaunches } from '@/lib/hooks';
+import { getLaunchLiveSignal } from '@/lib/format';
 import { Launch } from '@/lib/types';
 
 function NextLaunchStatus({
@@ -12,10 +13,13 @@ function NextLaunchStatus({
   launch: Launch;
   retained?: boolean;
 }): React.ReactElement {
+  const liveSignal = getLaunchLiveSignal(launch);
   const statusLabel = retained
     ? 'LAST KNOWN'
     : launch.isLive
-      ? 'LIVE'
+      ? liveSignal === 'mission'
+        ? 'IN FLIGHT'
+        : 'COVERAGE'
       : 'NEXT';
 
   return (
@@ -48,7 +52,9 @@ function NextLaunchStatus({
           animated={false}
           precision={launch.datePrecision}
           compact
-          completedLabel={launch.isLive ? 'In progress' : 'Window open'}
+          completedLabel={
+            liveSignal === 'mission' ? 'In flight' : 'Window open'
+          }
           className={
             launch.isLive
               ? 'shrink-0 !text-[var(--console-magenta)]'

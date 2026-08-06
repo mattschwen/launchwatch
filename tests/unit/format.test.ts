@@ -12,6 +12,7 @@ import {
   formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
+  getLaunchLiveSignal,
   isMeaningfulLaunchValue,
   normalizeLaunchDescription,
   hasCalendarReadyLaunchTime,
@@ -156,6 +157,25 @@ describe('launch formatting', () => {
         missionName: 'Different mission',
       })
     ).toBe('Provider designation');
+  });
+
+  it('separates a live prelaunch broadcast from an in-flight mission', () => {
+    const coverageLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'Go for Launch',
+      isLive: true,
+      webcastLive: true,
+    };
+
+    expect(getLaunchLiveSignal(coverageLaunch)).toBe('coverage');
+    expect(
+      getLaunchLiveSignal({
+        ...coverageLaunch,
+        statusName: 'In Flight',
+      })
+    ).toBe('mission');
+    expect(getLaunchLiveSignal(UPCOMING_LAUNCHES[0])).toBe('inactive');
   });
 
   it('normalizes provider description placeholders without hiding real copy', () => {

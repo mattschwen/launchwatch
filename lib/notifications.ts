@@ -1,5 +1,5 @@
 import { Launch } from './types';
-import { hasCalendarReadyLaunchTime } from './format';
+import { getLaunchLiveSignal, hasCalendarReadyLaunchTime } from './format';
 
 function markNotified(notificationKey: string, targetMinute?: string): void {
   try {
@@ -77,7 +77,9 @@ export async function showLaunchNotification(
   const destination = launchDestination(launch);
   const timingMessage =
     timeUntilLaunch === 'NOW!'
-      ? 'Live now'
+      ? getLaunchLiveSignal(launch) === 'mission'
+        ? 'Mission in flight'
+        : 'Coverage is live'
       : `Launching in ${timeUntilLaunch}`;
   const options: NotificationOptions = {
     body: `${timingMessage}\n${launch.rocket} from ${launch.launchSite}`,

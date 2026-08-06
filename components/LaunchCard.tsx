@@ -5,6 +5,7 @@ import type { Launch } from '@/lib/types';
 import {
   formatLaunchDay,
   formatLaunchTime,
+  getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   launchOutcomeLabel,
   shortenLaunchSite,
@@ -28,6 +29,7 @@ export default function LaunchCard({
 }: LaunchCardProps): React.ReactElement {
   const history = variant === 'history';
   const liveUnconfirmed = !history && launch.isLive && coverageUnconfirmed;
+  const liveSignal = getLaunchLiveSignal(launch);
   const [siteName, ...siteLocality] = shortenLaunchSite(
     launch.launchSite,
   ).split(',');
@@ -36,7 +38,9 @@ export default function LaunchCard({
     : liveUnconfirmed
       ? 'Coverage unconfirmed'
       : launch.isLive
-        ? 'Live now'
+        ? liveSignal === 'mission'
+          ? 'In flight'
+          : 'Coverage live'
         : launch.status === 'tbd'
           ? 'TBC'
           : launch.statusName || 'Go for launch';

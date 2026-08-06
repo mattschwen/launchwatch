@@ -46,7 +46,7 @@ export default function SystemStatusBar(): React.ReactElement {
         {liveCount > 0 && (
           <span className="flex items-center gap-1.5 font-semibold text-[var(--console-magenta)]">
             <span className="status-dot status-dot-live" aria-hidden="true" />
-            {liveCount} LIVE
+            {liveCount} LIVE SIGNAL{liveCount === 1 ? '' : 'S'}
           </span>
         )}
         <UTCClock showLabel={false} />

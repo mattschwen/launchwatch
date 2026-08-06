@@ -35,6 +35,7 @@ import {
   formatLaunchDate,
   formatPrimaryMissionName,
   formatTimelineOffset,
+  getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   isCompletedLaunch,
   shortenLaunchSite,
@@ -190,6 +191,7 @@ export default function LaunchDetailClient({
         : completed
           ? 'signal-nominal'
           : 'signal-cold';
+  const liveSignal = getLaunchLiveSignal(launch);
   const returnHref = returnToWatch
     ? `/watch?id=${encodeURIComponent(launch.id)}`
     : historyReturnHref ?? scheduleReturnHref ?? (completed ? '/history' : '/');
@@ -219,20 +221,32 @@ export default function LaunchDetailClient({
       aria-label="Mission telemetry"
       className="surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5"
     >
-      {!completed && !launch.isLive ? (
+      {!completed && liveSignal !== 'mission' ? (
         <div className="border-b border-[var(--border-subtle)] pb-5">
-          <p className="data-label">T-minus</p>
+          {liveSignal === 'coverage' ? (
+            <p className="mb-3 flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.1em] text-[var(--console-magenta)]">
+              <span
+                aria-hidden="true"
+                className="status-dot-live h-2 w-2 rounded-full bg-[var(--console-magenta)]"
+              />
+              Coverage live
+            </p>
+          ) : null}
+          <p className="data-label">
+            {liveSignal === 'coverage' ? 'Launch target' : 'T-minus'}
+          </p>
           <Countdown
             targetDate={launch.date}
             precision={launch.datePrecision}
+            completedLabel="Launch window open"
             className="mt-3 lg:[&>.countdown-display]:!text-[clamp(1.8rem,3.1vw,3rem)]"
           />
         </div>
-      ) : launch.isLive ? (
+      ) : liveSignal === 'mission' ? (
         <div className="border-b border-[var(--border-subtle)] pb-5">
           <p className="data-label">Mission state</p>
           <p className="mt-2 font-mono text-3xl font-semibold text-[var(--console-magenta)]">
-            LIVE NOW
+            IN FLIGHT
           </p>
         </div>
       ) : null}

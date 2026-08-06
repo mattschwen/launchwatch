@@ -38,6 +38,7 @@ import VideoPlayer from '@/components/video/VideoPlayer';
 import {
   formatLaunchDate,
   formatPrimaryMissionName,
+  getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -849,6 +850,18 @@ function WatchContent(): React.ReactElement {
   );
   const coverageUnconfirmed = Boolean(error || meta?.stale);
   const hasLiveCoverage = liveLaunches.length > 0 && !coverageUnconfirmed;
+  const inFlightMissionCount = liveLaunches.filter(
+    (launch) => getLaunchLiveSignal(launch) === 'mission',
+  ).length;
+  const liveBroadcastCount = liveLaunches.length - inFlightMissionCount;
+  const confirmedLiveSummary =
+    inFlightMissionCount > 0
+      ? `${inFlightMissionCount} mission${inFlightMissionCount === 1 ? '' : 's'} in flight${
+          liveBroadcastCount > 0
+            ? ` · ${liveBroadcastCount} other live broadcast${liveBroadcastCount === 1 ? '' : 's'}`
+            : ''
+        }`
+      : `${liveBroadcastCount} live broadcast${liveBroadcastCount === 1 ? '' : 's'}`;
   const selectedLiveCoverage = Boolean(
     selectedLaunch?.isLive && !coverageUnconfirmed,
   );
@@ -1077,9 +1090,9 @@ function WatchContent(): React.ReactElement {
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               {hasLiveCoverage
-                ? `${liveLaunches.length} mission${liveLaunches.length === 1 ? '' : 's'} live`
+                ? confirmedLiveSummary
                 : coverageUnconfirmed && liveLaunches.length > 0
-                  ? `${liveLaunches.length} last-known live mission${liveLaunches.length === 1 ? '' : 's'} · coverage unconfirmed`
+                  ? `${liveLaunches.length} last-known live signal${liveLaunches.length === 1 ? '' : 's'} · coverage unconfirmed`
                 : 'Provider streams and launch windows'}
               {meta?.partial && !coverageUnconfirmed
                 ? ' · partial provider data'

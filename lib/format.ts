@@ -37,6 +37,8 @@ const PLACEHOLDER_DESCRIPTION =
   /^(?:(?:mission\s+)?(?:details?|description))(?:\s+(?:are|is))?\s*(?:tbd|tbc|pending|to be (?:determined|confirmed)|not (?:available|provided|supplied))$/i;
 const CRITICAL_STATUS_NAME =
   /\b(?:abort(?:ed)?|cancel(?:led|ed)?|failure|failed|hold|scrub(?:bed)?|warning|anomaly)\b/i;
+const IN_FLIGHT_STATUS_NAME =
+  /\b(?:in[-\s]?flight|flight (?:in progress|underway))\b/i;
 const GENERIC_MISSION_NAME =
   /^(?:unknown|unannounced|classified)(?:\s+(?:payload|mission))?$/i;
 
@@ -70,6 +72,23 @@ export function isCriticalLaunchStatusName(
   value: string | null | undefined
 ): boolean {
   return Boolean(value && CRITICAL_STATUS_NAME.test(value));
+}
+
+export type LaunchLiveSignal = 'inactive' | 'coverage' | 'mission';
+
+export function isMissionInFlightStatusName(
+  value: string | null | undefined
+): boolean {
+  return Boolean(value && IN_FLIGHT_STATUS_NAME.test(value));
+}
+
+export function getLaunchLiveSignal(
+  launch: Pick<Launch, 'isLive' | 'statusName'>
+): LaunchLiveSignal {
+  if (!launch.isLive) return 'inactive';
+  return isMissionInFlightStatusName(launch.statusName)
+    ? 'mission'
+    : 'coverage';
 }
 
 export function formatLaunchValue(

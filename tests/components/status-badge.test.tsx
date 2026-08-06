@@ -3,10 +3,18 @@ import { describe, expect, it } from 'vitest';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 describe('StatusBadge', () => {
-  it('renders a clear live label', () => {
+  it('renders a cautious coverage label without an in-flight provider state', () => {
     render(<StatusBadge status="live" />);
 
-    expect(screen.getByText('LIVE')).toHaveClass(
+    expect(screen.getByText('COVERAGE LIVE')).toHaveClass(
+      'text-[var(--console-magenta)]'
+    );
+  });
+
+  it('reserves the in-flight label for an explicit provider mission state', () => {
+    render(<StatusBadge status="live" statusName="In Flight" />);
+
+    expect(screen.getByText('IN FLIGHT')).toHaveClass(
       'text-[var(--console-magenta)]'
     );
   });
@@ -17,7 +25,7 @@ describe('StatusBadge', () => {
     expect(screen.getByText('STATUS UNCONFIRMED')).toHaveClass(
       'text-[var(--console-amber)]'
     );
-    expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
+    expect(screen.queryByText('COVERAGE LIVE')).not.toBeInTheDocument();
   });
 
   it('does not claim a generic scheduled mission is go for launch', () => {

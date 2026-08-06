@@ -213,7 +213,7 @@ function TopNavContents({
           {hasLiveLaunches && (
             <Link
               href="/watch"
-              aria-label={`${liveCount} live launches`}
+              aria-label={`${liveCount} active live signal${liveCount === 1 ? '' : 's'}`}
               className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
             >
               <span className="relative flex h-2 w-2">

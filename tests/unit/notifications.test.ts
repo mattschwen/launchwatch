@@ -69,7 +69,7 @@ describe('launch notification precision', () => {
     expect(Object.keys(localStorage)).toHaveLength(0);
   });
 
-  it('still alerts when a coarse-date mission is already live', async () => {
+  it('labels a live prelaunch broadcast as coverage instead of liftoff', async () => {
     const showNotification = installGrantedNotifications();
 
     await checkAndNotify([
@@ -77,6 +77,8 @@ describe('launch notification precision', () => {
         ...UPCOMING_LAUNCHES[0],
         status: 'live',
         isLive: true,
+        webcastLive: true,
+        statusName: 'Go for Launch',
         datePrecision: { name: 'Month', abbrev: 'M' },
       },
     ]);
@@ -86,7 +88,7 @@ describe('launch notification precision', () => {
       '🚀 Orbital Dawn',
       expect.objectContaining({
         body:
-          'Live now\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station',
+          'Coverage is live\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station',
       }),
     );
     expect(localStorage.getItem('notified-live-ll2-demo-orbital-dawn')).toBe(

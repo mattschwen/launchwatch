@@ -1,5 +1,8 @@
 import { Launch } from '@/lib/types';
-import { isCriticalLaunchStatusName } from '@/lib/format';
+import {
+  isCriticalLaunchStatusName,
+  isMissionInFlightStatusName,
+} from '@/lib/format';
 import WarningLight from './WarningLight';
 
 interface StatusBadgeProps {
@@ -11,7 +14,7 @@ interface StatusBadgeProps {
 
 const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green' | 'magenta' | 'red' | 'amber'; textClass: string; bgClass: string; borderClass: string; spinning: boolean }> = {
   live: {
-    label: 'LIVE',
+    label: 'COVERAGE LIVE',
     lightColor: 'magenta',
     textClass: 'text-[var(--console-magenta)]',
     bgClass: 'bg-[var(--console-magenta)]/15',
@@ -67,6 +70,8 @@ export default function StatusBadge({
     : statusConfig[status];
   const displayLabel = unconfirmed
     ? 'STATUS UNCONFIRMED'
+    : status === 'live' && isMissionInFlightStatusName(statusName)
+      ? 'IN FLIGHT'
     : statusName && status !== 'live'
       ? statusName.toUpperCase()
       : config.label;

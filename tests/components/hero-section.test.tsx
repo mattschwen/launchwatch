@@ -95,9 +95,29 @@ describe('HeroSection', () => {
     expect(
       screen.getByRole('heading', { name: liveLaunch.name }).closest('section')
     ).toHaveClass('signal-live');
-    expect(screen.getByText('LIVE NOW')).toHaveClass(
+    expect(screen.getByText('IN FLIGHT')).toHaveClass(
       'text-[var(--console-magenta)]'
     );
+  });
+
+  it('keeps the launch countdown visible while prelaunch coverage is live', () => {
+    const coverageLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'Go for Launch',
+      isLive: true,
+      webcastLive: true,
+    };
+
+    render(<HeroSection {...defaultProps} activeLaunch={coverageLaunch} />);
+
+    expect(screen.getAllByText('Coverage live').length).toBeGreaterThan(0);
+    expect(screen.queryByText('LIVE NOW')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: coverageLaunch.name })
+        .closest('section')
+        ?.querySelector('time')
+    ).toBeVisible();
   });
 
   it('uses the supplied detail route for schedule return context', () => {
@@ -193,7 +213,7 @@ describe('HeroSection', () => {
       />
     );
 
-    expect(screen.getByText('Last-known live mission')).toBeVisible();
+    expect(screen.getByText('Last-known live coverage')).toBeVisible();
     expect(screen.getByText('COVERAGE UNCONFIRMED')).toBeVisible();
     expect(screen.queryByText('LIVE NOW')).not.toBeInTheDocument();
     expect(

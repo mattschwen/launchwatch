@@ -26,6 +26,35 @@ afterEach(() => {
 });
 
 describe('LaunchTicker', () => {
+  it('names a prelaunch broadcast without claiming the mission is in flight', async () => {
+    const coverageLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'Go for Launch',
+      isLive: true,
+      webcastLive: true,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({ launches: [coverageLaunch], meta: FEED_META })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <LaunchTicker />
+      </LaunchDataProvider>
+    );
+
+    const missionLink = await screen.findByRole('link', {
+      name: /Orbital Dawn/,
+    });
+    expect(missionLink).toHaveTextContent('COVERAGE');
+    expect(missionLink).not.toHaveTextContent('IN FLIGHT');
+    expect(missionLink.querySelector('time')).toBeInTheDocument();
+  });
+
   it('shows a stable provider estimate instead of a false countdown', async () => {
     const estimatedLaunch = {
       ...UPCOMING_LAUNCHES[0],
