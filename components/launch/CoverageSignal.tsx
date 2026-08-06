@@ -80,7 +80,7 @@ export default function CoverageSignal({
           <dd>{newsCount}</dd>
         </div>
         <div className="coverage-signal-count">
-          <dt>Community posts</dt>
+          <dt>Social updates</dt>
           <dd>{socialCount}</dd>
         </div>
       </dl>

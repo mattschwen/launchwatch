@@ -160,6 +160,9 @@ function NewsRow({ item }: { item: LaunchNewsItem }): React.ReactElement {
 }
 
 function SocialRow({ item }: { item: LaunchSocialItem }): React.ReactElement {
+  const officialSpaceX =
+    item.platform === 'x' && item.community?.trim().toLowerCase() === '@spacex';
+
   return (
     <a
       href={item.url}
@@ -175,6 +178,18 @@ function SocialRow({ item }: { item: LaunchSocialItem }): React.ReactElement {
         {item.community ? ` · ${item.community}` : ''}
         {item.publishedAt ? ` · ${formatPublishedAt(item.publishedAt)}` : ''}
       </span>
+      {officialSpaceX || item.note ? (
+        <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.68rem] leading-5">
+          {officialSpaceX ? (
+            <span className="rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-cyan)_32%,transparent)] bg-[color-mix(in_srgb,var(--console-cyan)_8%,transparent)] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-[var(--console-cyan)]">
+              Official @SpaceX
+            </span>
+          ) : null}
+          {item.note ? (
+            <span className="text-[var(--text-secondary)]">{item.note}</span>
+          ) : null}
+        </span>
+      ) : null}
       <ExternalLinkHint />
     </a>
   );
@@ -192,7 +207,7 @@ export default function LaunchIntelDeck({
   const regionRef = useRef<HTMLElement>(null);
   const recoveryPendingRef = useRef(false);
   const streamListId = `${useId()}-stream-leads`;
-  const socialListId = `${useId()}-community-signals`;
+  const socialListId = `${useId()}-social-signals`;
   const [expandedSignals, setExpandedSignals] = useState<{
     launchId: string | null;
     social: boolean;
@@ -308,7 +323,7 @@ export default function LaunchIntelDeck({
               </p>
             ) : (
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
-                No verified stream, coverage, or community signal is available
+                No verified stream, coverage, or social signal is available
                 for this mission yet. Official provider links remain the source
                 of truth.
               </p>
@@ -491,7 +506,7 @@ export default function LaunchIntelDeck({
               className="text-[var(--console-amber)]"
             />
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              Community signal
+              Social signals
             </h3>
             <span className="ml-auto font-mono text-xs text-[var(--text-muted)]">
               {intel.socialItems.length}
@@ -509,8 +524,8 @@ export default function LaunchIntelDeck({
               aria-controls={socialListId}
               aria-label={
                 socialExpanded
-                  ? 'Show fewer community signals'
-                  : `Show all ${intel.socialItems.length} community signals`
+                  ? 'Show fewer social signals'
+                  : `Show all ${intel.socialItems.length} social signals`
               }
               onClick={() =>
                 setExpandedSignals((current) => ({

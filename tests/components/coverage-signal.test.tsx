@@ -88,7 +88,7 @@ describe('CoverageSignal', () => {
       '1'
     );
     expect(
-      screen.getByText('Community posts').nextElementSibling
+      screen.getByText('Social updates').nextElementSibling
     ).toHaveTextContent('3');
 
     const visual = container.querySelector('.coverage-signal-visual');

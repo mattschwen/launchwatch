@@ -115,7 +115,9 @@ a fallback for recent official `@SpaceX` posts when no direct official X signal
 was found, a SpaceX mission is within 72 hours of launch or 12 hours after it,
 and the per-runtime daily lookup budget remains. Results are cached for six
 hours, limited to one two-turn search and three validated status links, and
-fail closed without affecting the launch feed.
+fail closed without affecting the launch feed. The interface labels these as
+LaunchWatch AI-assisted summaries, identifies the official SpaceX source, and
+links to the exact post for verification.
 
 For deterministic browser tests or a controlled provider mirror,
 `SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` can override the server-only

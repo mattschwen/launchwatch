@@ -262,7 +262,7 @@ export function parseXaiSpaceXResponse(
           publishedAt,
           author: 'SpaceX',
           community: '@SpaceX',
-          note: `Official SpaceX update matched to ${missionName(launch)}.`,
+          note: 'LaunchWatch AI-assisted summary of an official SpaceX post.',
         },
       ];
     })

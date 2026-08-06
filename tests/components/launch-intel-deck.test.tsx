@@ -38,8 +38,50 @@ describe('LaunchIntelDeck', () => {
       String(LAUNCH_INTEL.newsItems.length)
     );
     expect(
-      within(signal).getByText('Community posts').nextElementSibling
+      within(signal).getByText('Social updates').nextElementSibling
     ).toHaveTextContent(String(LAUNCH_INTEL.socialItems.length));
+  });
+
+  it('labels AI-assisted official updates without presenting them as community posts', () => {
+    const officialSummary =
+      'Polaris Relay is targeted to launch on Falcon 9 from Florida.';
+
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          socialItems: [
+            {
+              id: 'official-spacex-update',
+              platform: 'x',
+              title: officialSummary,
+              url: 'https://x.com/SpaceX/status/1234567890',
+              publishedAt: '2035-07-26T10:00:00.000Z',
+              author: 'SpaceX',
+              community: '@SpaceX',
+              note: 'LaunchWatch AI-assisted summary of an official SpaceX post.',
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Social signals' })
+    ).toBeVisible();
+    expect(screen.queryByText('Community signal')).not.toBeInTheDocument();
+    expect(screen.getByText('Official @SpaceX')).toBeVisible();
+    expect(
+      screen.getByText(
+        'LaunchWatch AI-assisted summary of an official SpaceX post.'
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByRole('link', {
+        name: new RegExp(`${officialSummary}.*new tab`, 'i'),
+      })
+    ).toHaveAttribute('href', 'https://x.com/SpaceX/status/1234567890');
   });
 
   it('distinguishes an intelligence-feed error from an honest empty result', () => {
@@ -58,14 +100,14 @@ describe('LaunchIntelDeck', () => {
       'Coverage provider unavailable'
     );
     expect(
-      screen.queryByText(/No verified stream, coverage, or community signal/)
+      screen.queryByText(/No verified stream, coverage, or social signal/)
     ).not.toBeInTheDocument();
 
     rerender(<LaunchIntelDeck launch={launch} intel={null} />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(
-      screen.getByText(/No verified stream, coverage, or community signal/)
+      screen.getByText(/No verified stream, coverage, or social signal/)
     ).toBeVisible();
   });
 
@@ -332,11 +374,11 @@ describe('LaunchIntelDeck', () => {
     expect(showStreams).toHaveAccessibleName('Show fewer stream leads');
 
     const showSocial = screen.getByRole('button', {
-      name: 'Show all 6 community signals',
+      name: 'Show all 6 social signals',
     });
     await user.click(showSocial);
     expect(screen.getByRole('link', { name: /Community signal 6/ })).toBeVisible();
-    expect(showSocial).toHaveAccessibleName('Show fewer community signals');
+    expect(showSocial).toHaveAccessibleName('Show fewer social signals');
 
     rerender(
       <LaunchIntelDeck

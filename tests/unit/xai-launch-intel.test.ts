@@ -127,7 +127,7 @@ describe('xAI SpaceX enrichment policy', () => {
         publishedAt: OFFICIAL_POST_TIME,
         author: 'SpaceX',
         community: '@SpaceX',
-        note: 'Official SpaceX update matched to Polaris Relay.',
+        note: 'LaunchWatch AI-assisted summary of an official SpaceX post.',
       },
     ]);
   });

@@ -4530,6 +4530,73 @@ test('mission intelligence keeps complete stream identities contained', async ({
   await expect(channel).toBeVisible();
 });
 
+test('mission intelligence identifies AI-assisted official social summaries', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const officialSummary =
+    'Polaris Relay launch preparations continue ahead of the confirmed Florida target window.';
+  const disclosure =
+    'LaunchWatch AI-assisted summary of an official SpaceX post.';
+
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        socialItems: [
+          {
+            id: 'official-spacex-update',
+            platform: 'x',
+            title: officialSummary,
+            url: 'https://x.com/SpaceX/status/1234567890',
+            publishedAt: '2035-07-26T10:00:00.000Z',
+            author: 'SpaceX',
+            community: '@SpaceX',
+            note: disclosure,
+          },
+        ],
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  const officialUpdate = intelligence.getByRole('link', {
+    name: new RegExp(`${officialSummary}.*new tab`, 'i'),
+  });
+  await officialUpdate.scrollIntoViewIfNeeded();
+
+  await expect(
+    intelligence.getByRole('heading', { name: 'Social signals' })
+  ).toBeVisible();
+  await expect(intelligence.getByText('Social updates')).toBeVisible();
+  await expect(intelligence.getByText('Official @SpaceX')).toBeVisible();
+  await expect(intelligence.getByText(disclosure)).toBeVisible();
+  await expect(intelligence.getByText('Community signal')).toHaveCount(0);
+  await expect(officialUpdate).toHaveAttribute(
+    'href',
+    'https://x.com/SpaceX/status/1234567890'
+  );
+  await officialUpdate.focus();
+  await expect(officialUpdate).toBeFocused();
+  expect((await officialUpdate.boundingBox())?.height).toBeGreaterThanOrEqual(
+    44
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('mission intelligence reveals every ranked signal on demand', async ({
   page,
 }) => {
@@ -4600,13 +4667,13 @@ test('mission intelligence reveals every ranked signal on demand', async ({
   expect((await hideStreams.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   const showSocial = intelligence.getByRole('button', {
-    name: 'Show all 6 community signals',
+    name: 'Show all 6 social signals',
   });
   await showSocial.scrollIntoViewIfNeeded();
   await showSocial.focus();
   await showSocial.press('Enter');
   const hideSocial = intelligence.getByRole('button', {
-    name: 'Show fewer community signals',
+    name: 'Show fewer social signals',
   });
   await expect(hideSocial).toBeFocused();
   await expect(lastSocial).toBeVisible();

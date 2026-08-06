@@ -316,6 +316,62 @@ test('@a11y search-only mission intelligence has no serious WCAG A/AA violations
   ).toEqual([]);
 });
 
+test('@a11y AI-assisted official social signal has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        socialItems: [
+          {
+            id: 'official-spacex-update',
+            platform: 'x',
+            title:
+              'Polaris Relay launch preparations continue ahead of the confirmed Florida target window.',
+            url: 'https://x.com/SpaceX/status/1234567890',
+            publishedAt: '2035-07-26T10:00:00.000Z',
+            author: 'SpaceX',
+            community: '@SpaceX',
+            note: 'LaunchWatch AI-assisted summary of an official SpaceX post.',
+          },
+        ],
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(intelligence.getByText('Official @SpaceX')).toBeVisible();
+  await expect(
+    intelligence.getByText(
+      'LaunchWatch AI-assisted summary of an official SpaceX post.'
+    )
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y blocked mission sharing has no serious WCAG A/AA violations', async ({
   page,
 }) => {
