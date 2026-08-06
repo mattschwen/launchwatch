@@ -103,6 +103,18 @@ function HistoryRow({
 }): React.ReactElement {
   const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const outcome = launchOutcomeLabel(launch);
+  const outcomeTone =
+    launch.status === 'failure'
+      ? 'text-[var(--console-red)]'
+      : launch.status === 'success'
+        ? 'text-[var(--console-green)]'
+        : 'text-[var(--console-amber)]';
+  const outcomeDot =
+    launch.status === 'failure'
+      ? 'bg-[var(--console-red)]'
+      : launch.status === 'success'
+        ? 'bg-[var(--console-green)]'
+        : 'bg-[var(--console-amber)]';
   const [detailState, setDetailState] = useState<{
     launch: Launch | null;
     loading: boolean;
@@ -286,19 +298,12 @@ function HistoryRow({
             <span className="min-w-0">
               <span className="data-label block">Outcome</span>
               <span
-                className={`mt-1 flex items-center gap-2 font-mono text-xs ${
-                  launch.status === 'failure'
-                    ? 'text-[var(--console-red)]'
-                    : 'text-[var(--console-green)]'
-                }`}
+                data-history-outcome={launch.status}
+                className={`mt-1 flex items-center gap-2 font-mono text-xs ${outcomeTone}`}
               >
                 <span
                   aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${
-                    launch.status === 'failure'
-                      ? 'bg-[var(--console-red)]'
-                      : 'bg-[var(--console-green)]'
-                  }`}
+                  className={`h-2 w-2 shrink-0 rounded-full ${outcomeDot}`}
                 />
                 <span className="truncate">{outcome}</span>
               </span>
@@ -314,19 +319,12 @@ function HistoryRow({
             {shortenLaunchSite(launch.launchSite)}
           </span>
           <span
-            className={`hidden items-center gap-2 font-mono text-xs xl:flex ${
-              launch.status === 'failure'
-                ? 'text-[var(--console-red)]'
-                : 'text-[var(--console-green)]'
-            }`}
+            data-history-outcome={launch.status}
+            className={`hidden items-center gap-2 font-mono text-xs xl:flex ${outcomeTone}`}
           >
             <span
               aria-hidden="true"
-              className={`h-2 w-2 rounded-full ${
-                launch.status === 'failure'
-                  ? 'bg-[var(--console-red)]'
-                  : 'bg-[var(--console-green)]'
-              }`}
+              className={`h-2 w-2 rounded-full ${outcomeDot}`}
             />
             {outcome}
           </span>
@@ -621,7 +619,10 @@ export default function PastLaunches({
           year === 'all' ||
           new Date(launch.date).getUTCFullYear() === Number(year);
         const matchesOutcome =
-          outcome === 'all' || launch.status === outcome;
+          outcome === 'all' ||
+          (outcome === 'pending'
+            ? launch.status !== 'success' && launch.status !== 'failure'
+            : launch.status === outcome);
         return matchesSearch && matchesProvider && matchesYear && matchesOutcome;
       })
       .sort((a, b) => {
@@ -953,7 +954,9 @@ export default function PastLaunches({
                 id={`${id}-outcome`}
                 value={outcome}
                 onChange={(event) => {
-                  setOutcome(event.target.value);
+                  setOutcome(
+                    event.target.value as HistoryFilters['outcome'],
+                  );
                   setVisibleCount(PAGE_SIZE);
                 }}
                 className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
@@ -961,6 +964,7 @@ export default function PastLaunches({
                 <option value="all">All outcomes</option>
                 <option value="success">Success</option>
                 <option value="failure">Failure</option>
+                <option value="pending">Unconfirmed</option>
               </select>
             </div>
 

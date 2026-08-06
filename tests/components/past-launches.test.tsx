@@ -79,6 +79,56 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('marks and filters past missions whose outcomes remain unconfirmed', async () => {
+    const user = userEvent.setup();
+    const unconfirmedLaunch = {
+      ...HISTORICAL_LAUNCHES[0],
+      id: 'll2-demo-outcome-pending',
+      sourceId: 'demo-outcome-pending',
+      source: 'll2' as const,
+      ll2Id: 'demo-outcome-pending',
+      name: 'Past Window Mission',
+      status: 'upcoming' as const,
+      statusName: 'Go for Launch',
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: [HISTORICAL_LAUNCHES[0], unconfirmedLaunch],
+          meta: FEED_META,
+        }),
+      }),
+    );
+
+    render(<PastLaunches />);
+
+    const pendingRow = (await screen.findByText('Past Window Mission')).closest(
+      'article',
+    );
+    expect(pendingRow).not.toBeNull();
+    expect(pendingRow).toHaveTextContent('Outcome unconfirmed');
+    expect(pendingRow).not.toHaveTextContent('Go for Launch');
+    expect(
+      pendingRow?.querySelectorAll('[data-history-outcome="upcoming"]'),
+    ).toHaveLength(2);
+    expect(
+      [...(pendingRow?.querySelectorAll('[data-history-outcome="upcoming"]') ?? [])]
+        .every((element) => element.classList.contains('text-[var(--console-amber)]')),
+    ).toBe(true);
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Outcome' }),
+      'pending',
+    );
+
+    expect(screen.getByText('Past Window Mission')).toBeVisible();
+    expect(screen.queryByText('Demo Return Flight')).not.toBeInTheDocument();
+    expect(window.location.search).toBe('?outcome=pending');
+  });
+
   it('checks canonical mission details for replay coverage on demand', async () => {
     const user = userEvent.setup();
     const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>

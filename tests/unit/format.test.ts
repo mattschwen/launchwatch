@@ -180,10 +180,12 @@ describe('launch formatting', () => {
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
   });
 
-  it('labels completed and scheduled missions consistently', () => {
+  it('labels terminal and unconfirmed outcomes consistently', () => {
     expect(isCompletedLaunch(HISTORICAL_LAUNCHES[0])).toBe(true);
     expect(launchOutcomeLabel(HISTORICAL_LAUNCHES[0])).toBe('Success');
     expect(isCompletedLaunch(UPCOMING_LAUNCHES[0])).toBe(false);
-    expect(launchOutcomeLabel(UPCOMING_LAUNCHES[0])).toBe('Go');
+    expect(launchOutcomeLabel(UPCOMING_LAUNCHES[0])).toBe(
+      'Outcome unconfirmed'
+    );
   });
 });

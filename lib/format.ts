@@ -434,10 +434,8 @@ export function launchOutcomeLabel(launch: Launch): string {
       return 'Failure';
     case 'live':
       return 'Live';
-    case 'tbd':
-      return launch.statusName || 'To be confirmed';
     default:
-      return launch.statusName || 'Scheduled';
+      return 'Outcome unconfirmed';
   }
 }
 

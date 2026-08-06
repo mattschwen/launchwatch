@@ -4,7 +4,7 @@ export interface HistoryFilters {
   search: string;
   provider: string;
   year: string;
-  outcome: string;
+  outcome: 'all' | 'success' | 'failure' | 'pending';
   sortBy: 'date-desc' | 'date-asc';
 }
 
@@ -68,7 +68,7 @@ export function parseHistoryFilters(
         ? year
         : DEFAULT_HISTORY_FILTERS.year,
     outcome:
-      outcome === 'success' || outcome === 'failure'
+      outcome === 'success' || outcome === 'failure' || outcome === 'pending'
         ? outcome
         : DEFAULT_HISTORY_FILTERS.outcome,
     sortBy:

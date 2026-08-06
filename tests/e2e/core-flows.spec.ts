@@ -4910,6 +4910,46 @@ test('history chronology reverses the visible feed window and survives detail re
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history identifies and isolates unconfirmed mission outcomes', async ({
+  page,
+}) => {
+  const pendingLaunch = {
+    ...HISTORICAL_LAUNCHES[0],
+    id: 'll2-demo-outcome-pending',
+    sourceId: 'demo-outcome-pending',
+    source: 'll2' as const,
+    ll2Id: 'demo-outcome-pending',
+    name: 'Past Window Mission',
+    status: 'upcoming' as const,
+    statusName: 'Go for Launch',
+  };
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [HISTORICAL_LAUNCHES[0], pendingLaunch],
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  await page.goto('/history?outcome=pending');
+
+  const outcome = page.locator('select[id$="-outcome"]');
+  const pendingRow = page.locator('article').filter({
+    hasText: 'Past Window Mission',
+  });
+  await expect(outcome).toHaveValue('pending');
+  await expect(pendingRow).toBeVisible();
+  await expect(pendingRow).toContainText('Outcome unconfirmed');
+  await expect(pendingRow).not.toContainText('Go for Launch');
+  await expect(
+    page.locator('article').filter({ hasText: 'Demo Return Flight' }),
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule filters survive mission detail navigation', async ({
   page,
 }) => {

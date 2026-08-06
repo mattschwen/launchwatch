@@ -104,4 +104,18 @@ describe('history return context', () => {
       parseHistoryFilters(new URLSearchParams('sort=random')).sortBy,
     ).toBe('date-desc');
   });
+
+  it('round-trips the unconfirmed outcome filter', () => {
+    const unconfirmed = parseHistoryFilters(
+      new URLSearchParams('outcome=pending'),
+    );
+
+    expect(unconfirmed.outcome).toBe('pending');
+    expect(serializeHistoryFilters(unconfirmed)).toBe('outcome=pending');
+    expect(
+      buildHistoryDetailHref('ll2-demo', unconfirmed),
+    ).toBe(
+      '/launch/ll2-demo?from=history&history=outcome%3Dpending',
+    );
+  });
 });
