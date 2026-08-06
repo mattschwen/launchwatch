@@ -1395,6 +1395,10 @@ test('mission details keep their parent surface current in primary navigation', 
       activeLabel: 'Home',
     },
     {
+      path: '/launch/spacex-demo-return',
+      activeLabel: 'History',
+    },
+    {
       path: '/launch/ll2-demo-orbital-dawn?from=watch',
       activeLabel: 'Watch',
     },
@@ -1415,6 +1419,9 @@ test('mission details keep their parent surface current in primary navigation', 
     await expect(currentLink).toHaveAccessibleName(
       new RegExp(`^${activeLabel}$`, 'i'),
     );
+    await currentLink.focus();
+    await expect(currentLink).toBeFocused();
+    expect((await currentLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   }
 });
 

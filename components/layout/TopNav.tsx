@@ -4,7 +4,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
-import { useLaunchData, useLiveContext } from '@/lib/contexts';
+import {
+  useDetailNavigationContext,
+  useLaunchData,
+  useLiveContext,
+} from '@/lib/contexts';
 import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
 import {
   isNavItemActive,
@@ -103,6 +107,7 @@ function TopNavContents({
   detailSource: string | null;
 }): React.ReactElement {
   const pathname = usePathname();
+  const { source: inferredDetailSource } = useDetailNavigationContext();
   const { hasLiveLaunches, liveCount } = useLiveContext();
   const { launches, loading, refreshing, error, meta } = useLaunchData();
   const feedHealth = getFeedHealth({
@@ -147,7 +152,7 @@ function TopNavContents({
             const isActive = isNavItemActive(
               pathname,
               link.href,
-              detailSource,
+              detailSource ?? inferredDetailSource,
             );
             const Icon = link.icon;
             return (

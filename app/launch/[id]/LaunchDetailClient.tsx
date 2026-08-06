@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -40,6 +41,7 @@ import {
 import { useLaunchIntel } from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
+import { useDetailNavigationContext } from '@/lib/contexts';
 
 const TIMELINE_EVENT_WIDTH_PX = 176;
 const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
@@ -117,6 +119,9 @@ export default function LaunchDetailClient({
   scheduleReturnHref?: string | null;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const completed = isCompletedLaunch(launch);
+  const { setSource: setDetailNavigationSource } =
+    useDetailNavigationContext();
   const [timelineScroll, setTimelineScroll] = useState({
     canMoveBackward: false,
     canMoveForward: false,
@@ -135,6 +140,11 @@ export default function LaunchDetailClient({
     retryAt: intelRetryAt,
     retry: retryIntel,
   } = useLaunchIntel(launch, intelligenceEnabled);
+
+  useLayoutEffect(() => {
+    setDetailNavigationSource(completed ? 'history' : 'home');
+    return () => setDetailNavigationSource(null);
+  }, [completed, setDetailNavigationSource]);
 
   useEffect(() => {
     if (intelligenceEnabled) return;
@@ -161,7 +171,6 @@ export default function LaunchDetailClient({
     return () => observer.disconnect();
   }, [intelligenceEnabled, launch.id]);
 
-  const completed = isCompletedLaunch(launch);
   const timelineEventCount = launch.timeline?.length ?? 0;
   const hasPlayableVideo = Boolean(
     launch.livestream && extractYouTubeId(launch.livestream)

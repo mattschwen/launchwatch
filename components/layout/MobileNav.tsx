@@ -3,7 +3,10 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useLiveContext } from '@/lib/contexts';
+import {
+  useDetailNavigationContext,
+  useLiveContext,
+} from '@/lib/contexts';
 import {
   isNavItemActive,
   PRIMARY_NAV_ITEMS,
@@ -18,6 +21,7 @@ function MobileNavContents({
   detailSource: string | null;
 }): React.ReactElement {
   const pathname = usePathname();
+  const { source: inferredDetailSource } = useDetailNavigationContext();
   const { hasLiveLaunches } = useLiveContext();
 
   return (
@@ -30,7 +34,7 @@ function MobileNavContents({
           const isActive = isNavItemActive(
             pathname,
             link.href,
-            detailSource,
+            detailSource ?? inferredDetailSource,
           );
           const Icon = link.icon;
           return (

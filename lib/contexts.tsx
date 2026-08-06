@@ -32,6 +32,36 @@ interface LaunchDataContextValue {
 
 const LaunchDataContext = createContext<LaunchDataContextValue | null>(null);
 
+export type DetailNavigationSource = 'home' | 'history';
+
+interface DetailNavigationContextValue {
+  source: DetailNavigationSource | null;
+  setSource: (source: DetailNavigationSource | null) => void;
+}
+
+const DetailNavigationContext = createContext<DetailNavigationContextValue>({
+  source: null,
+  setSource: () => undefined,
+});
+
+function DetailNavigationProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.ReactElement {
+  const [source, setSource] = useState<DetailNavigationSource | null>(null);
+  const value = useMemo(
+    () => ({ source, setSource }),
+    [source],
+  );
+
+  return (
+    <DetailNavigationContext.Provider value={value}>
+      {children}
+    </DetailNavigationContext.Provider>
+  );
+}
+
 function readLaunches(payload: unknown): {
   launches: Launch[];
   meta: LaunchFeedMeta | null;
@@ -215,6 +245,10 @@ export function useLiveContext(): LiveContextValue {
   return { hasLiveLaunches: liveCount > 0, liveCount };
 }
 
+export function useDetailNavigationContext(): DetailNavigationContextValue {
+  return useContext(DetailNavigationContext);
+}
+
 /**
  * Backwards-compatible provider name used by the app shell.
  * All launch selectors now share this single feed.
@@ -224,5 +258,9 @@ export function LiveProvider({
 }: {
   children: ReactNode;
 }): React.ReactElement {
-  return <LaunchDataProvider>{children}</LaunchDataProvider>;
+  return (
+    <LaunchDataProvider>
+      <DetailNavigationProvider>{children}</DetailNavigationProvider>
+    </LaunchDataProvider>
+  );
 }
