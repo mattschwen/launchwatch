@@ -59,6 +59,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 
 - The featured mission uses fluid type and keeps its primary mission actions
   ahead of secondary imagery in a single-column hierarchy on narrow screens.
+- At the supported 320-pixel boundary, the featured mission uses a 16-pixel
+  inset so telemetry words remain whole without shrinking the established type
+  scale; wider mobile layouts retain the standard 20-pixel inset.
 - On compact mobile viewports up to 430 × 760, featured mission actions precede
   the telemetry grid so both 44-pixel controls remain fully available above the
   fixed primary navigation.

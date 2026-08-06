@@ -1866,6 +1866,7 @@ test('short mobile viewports keep featured actions clear of primary navigation',
     name: 'Open briefing',
   });
   const telemetry = hero.locator('dl');
+  const missionType = telemetry.getByText('Communications', { exact: true });
   const mobileNav = page.locator(
     'nav[aria-label="Primary navigation"]:visible'
   );
@@ -1892,6 +1893,14 @@ test('short mobile viewports keep featured actions clear of primary navigation',
   expect(briefingBox!.y + briefingBox!.height + 4).toBeLessThanOrEqual(
     navBox!.y
   );
+  await expect(missionType).toBeVisible();
+  expect(
+    await missionType.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return range.getClientRects().length;
+    })
+  ).toBe(1);
 
   await page.setViewportSize({ width: 393, height: 727 });
   await expect

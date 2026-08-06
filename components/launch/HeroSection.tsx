@@ -209,7 +209,7 @@ export default function HeroSection({
               : partial || stale || retained
                 ? 'signal-warm'
                 : 'signal-nominal'
-        } relative flex min-h-[27.5rem] overflow-hidden p-5 sm:p-7 lg:p-8`}
+        } relative flex min-h-[27.5rem] overflow-hidden p-4 min-[360px]:p-5 sm:p-7 lg:p-8`}
       >
         <div
           aria-hidden="true"
