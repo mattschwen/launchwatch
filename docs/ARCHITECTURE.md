@@ -84,6 +84,8 @@ the same guard before its independent archive state can create mission links.
 - validates provider responses before normalization;
 - applies a 12-second provider timeout;
 - deduplicates identical in-flight requests;
+- suppresses repeat requests to the same failed provider resource for 30
+  seconds, while leaving healthy providers and distinct resources independent;
 - retains a last-known result for stale fallback;
 - attaches provider-level `ok`, `stale`, `error`, or `not-requested` metadata;
 - combines SpaceX and Launch Library 2 upcoming missions;
@@ -248,6 +250,11 @@ attribution.
 | `type=history` CDN response | 60 minutes + 120 minutes stale-while-revalidate |
 | `/api/launches/[id]` CDN response | 5 minutes + 15 minutes stale-while-revalidate |
 | Launch-intel aggregate | 2 minutes fresh + 10 minutes stale fallback |
+
+Provider transport failures also carry a bounded 30-second per-resource
+cooldown. The cooldown does not turn an error into a cache hit: provider
+metadata remains `error`, or `stale` when last-known data exists, until an
+upstream retry succeeds.
 
 The in-memory cache is per server instance and is an optimization, not durable storage.
 

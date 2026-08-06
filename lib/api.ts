@@ -21,6 +21,7 @@ import {
 import { isEligibleLaunchVisual } from './launch-visual';
 import { extractYouTubeId } from './youtube';
 import { parseLaunchId, toCanonicalLaunchId } from './launch-id';
+import { FailureCooldown } from './failure-cooldown';
 
 export { parseLaunchId, toCanonicalLaunchId } from './launch-id';
 
@@ -37,6 +38,7 @@ const LL2_API = (
 const NASA_API = 'https://api.nasa.gov';
 const NASA_API_KEY = process.env.NASA_API_KEY || 'DEMO_KEY';
 const PROVIDER_TIMEOUT_MS = 12_000;
+const PROVIDER_FAILURE_COOLDOWN_MS = 30_000;
 export const MAX_HISTORY_LIMIT = 100;
 
 // Cache configuration
@@ -46,6 +48,10 @@ const MAX_CACHE_ENTRIES = 250;
 type CacheEntry<T> = { data: T; timestamp: number };
 const cache = new Map<string, CacheEntry<unknown>>();
 const inFlightRequests = new Map<string, Promise<unknown>>();
+const providerFailureCooldown = new FailureCooldown({
+  durationMs: PROVIDER_FAILURE_COOLDOWN_MS,
+  maxEntries: MAX_CACHE_ENTRIES,
+});
 
 interface ProviderDataResult<T> {
   data: T;
@@ -267,18 +273,20 @@ async function getSpaceXUpcomingLaunchesWithMeta(): Promise<ProviderDataResult<S
   }
 
   try {
-    const result = await fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: { upcoming: true },
-        options: {
-          populate: ['rocket', 'launchpad'],
-          sort: { date_unix: 'asc' },
-        },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: { upcoming: true },
+          options: {
+            populate: ['rocket', 'launchpad'],
+            sort: { date_unix: 'asc' },
+          },
+        }),
+        next: { revalidate: 300 },
       }),
-      next: { revalidate: 300 },
-    });
+    );
     const data = readSpaceXDocs(result);
     setCachedData(cacheKey, data);
     return { data, meta: providerMeta('ok', false, Date.now()) };
@@ -308,19 +316,21 @@ async function getSpaceXPastLaunchesWithMeta(limit: number = 10): Promise<Provid
   }
 
   try {
-    const result = await fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: { upcoming: false },
-        options: {
-          populate: ['rocket', 'launchpad'],
-          sort: { date_unix: 'desc' },
-          limit: boundedLimit,
-        },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: { upcoming: false },
+          options: {
+            populate: ['rocket', 'launchpad'],
+            sort: { date_unix: 'desc' },
+            limit: boundedLimit,
+          },
+        }),
+        next: { revalidate: 3600 },
       }),
-      next: { revalidate: 3600 },
-    });
+    );
     const data = readSpaceXDocs(result);
     setCachedData(cacheKey, data);
     return { data, meta: providerMeta('ok', false, Date.now()) };
@@ -348,18 +358,20 @@ async function getSpaceXLaunchByIdWithMeta(sourceId: string): Promise<ProviderDa
   }
 
   try {
-    const result = await fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: { _id: sourceId },
-        options: {
-          populate: ['rocket', 'launchpad'],
-          limit: 1,
-        },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(`${SPACEX_API}/launches/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: { _id: sourceId },
+          options: {
+            populate: ['rocket', 'launchpad'],
+            limit: 1,
+          },
+        }),
+        next: { revalidate: 3600 },
       }),
-      next: { revalidate: 3600 },
-    });
+    );
     const launch = readSpaceXDocs(result)[0] || null;
     if (!launch) {
       return {
@@ -411,12 +423,14 @@ async function getLL2UpcomingLaunchesWithMeta(limit: number = 20): Promise<Provi
   }
 
   try {
-    const result = await fetchJson<unknown>(
-      `${LL2_API}/launches/upcoming/?limit=${boundedLimit}&mode=normal`,
-      {
-        headers: getLL2Headers(),
-        next: { revalidate: 1800 },
-      },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(
+        `${LL2_API}/launches/upcoming/?limit=${boundedLimit}&mode=normal`,
+        {
+          headers: getLL2Headers(),
+          next: { revalidate: 1800 },
+        },
+      ),
     );
     const data = readLL2Results(result);
     setCachedData(cacheKey, data);
@@ -446,12 +460,14 @@ async function getLL2PastLaunchesWithMeta(limit: number = 50): Promise<ProviderD
   }
 
   try {
-    const result = await fetchJson<unknown>(
-      `${LL2_API}/launches/previous/?limit=${boundedLimit}&mode=normal`,
-      {
-        headers: getLL2Headers(),
-        next: { revalidate: 3600 },
-      },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(
+        `${LL2_API}/launches/previous/?limit=${boundedLimit}&mode=normal`,
+        {
+          headers: getLL2Headers(),
+          next: { revalidate: 3600 },
+        },
+      ),
     );
     const data = readLL2Results(result);
     setCachedData(cacheKey, data);
@@ -476,12 +492,14 @@ async function getLL2LaunchByIdWithMeta(sourceId: string): Promise<ProviderDataR
   }
 
   try {
-    const result = await fetchJson<unknown>(
-      `${LL2_API}/launches/${encodeURIComponent(sourceId)}/?mode=detailed`,
-      {
-        headers: getLL2Headers(),
-        next: { revalidate: 1800 },
-      },
+    const result = await providerFailureCooldown.run(cacheKey, () =>
+      fetchJson<unknown>(
+        `${LL2_API}/launches/${encodeURIComponent(sourceId)}/?mode=detailed`,
+        {
+          headers: getLL2Headers(),
+          next: { revalidate: 1800 },
+        },
+      ),
     );
     if (!isLL2Launch(result)) {
       throw new ProviderFetchError('Launch Library 2 returned an invalid launch payload');

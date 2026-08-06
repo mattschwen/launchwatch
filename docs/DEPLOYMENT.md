@@ -175,6 +175,8 @@ The service worker cache is versioned. A corrective release that changes cached 
 - Provider caches are in memory and therefore local to a server instance.
 - CDN response caching is controlled by each internal route’s `Cache-Control` header.
 - Provider failures can return last-known data marked `stale`.
+- Repeated failures for one provider resource pause upstream retries for 30
+  seconds without suppressing healthy providers or changing degraded metadata.
 - The app has no database requirement.
 - Data APIs are never service-worker cache sources.
 - X enrichment is optional and does not block launch data.

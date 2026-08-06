@@ -141,6 +141,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   canonical launch detail record to acquire richer vehicle-image provenance;
   the server caches the result under the existing detail policy.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
+- A failed provider resource enters a bounded 30-second recovery window before
+  LaunchWatch attempts that same upstream request again. Other providers remain
+  independent, and degraded or stale metadata stays visible throughout.
 - Every browser-facing launch collection, including the independent History
   archive, must pass the shared launch contract and canonical-ID guard before it
   can replace settled records or create mission links.
