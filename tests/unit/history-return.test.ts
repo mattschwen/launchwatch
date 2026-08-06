@@ -22,6 +22,7 @@ describe('history return context', () => {
       provider: 'SpaceX',
       year: '2025',
       outcome: 'success',
+      sortBy: 'date-desc',
     });
     expect(serializeHistoryFilters(filters)).toBe(
       'q=Return&provider=SpaceX&year=2025&outcome=success',
@@ -52,6 +53,7 @@ describe('history return context', () => {
       provider: 'SpaceX',
       year: 'all',
       outcome: 'all',
+      sortBy: 'date-desc',
     });
 
     expect(href).toBe(
@@ -64,5 +66,22 @@ describe('history return context', () => {
     expect(buildHistoryReturnHref(query!)).toBe(
       '/history?q=Return+flight&provider=SpaceX',
     );
+  });
+
+  it('preserves a bounded archive chronology preference', () => {
+    const oldestFirst = parseHistoryFilters(
+      new URLSearchParams('sort=date-asc'),
+    );
+
+    expect(oldestFirst.sortBy).toBe('date-asc');
+    expect(serializeHistoryFilters(oldestFirst)).toBe('sort=date-asc');
+    expect(
+      buildHistoryDetailHref('ll2-demo', oldestFirst),
+    ).toBe(
+      '/launch/ll2-demo?from=history&history=sort%3Ddate-asc',
+    );
+    expect(
+      parseHistoryFilters(new URLSearchParams('sort=random')).sortBy,
+    ).toBe('date-desc');
   });
 });

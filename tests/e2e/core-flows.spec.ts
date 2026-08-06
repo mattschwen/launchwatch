@@ -4669,10 +4669,12 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   const provider = page.locator('select[id$="-provider"]');
   const year = page.locator('select[id$="-year"]');
   const outcome = page.locator('select[id$="-outcome"]');
+  const chronology = page.locator('select[id$="-sort"]');
   const searchLabel = page.locator(`label[for="${await search.getAttribute('id')}"]`);
   const providerLabel = page.locator(`label[for="${await provider.getAttribute('id')}"]`);
   const yearLabel = page.locator(`label[for="${await year.getAttribute('id')}"]`);
   const outcomeLabel = page.locator(`label[for="${await outcome.getAttribute('id')}"]`);
+  const chronologyLabel = page.locator(`label[for="${await chronology.getAttribute('id')}"]`);
   const mobile = test.info().project.name.startsWith('mobile');
 
   await expect(searchLabel).toHaveText('Search missions');
@@ -4688,9 +4690,11 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
     await expect(provider).toHaveAccessibleName('Provider');
     await expect(year).toHaveAccessibleName('Launch year');
     await expect(outcome).toHaveAccessibleName('Outcome');
+    await expect(chronology).toHaveAccessibleName('Chronology');
     await expect(providerLabel).toBeVisible();
     await expect(yearLabel).toBeVisible();
     await expect(outcomeLabel).toBeVisible();
+    await expect(chronologyLabel).toBeVisible();
     return;
   }
 
@@ -4720,14 +4724,58 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   await expect(provider).toHaveAccessibleName('Provider');
   await expect(year).toHaveAccessibleName('Launch year');
   await expect(outcome).toHaveAccessibleName('Outcome');
+  await expect(chronology).toHaveAccessibleName('Chronology');
   await expect(providerLabel).toBeVisible();
   await expect(yearLabel).toBeVisible();
   await expect(outcomeLabel).toBeVisible();
+  await expect(chronologyLabel).toBeVisible();
   expect((await hideFilterToggle.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   await provider.selectOption({ label: 'SpaceX' });
   await expect(page).toHaveURL(/\/history\?provider=SpaceX$/);
   await expect(hideFilterToggle).toContainText('1');
+
+  await chronology.selectOption({ label: 'Oldest first' });
+  await expect(page).toHaveURL(
+    /\/history\?provider=SpaceX&sort=date-asc$/,
+  );
+  await expect(hideFilterToggle).toHaveAccessibleName(
+    'Hide archive filters, 2 active',
+  );
+  await expect(hideFilterToggle).toContainText('2');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history chronology reverses the visible feed window and survives detail return', async ({
+  page,
+}) => {
+  await page.goto('/history?sort=date-asc');
+
+  const chronology = page.locator('select[id$="-sort"]');
+  const rows = page.locator('article');
+  await expect(chronology).toHaveValue('date-asc');
+  await expect(rows.first()).toContainText('Pathfinder Qualification');
+  await expect(rows.last()).toContainText('Demo Return Flight');
+
+  const oldestMission = rows.first().getByRole('link', {
+    name: 'View mission',
+  });
+  await expect(oldestMission).toHaveAttribute(
+    'href',
+    '/launch/ll2-demo-pathfinder?from=history&history=sort%3Ddate-asc',
+  );
+  await oldestMission.click();
+
+  const returnLink = page.getByRole('link', {
+    name: 'Back to filtered archive',
+  });
+  await expect(returnLink).toHaveAttribute(
+    'href',
+    '/history?sort=date-asc',
+  );
+  await returnLink.click();
+  await expect(chronology).toHaveValue('date-asc');
+  await expect(rows.first()).toContainText('Pathfinder Qualification');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

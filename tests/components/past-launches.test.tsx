@@ -301,6 +301,7 @@ describe('PastLaunches', () => {
           provider: 'SpaceX',
           year: '2025',
           outcome: 'success',
+          sortBy: 'date-desc',
         }}
       />,
     );
@@ -316,7 +317,9 @@ describe('PastLaunches', () => {
       'SpaceX',
     );
     expect(
-      screen.getByRole('button', { name: 'Hide archive filters' })
+      screen.getByRole('button', {
+        name: 'Hide archive filters, 3 active',
+      })
     ).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'View mission' })).toHaveAttribute(
       'href',
@@ -332,6 +335,7 @@ describe('PastLaunches', () => {
           provider: 'Retired Provider',
           year: 'all',
           outcome: 'all',
+          sortBy: 'date-desc',
         }}
       />
     );
@@ -358,6 +362,7 @@ describe('PastLaunches', () => {
           provider: 'all',
           year: '1999',
           outcome: 'all',
+          sortBy: 'date-desc',
         }}
       />
     );

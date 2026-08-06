@@ -3,6 +3,7 @@ export interface HistoryFilters {
   provider: string;
   year: string;
   outcome: string;
+  sortBy: 'date-desc' | 'date-asc';
 }
 
 export const DEFAULT_HISTORY_FILTERS: HistoryFilters = {
@@ -10,6 +11,7 @@ export const DEFAULT_HISTORY_FILTERS: HistoryFilters = {
   provider: 'all',
   year: 'all',
   outcome: 'all',
+  sortBy: 'date-desc',
 };
 
 type SearchParamRecord = Record<
@@ -54,6 +56,7 @@ export function parseHistoryFilters(
   const provider = boundedText(read('provider'), MAX_PROVIDER_LENGTH);
   const year = read('year');
   const outcome = read('outcome');
+  const sortBy = read('sort');
 
   return {
     search,
@@ -66,6 +69,10 @@ export function parseHistoryFilters(
       outcome === 'success' || outcome === 'failure'
         ? outcome
         : DEFAULT_HISTORY_FILTERS.outcome,
+    sortBy:
+      sortBy === 'date-asc'
+        ? sortBy
+        : DEFAULT_HISTORY_FILTERS.sortBy,
   };
 }
 
@@ -77,6 +84,7 @@ export function serializeHistoryFilters(
     provider: filters.provider,
     year: filters.year,
     outcome: filters.outcome,
+    sort: filters.sortBy,
   });
   const params = new URLSearchParams();
 
@@ -89,6 +97,9 @@ export function serializeHistoryFilters(
   }
   if (normalized.outcome !== DEFAULT_HISTORY_FILTERS.outcome) {
     params.set('outcome', normalized.outcome);
+  }
+  if (normalized.sortBy !== DEFAULT_HISTORY_FILTERS.sortBy) {
+    params.set('sort', normalized.sortBy);
   }
 
   return params.toString();

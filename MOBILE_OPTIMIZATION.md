@@ -243,10 +243,14 @@ The optional expanded map remains a modal dialog. It must:
   provider-acquisition copy, and a named busy region while decorative result
   placeholders stay out of the accessibility tree.
 - Search stays immediately available on narrow screens while secondary
-  provider/year/outcome filters use a touch-safe disclosure. Active secondary
-  filters reopen from URL return context and remain visibly counted.
-- Search, provider, launch year, and outcome retain visible field labels as
+  provider/year/outcome and chronology controls use a touch-safe disclosure.
+  Active secondary controls reopen from URL return context and remain visibly
+  counted.
+- Search, provider, launch year, outcome, and chronology retain visible field labels as
   values change, so restored or shared archive filters remain self-identifying.
+- Chronology reverses only the current bounded archive response, explicitly
+  offering newest-first or oldest-first scanning without implying access beyond
+  the labeled feed window. It survives mission-detail return navigation.
 - Activating the already-current History command resets archive filters and
   results together, while Back and Forward restore the prior URL-bound context.
 - The archive exposes a labeled clear action only while filters are active, so

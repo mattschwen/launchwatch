@@ -448,11 +448,13 @@ export default function PastLaunches({
   const [provider, setProvider] = useState(initialFilters.provider);
   const [year, setYear] = useState(initialFilters.year);
   const [outcome, setOutcome] = useState(initialFilters.outcome);
+  const [sortBy, setSortBy] = useState(initialFilters.sortBy);
   const [filtersOpen, setFiltersOpen] = useState(
     () =>
       initialFilters.provider !== 'all' ||
       initialFilters.year !== 'all' ||
-      initialFilters.outcome !== 'all'
+      initialFilters.outcome !== 'all' ||
+      initialFilters.sortBy !== DEFAULT_HISTORY_FILTERS.sortBy
   );
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -569,17 +571,19 @@ export default function PastLaunches({
       setProvider(nextFilters.provider);
       setYear(nextFilters.year);
       setOutcome(nextFilters.outcome);
+      setSortBy(nextFilters.sortBy);
       setFiltersOpen(
         nextFilters.provider !== DEFAULT_HISTORY_FILTERS.provider ||
           nextFilters.year !== DEFAULT_HISTORY_FILTERS.year ||
-          nextFilters.outcome !== DEFAULT_HISTORY_FILTERS.outcome,
+          nextFilters.outcome !== DEFAULT_HISTORY_FILTERS.outcome ||
+          nextFilters.sortBy !== DEFAULT_HISTORY_FILTERS.sortBy,
       );
       setVisibleCount(PAGE_SIZE);
       setExpandedId(null);
     };
     const resetHistoryFilters = (): void => {
       suppressNextUrlWriteRef.current = Boolean(
-        serializeHistoryFilters({ search, provider, year, outcome }),
+        serializeHistoryFilters({ search, provider, year, outcome, sortBy }),
       );
       applyNavigationFilters(DEFAULT_HISTORY_FILTERS);
     };
@@ -597,30 +601,44 @@ export default function PastLaunches({
       );
       window.removeEventListener('popstate', restoreHistoryFilters);
     };
-  }, [outcome, provider, search, year]);
+  }, [outcome, provider, search, sortBy, year]);
 
   const filtered = useMemo(() => {
-    return launches.filter((launch) => {
-      const matchesSearch = matchesLaunchSearch(launch, search);
-      const matchesProvider =
-        provider === 'all' || launch.provider === provider;
-      const matchesYear =
-        year === 'all' ||
-        new Date(launch.date).getUTCFullYear() === Number(year);
-      const matchesOutcome =
-        outcome === 'all' || launch.status === outcome;
-      return matchesSearch && matchesProvider && matchesYear && matchesOutcome;
-    });
-  }, [launches, outcome, provider, search, year]);
+    return launches
+      .filter((launch) => {
+        const matchesSearch = matchesLaunchSearch(launch, search);
+        const matchesProvider =
+          provider === 'all' || launch.provider === provider;
+        const matchesYear =
+          year === 'all' ||
+          new Date(launch.date).getUTCFullYear() === Number(year);
+        const matchesOutcome =
+          outcome === 'all' || launch.status === outcome;
+        return matchesSearch && matchesProvider && matchesYear && matchesOutcome;
+      })
+      .sort((a, b) => {
+        const difference =
+          sortBy === 'date-asc'
+            ? a.dateUnix - b.dateUnix
+            : b.dateUnix - a.dateUnix;
+        return (
+          difference ||
+          a.name.localeCompare(b.name) ||
+          a.id.localeCompare(b.id)
+        );
+      });
+  }, [launches, outcome, provider, search, sortBy, year]);
   const filtersActive =
     Boolean(search.trim()) ||
     provider !== 'all' ||
     year !== 'all' ||
-    outcome !== 'all';
+    outcome !== 'all' ||
+    sortBy !== DEFAULT_HISTORY_FILTERS.sortBy;
   const secondaryFilterCount = [
     provider !== 'all',
     year !== 'all',
     outcome !== 'all',
+    sortBy !== DEFAULT_HISTORY_FILTERS.sortBy,
   ].filter(Boolean).length;
   const visibleLaunches = filtered.slice(0, visibleCount);
   const allResultsVisible =
@@ -641,6 +659,7 @@ export default function PastLaunches({
       provider,
       year,
       outcome,
+      sortBy,
     });
     const nextUrl = query ? `/history?${query}` : '/history';
     const currentUrl = `${window.location.pathname}${window.location.search}`;
@@ -648,13 +667,14 @@ export default function PastLaunches({
     if (currentUrl !== nextUrl) {
       window.history.replaceState(window.history.state, '', nextUrl);
     }
-  }, [outcome, provider, search, year]);
+  }, [outcome, provider, search, sortBy, year]);
 
   const clearFilters = (): void => {
     setSearch('');
     setProvider('all');
     setYear('all');
     setOutcome('all');
+    setSortBy(DEFAULT_HISTORY_FILTERS.sortBy);
     setFiltersOpen(false);
     setVisibleCount(PAGE_SIZE);
     searchRef.current?.focus();
@@ -699,14 +719,14 @@ export default function PastLaunches({
           </p>
         </header>
         <div aria-hidden="true">
-          <div className="grid items-end gap-3 border-b border-[var(--border-subtle)] p-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_7rem]">
-            {Array.from({ length: 4 }).map((_, index) => (
+          <div className="grid items-end gap-3 border-b border-[var(--border-subtle)] p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(15rem,1fr)_11rem_8.5rem_10rem_10rem_7rem]">
+            {Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="space-y-2">
                 <div className="skeleton h-3 w-20 rounded" />
                 <div className="skeleton h-11 rounded" />
               </div>
             ))}
-            <div className="skeleton h-11 rounded md:col-span-2 xl:col-span-1" />
+            <div className="skeleton h-11 rounded md:col-span-2 lg:col-span-3 xl:col-span-1" />
           </div>
           {Array.from({ length: 6 }).map((_, index) => (
             <div
@@ -763,7 +783,7 @@ export default function PastLaunches({
       className="surface-card holo-card signal-warm overflow-hidden"
     >
       <div className="border-b border-[var(--border-subtle)] p-4">
-        <div className="grid min-w-0 items-end gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_12rem_10rem_11rem_auto]">
+        <div className="grid min-w-0 items-end gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(15rem,1fr)_11rem_8.5rem_10rem_10rem_auto]">
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3 md:contents">
             <div className="min-w-0">
               <label
@@ -798,9 +818,13 @@ export default function PastLaunches({
                 type="button"
                 aria-expanded={filtersOpen}
                 aria-controls={`${id}-filters`}
-                aria-label={
+                aria-label={`${
                   filtersOpen ? 'Hide archive filters' : 'Show archive filters'
-                }
+                }${
+                  secondaryFilterCount > 0
+                    ? `, ${secondaryFilterCount} active`
+                    : ''
+                }`}
                 onClick={() => setFiltersOpen((open) => !open)}
                 className="action-button action-button-secondary px-3"
               >
@@ -900,9 +924,33 @@ export default function PastLaunches({
                 <option value="failure">Failure</option>
               </select>
             </div>
+
+            <div className="min-w-0">
+              <label
+                className="data-label mb-1.5 block"
+                htmlFor={`${id}-sort`}
+              >
+                Chronology
+              </label>
+              <select
+                id={`${id}-sort`}
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(
+                    event.target.value as HistoryFilters['sortBy'],
+                  );
+                  setVisibleCount(PAGE_SIZE);
+                  setExpandedId(null);
+                }}
+                className="min-h-11 min-w-0 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+              >
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 xl:col-span-1 xl:justify-end">
+          <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 lg:col-span-3 xl:col-span-1 xl:justify-end">
             <div className="min-w-0">
               <p
                 role="status"
@@ -1048,6 +1096,7 @@ export default function PastLaunches({
                   provider,
                   year,
                   outcome,
+                  sortBy,
                 })}
                 onToggle={() =>
                   setExpandedId((current) =>
