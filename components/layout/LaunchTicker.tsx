@@ -51,9 +51,11 @@ function NextLaunchStatus({
           targetDate={launch.date}
           animated={false}
           precision={launch.datePrecision}
+          windowStart={launch.windowStart}
+          windowEnd={launch.windowEnd}
           compact
           completedLabel={
-            liveSignal === 'mission' ? 'In flight' : 'Window open'
+            liveSignal === 'mission' ? 'In flight' : undefined
           }
           className={
             launch.isLive

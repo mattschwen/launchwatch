@@ -286,8 +286,9 @@ export default function HeroSection({
                   <Countdown
                     targetDate={activeLaunch.date}
                     precision={activeLaunch.datePrecision}
+                    windowStart={activeLaunch.windowStart}
+                    windowEnd={activeLaunch.windowEnd}
                     featured
-                    completedLabel="Launch window open"
                   />
                 </div>
               ) : retainedLive ? (
@@ -310,6 +311,8 @@ export default function HeroSection({
                 <Countdown
                   targetDate={activeLaunch.date}
                   precision={activeLaunch.datePrecision}
+                  windowStart={activeLaunch.windowStart}
+                  windowEnd={activeLaunch.windowEnd}
                   featured
                 />
               )}

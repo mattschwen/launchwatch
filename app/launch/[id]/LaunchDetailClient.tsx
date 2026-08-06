@@ -238,7 +238,8 @@ export default function LaunchDetailClient({
           <Countdown
             targetDate={launch.date}
             precision={launch.datePrecision}
-            completedLabel="Launch window open"
+            windowStart={launch.windowStart}
+            windowEnd={launch.windowEnd}
             className="mt-3 lg:[&>.countdown-display]:!text-[clamp(1.8rem,3.1vw,3rem)]"
           />
         </div>

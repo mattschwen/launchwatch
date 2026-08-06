@@ -4,6 +4,7 @@ import { useCountdown } from '@/lib/hooks';
 import {
   formatLaunchPrecisionLabel,
   formatLaunchTarget,
+  getLaunchWindowBounds,
   hasCountdownTarget,
   hasExactLaunchTime,
 } from '@/lib/format';
@@ -17,6 +18,8 @@ interface CountdownProps {
   completedLabel?: string;
   featured?: boolean;
   precision?: LaunchDatePrecision | null;
+  windowEnd?: string | null;
+  windowStart?: string | null;
 }
 
 function formatCountdownUnit(
@@ -58,11 +61,14 @@ export default function Countdown({
   animated = true,
   className = '',
   compact = false,
-  completedLabel = 'Window open',
+  completedLabel,
   featured = false,
   precision = null,
+  windowEnd = null,
+  windowStart = null,
 }: CountdownProps): React.ReactElement {
-  const { days, hours, minutes, seconds, total } = useCountdown(targetDate);
+  const { days, hours, minutes, seconds, total, now } =
+    useCountdown(targetDate);
   const exact = hasExactLaunchTime(precision);
   const precisionLabel = formatLaunchPrecisionLabel(precision) || 'Date estimate';
   const estimated = !exact && hasCountdownTarget(precision);
@@ -115,11 +121,40 @@ export default function Countdown({
   }
 
   if (total <= 0) {
+    const launchWindow = getLaunchWindowBounds({
+      date: targetDate,
+      windowStart,
+      windowEnd,
+    });
+    const providerWindowOpen = Boolean(
+      launchWindow && launchWindow.end.getTime() >= now
+    );
+    const statusLabel = completedLabel
+      ? completedLabel
+      : providerWindowOpen
+        ? 'Launch window open'
+        : 'Awaiting provider update';
+    const statusTone = completedLabel
+      ? 'text-[var(--text-secondary)]'
+      : providerWindowOpen
+        ? 'text-[var(--console-green)]'
+        : 'text-[var(--console-amber)]';
+
     return (
       <span
-        className={`font-mono text-sm font-medium text-[var(--text-secondary)] ${className}`}
+        role="status"
+        aria-label={statusLabel}
+        aria-atomic="true"
+        data-countdown-state={
+          completedLabel
+            ? 'complete'
+            : providerWindowOpen
+              ? 'window-open'
+              : 'awaiting-provider'
+        }
+        className={`font-mono text-sm font-medium ${statusTone} ${className}`}
       >
-        {completedLabel}
+        {statusLabel}
       </span>
     );
   }

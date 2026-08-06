@@ -151,7 +151,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   mission. Primary mission summaries retain a supplied window instead of
   reducing it to one target instant. Coarse day, month, quarter, and year
   targets render as estimates instead of exact countdowns; calendar export and
-  alerts remain pending until T-0 is precise enough.
+  alerts remain pending until T-0 is precise enough. After T-0, the interface
+  calls a window open only while validated provider bounds remain active;
+  otherwise it waits visibly for the next provider update.
 - Compact launch-site labels retain the provider's facility context when a pad
   name alone is ambiguous, including schedule, Watch, History, detail,
   calendar, clipboard, and browser-alert surfaces.

@@ -898,6 +898,8 @@ export default function LaunchMap({ launches }: LaunchMapProps): React.ReactElem
                       <Countdown
                         targetDate={launch.date}
                         precision={launch.datePrecision}
+                        windowStart={launch.windowStart}
+                        windowEnd={launch.windowEnd}
                         compact
                       />
                       <ChevronRight
@@ -1026,6 +1028,8 @@ export default function LaunchMap({ launches }: LaunchMapProps): React.ReactElem
                 <Countdown
                   targetDate={highlightedSite.nextLaunch.date}
                   precision={highlightedSite.nextLaunch.datePrecision}
+                  windowStart={highlightedSite.nextLaunch.windowStart}
+                  windowEnd={highlightedSite.nextLaunch.windowEnd}
                   compact
                 />
                 <ChevronRight

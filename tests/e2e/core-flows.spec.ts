@@ -1007,6 +1007,63 @@ test('timed estimates retain a live approximate countdown', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('post-target countdowns wait for provider confirmation without inventing a window', async ({
+  page,
+}) => {
+  const pastTarget = new Date(Date.now() - 60_000).toISOString();
+  const pendingLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: pastTarget,
+    dateUnix: Math.floor(Date.parse(pastTarget) / 1000),
+    windowStart: null,
+    windowEnd: null,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [pendingLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: pendingLaunch,
+        canonicalId: pendingLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  const providerStatus = hero.getByRole('status', {
+    name: 'Awaiting provider update',
+  });
+  await expect(providerStatus).toBeVisible();
+  await expect(providerStatus).toHaveAttribute(
+    'data-countdown-state',
+    'awaiting-provider'
+  );
+  await expect(providerStatus).toHaveClass(/text-\[var\(--console-amber\)\]/);
+  await expect(hero.getByText('Window open', { exact: true })).toHaveCount(0);
+
+  if (!test.info().project.name.startsWith('mobile')) {
+    const ticker = page
+      .getByRole('complementary', { name: 'Mission status' })
+      .getByRole('status', { name: 'Awaiting provider update' });
+    await expect(ticker).toBeVisible();
+  }
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared chrome reports partial feed health on every route', async ({
   page,
 }) => {

@@ -17,6 +17,7 @@ describe('Countdown', () => {
       minutes: 4,
       seconds: 5,
       total: 183845,
+      now: Date.now(),
     });
   });
 
@@ -59,6 +60,7 @@ describe('Countdown', () => {
       minutes: 8,
       seconds: 7,
       total: 10660087,
+      now: Date.now(),
     });
 
     const { container } = render(
@@ -96,6 +98,7 @@ describe('Countdown', () => {
       minutes: 1,
       seconds: 1,
       total: 90061,
+      now: Date.now(),
     });
 
     render(<Countdown targetDate="2035-07-28T14:30:00.000Z" />);
@@ -103,6 +106,72 @@ describe('Countdown', () => {
     expect(
       screen.getByText('1 day, 1 hour, 1 minute, 1 second until launch')
     ).toHaveClass('sr-only', 'countdown-spoken');
+  });
+
+  it('does not claim an unconfirmed launch window after the target passes', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+      now: Date.now(),
+    });
+
+    render(<Countdown targetDate="2035-07-28T14:30:00.000Z" compact />);
+
+    expect(
+      screen.getByRole('status', { name: 'Awaiting provider update' })
+    ).toHaveClass('text-[var(--console-amber)]');
+    expect(screen.queryByText('Window open')).not.toBeInTheDocument();
+  });
+
+  it('identifies a confirmed provider window that remains open', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+      now: Date.now(),
+    });
+    const target = new Date(Date.now() - 60_000);
+
+    render(
+      <Countdown
+        targetDate={target.toISOString()}
+        windowStart={new Date(target.getTime() - 30 * 60_000).toISOString()}
+        windowEnd={new Date(Date.now() + 30 * 60_000).toISOString()}
+      />
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Launch window open' })
+    ).toHaveClass('text-[var(--console-green)]');
+  });
+
+  it('stops calling a validated provider window open after its end', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+      now: Date.now(),
+    });
+    const target = new Date(Date.now() - 60 * 60_000);
+
+    render(
+      <Countdown
+        targetDate={target.toISOString()}
+        windowStart={new Date(target.getTime() - 30 * 60_000).toISOString()}
+        windowEnd={new Date(Date.now() - 30 * 60_000).toISOString()}
+      />
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Awaiting provider update' })
+    ).toHaveAttribute('data-countdown-state', 'awaiting-provider');
   });
 
   it('shows a stable estimate instead of a false countdown for coarse dates', () => {

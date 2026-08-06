@@ -484,6 +484,7 @@ export function useCountdown(targetDate: string) {
       minutes: 0,
       seconds: 0,
       total: 0,
+      now,
     };
   }
 
@@ -493,5 +494,6 @@ export function useCountdown(targetDate: string) {
     minutes: Math.floor((difference / 1000 / 60) % 60),
     seconds: Math.floor((difference / 1000) % 60),
     total: difference,
+    now,
   };
 }

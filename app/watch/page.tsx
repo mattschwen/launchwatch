@@ -471,6 +471,8 @@ function WatchStage({
           <Countdown
             targetDate={launch.date}
             precision={launch.datePrecision}
+            windowStart={launch.windowStart}
+            windowEnd={launch.windowEnd}
             compact
           />
         </div>
