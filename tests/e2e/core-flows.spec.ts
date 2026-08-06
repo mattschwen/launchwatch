@@ -14,6 +14,75 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('first visit confirms synchronization without covering the active route', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.removeItem('launchwatch.boot-sequence.v3');
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: { ...FEED_META, partial: true },
+      }),
+    })
+  );
+  await page.goto('/');
+
+  const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
+  await expect(toast).toBeVisible();
+  await expect(toast.getByRole('status')).toHaveText(
+    'Partial provider schedule loaded'
+  );
+  const geometry = await toast.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const heading = document
+      .querySelector<HTMLElement>('#main-content h1')
+      ?.getBoundingClientRect();
+    const primaryAction = document
+      .querySelector<HTMLElement>('#main-content .action-button-primary')
+      ?.getBoundingClientRect();
+    const intersects = (target?: DOMRect): boolean =>
+      Boolean(
+        target &&
+          bounds.left < target.right &&
+          bounds.right > target.left &&
+          bounds.top < target.bottom &&
+          bounds.bottom > target.top
+      );
+    return {
+      withinViewport:
+        bounds.left >= 0 &&
+        bounds.right <= window.innerWidth &&
+        bounds.top >= 0 &&
+        bounds.bottom <= window.innerHeight,
+      coversHeading: intersects(heading),
+      coversPrimaryAction: intersects(primaryAction),
+    };
+  });
+  expect(geometry).toEqual({
+    withinViewport: true,
+    coversHeading: false,
+    coversPrimaryAction: false,
+  });
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  const dismiss = toast.getByRole('button', {
+    name: 'Dismiss system status',
+  });
+  expect((await dismiss.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await dismiss.focus();
+  await dismiss.press('Enter');
+  await expect(toast).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+});
+
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {

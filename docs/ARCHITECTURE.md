@@ -54,7 +54,7 @@ app/
   api/launch-intel/route.ts  ID-scoped launch intelligence
 ```
 
-`AppShell` owns the shared data provider, accessible skip link, responsive primary navigation, footer, and desktop status bar. Home, Watch, History, and detail views present route-specific controls without duplicating the global shell.
+`AppShell` owns the shared data provider, accessible skip link, responsive primary navigation, first-visit synchronization toast, footer, and desktop status bar. The toast waits for a usable feed, reports partial or retained data honestly, remains non-blocking, and preserves the same content under reduced motion. Home, Watch, History, and detail views present route-specific controls without duplicating the global shell.
 
 ## Canonical Launch Identity
 

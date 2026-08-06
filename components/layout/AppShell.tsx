@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import TopNav from './TopNav';
 import MobileNav from './MobileNav';
+import MissionBootSequence from './MissionBootSequence';
 import SystemStatusBar from './SystemStatusBar';
 import Footer from '@/components/Footer';
 import { LiveProvider } from '@/lib/contexts';
@@ -30,6 +31,7 @@ export default function AppShell({ children }: AppShellProps): React.ReactElemen
         >
           {children}
         </main>
+        <MissionBootSequence />
         <Footer />
         <SystemStatusBar />
       </div>
