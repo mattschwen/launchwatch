@@ -1672,7 +1672,7 @@ test('featured mission telemetry stays legible in the split layout', async ({
     telemetry.getByText('Taiyuan Satellite Launch Center', { exact: true })
   ).toBeVisible();
   await expect(
-    telemetry.getByText("People's Republic of China", { exact: true })
+    telemetry.getByText('China', { exact: true })
   ).toBeVisible();
   await expect(
     telemetry.getByText('Communications', { exact: true })
@@ -2655,6 +2655,7 @@ test('home schedule keeps long mission telemetry readable', async ({
   const displayedSiteName = 'Satish Dhawan Space Centre Second Pad';
   const longSiteLocality =
     "Wenchang Space Launch Site, People's Republic of China";
+  const displayedSiteLocality = 'Wenchang Space Launch Site, China';
 
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -2705,9 +2706,6 @@ test('home schedule keeps long mission telemetry readable', async ({
     schedule
       .getByText(longVehicleName, { exact: true })
       .filter({ visible: true }),
-    schedule
-      .getByText(displayedSiteName, { exact: true })
-      .filter({ visible: true }),
   ];
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     readableContent.push(
@@ -2715,10 +2713,20 @@ test('home schedule keeps long mission telemetry readable', async ({
         .getByText(longVehicleFamily, { exact: true })
         .filter({ visible: true }),
       schedule
-        .getByText(longSiteLocality, { exact: true })
+        .getByText(displayedSiteName, { exact: true })
+        .filter({ visible: true }),
+      schedule
+        .getByText(displayedSiteLocality, { exact: true })
         .filter({ visible: true })
     );
   } else {
+    readableContent.push(
+      schedule
+        .getByText(`${displayedSiteName} · ${displayedSiteLocality}`, {
+          exact: true,
+        })
+        .filter({ visible: true })
+    );
     const scheduleRow = schedule.locator('article').first();
     await expect(
       scheduleRow.getByText('Vehicle', { exact: true }).filter({ visible: true })
@@ -2754,6 +2762,60 @@ test('home schedule keeps long mission telemetry readable', async ({
   await expect(missionLink).toBeFocused();
   expect((await missionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home keeps facility context visible for numeric launch pads', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const numericPadLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    launchSite: '201',
+    location: {
+      lat: 19.618452,
+      lng: 110.955356,
+      name: "Wenchang Space Launch Site, People's Republic of China",
+      countryCode: 'CN',
+    },
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [numericPadLaunch],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const siteLabel =
+    (page.viewportSize()?.width ?? 0) >= 1024
+      ? schedule.getByText('Wenchang Space Launch Site, China', {
+          exact: true,
+        })
+      : schedule.getByText('201 · Wenchang Space Launch Site, China', {
+          exact: true,
+        });
+  await expect(siteLabel.filter({ visible: true })).toBeVisible();
+  const missionLink = schedule.getByRole('link', {
+    name: /Orbital Dawn/,
+  });
+  await missionLink.focus();
+  await expect(missionLink).toBeFocused();
+  expect((await missionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
 });
 
 test('home distinguishes an empty provider schedule and offers recovery', async ({
@@ -5130,7 +5192,7 @@ test('history keeps long mission telemetry readable', async ({
   const longSiteName =
     'Rocket Lab Launch Complex 2 (Launch Area 0 C), Wallops Island';
   const displayedSiteName =
-    'Rocket Lab LC-2 (Launch Area 0 C), Wallops Island';
+    'Rocket Lab LC-2 (Launch Area 0 C) · Wallops Island';
 
   if ((page.viewportSize()?.width ?? 0) >= 1024) {
     await page.setViewportSize({ width: 1440, height: 900 });

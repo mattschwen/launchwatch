@@ -35,10 +35,10 @@ import {
   formatLaunchDate,
   formatPrimaryMissionName,
   formatTimelineOffset,
+  getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   isCompletedLaunch,
-  shortenLaunchSite,
 } from '@/lib/format';
 import { useLaunchIntel } from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
@@ -260,7 +260,7 @@ export default function LaunchDetailClient({
           />
           <dt className="data-label">Launch site</dt>
           <dd className="mt-1 text-sm text-[var(--text-primary)]">
-            {shortenLaunchSite(launch.launchSite)}
+            {getLaunchSiteDisplay(launch).label}
           </dd>
         </div>
         <div className="relative pl-8">

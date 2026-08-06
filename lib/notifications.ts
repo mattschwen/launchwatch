@@ -1,5 +1,9 @@
 import { Launch } from './types';
-import { getLaunchLiveSignal, hasCalendarReadyLaunchTime } from './format';
+import {
+  getLaunchLiveSignal,
+  getLaunchSiteDisplay,
+  hasCalendarReadyLaunchTime,
+} from './format';
 
 function markNotified(notificationKey: string, targetMinute?: string): void {
   try {
@@ -81,8 +85,9 @@ export async function showLaunchNotification(
         ? 'Mission in flight'
         : 'Coverage is live'
       : `Launching in ${timeUntilLaunch}`;
+  const launchSite = getLaunchSiteDisplay(launch).label;
   const options: NotificationOptions = {
-    body: `${timingMessage}\n${launch.rocket} from ${launch.launchSite}`,
+    body: `${timingMessage}\n${launch.rocket} from ${launchSite}`,
     icon: '/icon-192.png',
     badge: '/badge-96.png',
     tag: `launch-${launch.id}`,

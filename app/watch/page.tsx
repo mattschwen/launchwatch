@@ -38,9 +38,9 @@ import VideoPlayer from '@/components/video/VideoPlayer';
 import {
   formatLaunchDate,
   formatPrimaryMissionName,
+  getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCriticalLaunchStatusName,
-  shortenLaunchSite,
 } from '@/lib/format';
 import {
   useLaunchById,
@@ -1186,7 +1186,7 @@ function WatchContent(): React.ReactElement {
                   </Link>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     {selectedLaunch.rocket} ·{' '}
-                    {shortenLaunchSite(selectedLaunch.launchSite)}
+                    {getLaunchSiteDisplay(selectedLaunch).label}
                   </p>
                   <p className="mt-1 font-mono text-xs text-[var(--console-cyan)]">
                     {formatLaunchDate(

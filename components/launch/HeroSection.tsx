@@ -9,9 +9,9 @@ import {
   formatLaunchDay,
   formatPrimaryMissionName,
   formatLaunchTime,
+  getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCriticalLaunchStatusName,
-  shortenLaunchSite,
 } from '@/lib/format';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
@@ -29,11 +29,6 @@ interface HeroSectionProps {
   coverageLoading?: boolean;
   coverageUnavailable?: boolean;
   refresh: () => Promise<void>;
-}
-
-function splitSite(site: string): [string, string] {
-  const [primary, ...rest] = shortenLaunchSite(site).split(',');
-  return [primary.trim(), rest.join(',').trim()];
 }
 
 export default function HeroSection({
@@ -188,7 +183,7 @@ export default function HeroSection({
   const critical =
     activeLaunch.status === 'failure' ||
     isCriticalLaunchStatusName(activeLaunch.statusName);
-  const [siteName, siteLocality] = splitSite(activeLaunch.launchSite);
+  const site = getLaunchSiteDisplay(activeLaunch);
   const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
     .filter(Boolean)
     .join(' ');
@@ -354,11 +349,13 @@ export default function HeroSection({
               />
               <dt className="data-label">Site</dt>
               <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
-                {siteName}
+                {site.primary}
               </dd>
-              <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
-                {siteLocality || activeLaunch.location?.name || 'Location pending'}
-              </dd>
+              {site.context ? (
+                <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
+                  {site.context}
+                </dd>
+              ) : null}
             </div>
             <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <Rocket

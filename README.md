@@ -148,6 +148,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   reducing it to one target instant. Coarse day, month, quarter, and year
   targets render as estimates instead of exact countdowns; calendar export and
   alerts remain pending until T-0 is precise enough.
+- Compact launch-site labels retain the provider's facility context when a pad
+  name alone is ambiguous, including schedule, Watch, History, detail,
+  calendar, clipboard, and browser-alert surfaces.
 - Primary mission headings use a provider's structured mission name when it
   safely removes an identical `Vehicle |` prefix. Canonical provider titles
   remain unchanged in feeds, compact lists, search, sharing, and route metadata.

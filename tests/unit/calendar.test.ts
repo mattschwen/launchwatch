@@ -90,7 +90,7 @@ describe('calendar exports', () => {
       'SUMMARY:Mission\\\\Path\\,\\nSecond\\; stage',
     );
     expect(unfolded).toContain(
-      'Rocket: R\\\\1\\nLaunch Site: Pad\\, 1\\nFirst\\nSecond\\nThird\\nFourth\\; phase',
+      'Rocket: R\\\\1\\nLaunch Site: Pad\\, 1 · Cape Canaveral\\nFirst\\nSecond\\nThird\\nFourth\\; phase',
     );
     expect(
       physicalLines.every(
@@ -135,6 +135,28 @@ describe('calendar exports', () => {
       '20350728T143000Z/20350728T163000Z'
     );
     expect(url.searchParams.get('details')).toContain('Astra Nova');
+  });
+
+  it('adds provider facility context to an ambiguous launch pad', () => {
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      launchSite: '201',
+      location: {
+        lat: 19.618452,
+        lng: 110.955356,
+        name: "Wenchang Space Launch Site, People's Republic of China",
+        countryCode: 'CN',
+      },
+    };
+    const calendar = generateICS(launch).replace(/\r\n /g, '');
+    const googleUrl = new URL(getGoogleCalendarUrl(launch));
+
+    expect(calendar).toContain(
+      'LOCATION:201 · Wenchang Space Launch Site\\, China'
+    );
+    expect(googleUrl.searchParams.get('location')).toBe(
+      '201 · Wenchang Space Launch Site, China'
+    );
   });
 
   it('copies explicitly labeled UTC target and window times', async () => {

@@ -407,7 +407,7 @@ describe('MissionTrajectory', () => {
     expect(screen.queryByText('Unknown Site')).not.toBeInTheDocument();
   });
 
-  it('keeps the full reported pad name readable in detail facts', () => {
+  it('keeps the reported pad and facility readable in detail facts', () => {
     const reportedSite =
       'Space Launch Complex 40, Cape Canaveral Space Force Station';
     render(
@@ -424,7 +424,9 @@ describe('MissionTrajectory', () => {
       />
     );
 
-    expect(screen.getAllByText(reportedSite).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('SLC-40 · Cape Canaveral').length
+    ).toBeGreaterThan(0);
   });
 
   it('renders an honest waiting state before a mission is available', () => {

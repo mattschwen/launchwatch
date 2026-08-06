@@ -179,6 +179,27 @@ describe('HeroSection', () => {
     expect(screen.queryByRole('note', { name: /Launch window/ })).toBeNull();
   });
 
+  it('pairs a provider pad identifier with its launch facility', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={{
+          ...UPCOMING_LAUNCHES[0],
+          launchSite: '201',
+          location: {
+            lat: 19.618452,
+            lng: 110.955356,
+            name: "Wenchang Space Launch Site, People's Republic of China",
+            countryCode: 'CN',
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByText('201')).toBeVisible();
+    expect(screen.getByText('Wenchang Space Launch Site, China')).toBeVisible();
+  });
+
   it('marks a retained mission as last-known after refresh failure', () => {
     render(
       <HeroSection

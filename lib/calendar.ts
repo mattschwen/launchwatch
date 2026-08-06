@@ -2,6 +2,7 @@ import { Launch } from './types';
 import {
   formatLaunchDate,
   formatLaunchWindow,
+  getLaunchSiteDisplay,
   getLaunchWindowBounds,
 } from './format';
 
@@ -64,6 +65,7 @@ function foldICSLine(line: string): string {
 export function generateICS(launch: Launch): string {
   const { start: startDate, end: endDate } = getCalendarBounds(launch);
   const launchWindow = formatLaunchWindow(launch);
+  const launchSite = getLaunchSiteDisplay(launch).label;
 
   const formatDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -88,11 +90,11 @@ export function generateICS(launch: Launch): string {
       `Target Time: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
       launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
-      `Launch Site: ${launch.launchSite}`,
+      `Launch Site: ${launchSite}`,
       launch.description || '',
       livestream ? `Watch Live: ${livestream}` : '',
     ].filter(Boolean).join('\n'))}`,
-    `LOCATION:${escapeICSText(launch.launchSite)}`,
+    `LOCATION:${escapeICSText(launchSite)}`,
     `STATUS:${launch.status === 'tbd' ? 'TENTATIVE' : 'CONFIRMED'}`,
     `SEQUENCE:0`,
     livestream ? `URL:${livestream}` : '',
@@ -132,6 +134,7 @@ export function downloadICS(launch: Launch): void {
 export function getGoogleCalendarUrl(launch: Launch): string {
   const { start: startDate, end: endDate } = getCalendarBounds(launch);
   const launchWindow = formatLaunchWindow(launch);
+  const launchSite = getLaunchSiteDisplay(launch).label;
 
   const formatGoogleDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -145,11 +148,11 @@ export function getGoogleCalendarUrl(launch: Launch): string {
       `Target Time: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
       launchWindow ? `Launch Window: ${launchWindow}` : '',
       `Rocket: ${launch.rocket}`,
-      `Launch Site: ${launch.launchSite}`,
+      `Launch Site: ${launchSite}`,
       launch.description || '',
       launch.livestream ? `\n\nWatch Live: ${launch.livestream}` : '',
     ].filter(Boolean).join('\n'),
-    location: launch.launchSite,
+    location: launchSite,
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -160,13 +163,14 @@ export function getGoogleCalendarUrl(launch: Launch): string {
  */
 export async function copyToClipboard(launch: Launch): Promise<boolean> {
   const launchWindow = formatLaunchWindow(launch);
+  const launchSite = getLaunchSiteDisplay(launch).label;
   const text = [
     `🚀 ${launch.name}`,
     ``,
     `📅 Target: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
     launchWindow ? `🛰️ Window: ${launchWindow}` : '',
     `🚀 Rocket: ${launch.rocket}`,
-    `📍 Launch Site: ${launch.launchSite}`,
+    `📍 Launch Site: ${launchSite}`,
     launch.description ? `\n${launch.description}` : '',
     launch.livestream ? `\n🎥 Watch: ${launch.livestream}` : '',
   ].filter(Boolean).join('\n');

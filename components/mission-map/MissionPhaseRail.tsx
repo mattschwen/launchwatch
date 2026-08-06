@@ -1,7 +1,7 @@
 'use client';
 
 import { MapPin, Orbit, Route } from 'lucide-react';
-import { firstLaunchValue, isMeaningfulLaunchValue } from '@/lib/format';
+import { getLaunchSiteDisplay, isMeaningfulLaunchValue } from '@/lib/format';
 import type { IllustrativeTrajectory } from '@/lib/trajectory';
 import type { Launch } from '@/lib/types';
 import type { MissionMapSelection } from './MissionMapCanvas';
@@ -44,10 +44,9 @@ export default function MissionPhaseRail({
   trajectory,
 }: MissionPhaseRailProps): React.ReactElement {
   const items: PhaseItem[] = [];
-  const reportedSiteLabel = firstLaunchValue(
-    [launch.launchSite, launch.location?.name],
-    trajectory.siteLabel
-  );
+  const site = getLaunchSiteDisplay(launch);
+  const reportedSiteLabel =
+    site.primary === 'Location pending' ? trajectory.siteLabel : site.label;
 
   if (trajectory.launchPoint) {
     items.push({
@@ -175,7 +174,7 @@ export default function MissionPhaseRail({
             </p>
             <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
               {isMeaningfulLaunchValue(launch.launchSite)
-                ? `${launch.launchSite} is reported, but geographic coordinates were not supplied.`
+                ? `${site.label} is reported, but geographic coordinates were not supplied.`
                 : 'The launch provider has not supplied a geographic origin.'}
             </p>
           </div>

@@ -441,8 +441,59 @@ export function shortenLaunchSite(site: string): string {
     .replace(/Cape Canaveral Space Force Station/gi, 'Cape Canaveral')
     .replace(/Kennedy Space Center/gi, 'Kennedy')
     .replace(/Vandenberg Space Force Base/gi, 'Vandenberg')
+    .replace(/People's Republic of China/gi, 'China')
     .replace(/, United States of America/gi, '')
     .replace(/, USA/gi, '');
+}
+
+export interface LaunchSiteDisplay {
+  primary: string;
+  context: string | null;
+  label: string;
+}
+
+function comparableLaunchSite(value: string): string {
+  return value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+export function getLaunchSiteDisplay(
+  launch: Pick<Launch, 'launchSite' | 'location'>
+): LaunchSiteDisplay {
+  const reportedSite = isMeaningfulLaunchValue(launch.launchSite)
+    ? shortenLaunchSite(launch.launchSite.trim())
+    : '';
+  const providerLocation = isMeaningfulLaunchValue(launch.location?.name)
+    ? shortenLaunchSite(launch.location.name.trim())
+    : '';
+  const [reportedPrimary = '', ...reportedContextParts] =
+    reportedSite.split(',');
+  const reportedContextCandidate = reportedContextParts.join(',').trim();
+  const commaBelongsToPadName =
+    /\bpad$/i.test(reportedPrimary.trim()) &&
+    /^\d+[a-z]?(?:\b|$)/i.test(reportedContextCandidate);
+  const primary =
+    (commaBelongsToPadName ? reportedSite : reportedPrimary.trim()) ||
+    providerLocation ||
+    'Location pending';
+  const reportedContext = commaBelongsToPadName
+    ? ''
+    : reportedContextCandidate;
+  const primaryKey = comparableLaunchSite(primary);
+  const locationKey = comparableLaunchSite(providerLocation);
+  const providerContextIsDistinct = Boolean(
+    locationKey &&
+      primaryKey &&
+      !locationKey.includes(primaryKey) &&
+      !primaryKey.includes(locationKey)
+  );
+  const context =
+    reportedContext || (providerContextIsDistinct ? providerLocation : null);
+
+  return {
+    primary,
+    context,
+    label: context ? `${primary} · ${context}` : primary,
+  };
 }
 
 export function launchOutcomeLabel(launch: Launch): string {

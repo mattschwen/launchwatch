@@ -24,9 +24,9 @@ import {
   formatLaunchValue,
   formatLaunchDate,
   formatLaunchDay,
+  getLaunchSiteDisplay,
   launchOutcomeLabel,
   matchesLaunchSearch,
-  shortenLaunchSite,
 } from '@/lib/format';
 import {
   buildHistoryDetailHref,
@@ -292,7 +292,7 @@ function HistoryRow({
             <span className="min-w-0">
               <span className="data-label block">Site</span>
               <span className="mt-1 block break-words text-xs leading-4 text-[var(--text-secondary)]">
-                {shortenLaunchSite(launch.launchSite)}
+                {getLaunchSiteDisplay(launch).label}
               </span>
             </span>
             <span className="min-w-0">
@@ -316,7 +316,7 @@ function HistoryRow({
             {launch.rocket}
           </span>
           <span className="hidden break-words text-sm leading-5 text-[var(--text-secondary)] xl:block">
-            {shortenLaunchSite(launch.launchSite)}
+            {getLaunchSiteDisplay(launch).label}
           </span>
           <span
             data-history-outcome={launch.status}

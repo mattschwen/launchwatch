@@ -5,10 +5,10 @@ import type { Launch } from '@/lib/types';
 import {
   formatLaunchDay,
   formatLaunchTime,
+  getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCriticalLaunchStatusName,
   launchOutcomeLabel,
-  shortenLaunchSite,
 } from '@/lib/format';
 
 interface LaunchCardProps {
@@ -30,9 +30,7 @@ export default function LaunchCard({
   const history = variant === 'history';
   const liveUnconfirmed = !history && launch.isLive && coverageUnconfirmed;
   const liveSignal = getLaunchLiveSignal(launch);
-  const [siteName, ...siteLocality] = shortenLaunchSite(
-    launch.launchSite,
-  ).split(',');
+  const site = getLaunchSiteDisplay(launch);
   const statusLabel = history
     ? launchOutcomeLabel(launch)
     : liveUnconfirmed
@@ -115,13 +113,13 @@ export default function LaunchCard({
 
         <div className="hidden min-w-0 lg:block">
           <p className="break-words text-sm font-medium leading-5 text-[var(--text-primary)]">
-            {siteName.trim()}
+            {site.primary}
           </p>
-          <p className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
-            {siteLocality.join(',').trim() ||
-              launch.location?.name ||
-              'Location pending'}
-          </p>
+          {site.context ? (
+            <p className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
+              {site.context}
+            </p>
+          ) : null}
         </div>
 
         <div className="col-start-2 flex min-w-0 items-center justify-between gap-3 lg:col-start-auto">
@@ -153,7 +151,7 @@ export default function LaunchCard({
           <div className="min-w-0">
             <dt className="data-label">Site</dt>
             <dd className="mt-1 break-words text-xs leading-4 text-[var(--console-cyan)]">
-              {shortenLaunchSite(launch.launchSite)}
+              {site.label}
             </dd>
           </div>
         </dl>

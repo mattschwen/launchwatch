@@ -19,7 +19,7 @@ import {
   formatPrimaryMissionName,
   formatLaunchWindow,
   formatTimelineOffset,
-  shortenLaunchSite,
+  getLaunchSiteDisplay,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
 import MissionDescription from './MissionDescription';
@@ -235,7 +235,7 @@ export default function LaunchBriefingDrawer({
                 <span className="data-label">Launch site</span>
               </dt>
               <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
-                {shortenLaunchSite(launch.launchSite)}
+                {getLaunchSiteDisplay(launch).label}
               </dd>
             </div>
             <div className="py-4">

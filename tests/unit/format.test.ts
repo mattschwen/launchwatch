@@ -3,6 +3,7 @@ import {
   firstLaunchValue,
   formatLaunchDate,
   formatLaunchPrecisionLabel,
+  getLaunchSiteDisplay,
   formatPrimaryMissionName,
   formatLaunchTarget,
   formatLaunchTime,
@@ -124,6 +125,41 @@ describe('launch formatting', () => {
       )
     ).toBe('SLC-40, Cape Canaveral');
     expect(shortenLaunchSite('LC 9A, Taiyuan')).toBe('LC-9A, Taiyuan');
+  });
+
+  it('pairs ambiguous pad identifiers with provider location context', () => {
+    expect(
+      getLaunchSiteDisplay({
+        launchSite: '201',
+        location: {
+          lat: 19.618452,
+          lng: 110.955356,
+          name: "Wenchang Space Launch Site, People's Republic of China",
+          countryCode: 'CN',
+        },
+      })
+    ).toEqual({
+      primary: '201',
+      context: 'Wenchang Space Launch Site, China',
+      label: '201 · Wenchang Space Launch Site, China',
+    });
+
+    expect(
+      getLaunchSiteDisplay({
+        launchSite:
+          'Space Launch Complex 40, Cape Canaveral Space Force Station, USA',
+        location: {
+          lat: 28.5619,
+          lng: -80.5774,
+          name: 'Cape Canaveral Space Force Station, USA',
+          countryCode: 'US',
+        },
+      })
+    ).toEqual({
+      primary: 'SLC-40',
+      context: 'Cape Canaveral',
+      label: 'SLC-40 · Cape Canaveral',
+    });
   });
 
   it('replaces provider placeholder metadata with useful fallback copy', () => {

@@ -88,7 +88,7 @@ describe('launch notification precision', () => {
       '🚀 Orbital Dawn',
       expect.objectContaining({
         body:
-          'Coverage is live\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station',
+          'Coverage is live\nAstra Nova from SLC-40 · Cape Canaveral',
       }),
     );
     expect(localStorage.getItem('notified-live-ll2-demo-orbital-dawn')).toBe(
@@ -118,7 +118,7 @@ describe('launch notification precision', () => {
       expect(showNotification).toHaveBeenCalledWith(
         '🚀 Orbital Dawn',
         expect.objectContaining({
-          body: `Launching in ${timingLabel}\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station`,
+          body: `Launching in ${timingLabel}\nAstra Nova from SLC-40 · Cape Canaveral`,
         }),
       );
     },
@@ -153,7 +153,7 @@ describe('launch notification precision', () => {
       '🚀 Orbital Dawn',
       expect.objectContaining({
         body:
-          'Launching in 30 minutes\nAstra Nova from Space Launch Complex 40, Cape Canaveral Space Force Station',
+          'Launching in 30 minutes\nAstra Nova from SLC-40 · Cape Canaveral',
       }),
     );
   });
