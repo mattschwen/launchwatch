@@ -172,8 +172,35 @@ const SOCIAL_PRIORITY_COMMUNITIES = [
   'r/spacexlounge',
 ];
 
-function normalizeMissionName(name: string): string {
-  return name.split('|')[0]?.trim() || name;
+const MISSION_SIGNAL_STOP_TERMS = new Set([
+  'and',
+  'block',
+  'dedicated',
+  'demo',
+  'flight',
+  'for',
+  'from',
+  'group',
+  'launch',
+  'mission',
+  'payload',
+  'provides',
+  'rideshare',
+  'satellite',
+  'satellites',
+  'test',
+  'the',
+  'unknown',
+  'with',
+]);
+
+export function getLaunchIntelMissionName(launch: Launch): string {
+  const structuredName = launch.missionName?.trim();
+  if (structuredName) return structuredName;
+
+  const providerTitleParts = launch.name.split('|');
+  const providerMissionName = providerTitleParts.slice(1).join('|').trim();
+  return providerMissionName || launch.name.trim();
 }
 
 function escapeQuery(query: string): string {
@@ -236,8 +263,7 @@ function buildXOAuthHeader(method: 'GET', requestUrl: string): string {
 
 function buildMissionPhrases(launch: Launch): string[] {
   return [
-    normalizeMissionName(launch.name),
-    launch.missionName || '',
+    getLaunchIntelMissionName(launch),
     launch.rocket,
     inferLaunchProvider(launch),
     `${inferLaunchProvider(launch)} ${launch.rocket}`,
@@ -249,18 +275,67 @@ function buildMissionPhrases(launch: Launch): string[] {
 }
 
 function buildNewsCacheKey(launch: Launch): string {
-  return escapeQuery(`${inferLaunchProvider(launch)} ${normalizeMissionName(launch.name)} ${launch.rocket}`).toLowerCase();
+  return escapeQuery(
+    `${inferLaunchProvider(launch)} ${getLaunchIntelMissionName(launch)} ${launch.rocket}`
+  ).toLowerCase();
 }
 
 function buildSocialCacheKey(launch: Launch): string {
-  return escapeQuery(`${normalizeMissionName(launch.name)} ${launch.rocket}`).toLowerCase();
+  return escapeQuery(
+    `${getLaunchIntelMissionName(launch)} ${launch.rocket}`
+  ).toLowerCase();
 }
 
 function buildMissionTerms(launch: Launch): string[] {
-  return escapeQuery(`${inferLaunchProvider(launch)} ${normalizeMissionName(launch.name)} ${launch.rocket}`)
+  return escapeQuery(
+    `${inferLaunchProvider(launch)} ${getLaunchIntelMissionName(launch)} ${launch.rocket}`
+  )
     .split(/\s+/)
     .map((term) => term.replace(/[^\w-]/g, '').toLowerCase())
     .filter((term) => term.length > 2);
+}
+
+function buildMissionSignalTerms(
+  launch: Launch
+): Array<{ term: string; strong: boolean }> {
+  const excludedTerms = new Set(
+    normalizeForMatch(`${inferLaunchProvider(launch)} ${launch.rocket}`)
+      .split(/\s+/)
+      .filter(Boolean)
+  );
+
+  return getLaunchIntelMissionName(launch)
+    .match(/[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*/g)
+    ?.map((rawTerm) => ({
+      term: rawTerm.toLowerCase(),
+      strong:
+        /[0-9-]/.test(rawTerm) ||
+        (rawTerm.match(/[A-Z]/g)?.length ?? 0) >= 2,
+    }))
+    .filter(
+      ({ term }, index, terms) =>
+        term.length >= 3 &&
+        !MISSION_SIGNAL_STOP_TERMS.has(term) &&
+        !excludedTerms.has(term) &&
+        terms.findIndex((candidate) => candidate.term === term) === index
+    ) ?? [];
+}
+
+export function isMissionSpecificCoverage(
+  launch: Launch,
+  text: string
+): boolean {
+  const mission = normalizeForMatch(getLaunchIntelMissionName(launch));
+  const haystack = normalizeForMatch(text);
+  const signalTerms = buildMissionSignalTerms(launch);
+  if (signalTerms.length === 0) return false;
+  if (mission.length >= 4 && haystack.includes(mission)) return true;
+
+  const haystackTerms = new Set(haystack.split(/\s+/));
+  const matchedTerms = signalTerms.filter(({ term }) => haystackTerms.has(term));
+  return (
+    matchedTerms.some(({ strong }) => strong) || matchedTerms.length >= 2
+  );
 }
 
 function scoreTextRelevance(launch: Launch, text: string): number {
@@ -310,7 +385,7 @@ function scoreRecency(publishedAt?: string | null, thresholds: Array<[number, nu
 }
 
 function hasExactMissionMatch(launch: Launch, text: string): boolean {
-  const mission = normalizeForMatch(normalizeMissionName(launch.name));
+  const mission = normalizeForMatch(getLaunchIntelMissionName(launch));
   return mission.length >= 4 && normalizeForMatch(text).includes(mission);
 }
 
@@ -673,7 +748,7 @@ async function searchYouTubeCandidates(launch: Launch): Promise<LaunchStreamCand
 }
 
 async function fetchLaunchNews(launch: Launch): Promise<LaunchNewsItem[]> {
-  const query = escapeQuery(`${inferLaunchProvider(launch)} ${normalizeMissionName(launch.name)} ${launch.rocket}`);
+  const query = escapeQuery(`${inferLaunchProvider(launch)} ${launch.rocket}`);
   try {
     const params = new URLSearchParams({
       search: query,
@@ -700,10 +775,14 @@ async function fetchLaunchNews(launch: Launch): Promise<LaunchNewsItem[]> {
         summary: item.summary || null,
       }))
       .filter((item) =>
+        isMissionSpecificCoverage(
+          launch,
+          `${item.title} ${item.summary || ''}`
+        ) &&
         isFreshMissionSignal(
           launch,
           item.publishedAt,
-          `${item.title} ${item.summary || ''}`,
+          `${item.title} ${item.summary || ''}`
         )
       )
       .map((item) => ({ item, score: scoreNewsItem(launch, item) }))
@@ -717,7 +796,9 @@ async function fetchLaunchNews(launch: Launch): Promise<LaunchNewsItem[]> {
 }
 
 async function fetchRedditItems(launch: Launch): Promise<LaunchSocialItem[]> {
-  const query = escapeQuery(`${inferLaunchProvider(launch)} ${normalizeMissionName(launch.name)} ${launch.rocket}`);
+  const query = escapeQuery(
+    `${inferLaunchProvider(launch)} ${getLaunchIntelMissionName(launch)} ${launch.rocket}`
+  );
   try {
     const params = new URLSearchParams({
       q: query,
@@ -767,6 +848,7 @@ async function fetchRedditItems(launch: Launch): Promise<LaunchSocialItem[]> {
         ];
       })
       .filter((item) =>
+        isMissionSpecificCoverage(launch, item.title) &&
         isFreshMissionSignal(launch, item.publishedAt, item.title)
       )
       .map((item) => ({ item, score: scoreSocialItem(launch, item) }))
@@ -784,7 +866,7 @@ async function fetchXItems(launch: Launch): Promise<LaunchSocialItem[]> {
     return [];
   }
 
-  const query = `"${normalizeMissionName(launch.name)}" OR "${launch.rocket}"`;
+  const query = `"${getLaunchIntelMissionName(launch)}" OR "${launch.rocket}"`;
   try {
     const params = new URLSearchParams({
       query,
@@ -835,6 +917,7 @@ async function fetchXItems(launch: Launch): Promise<LaunchSocialItem[]> {
         };
       })
       .filter((item) =>
+        isMissionSpecificCoverage(launch, item.title) &&
         isFreshMissionSignal(launch, item.publishedAt, item.title)
       )
       .map((item) => ({ item, score: scoreSocialItem(launch, item) }))

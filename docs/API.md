@@ -217,6 +217,12 @@ Public rationale and candidate-note text describes the available user action
 without disclosing deployment configuration, credential availability, or
 internal verification budgets. Operational detail remains server-side.
 
+Coverage and community candidates are keyed by the resolved structured mission
+name. A candidate must match a distinctive mission phrase, identifier, or
+multiple mission terms; sharing only a provider or launch vehicle is not enough.
+When no candidate clears that boundary, the arrays remain empty rather than
+showing another flight's coverage.
+
 Example:
 
 ```http
