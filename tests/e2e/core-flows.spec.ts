@@ -38,51 +38,54 @@ test('first visit confirms synchronization without covering the active route', a
   await expect(toast.getByRole('status')).toHaveAccessibleName(
     'Partial provider schedule loaded'
   );
-  const geometry = await toast.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    const header = document
-      .querySelector<HTMLElement>('header')
-      ?.getBoundingClientRect();
-    const main = document
-      .querySelector<HTMLElement>('#main-content')
-      ?.getBoundingClientRect();
-    const heading = document
-      .querySelector<HTMLElement>('#main-content h1')
-      ?.getBoundingClientRect();
-    const primaryAction = document
-      .querySelector<HTMLElement>('#main-content .action-button-primary')
-      ?.getBoundingClientRect();
-    const intersects = (target?: DOMRect): boolean =>
-      Boolean(
-        target &&
-          bounds.left < target.right &&
-          bounds.right > target.left &&
-          bounds.top < target.bottom &&
-          bounds.bottom > target.top
-      );
-    return {
-      withinViewport:
-        bounds.left >= 0 &&
-        bounds.right <= window.innerWidth &&
-        bounds.top >= 0 &&
-        bounds.bottom <= window.innerHeight,
-      containedInHeader: Boolean(
-        header &&
-          bounds.top >= header.top &&
-          bounds.bottom <= header.bottom + 1
-      ),
-      coversHeading: intersects(heading),
-      coversPrimaryAction: intersects(primaryAction),
-      coversMainContent: Boolean(main && bounds.bottom > main.top + 1),
-    };
-  });
-  expect(geometry).toEqual({
-    withinViewport: true,
-    containedInHeader: true,
-    coversHeading: false,
-    coversPrimaryAction: false,
-    coversMainContent: false,
-  });
+  await expect
+    .poll(() =>
+      toast.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const header = document
+          .querySelector<HTMLElement>('header')
+          ?.getBoundingClientRect();
+        const main = document
+          .querySelector<HTMLElement>('#main-content')
+          ?.getBoundingClientRect();
+        const heading = document
+          .querySelector<HTMLElement>('#main-content h1')
+          ?.getBoundingClientRect();
+        const primaryAction = document
+          .querySelector<HTMLElement>('#main-content .action-button-primary')
+          ?.getBoundingClientRect();
+        const intersects = (target?: DOMRect): boolean =>
+          Boolean(
+            target &&
+              bounds.left < target.right &&
+              bounds.right > target.left &&
+              bounds.top < target.bottom &&
+              bounds.bottom > target.top
+          );
+        return {
+          withinViewport:
+            bounds.left >= 0 &&
+            bounds.right <= window.innerWidth &&
+            bounds.top >= 0 &&
+            bounds.bottom <= window.innerHeight,
+          containedInHeader: Boolean(
+            header &&
+              bounds.top >= header.top &&
+              bounds.bottom <= header.bottom + 1
+          ),
+          coversHeading: intersects(heading),
+          coversPrimaryAction: intersects(primaryAction),
+          coversMainContent: Boolean(main && bounds.bottom > main.top + 1),
+        };
+      })
+    )
+    .toEqual({
+      withinViewport: true,
+      containedInHeader: true,
+      coversHeading: false,
+      coversPrimaryAction: false,
+      coversMainContent: false,
+    });
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   const feedStatusShortcuts = page.locator(
@@ -152,6 +155,36 @@ test('shared routes publish the branded LaunchWatch social preview', async ({
   expect(imageResponse.status()).toBe(200);
   expect(imageResponse.headers()['content-type']).toContain('image/png');
   expect((await imageResponse.body()).byteLength).toBeGreaterThan(20_000);
+});
+
+test('external actions identify when they open a new tab', async ({ page }) => {
+  for (const route of [
+    '/',
+    '/watch',
+    '/history',
+    '/launch/ll2-demo-orbital-dawn',
+  ]) {
+    await page.goto(route);
+    await page.waitForLoadState('networkidle');
+
+    const externalLinks = page.locator('a[target="_blank"]');
+    await expect(externalLinks.first()).toBeVisible();
+    await expect
+      .poll(() =>
+        externalLinks.evaluateAll(
+          (links) =>
+            links.length > 0 &&
+            links.every((link) =>
+              `${link.getAttribute('aria-label') || ''} ${
+                link.textContent || ''
+              }`
+                .toLocaleLowerCase()
+                .includes('new tab')
+            )
+        )
+      )
+      .toBe(true);
+  }
 });
 
 test('mission details publish a consistent canonical social preview', async ({
@@ -377,7 +410,7 @@ test('watch prefers official provider coverage over an earlier restream', async 
   ).toBeVisible();
   await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   const primaryCoverage = page.getByRole('link', {
-    name: 'Open provider stream',
+    name: /Open provider stream.*new tab/i,
   });
   await expect(primaryCoverage).toHaveAttribute(
     'href',
@@ -404,7 +437,7 @@ test('watch degrades unsafe provider coverage to a safe stream search', async ({
   await expect(
     page.getByRole('heading', { level: 2, name: 'Unsafe Coverage Fixture' })
   ).toBeVisible();
-  const fallback = page.getByRole('link', { name: 'Search for stream' });
+  const fallback = page.getByRole('link', { name: /Search for stream.*new tab/i });
   await expect(fallback).toHaveAttribute(
     'href',
     /https:\/\/www\.youtube\.com\/results\?search_query=/
@@ -544,7 +577,7 @@ test('route content hands off directly to the protected footer', async ({
       Number.parseFloat(shellSpacing.footerPaddingBottom!),
     ).toBeGreaterThanOrEqual(shellSpacing.mobileNavHeight - 1);
 
-    const sourceLink = page.getByRole('link', { name: 'Source', exact: true });
+    const sourceLink = page.getByRole('link', { name: /^Source.*new tab/i });
     await sourceLink.focus();
     await expect(sourceLink).toBeFocused();
     await expect
@@ -1035,12 +1068,12 @@ test('shared chrome reports partial feed health on every route', async ({
   await expect(sourceFeeds).toBeInViewport();
   await expect(
     sourceFeeds.getByRole('link', {
-      name: 'SpaceX source — unavailable',
+      name: /SpaceX source — unavailable.*new tab/i,
     })
   ).toContainText('unavailable');
   await expect(
     sourceFeeds.getByRole('link', {
-      name: 'Launch Library 2 source — available',
+      name: /Launch Library 2 source — available.*new tab/i,
     })
   ).toContainText('available');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
@@ -1980,7 +2013,7 @@ test('home waits for canonical coverage before offering a stream fallback', asyn
   });
   await expect(checkingCoverage).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Find stream' })
+    page.getByRole('link', { name: /Find stream.*new tab/i })
   ).toHaveCount(0);
   expect(
     await checkingCoverage.evaluate(
@@ -2195,7 +2228,7 @@ test('home reports visual-detail failures as degraded data', async ({
     degradedVisual.getByText('Provider image not supplied')
   ).toHaveCount(0);
   await expect(
-    page.getByRole('link', { name: 'Find stream' })
+    page.getByRole('link', { name: /Find stream.*new tab/i })
   ).toBeVisible();
   await expect(
     page.getByText(
@@ -2233,16 +2266,16 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
   await page.waitForTimeout(100);
 
   const refresh = page.locator('footer button');
-  const source = page.getByRole('link', { name: 'Source', exact: true });
+  const source = page.getByRole('link', { name: /^Source.*new tab/i });
   const sourceFeeds = page.getByRole('navigation', {
     name: 'Launch data sources',
   });
   const spacexSource = sourceFeeds.getByRole('link', {
-    name: 'SpaceX source — available',
+    name: /SpaceX source — available.*new tab/i,
     exact: true,
   });
   const launchLibrarySource = sourceFeeds.getByRole('link', {
-    name: 'Launch Library 2 source — available',
+    name: /Launch Library 2 source — available.*new tab/i,
     exact: true,
   });
   await expect(refresh).toHaveText('Refresh now');
@@ -2918,11 +2951,11 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   await expect(heroRetry).toHaveAccessibleName('Retry schedule');
   await expect(listRetry).toHaveAccessibleName('Retry schedule');
   await expect(
-    page.getByRole('link', { name: 'SpaceX source — unavailable' })
+    page.getByRole('link', { name: /SpaceX source — unavailable.*new tab/i })
   ).toContainText('unavailable');
   await expect(
     page.getByRole('link', {
-      name: 'Launch Library 2 source — unavailable',
+      name: /Launch Library 2 source — unavailable.*new tab/i,
     })
   ).toContainText('unavailable');
   await heroRetry.focus();
@@ -2947,11 +2980,11 @@ test('home schedule retry reports progress and restores keyboard focus', async (
     page.getByRole('heading', { name: 'Upcoming launches' })
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'SpaceX source — available' })
+    page.getByRole('link', { name: /SpaceX source — available.*new tab/i })
   ).toContainText('available');
   await expect(
     page.getByRole('link', {
-      name: 'Launch Library 2 source — available',
+      name: /Launch Library 2 source — available.*new tab/i,
     })
   ).toContainText('available');
   await expect(
@@ -3007,7 +3040,7 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.getByText('This provider stream opens in a separate window.')
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Open provider stream' })
+    page.getByRole('link', { name: /Open provider stream.*new tab/i })
   ).toHaveAttribute(
     'href',
     'https://x.com/i/broadcasts/demo-orbital-dawn'
@@ -3018,7 +3051,7 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(scheduledCoverage).toHaveClass(/signal-cold/);
   await expect(scheduledCoverage).not.toHaveClass(/signal-live/);
   await expect(
-    scheduledCoverage.getByRole('link', { name: 'Open provider stream' })
+    scheduledCoverage.getByRole('link', { name: /Open provider stream.*new tab/i })
   ).toHaveClass(/action-button-secondary/);
   const scheduledSurface = scheduledCoverage.locator('.stream-surface');
   await expect(scheduledSurface).toHaveClass(/signal-cold/);
@@ -3311,7 +3344,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
 
   await expect(
-    page.getByRole('link', { name: 'Open provider stream' })
+    page.getByRole('link', { name: /Open provider stream.*new tab/i })
   ).toBeVisible();
   await expect(page.locator('figure[data-visual-kind]')).toHaveCount(0);
   const showVisual = page.getByRole('button', {
@@ -3362,7 +3395,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
 
   await expect(
-    page.getByRole('link', { name: 'Open provider stream' })
+    page.getByRole('link', { name: /Open provider stream.*new tab/i })
   ).toHaveCount(0);
   const visual = page.locator('figure[data-visual-kind="vehicle"]');
   await expect(visual).toHaveCount(1);
@@ -3855,8 +3888,10 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(unconfirmedCoverage).toBeVisible();
   await expect(unconfirmedCoverage.locator('iframe')).toHaveCount(0);
   await expect(page.getByText('Schedule status unconfirmed')).toBeVisible();
-  await expect(page.locator('.route-masthead')).toHaveClass(/signal-warm/);
-  await expect(page.locator('.route-masthead')).not.toHaveClass(/signal-live/);
+  const masthead = page.locator('.route-masthead');
+  await expect(masthead).toHaveCount(1);
+  await expect(masthead).toHaveClass(/signal-warm/);
+  await expect(masthead).not.toHaveClass(/signal-live/);
   await expect(page.getByText('LIVE', { exact: true })).toHaveCount(0);
 
   const retry = retainedNotice.locator('button');
@@ -3877,7 +3912,7 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(
     page.getByRole('region', { name: 'Mission coverage live' }),
   ).toBeVisible();
-  await expect(page.locator('.route-masthead')).toHaveClass(/signal-live/);
+  await expect(masthead).toHaveClass(/signal-live/);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
   expect(
     consoleErrors.filter(
@@ -4191,7 +4226,7 @@ test('mission intelligence keeps generic search separate from stream leads', asy
   const intelligence = page.getByRole('region', {
     name: 'Mission intelligence',
   });
-  const search = intelligence.getByRole('link', { name: 'Search YouTube' });
+  const search = intelligence.getByRole('link', { name: /Search YouTube.*new tab/i });
   const signal = intelligence.getByRole('group', { name: 'Coverage signal' });
 
   await expect(search).toHaveAttribute('href', searchUrl);
@@ -4470,7 +4505,7 @@ test('watch recovers failed detail enrichment without reloading the schedule', a
   await expect(retry).toHaveAttribute('aria-busy', 'true');
   releaseRetry?.();
   await expect(
-    page.getByRole('link', { name: 'Open provider stream' })
+    page.getByRole('link', { name: /Open provider stream.*new tab/i })
   ).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Mission coverage scheduled' })
@@ -4598,7 +4633,7 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
   await page.goto('/watch');
 
   const searchFallback = page.getByRole('link', {
-    name: 'Search for stream',
+    name: /Search for stream.*new tab/i,
     exact: true,
   });
   await expect(searchFallback).toBeVisible();
@@ -4615,13 +4650,13 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
     )
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Open provider channel', exact: true })
+    page.getByRole('link', { name: /Open provider channel.*new tab/i, exact: true })
   ).toHaveCount(0);
 
   await page.getByRole('button', { name: /Polaris Relay/i }).click();
 
   const providerFallback = page.getByRole('link', {
-    name: 'Open provider channel',
+    name: /Open provider channel.*new tab/i,
     exact: true,
   });
   await expect(providerFallback).toBeVisible();
@@ -6120,7 +6155,7 @@ test('upcoming detail keeps mission commands in a touch-safe mobile console', as
   await page.goto('/launch/ll2-demo-orbital-dawn');
 
   const findStream = page.getByRole('link', {
-    name: 'Find stream',
+    name: /Find stream.*new tab/i,
     exact: true,
   });
   const briefing = page.getByRole('button', {

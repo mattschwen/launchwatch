@@ -4,6 +4,7 @@ import {
   generateYouTubeSearchUrl,
   getProviderYouTubeChannel,
 } from '@/lib/youtube';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 
 interface VideoFallbackProps {
   launch: Launch;
@@ -27,6 +28,7 @@ export default function VideoFallback({
       >
         <ExternalLink aria-hidden="true" size={16} />
         {channelUrl ? 'Provider channel' : 'Find stream'}
+        <ExternalLinkHint />
       </a>
       {channelUrl ? (
         <a
@@ -37,6 +39,7 @@ export default function VideoFallback({
         >
           <Search aria-hidden="true" size={16} />
           Search YouTube
+          <ExternalLinkHint />
         </a>
       ) : null}
     </div>

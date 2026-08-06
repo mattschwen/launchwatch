@@ -10,6 +10,7 @@ import {
   Radio,
   Search,
 } from 'lucide-react';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import CoverageSignal from './CoverageSignal';
 import { publicLaunchIntelRationale } from '@/lib/launch-intel-copy';
 import type {
@@ -134,6 +135,7 @@ function StreamRow({
         size={15}
         className="mt-0.5 shrink-0 text-[var(--text-muted)]"
       />
+      <ExternalLinkHint />
     </a>
   );
 }
@@ -152,6 +154,7 @@ function NewsRow({ item }: { item: LaunchNewsItem }): React.ReactElement {
       <span className="mt-1 block text-xs text-[var(--text-muted)]">
         {item.source} · {formatPublishedAt(item.publishedAt)}
       </span>
+      <ExternalLinkHint />
     </a>
   );
 }
@@ -172,6 +175,7 @@ function SocialRow({ item }: { item: LaunchSocialItem }): React.ReactElement {
         {item.community ? ` · ${item.community}` : ''}
         {item.publishedAt ? ` · ${formatPublishedAt(item.publishedAt)}` : ''}
       </span>
+      <ExternalLinkHint />
     </a>
   );
 }
@@ -383,6 +387,7 @@ export default function LaunchIntelDeck({
               <Radio aria-hidden="true" size={16} />
             )}
             {intel.summary.recommendedLabel}
+            <ExternalLinkHint />
           </a>
         ) : null}
 
@@ -542,6 +547,7 @@ export default function LaunchIntelDeck({
           className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           YouTube search
+          <ExternalLinkHint />
         </a>
         <a
           href={intel.quickLinks.redditSearch}
@@ -550,6 +556,7 @@ export default function LaunchIntelDeck({
           className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           Reddit search
+          <ExternalLinkHint />
         </a>
         <a
           href={intel.quickLinks.xSearch}
@@ -558,6 +565,7 @@ export default function LaunchIntelDeck({
           className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] px-2 text-sm font-medium text-[var(--console-cyan)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
         >
           X search
+          <ExternalLinkHint />
         </a>
       </footer>
     </section>

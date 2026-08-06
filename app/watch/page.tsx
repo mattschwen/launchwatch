@@ -33,6 +33,7 @@ import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
@@ -483,6 +484,7 @@ function WatchStage({
             >
               <ExternalLink aria-hidden="true" size={16} />
               {hasProviderChannel ? 'Open provider channel' : 'Search for stream'}
+              <ExternalLinkHint />
             </a>
           ) : null}
           {streamLookupError || detailRetrying ? (

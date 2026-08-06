@@ -8,6 +8,7 @@ import { isCompletedLaunch } from '@/lib/format';
 import { extractYouTubeId } from '@/lib/youtube';
 import AddToCalendar from '@/components/AddToCalendar';
 import ShareMissionButton from '@/components/ShareMissionButton';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 
 interface LaunchActionsProps {
   launch: Launch;
@@ -106,6 +107,7 @@ export default function LaunchActions({
           >
             <ExternalLink aria-hidden="true" size={17} />
             {primaryLabel}
+            <ExternalLinkHint />
           </a>
         ) : (
           <Link

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ExternalLink, Play, Tv } from 'lucide-react';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { extractYouTubeId } from '@/lib/youtube';
 
 interface VideoPlayerProps {
@@ -68,6 +69,7 @@ export default function VideoPlayer({
         >
           <ExternalLink aria-hidden="true" size={16} />
           Open provider stream
+          <ExternalLinkHint />
         </a>
       </div>
     );

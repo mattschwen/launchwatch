@@ -168,7 +168,10 @@ describe('LaunchIntelDeck', () => {
 
     expect(
       screen.getByRole('link', {
-        name: LAUNCH_INTEL.summary.recommendedLabel,
+        name: new RegExp(
+          `${LAUNCH_INTEL.summary.recommendedLabel}.*new tab`,
+          'i'
+        ),
       })
     ).toHaveClass('action-button-stream');
 
@@ -187,7 +190,10 @@ describe('LaunchIntelDeck', () => {
 
     expect(
       screen.getByRole('link', {
-        name: LAUNCH_INTEL.summary.recommendedLabel,
+        name: new RegExp(
+          `${LAUNCH_INTEL.summary.recommendedLabel}.*new tab`,
+          'i'
+        ),
       })
     ).toHaveClass('action-button-secondary');
   });
@@ -230,6 +236,56 @@ describe('LaunchIntelDeck', () => {
     expect(title).not.toHaveClass('truncate');
     expect(channel).toHaveClass('break-words');
     expect(channel).not.toHaveClass('truncate');
+  });
+
+  it('identifies new-tab behavior for every external intelligence action', () => {
+    const { container } = render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          streamCandidates: [
+            {
+              id: 'official-test',
+              title: 'Official mission stream',
+              url: 'https://www.youtube.com/watch?v=official-test',
+              channelTitle: 'Mission provider',
+              source: 'youtube-api',
+              confidence: 'high',
+              liveStatus: 'upcoming',
+            },
+          ],
+          newsItems: [
+            {
+              id: 'news-test',
+              title: 'Mission coverage report',
+              url: 'https://example.test/news',
+              source: 'Example News',
+              publishedAt: '2035-07-26T12:00:00.000Z',
+              summary: null,
+            },
+          ],
+          socialItems: [
+            {
+              id: 'social-test',
+              platform: 'reddit',
+              title: 'Mission community thread',
+              url: 'https://www.reddit.com/r/space/comments/social-test',
+              publishedAt: '2035-07-26T12:00:00.000Z',
+              author: 'observer',
+              community: 'r/space',
+              note: null,
+            },
+          ],
+        }}
+      />
+    );
+
+    const externalLinks = container.querySelectorAll('a[target="_blank"]');
+    expect(externalLinks.length).toBeGreaterThan(0);
+    externalLinks.forEach((link) => {
+      expect(link).toHaveAccessibleName(/new tab/i);
+    });
   });
 
   it('lets users inspect every ranked stream and community signal', async () => {
@@ -321,7 +377,9 @@ describe('LaunchIntelDeck', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: 'Search YouTube' })).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Search YouTube.*new tab/i })
+    ).toBeVisible();
     expect(screen.queryByText('YouTube search fallback')).not.toBeInTheDocument();
     expect(
       screen.getByText(/No verified broadcast has been ranked yet/)

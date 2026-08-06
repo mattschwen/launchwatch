@@ -294,7 +294,7 @@ test('@a11y search-only mission intelligence has no serious WCAG A/AA violations
   await expect(
     page
       .getByRole('region', { name: 'Mission intelligence' })
-      .getByRole('link', { name: 'Search YouTube' })
+      .getByRole('link', { name: /Search YouTube.*new tab/i })
   ).toBeVisible();
 
   const results = await new AxeBuilder({ page })

@@ -44,10 +44,10 @@ describe('Footer', () => {
       name: 'Launch data sources',
     });
     const spacex = screen.getByRole('link', {
-      name: 'SpaceX source — available',
+      name: /SpaceX source — available.*new tab/i,
     });
     const launchLibrary = screen.getByRole('link', {
-      name: 'Launch Library 2 source — available',
+      name: /Launch Library 2 source — available.*new tab/i,
     });
 
     expect(sources).toContainElement(spacex);
@@ -102,11 +102,13 @@ describe('Footer', () => {
     expect(status?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'SpaceX source — unavailable' })
+      screen.getByRole('link', {
+        name: /SpaceX source — unavailable.*new tab/i,
+      })
     ).toHaveTextContent('unavailable');
     expect(
       screen.getByRole('link', {
-        name: 'Launch Library 2 source — available',
+        name: /Launch Library 2 source — available.*new tab/i,
       })
     ).toHaveTextContent('available');
   });
@@ -127,12 +129,12 @@ describe('Footer', () => {
 
     expect(
       await screen.findByRole('link', {
-        name: 'SpaceX source — unavailable',
+        name: /SpaceX source — unavailable.*new tab/i,
       })
     ).toHaveTextContent('unavailable');
     expect(
       screen.getByRole('link', {
-        name: 'Launch Library 2 source — unavailable',
+        name: /Launch Library 2 source — unavailable.*new tab/i,
       })
     ).toHaveTextContent('unavailable');
     expect(screen.getByText('Launch feed is offline.')).toBeInTheDocument();

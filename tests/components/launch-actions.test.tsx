@@ -19,7 +19,7 @@ describe('LaunchActions', () => {
       screen.getByRole('status', { name: 'Checking official coverage' })
     ).toHaveTextContent('Checking coverage');
     expect(
-      screen.queryByRole('link', { name: 'Find stream' })
+      screen.queryByRole('link', { name: /Find stream.*new tab/i })
     ).not.toBeInTheDocument();
 
     rerender(
@@ -76,7 +76,9 @@ describe('LaunchActions', () => {
       />
     );
 
-    expect(screen.getByRole('link', { name: 'Find stream' })).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Find stream.*new tab/i })
+    ).toBeVisible();
     expect(screen.getByRole('status')).toHaveTextContent(
       'Official coverage status unavailable; search fallback shown.'
     );

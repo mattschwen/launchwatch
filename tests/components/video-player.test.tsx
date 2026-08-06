@@ -9,7 +9,7 @@ describe('VideoPlayer coverage state', () => {
     );
 
     const scheduled = screen.getByRole('link', {
-      name: 'Open provider stream',
+      name: /Open provider stream.*new tab/i,
     });
     expect(scheduled.closest('.stream-surface')).toHaveClass('signal-cold');
     expect(scheduled).toHaveClass('action-button-secondary');
@@ -22,7 +22,9 @@ describe('VideoPlayer coverage state', () => {
       />
     );
 
-    const live = screen.getByRole('link', { name: 'Open provider stream' });
+    const live = screen.getByRole('link', {
+      name: /Open provider stream.*new tab/i,
+    });
     expect(live.closest('.stream-surface')).toHaveClass('signal-live');
     expect(live).toHaveClass('action-button-stream');
   });

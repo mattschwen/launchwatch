@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink, RefreshCw } from 'lucide-react';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { useCurrentTime, useLaunches } from '@/lib/hooks';
 import { getFeedHealth } from '@/lib/feed-health';
 
@@ -161,7 +162,7 @@ export default function Footer(): React.ReactElement {
               href="https://github.com/r-spacex/SpaceX-API"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`SpaceX source — ${spacexStatus.label}`}
+              aria-label={`SpaceX source — ${spacexStatus.label} (opens in a new tab)`}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
             >
               <span>SpaceX</span>
@@ -180,7 +181,7 @@ export default function Footer(): React.ReactElement {
               href="https://thespacedevs.com/llapi"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Launch Library 2 source — ${ll2Status.label}`}
+              aria-label={`Launch Library 2 source — ${ll2Status.label} (opens in a new tab)`}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
             >
               <span>Launch Library 2</span>
@@ -232,6 +233,7 @@ export default function Footer(): React.ReactElement {
           >
             Source
             <ExternalLink aria-hidden="true" size={13} />
+            <ExternalLinkHint />
           </a>
         </div>
       </div>
