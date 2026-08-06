@@ -5,6 +5,7 @@ import type { Launch } from '@/lib/types';
 import {
   formatLaunchDay,
   formatLaunchTime,
+  getPendingLaunchStatus,
   getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCriticalLaunchStatusName,
@@ -31,6 +32,7 @@ export default function LaunchCard({
   const liveUnconfirmed = !history && launch.isLive && coverageUnconfirmed;
   const liveSignal = getLaunchLiveSignal(launch);
   const site = getLaunchSiteDisplay(launch);
+  const pendingStatus = getPendingLaunchStatus(launch.statusName);
   const statusLabel = history
     ? launchOutcomeLabel(launch)
     : liveUnconfirmed
@@ -40,7 +42,7 @@ export default function LaunchCard({
           ? 'In flight'
           : 'Coverage live'
         : launch.status === 'tbd'
-          ? 'TBC'
+          ? pendingStatus.label
           : launch.statusName || 'Go for launch';
   const critical =
     launch.status === 'failure' ||
@@ -124,6 +126,14 @@ export default function LaunchCard({
 
         <div className="col-start-2 flex min-w-0 items-center justify-between gap-3 lg:col-start-auto">
           <span
+            aria-label={
+              !history &&
+              !liveUnconfirmed &&
+              !launch.isLive &&
+              launch.status === 'tbd'
+                ? pendingStatus.name
+                : undefined
+            }
             className={`flex min-w-0 items-center gap-2 font-mono text-xs font-medium ${statusClass}`}
           >
             <span

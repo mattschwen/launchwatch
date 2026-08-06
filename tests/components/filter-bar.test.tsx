@@ -22,6 +22,9 @@ describe('FilterBar', () => {
     expect(
       screen.getByRole('searchbox', { name: 'Search launches' })
     ).toHaveAttribute('maxlength', '120');
+    expect(
+      screen.getByRole('option', { name: 'Timing pending' })
+    ).toHaveValue('tbd');
   });
 
   it('renders the current providers and emits the selected provider name', async () => {

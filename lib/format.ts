@@ -39,6 +39,7 @@ const CRITICAL_STATUS_NAME =
   /\b(?:abort(?:ed)?|cancel(?:led|ed)?|failure|failed|hold|scrub(?:bed)?|warning|anomaly)\b/i;
 const IN_FLIGHT_STATUS_NAME =
   /\b(?:in[-\s]?flight|flight (?:in progress|underway))\b/i;
+const TO_BE_CONFIRMED_STATUS_NAME = /\b(?:to be confirmed|tbc)\b/i;
 const GENERIC_MISSION_NAME =
   /^(?:unknown|unannounced|classified)(?:\s+(?:payload|mission))?$/i;
 
@@ -89,6 +90,14 @@ export function getLaunchLiveSignal(
   return isMissionInFlightStatusName(launch.statusName)
     ? 'mission'
     : 'coverage';
+}
+
+export function getPendingLaunchStatus(
+  statusName: string | null | undefined
+): { label: 'TBC' | 'TBD'; name: 'To be confirmed' | 'To be determined' } {
+  return TO_BE_CONFIRMED_STATUS_NAME.test(statusName || '')
+    ? { label: 'TBC', name: 'To be confirmed' }
+    : { label: 'TBD', name: 'To be determined' };
 }
 
 export function formatLaunchValue(

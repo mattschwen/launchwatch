@@ -80,6 +80,47 @@ describe('LaunchList', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('preserves provider TBD and TBC timing semantics in compact rows', () => {
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: [
+        {
+          ...UPCOMING_LAUNCHES[0],
+          id: 'll2-timing-determined',
+          sourceId: 'timing-determined',
+          name: 'Determined Window',
+          status: 'tbd',
+          statusName: 'To Be Determined',
+        },
+        {
+          ...UPCOMING_LAUNCHES[1],
+          id: 'spacex-timing-confirmed',
+          sourceId: 'timing-confirmed',
+          name: 'Confirmed Window',
+          status: 'tbd',
+          statusName: 'To Be Confirmed',
+        },
+      ],
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    const determined = screen.getByRole('link', {
+      name: /Determined Window/,
+    });
+    const confirmed = screen.getByRole('link', {
+      name: /Confirmed Window/,
+    });
+    expect(determined).toHaveTextContent('TBD');
+    expect(determined).toHaveAccessibleName(/To be determined/);
+    expect(confirmed).toHaveTextContent('TBC');
+    expect(confirmed).toHaveAccessibleName(/To be confirmed/);
+  });
+
   it('reconciles filters when history navigation changes the URL context', () => {
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,

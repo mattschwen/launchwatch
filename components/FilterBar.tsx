@@ -28,7 +28,7 @@ const statuses: Array<{
   { value: 'all', label: 'All statuses' },
   { value: 'upcoming', label: 'Scheduled' },
   { value: 'live', label: 'Live' },
-  { value: 'tbd', label: 'To be confirmed' },
+  { value: 'tbd', label: 'Timing pending' },
 ];
 
 export default function FilterBar({

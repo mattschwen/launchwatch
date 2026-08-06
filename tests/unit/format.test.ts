@@ -4,6 +4,7 @@ import {
   formatLaunchDate,
   formatLaunchPrecisionLabel,
   getLaunchSiteDisplay,
+  getPendingLaunchStatus,
   formatPrimaryMissionName,
   formatLaunchTarget,
   formatLaunchTime,
@@ -59,6 +60,25 @@ describe('launch formatting', () => {
     expect(hasCalendarReadyLaunchTime({ name: 'Minute', abbrev: 'MIN' })).toBe(
       true
     );
+  });
+
+  it('preserves the provider distinction between TBC and TBD timing', () => {
+    expect(getPendingLaunchStatus('To Be Confirmed')).toEqual({
+      label: 'TBC',
+      name: 'To be confirmed',
+    });
+    expect(getPendingLaunchStatus('TBC')).toEqual({
+      label: 'TBC',
+      name: 'To be confirmed',
+    });
+    expect(getPendingLaunchStatus('To Be Determined')).toEqual({
+      label: 'TBD',
+      name: 'To be determined',
+    });
+    expect(getPendingLaunchStatus(null)).toEqual({
+      label: 'TBD',
+      name: 'To be determined',
+    });
   });
 
   it('uses concise relative labels around the current day', () => {

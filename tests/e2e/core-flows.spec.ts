@@ -2633,6 +2633,68 @@ test('home brand navigation clears same-route schedule context', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home preserves TBD and TBC provider timing in compact rows', async ({
+  page,
+}) => {
+  const launches = [
+    {
+      ...UPCOMING_LAUNCHES[0],
+      id: 'll2-demo-determined-timing',
+      sourceId: 'demo-determined-timing',
+      name: 'Determined Timing Mission',
+      status: 'tbd' as const,
+      statusName: 'To Be Determined',
+    },
+    {
+      ...UPCOMING_LAUNCHES[1],
+      id: 'spacex-demo-confirmed-timing',
+      sourceId: 'demo-confirmed-timing',
+      name: 'Confirmed Timing Mission',
+      status: 'tbd' as const,
+      statusName: 'To Be Confirmed',
+    },
+    {
+      ...UPCOMING_LAUNCHES[0],
+      id: 'll2-demo-scheduled-timing',
+      sourceId: 'demo-scheduled-timing',
+      name: 'Scheduled Timing Mission',
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix + 2,
+    },
+  ];
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const determined = schedule.getByRole('link', {
+    name: /Determined Timing Mission/,
+  });
+  const confirmed = schedule.getByRole('link', {
+    name: /Confirmed Timing Mission/,
+  });
+  await expect(determined.getByLabel('To be determined')).toHaveText('TBD');
+  await expect(confirmed.getByLabel('To be confirmed')).toHaveText('TBC');
+
+  await schedule.getByRole('button', { name: 'Filter' }).click();
+  await schedule
+    .getByRole('combobox', { name: 'Status' })
+    .selectOption({ label: 'Timing pending' });
+  await expect(page).toHaveURL(/\?status=tbd$/);
+  await expect(
+    schedule.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('2 missions');
+  await expect(
+    schedule.getByRole('heading', { name: 'Scheduled Timing Mission' })
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home reveals a large mission queue in honest, touch-safe batches', async ({
   page,
 }) => {

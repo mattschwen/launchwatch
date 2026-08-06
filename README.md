@@ -158,6 +158,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   alerts remain pending until T-0 is precise enough. After T-0, the interface
   calls a window open only while validated provider bounds remain active;
   otherwise it waits visibly for the next provider update.
+- Compact schedule rows preserve the provider's distinction between a launch
+  time that is to be confirmed (TBC) and one that is to be determined (TBD);
+  the shared pending-timing filter includes both states.
 - Compact launch-site labels retain the provider's facility context when a pad
   name alone is ambiguous, including schedule, Watch, History, detail,
   calendar, clipboard, and browser-alert surfaces.
