@@ -5,8 +5,14 @@ import {
   getLaunchSiteDisplay,
   getLaunchWindowBounds,
 } from './format';
+import { getCanonicalLaunchUrl } from './share';
 
 const DEFAULT_EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
+const LAUNCHWATCH_ORIGIN = 'https://www.launchwatch.io';
+
+function getMissionUrl(launch: Pick<Launch, 'id'>): string {
+  return getCanonicalLaunchUrl(launch.id, LAUNCHWATCH_ORIGIN);
+}
 
 function getCalendarBounds(launch: Launch): { start: Date; end: Date } {
   const providerWindow = getLaunchWindowBounds(launch);
@@ -66,6 +72,7 @@ export function generateICS(launch: Launch): string {
   const { start: startDate, end: endDate } = getCalendarBounds(launch);
   const launchWindow = formatLaunchWindow(launch);
   const launchSite = getLaunchSiteDisplay(launch).label;
+  const missionUrl = getMissionUrl(launch);
 
   const formatDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -92,12 +99,13 @@ export function generateICS(launch: Launch): string {
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launchSite}`,
       launch.description || '',
+      `Mission details: ${missionUrl}`,
       livestream ? `Watch Live: ${livestream}` : '',
     ].filter(Boolean).join('\n'))}`,
     `LOCATION:${escapeICSText(launchSite)}`,
     `STATUS:${launch.status === 'tbd' ? 'TENTATIVE' : 'CONFIRMED'}`,
     `SEQUENCE:0`,
-    livestream ? `URL:${livestream}` : '',
+    `URL:${missionUrl}`,
     'BEGIN:VALARM',
     'TRIGGER:-PT1H',
     'ACTION:DISPLAY',
@@ -135,6 +143,7 @@ export function getGoogleCalendarUrl(launch: Launch): string {
   const { start: startDate, end: endDate } = getCalendarBounds(launch);
   const launchWindow = formatLaunchWindow(launch);
   const launchSite = getLaunchSiteDisplay(launch).label;
+  const missionUrl = getMissionUrl(launch);
 
   const formatGoogleDate = (date: Date): string => {
     return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -150,6 +159,7 @@ export function getGoogleCalendarUrl(launch: Launch): string {
       `Rocket: ${launch.rocket}`,
       `Launch Site: ${launchSite}`,
       launch.description || '',
+      `Mission details: ${missionUrl}`,
       launch.livestream ? `\n\nWatch Live: ${launch.livestream}` : '',
     ].filter(Boolean).join('\n'),
     location: launchSite,
@@ -164,6 +174,7 @@ export function getGoogleCalendarUrl(launch: Launch): string {
 export async function copyToClipboard(launch: Launch): Promise<boolean> {
   const launchWindow = formatLaunchWindow(launch);
   const launchSite = getLaunchSiteDisplay(launch).label;
+  const missionUrl = getMissionUrl(launch);
   const text = [
     `🚀 ${launch.name}`,
     ``,
@@ -172,6 +183,7 @@ export async function copyToClipboard(launch: Launch): Promise<boolean> {
     `🚀 Rocket: ${launch.rocket}`,
     `📍 Launch Site: ${launchSite}`,
     launch.description ? `\n${launch.description}` : '',
+    `\n🔗 Mission details: ${missionUrl}`,
     launch.livestream ? `\n🎥 Watch: ${launch.livestream}` : '',
   ].filter(Boolean).join('\n');
 

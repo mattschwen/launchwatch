@@ -115,9 +115,9 @@ describe('calendar exports', () => {
       .split('\r\n')
       .filter(Boolean);
 
-    expect(unfoldedLines).not.toContain(
-      expect.stringMatching(/^URL:/),
-    );
+    expect(unfoldedLines.filter((line) => line.startsWith('URL:'))).toEqual([
+      'URL:https://www.launchwatch.io/launch/safe%0D%0AX-UID-INJECTED%3AYES',
+    ]);
     expect(calendar).not.toContain('Watch Live:');
     expect(calendar).not.toContain('\r\nX-URL-INJECTED:');
     expect(calendar).toContain(
@@ -135,6 +135,33 @@ describe('calendar exports', () => {
       '20350728T143000Z/20350728T163000Z'
     );
     expect(url.searchParams.get('details')).toContain('Astra Nova');
+  });
+
+  it('keeps every calendar handoff connected to the canonical mission route', async () => {
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      livestream: null,
+    };
+    const canonicalUrl =
+      'https://www.launchwatch.io/launch/ll2-demo-orbital-dawn';
+    const calendar = generateICS(launch).replace(/\r\n /g, '');
+    const googleUrl = new URL(getGoogleCalendarUrl(launch));
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    expect(calendar).toContain(`URL:${canonicalUrl}`);
+    expect(calendar).toContain(`Mission details: ${canonicalUrl}`);
+    expect(googleUrl.searchParams.get('details')).toContain(
+      `Mission details: ${canonicalUrl}`
+    );
+
+    await expect(copyToClipboard(launch)).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`🔗 Mission details: ${canonicalUrl}`)
+    );
   });
 
   it('adds provider facility context to an ambiguous launch pad', () => {

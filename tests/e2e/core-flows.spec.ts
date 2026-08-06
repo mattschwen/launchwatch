@@ -4888,6 +4888,47 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('copied calendar details retain the canonical mission route', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          (
+            window as Window & { __launchWatchCalendarCopy?: string }
+          ).__launchWatchCalendarCopy = value;
+        },
+      },
+    });
+  });
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  const calendar = page.getByRole('button', { name: 'Calendar', exact: true });
+  await calendar.focus();
+  await calendar.press('Enter');
+  const copy = page.getByRole('button', { name: 'Copy launch details' });
+  await copy.focus();
+  await copy.press('Enter');
+
+  await expect(
+    page.getByRole('button', { name: 'Details copied' })
+  ).toBeFocused();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __launchWatchCalendarCopy?: string })
+            .__launchWatchCalendarCopy
+      )
+    )
+    .toContain(
+      '🔗 Mission details: https://www.launchwatch.io/launch/ll2-demo-orbital-dawn'
+    );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history search reaches a completed mission detail', async ({ page }) => {
   await page.goto('/history');
 

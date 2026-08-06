@@ -45,7 +45,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   attribution, a full-resolution action, and truthful unavailable states
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
-  re-arm the alert thresholds for the new confirmed time
+  re-arm the alert thresholds for the new confirmed time, and exported or
+  copied mission details retain the canonical LaunchWatch route
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available
