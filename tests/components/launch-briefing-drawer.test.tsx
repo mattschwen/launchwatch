@@ -96,4 +96,22 @@ describe('LaunchBriefingDrawer', () => {
     expect(within(timeline).getAllByRole('listitem')).toHaveLength(8);
     expect(within(timeline).queryByText('Timeline event 10')).not.toBeInTheDocument();
   });
+
+  it('uses the structured mission name in its primary heading', () => {
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      name: 'Falcon Heavy | Nancy Grace Roman Space Telescope',
+      missionName: 'Nancy Grace Roman Space Telescope',
+    };
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    expect(
+      screen.getByRole('dialog', {
+        name: 'Nancy Grace Roman Space Telescope',
+      })
+    ).toBeVisible();
+  });
 });

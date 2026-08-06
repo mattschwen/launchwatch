@@ -145,6 +145,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   reducing it to one target instant. Coarse day, month, quarter, and year
   targets render as estimates instead of exact countdowns; calendar export and
   alerts remain pending until T-0 is precise enough.
+- Primary mission headings use a provider's structured mission name when it
+  safely removes an identical `Vehicle |` prefix. Canonical provider titles
+  remain unchanged in feeds, compact lists, search, sharing, and route metadata.
 - Non-terminal missions remain in the active schedule through a valid provider
   launch-window end instead of moving to History at the nominal target instant.
 - Launch Library 2's confirmed payload-deployment state is normalized as a

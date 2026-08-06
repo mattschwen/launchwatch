@@ -33,6 +33,7 @@ import VideoPlayer from '@/components/video/VideoPlayer';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatPrimaryMissionName,
   formatTimelineOffset,
   isCriticalLaunchStatusName,
   isCompletedLaunch,
@@ -205,6 +206,7 @@ export default function LaunchDetailClient({
         : completed
           ? 'Back to history'
           : 'Back to launches';
+  const primaryMissionName = formatPrimaryMissionName(launch);
   const missionVisual = (
     <MissionVisual
       launch={launch}
@@ -371,7 +373,7 @@ export default function LaunchDetailClient({
             </div>
 
             <h1 className="mt-5 max-w-5xl break-words text-[clamp(2.35rem,5vw,5rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
-              {launch.name}
+              {primaryMissionName}
             </h1>
 
             <p className="mt-5 flex items-center gap-2 text-sm text-[var(--text-secondary)]">

@@ -204,6 +204,80 @@ test('mission details publish a consistent canonical social preview', async ({
   );
 });
 
+test('primary mission headings remove a redundant provider vehicle prefix', async ({
+  page,
+}) => {
+  const browserErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') browserErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  const providerName =
+    'Falcon Heavy | Nancy Grace Roman Space Telescope';
+  const missionName = 'Nancy Grace Roman Space Telescope';
+  const prefixedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    name: providerName,
+    missionName,
+    rocket: 'Falcon Heavy',
+  };
+
+  await page.route('**/api/launches**', async (route) => {
+    const url = new URL(route.request().url());
+    const launch = url.pathname === '/api/launches'
+      ? null
+      : prefixedLaunch;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        launch
+          ? { launch, canonicalId: launch.id, meta: FEED_META }
+          : { launches: [prefixedLaunch], meta: FEED_META }
+      ),
+    });
+  });
+
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: missionName })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 3, name: providerName })
+  ).toBeVisible();
+  const homeMissionLink = page.getByRole('link', { name: missionName }).first();
+  await homeMissionLink.focus();
+  await expect(homeMissionLink).toBeFocused();
+  expect((await homeMissionLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto(`/watch?id=${encodeURIComponent(prefixedLaunch.id)}`);
+  const watchHeading = page.getByRole('heading', {
+    level: 2,
+    name: missionName,
+  });
+  await expect(watchHeading).toBeVisible();
+  const watchMissionLink = watchHeading.locator('..');
+  await watchMissionLink.focus();
+  await expect(watchMissionLink).toBeFocused();
+  await expect(page.getByText(/^Falcon Heavy ·/)).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/launch/ll2-demo-prefixed-mission');
+  await expect(
+    page.getByRole('heading', { level: 1, name: missionName })
+  ).toBeVisible();
+  await expect(page).toHaveTitle(`${providerName} | LaunchWatch`);
+  await expect(
+    page.getByText('Falcon Heavy', { exact: true }).first()
+  ).toBeVisible();
+  const returnLink = page.getByRole('link', { name: 'Back to launches' });
+  await returnLink.focus();
+  await expect(returnLink).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(browserErrors).toEqual([]);
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {

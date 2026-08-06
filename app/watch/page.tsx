@@ -37,6 +37,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import {
   formatLaunchDate,
+  formatPrimaryMissionName,
   isCriticalLaunchStatusName,
   shortenLaunchSite,
 } from '@/lib/format';
@@ -346,6 +347,7 @@ function WatchStage({
   streamLookupError?: string | null;
 }): React.ReactElement {
   const fallback = getFallbackLaunchSummary(launch);
+  const primaryMissionName = formatPrimaryMissionName(launch);
   const hasProviderChannel = fallback.streamState === 'standby';
   const liveCoverage = launch.isLive && !coverageUnconfirmed;
   const fallbackDescription = detailLoading
@@ -457,7 +459,7 @@ function WatchStage({
           href={detailHref}
           className="mt-1 inline-flex min-h-11 max-w-full items-center justify-center text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
         >
-          {launch.name}
+          {primaryMissionName}
         </Link>
         <div className="mt-3">
           <Countdown
@@ -852,6 +854,9 @@ function WatchContent(): React.ReactElement {
   const selectedDetailHref = selectedLaunch
     ? `/launch/${encodeURIComponent(selectedLaunch.id)}?from=watch`
     : '';
+  const selectedPrimaryMissionName = selectedLaunch
+    ? formatPrimaryMissionName(selectedLaunch)
+    : '';
   const {
     intel,
     loading: intelLoading,
@@ -1140,7 +1145,7 @@ function WatchContent(): React.ReactElement {
                     className="group inline-flex min-h-11 max-w-full items-center"
                   >
                     <h2 className="text-[clamp(1.65rem,3vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
-                      {selectedLaunch.name}
+                      {selectedPrimaryMissionName}
                     </h2>
                   </Link>
                   <p className="mt-2 text-sm text-[var(--text-secondary)]">

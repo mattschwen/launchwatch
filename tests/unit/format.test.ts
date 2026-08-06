@@ -3,6 +3,7 @@ import {
   firstLaunchValue,
   formatLaunchDate,
   formatLaunchPrecisionLabel,
+  formatPrimaryMissionName,
   formatLaunchTarget,
   formatLaunchTime,
   formatLaunchWindow,
@@ -134,6 +135,27 @@ describe('launch formatting', () => {
     expect(
       firstLaunchValue(['Unknown', null, '  Communications  '], 'Pending')
     ).toBe('Communications');
+  });
+
+  it('uses a structured mission name only when it safely removes a provider vehicle prefix', () => {
+    expect(
+      formatPrimaryMissionName({
+        name: 'Falcon Heavy | Nancy Grace Roman Space Telescope',
+        missionName: 'Nancy Grace Roman Space Telescope',
+      })
+    ).toBe('Nancy Grace Roman Space Telescope');
+    expect(
+      formatPrimaryMissionName({
+        name: 'Long March 7A | Unknown Payload',
+        missionName: 'Unknown Payload',
+      })
+    ).toBe('Long March 7A | Unknown Payload');
+    expect(
+      formatPrimaryMissionName({
+        name: 'Provider designation',
+        missionName: 'Different mission',
+      })
+    ).toBe('Provider designation');
   });
 
   it('normalizes provider description placeholders without hiding real copy', () => {

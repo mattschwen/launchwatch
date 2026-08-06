@@ -16,6 +16,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatPrimaryMissionName,
   formatLaunchWindow,
   formatTimelineOffset,
   shortenLaunchSite,
@@ -150,7 +151,7 @@ export default function LaunchBriefingDrawer({
               id={titleId}
               className="mt-2 break-words text-2xl font-bold tracking-[-0.035em] text-[var(--text-primary)] sm:text-3xl"
             >
-              {launch.name}
+              {formatPrimaryMissionName(launch)}
             </h2>
           </div>
           <button

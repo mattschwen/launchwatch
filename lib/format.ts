@@ -37,6 +37,8 @@ const PLACEHOLDER_DESCRIPTION =
   /^(?:(?:mission\s+)?(?:details?|description))(?:\s+(?:are|is))?\s*(?:tbd|tbc|pending|to be (?:determined|confirmed)|not (?:available|provided|supplied))$/i;
 const CRITICAL_STATUS_NAME =
   /\b(?:abort(?:ed)?|cancel(?:led|ed)?|failure|failed|hold|scrub(?:bed)?|warning|anomaly)\b/i;
+const GENERIC_MISSION_NAME =
+  /^(?:unknown|unannounced|classified)(?:\s+(?:payload|mission))?$/i;
 
 export function isMeaningfulLaunchValue(
   value: string | null | undefined
@@ -82,6 +84,31 @@ export function firstLaunchValue(
   fallback = 'Not provided'
 ): string {
   return values.find(isMeaningfulLaunchValue)?.trim() || fallback;
+}
+
+export function formatPrimaryMissionName(
+  launch: Pick<Launch, 'name' | 'missionName'>
+): string {
+  const providerName = launch.name.trim();
+  const missionName = launch.missionName?.trim();
+  if (
+    !missionName ||
+    !isMeaningfulLaunchValue(missionName) ||
+    GENERIC_MISSION_NAME.test(missionName) ||
+    missionName.length >= providerName.length
+  ) {
+    return providerName;
+  }
+
+  const separatorIndex = providerName.indexOf('|');
+  if (separatorIndex < 0) return providerName;
+
+  const providerMissionName = providerName.slice(separatorIndex + 1).trim();
+  return providerMissionName.localeCompare(missionName, undefined, {
+    sensitivity: 'base',
+  }) === 0
+    ? missionName
+    : providerName;
 }
 
 export function matchesLaunchSearch(launch: Launch, query: string): boolean {

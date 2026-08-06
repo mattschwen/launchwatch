@@ -7,6 +7,7 @@ import type { Launch } from '@/lib/types';
 import {
   firstLaunchValue,
   formatLaunchDay,
+  formatPrimaryMissionName,
   formatLaunchTime,
   isCriticalLaunchStatusName,
   shortenLaunchSite,
@@ -196,6 +197,7 @@ export default function HeroSection({
     [activeLaunch.orbit, activeLaunch.program],
     'Target pending'
   );
+  const primaryMissionName = formatPrimaryMissionName(activeLaunch);
 
   return (
     <>
@@ -254,7 +256,7 @@ export default function HeroSection({
               id="featured-launch-title"
               className="max-w-3xl text-[clamp(2.15rem,4vw,3.65rem)] font-bold leading-[1.02] tracking-[-0.05em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]"
             >
-              {activeLaunch.name}
+              {primaryMissionName}
             </h1>
           </Link>
 

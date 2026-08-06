@@ -326,6 +326,27 @@ const ll2HourEstimate = {
   },
 };
 
+const ll2PrefixedMission = {
+  ...ll2Upcoming,
+  id: 'demo-prefixed-mission',
+  name: 'Falcon Heavy | Nancy Grace Roman Space Telescope',
+  rocket: {
+    ...ll2Upcoming.rocket,
+    configuration: {
+      ...ll2Upcoming.rocket.configuration,
+      name: 'Falcon Heavy',
+      full_name: 'Falcon Heavy Block 5',
+      family: 'Falcon',
+      families: [{ id: 2, name: 'Falcon' }],
+      variant: 'Block 5',
+    },
+  },
+  mission: {
+    ...ll2Upcoming.mission,
+    name: 'Nancy Grace Roman Space Telescope',
+  },
+};
+
 const ll2Previous = ll2Launch({
   id: 'demo-pathfinder',
   name: 'Pathfinder Qualification',
@@ -437,6 +458,8 @@ const server = createServer(async (request, response) => {
         ? ll2Upcoming
         : id === ll2HourEstimate.id
           ? ll2HourEstimate
+        : id === ll2PrefixedMission.id
+          ? ll2PrefixedMission
         : id === ll2RankedCoverage.id
           ? ll2RankedCoverage
         : id === ll2UnsafeCoverage.id

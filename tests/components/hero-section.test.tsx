@@ -117,6 +117,28 @@ describe('HeroSection', () => {
     ).toHaveAttribute('href', detailHref);
   });
 
+  it('keeps the primary heading mission-first when the vehicle is already telemetry', () => {
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      name: 'Falcon Heavy | Nancy Grace Roman Space Telescope',
+      missionName: 'Nancy Grace Roman Space Telescope',
+      rocket: 'Falcon Heavy',
+    };
+
+    render(<HeroSection {...defaultProps} activeLaunch={launch} />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Nancy Grace Roman Space Telescope',
+      })
+    ).toBeVisible();
+    expect(screen.getByText('Falcon Heavy')).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: launch.name })
+    ).not.toBeInTheDocument();
+  });
+
   it('keeps the provider launch window visible beside the target time', () => {
     const { rerender } = render(
       <HeroSection
