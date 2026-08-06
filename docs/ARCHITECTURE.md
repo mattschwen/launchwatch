@@ -166,6 +166,13 @@ keeps the shared feed mission visible and can be retried in place; Watch reports
 the checking, failed, retrying, and recovered coverage states without reloading
 the schedule. `useLaunchIntel` sends only the selected canonical ID.
 
+Canonical detail pages retain the richer server detail payload, but reconcile
+its volatile live status with the shared browser feed after that feed settles.
+A server-rendered live snapshot is not allowed to keep magenta
+live treatment or autoplay when the current feed is unavailable, stale, or no
+longer confirms the mission. The detail route instead exposes an amber retry
+state while preserving official coverage and the canonical mission identity.
+
 History has a separate server endpoint because its retention window and provider scope differ from the upcoming feed.
 
 Opt-in browser alerts are deduplicated by canonical mission, alert threshold,

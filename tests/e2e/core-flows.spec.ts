@@ -371,6 +371,44 @@ test('prelaunch coverage stays distinct from mission flight state', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('detail suppresses a live server snapshot the current feed cannot confirm', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Launch feed unavailable for test' }),
+    })
+  );
+
+  await page.goto('/launch/ll2-demo-stale-live-detail');
+
+  const detail = page.locator('#main-content');
+  await expect(
+    detail.getByText('Live status unconfirmed.', { exact: true })
+  ).toBeVisible();
+  await expect(
+    detail.getByText('STATUS UNCONFIRMED', { exact: true })
+  ).toBeVisible();
+  await expect(detail.getByText('IN FLIGHT')).toHaveCount(0);
+  await expect(detail.getByText('COVERAGE LIVE')).toHaveCount(0);
+  await expect(
+    detail.getByRole('region', { name: 'Mission coverage status unconfirmed' })
+  ).toBeVisible();
+  await expect(
+    detail.getByRole('link', {
+      name: /Open provider coverage.*new tab/i,
+    })
+  ).toBeVisible();
+
+  const retry = detail.getByRole('button', { name: 'Retry launch feed' });
+  await retry.focus();
+  await expect(retry).toBeFocused();
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {

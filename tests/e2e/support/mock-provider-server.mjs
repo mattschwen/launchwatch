@@ -281,6 +281,33 @@ const ll2RankedCoverage = {
   ],
 };
 
+const ll2StaleLiveDetail = {
+  ...ll2Upcoming,
+  id: 'demo-stale-live-detail',
+  name: 'Stale Live Detail',
+  status: {
+    id: 6,
+    name: 'In Flight',
+    abbrev: 'In Flight',
+  },
+  webcast_live: true,
+  vid_urls: [
+    {
+      priority: 10,
+      source: 'x.com',
+      publisher: 'Demo Launch Alliance',
+      title: 'Stale Live Detail official webcast',
+      url: 'https://x.com/i/broadcasts/stale-live-detail',
+      type: { name: 'Official Webcast' },
+      live: true,
+    },
+  ],
+  mission: {
+    ...ll2Upcoming.mission,
+    name: 'Stale Live Detail',
+  },
+};
+
 const ll2UnsafeCoverage = {
   ...ll2Upcoming,
   id: 'demo-unsafe-coverage',
@@ -462,6 +489,8 @@ const server = createServer(async (request, response) => {
           ? ll2PrefixedMission
         : id === ll2RankedCoverage.id
           ? ll2RankedCoverage
+        : id === ll2StaleLiveDetail.id
+          ? ll2StaleLiveDetail
         : id === ll2UnsafeCoverage.id
           ? ll2UnsafeCoverage
         : id === ll2PendingBriefing.id

@@ -54,6 +54,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Live provider coverage remains distinct from vehicle flight state: a
   prelaunch broadcast keeps the mission countdown visible until the provider
   explicitly reports the mission in flight
+- Canonical mission details reconcile server-rendered live state with the
+  shared browser feed; an unconfirmed snapshot becomes an amber, retryable
+  state and keeps official coverage available without autoplay
 - Reduced-motion-safe trajectory drawing, hardware LEDs, holographic surfaces,
   grid texture, and scanlines
 - Partial, stale, offline, empty, error, and retry states
