@@ -357,7 +357,7 @@ test('prelaunch coverage stays distinct from mission flight state', async ({
   );
   await expect(hero.getByText('Coverage live').first()).toBeVisible();
   await expect(hero.getByText('LIVE NOW')).toHaveCount(0);
-  await expect(hero.locator('time')).toBeVisible();
+  await expect(hero.locator('time').first()).toBeVisible();
   await expect(
     page.locator('section[aria-labelledby="upcoming-launches-title"]')
       .getByText('Coverage live')
@@ -654,6 +654,7 @@ test('short landscape keeps mission telemetry clear of duplicate bottom chrome',
       name: 'Primary navigation',
     })
   ).toBeVisible();
+  await expect(hero.getByText('Your time', { exact: true })).toBeHidden();
 
   const constrainedLayout = await page.evaluate(() => ({
     shellPaddingBottom: getComputedStyle(

@@ -22,6 +22,7 @@ import {
   getLaunchSiteDisplay,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
+import LocalLaunchTime from './LocalLaunchTime';
 import MissionDescription from './MissionDescription';
 import StatusBadge from './ui/StatusBadge';
 
@@ -194,7 +195,14 @@ export default function LaunchBriefingDrawer({
                 <span className="data-label">Target time</span>
               </dt>
               <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
-                {formatLaunchDate(launch.date, launch.datePrecision)}
+                <span className="block">
+                  {formatLaunchDate(launch.date, launch.datePrecision)}
+                </span>
+                <LocalLaunchTime
+                  date={launch.date}
+                  precision={launch.datePrecision}
+                  className="mt-1 font-mono text-xs text-[var(--text-secondary)]"
+                />
               </dd>
             </div>
             {launchWindow ? (

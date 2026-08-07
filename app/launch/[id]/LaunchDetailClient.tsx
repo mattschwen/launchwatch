@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import LocalLaunchTime from '@/components/LocalLaunchTime';
 import MissionDescription from '@/components/MissionDescription';
 import MissionTrajectory from '@/components/MissionTrajectory';
 import LaunchActions from '@/components/launch/LaunchActions';
@@ -498,6 +499,13 @@ export default function LaunchDetailClient({
                 presentedLaunch.datePrecision,
               )}
             </p>
+            {!completed ? (
+              <LocalLaunchTime
+                date={presentedLaunch.date}
+                precision={presentedLaunch.datePrecision}
+                className="mt-1 pl-6 font-mono text-xs text-[var(--text-secondary)]"
+              />
+            ) : null}
             <LaunchWindow launch={presentedLaunch} className="mt-3" />
 
             {launch.description ? (

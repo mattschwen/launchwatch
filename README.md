@@ -47,6 +47,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   once the provider confirms a minute-level launch target; provider retargets
   re-arm the alert thresholds for the new confirmed time, and exported or
   copied mission details retain the canonical LaunchWatch route
+- Compact local-time context beside exact primary mission targets while UTC
+  remains the authoritative schedule time; UTC users and coarse provider
+  estimates keep the existing single-time presentation
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available

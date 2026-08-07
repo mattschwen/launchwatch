@@ -15,6 +15,7 @@ import {
 } from '@/lib/format';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
+import LocalLaunchTime from '@/components/LocalLaunchTime';
 import LaunchActions from './LaunchActions';
 import LaunchWindow from './LaunchWindow';
 
@@ -343,6 +344,12 @@ export default function HeroSection({
                   activeLaunch.datePrecision
                 )}
               </dd>
+              <LocalLaunchTime
+                as="dd"
+                date={activeLaunch.date}
+                precision={activeLaunch.datePrecision}
+                className="mt-1 font-mono text-[0.7rem] leading-4 text-[var(--text-secondary)]"
+              />
             </div>
             <div className="relative min-w-0 pl-6 min-[360px]:px-3 min-[360px]:pl-10">
               <MapPin

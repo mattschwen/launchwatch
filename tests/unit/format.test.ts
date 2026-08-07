@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatLocalLaunchTime,
   formatLaunchPrecisionLabel,
   getLaunchSiteDisplay,
   getPendingLaunchStatus,
@@ -38,6 +39,43 @@ describe('launch formatting', () => {
   it('formats dates in UTC and handles invalid input', () => {
     expect(formatLaunchDate('2035-07-28T14:30:00.000Z')).toContain('UTC');
     expect(formatLaunchDate('not-a-date')).toBe('Date unavailable');
+  });
+
+  it('adds local context only for precise targets outside UTC', () => {
+    expect(
+      formatLocalLaunchTime(
+        '2035-07-28T14:30:00.000Z',
+        null,
+        'America/Denver'
+      )
+    ).toBe('8:30 AM MDT');
+    expect(
+      formatLocalLaunchTime('2035-07-28T14:30:00.000Z', null, 'UTC')
+    ).toBeNull();
+    expect(
+      formatLocalLaunchTime(
+        '2035-07-28T14:30:00.000Z',
+        { name: 'Day', abbrev: 'DAY' },
+        'America/Denver'
+      )
+    ).toBeNull();
+    expect(
+      formatLocalLaunchTime('not-a-date', null, 'America/Denver')
+    ).toBeNull();
+    expect(
+      formatLocalLaunchTime(
+        '2035-07-28T14:30:00.000Z',
+        null,
+        'Not/A_Timezone'
+      )
+    ).toBeNull();
+    expect(
+      formatLocalLaunchTime(
+        '2035-07-28T01:30:00.000Z',
+        null,
+        'America/Denver'
+      )
+    ).toBe('Jul 27, 7:30 PM MDT');
   });
 
   it('formats provider precision without inventing exact placeholder times', () => {

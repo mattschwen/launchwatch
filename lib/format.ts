@@ -176,6 +176,66 @@ export function formatLaunchDate(
     : target;
 }
 
+export function formatLocalLaunchTime(
+  date: string,
+  precision: LaunchDatePrecision | null | undefined,
+  timeZone: string,
+  locale = 'en-US'
+): string | null {
+  if (!hasCalendarReadyLaunchTime(precision)) return null;
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  try {
+    const offsetName = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      timeZoneName: 'longOffset',
+    })
+      .formatToParts(parsed)
+      .find((part) => part.type === 'timeZoneName')?.value;
+
+    if (!offsetName || offsetName === 'GMT' || offsetName === 'GMT+00:00') {
+      return null;
+    }
+
+    const dateParts = (zone: string): Record<string, string> =>
+      Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: zone,
+        })
+          .formatToParts(parsed)
+          .filter((part) => part.type !== 'literal')
+          .map((part) => [part.type, part.value])
+      );
+    const localDate = dateParts(timeZone);
+    const utcDate = dateParts('UTC');
+    const sameDay = ['year', 'month', 'day'].every(
+      (part) => localDate[part] === utcDate[part]
+    );
+    const sameYear = localDate.year === utcDate.year;
+
+    return new Intl.DateTimeFormat(locale, {
+      ...(sameDay
+        ? {}
+        : {
+            month: 'short' as const,
+            day: 'numeric' as const,
+            ...(sameYear ? {} : { year: 'numeric' as const }),
+          }),
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone,
+      timeZoneName: 'short',
+    }).format(parsed);
+  } catch {
+    return null;
+  }
+}
+
 function precisionCode(
   precision: LaunchDatePrecision | null | undefined
 ): string | null {
