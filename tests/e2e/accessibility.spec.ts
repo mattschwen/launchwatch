@@ -94,6 +94,85 @@ test('@a11y forced colors keeps current and selected controls visible', async ({
   await expect(selectedMission).toHaveCSS('outline-width', '2px');
 });
 
+test('@a11y increased contrast strengthens telemetry and selected surfaces', async ({
+  page,
+}) => {
+  const readTheme = (): Promise<{
+    textSecondary: string;
+    textMuted: string;
+    borderSubtle: string;
+    borderStrong: string;
+    surfaceAccent: string;
+    selectedBackground: string;
+  }> =>
+    page.evaluate(() => {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const selectedMission = document.querySelector<HTMLElement>(
+        '[aria-pressed="true"]',
+      );
+      const resolveColor = (value: string): string => {
+        const probe = document.createElement('span');
+        probe.style.color = value;
+        document.body.append(probe);
+        const color = getComputedStyle(probe).color;
+        probe.remove();
+        return color;
+      };
+
+      return {
+        textSecondary: resolveColor(
+          rootStyle.getPropertyValue('--text-secondary'),
+        ),
+        textMuted: resolveColor(rootStyle.getPropertyValue('--text-muted')),
+        borderSubtle: resolveColor(
+          rootStyle.getPropertyValue('--border-subtle'),
+        ),
+        borderStrong: resolveColor(
+          rootStyle.getPropertyValue('--border-strong'),
+        ),
+        surfaceAccent: resolveColor(
+          rootStyle.getPropertyValue('--surface-accent'),
+        ),
+        selectedBackground: selectedMission
+          ? getComputedStyle(selectedMission).backgroundColor
+          : '',
+      };
+    });
+
+  await page.emulateMedia({ contrast: 'no-preference' });
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+  await expect(
+    page
+      .getByRole('complementary', { name: 'Next up' })
+      .getByRole('button', { name: /Orbital Dawn/i }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  const defaultTheme = await readTheme();
+
+  await page.emulateMedia({ contrast: 'more' });
+  const expectedIncreasedContrastTheme = {
+    textSecondary: 'rgb(228, 233, 242)',
+    textMuted: 'rgb(193, 204, 219)',
+    borderSubtle: 'rgba(218, 228, 244, 0.34)',
+    borderStrong: 'rgba(232, 239, 252, 0.58)',
+    surfaceAccent: 'rgba(99, 246, 178, 0.16)',
+    selectedBackground: 'rgba(99, 246, 178, 0.16)',
+  };
+
+  await expect.poll(readTheme).toEqual(expectedIncreasedContrastTheme);
+  const increasedContrastTheme = await readTheme();
+  expect(increasedContrastTheme).not.toEqual(defaultTheme);
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    results.violations.filter(
+      (violation) =>
+        violation.impact === 'serious' || violation.impact === 'critical',
+    ),
+  ).toEqual([]);
+});
+
 test('@a11y home mission visual disclosure has no serious WCAG A/AA violations', async ({
   page,
 }) => {

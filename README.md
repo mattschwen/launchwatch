@@ -65,6 +65,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   grid texture, and scanlines
 - Windows high-contrast affordances that preserve the current route and
   selected mission, map site, phase, and view controls without relying on color
+- Increased-contrast theming that strengthens muted telemetry, panel
+  boundaries, and persistent selected surfaces while retaining signal colors
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
 - Branded large-image previews for shared routes and canonical mission details

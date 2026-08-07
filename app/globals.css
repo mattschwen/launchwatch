@@ -1618,6 +1618,24 @@ select:focus {
   outline-offset: -3px;
 }
 
+/* Keep the mission-control palette while honoring an explicit request for
+   stronger text, panel, and persistent-state separation. */
+@media (prefers-contrast: more) {
+  :root {
+    --surface-header: rgba(5, 6, 10, 0.97);
+    --surface-accent: rgba(99, 246, 178, 0.16);
+    --surface-live: rgba(255, 79, 216, 0.16);
+    --surface-cold: rgba(88, 230, 255, 0.14);
+    --surface-warm: rgba(255, 196, 92, 0.14);
+    --surface-danger: rgba(255, 92, 108, 0.16);
+    --border-subtle: rgba(218, 228, 244, 0.34);
+    --border-strong: rgba(232, 239, 252, 0.58);
+    --border-accent: rgba(99, 246, 178, 0.68);
+    --text-secondary: #e4e9f2;
+    --text-muted: #c1ccdb;
+  }
+}
+
 /* Windows high-contrast mode removes authored backgrounds and inset shadows.
    Restore non-color affordances for persistent route and selection state. */
 @media (forced-colors: active) {
