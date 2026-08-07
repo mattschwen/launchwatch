@@ -110,6 +110,38 @@ test('@a11y forced colors keeps current and selected controls visible', async ({
   await expect(selectedMission).toHaveCSS('outline-width', '2px');
 });
 
+test('@a11y retained offline schedule has no serious WCAG A/AA violations', async ({
+  context,
+  page,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+
+  await context.setOffline(true);
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Feed offline' }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Upcoming launches' })
+      .getByRole('button', { name: 'Refresh when online' }),
+  ).toHaveAttribute('aria-disabled', 'true');
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    results.violations.filter(
+      (violation) =>
+        violation.impact === 'serious' || violation.impact === 'critical',
+    ),
+  ).toEqual([]);
+
+  await context.setOffline(false);
+});
+
 test('@a11y increased contrast strengthens telemetry and selected surfaces', async ({
   page,
 }) => {

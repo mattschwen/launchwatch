@@ -36,7 +36,7 @@ export default function LaunchList({
   onFiltersChange?: (filters: FilterOptions) => void;
   returnFocusId?: string | null;
 }): React.ReactElement {
-  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
+  const { launches, online, loading, refreshing, error, meta, refresh } = useLaunches();
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(
     () => Boolean(serializeScheduleFilters(initialFilters))
@@ -53,6 +53,7 @@ export default function LaunchList({
   const retryFocusPendingRef = useRef(false);
   const retryScrollFrameRef = useRef<number | null>(null);
   const suppressNextUrlWriteRef = useRef(false);
+  const retryUnavailable = refreshing || !online;
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
@@ -146,7 +147,7 @@ export default function LaunchList({
   );
 
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
-    if (refreshing) return;
+    if (retryUnavailable) return;
     const retryButton = event.currentTarget;
     retryFocusPendingRef.current = true;
     void refresh();
@@ -192,7 +193,7 @@ export default function LaunchList({
   const allResultsVisible =
     filtered.length > 0 && visibleLaunches.length === filtered.length;
   const retainedSchedule = Boolean(
-    launches.length > 0 && (error || meta?.stale),
+    launches.length > 0 && (!online || error || meta?.stale),
   );
   const degradedSchedule = Boolean(retainedSchedule || meta?.partial);
   const resultCountLabel =
@@ -283,11 +284,15 @@ export default function LaunchList({
         <button
           type="button"
           onClick={retrySchedule}
-          aria-disabled={refreshing}
+          aria-disabled={retryUnavailable}
           aria-busy={refreshing}
           className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          {refreshing ? 'Retrying schedule' : 'Retry schedule'}
+          {refreshing
+            ? 'Retrying schedule'
+            : online
+              ? 'Retry schedule'
+              : 'Reconnect to retry'}
         </button>
       </section>
     );
@@ -313,8 +318,10 @@ export default function LaunchList({
             className="mt-1 text-xs text-[var(--text-muted)]"
           >
             {resultCountLabel}
-            {error && launches.length > 0
-              ? ' · refresh failed; showing last-known schedule'
+            {!online
+              ? ' · device offline; showing last-known schedule'
+              : error && launches.length > 0
+                ? ' · refresh failed; showing last-known schedule'
               : meta?.stale
                 ? ' · showing stale provider cache'
                 : meta?.partial
@@ -363,7 +370,11 @@ export default function LaunchList({
             />
             <span>
               <strong className="font-semibold text-[var(--console-amber)]">
-                {error ? 'Refresh failed.' : 'Provider cache is stale.'}
+                {!online
+                  ? 'Device is offline.'
+                  : error
+                    ? 'Refresh failed.'
+                    : 'Provider cache is stale.'}
               </strong>{' '}
               Showing the last-known mission schedule.
             </span>
@@ -372,11 +383,15 @@ export default function LaunchList({
             ref={retainedRetryRef}
             type="button"
             onClick={retrySchedule}
-            aria-disabled={refreshing}
+            aria-disabled={retryUnavailable}
             aria-busy={refreshing}
             className="action-button action-button-quiet w-full shrink-0 justify-center whitespace-nowrap text-[var(--console-amber)] aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-auto"
           >
-            {refreshing ? 'Retrying feed' : 'Retry feed'}
+            {refreshing
+              ? 'Retrying feed'
+              : online
+                ? 'Retry feed'
+                : 'Refresh when online'}
           </button>
         </div>
       ) : null}
@@ -416,7 +431,7 @@ export default function LaunchList({
           <button
             type="button"
             onClick={hasActiveFilters ? clearFilters : retrySchedule}
-            aria-disabled={!hasActiveFilters && refreshing}
+            aria-disabled={!hasActiveFilters && retryUnavailable}
             aria-busy={!hasActiveFilters && refreshing}
             className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
@@ -424,7 +439,9 @@ export default function LaunchList({
               ? 'Clear all filters'
               : refreshing
                 ? 'Refreshing launch schedule'
-                : 'Refresh launch schedule'}
+                : online
+                  ? 'Refresh launch schedule'
+                  : 'Reconnect to refresh'}
           </button>
         </div>
       ) : (

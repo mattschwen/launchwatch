@@ -109,9 +109,10 @@ function TopNavContents({
   const pathname = usePathname();
   const { source: inferredDetailSource } = useDetailNavigationContext();
   const { hasLiveLaunches, liveCount } = useLiveContext();
-  const { launches, loading, refreshing, error, meta } = useLaunchData();
+  const { launches, online, loading, refreshing, error, meta } = useLaunchData();
   const feedHealth = getFeedHealth({
     hasLaunches: launches.length > 0,
+    online,
     loading,
     refreshing,
     error,

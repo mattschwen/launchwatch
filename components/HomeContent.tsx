@@ -75,7 +75,7 @@ function HomeExperience({
   initialFilters: FilterOptions;
   returnFocusId?: string | null;
 }): React.ReactElement {
-  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
+  const { launches, online, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
   const [scheduleFilters, setScheduleFilters] = useState(initialFilters);
@@ -120,6 +120,7 @@ function HomeExperience({
           loading={loading}
           refreshing={refreshing}
           error={error}
+          offline={!online}
           partial={Boolean(meta?.partial)}
           stale={Boolean(meta?.stale)}
           coverageLoading={

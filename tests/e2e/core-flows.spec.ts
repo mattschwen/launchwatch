@@ -1477,6 +1477,44 @@ test('home rejects noncanonical mission identity without erasing retained missio
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home immediately marks retained mission data offline and recovers on reconnect', async ({
+  context,
+  page,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { level: 1, name: UPCOMING_LAUNCHES[0].name }),
+  ).toBeVisible();
+
+  await context.setOffline(true);
+
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Feed offline' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('section[aria-labelledby="featured-launch-title"]'),
+  ).toContainText('Last-known mission · device offline');
+  await expect(page.getByText('Device is offline.', { exact: true })).toBeVisible();
+  const offlineRefresh = page
+    .getByRole('region', { name: 'Upcoming launches' })
+    .getByRole('button', { name: 'Refresh when online' });
+  await expect(offlineRefresh).toHaveAttribute('aria-disabled', 'true');
+  await expect(
+    page.getByRole('link', { name: /Orbital Dawn/i }).first(),
+  ).toBeVisible();
+
+  await context.setOffline(false);
+
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Live feed' }),
+  ).toBeVisible();
+  await expect(
+    page.locator('section[aria-labelledby="featured-launch-title"]'),
+  ).not.toContainText('device offline');
+  await expect(page.getByRole('button', { name: 'Refresh now' })).toBeEnabled();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('desktop ticker keeps the last known mission after refresh failure', async ({
   page,
 }) => {

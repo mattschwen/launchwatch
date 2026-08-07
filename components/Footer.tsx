@@ -9,11 +9,26 @@ function providerStatus(
   meta: unknown,
   pending: boolean,
   unavailable: boolean,
+  online: boolean,
 ): {
   label: string;
   className: string;
   dotClassName: string;
 } {
+  if (!online) {
+    return meta && typeof meta === 'object'
+      ? {
+          label: 'last known',
+          className: 'text-[var(--console-amber)]',
+          dotClassName: 'bg-[var(--console-amber)]',
+        }
+      : {
+          label: 'offline',
+          className: 'text-[var(--console-red)]',
+          dotClassName: 'bg-[var(--console-red)]',
+        };
+  }
+
   if (unavailable) {
     return {
       label: 'unavailable',
@@ -92,10 +107,11 @@ function refreshAge(generatedAt: string | undefined, now: number): string {
 }
 
 export default function Footer(): React.ReactElement {
-  const { launches, loading, refreshing, error, meta, refresh } = useLaunches();
+  const { launches, online, loading, refreshing, error, meta, refresh } = useLaunches();
   const now = useCurrentTime();
   const feedHealth = getFeedHealth({
     hasLaunches: launches.length > 0,
+    online,
     loading,
     refreshing,
     error,
@@ -113,16 +129,20 @@ export default function Footer(): React.ReactElement {
     providers?.spacex,
     providerSyncPending,
     providerFeedUnavailable,
+    online,
   );
   const ll2Status = providerStatus(
     providers?.ll2,
     providerSyncPending,
     providerFeedUnavailable,
+    online,
   );
   const age = refreshAge(meta?.generatedAt, now);
   const statusLabel =
     feedHealth === 'offline'
-      ? 'Feed offline'
+      ? launches.length > 0 && age !== 'pending'
+        ? `Offline · last update ${age}`
+        : 'Feed offline'
       : feedHealth === 'syncing'
         ? 'Syncing feed'
         : feedHealth === 'refreshing'
@@ -225,9 +245,9 @@ export default function Footer(): React.ReactElement {
           <button
             type="button"
             onClick={() => {
-              if (!refreshing) void refresh();
+              if (online && !refreshing) void refresh();
             }}
-            aria-disabled={refreshing}
+            aria-disabled={refreshing || !online}
             aria-busy={refreshing}
             className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)] aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
@@ -236,7 +256,11 @@ export default function Footer(): React.ReactElement {
               size={15}
               className={refreshing ? 'animate-spin' : ''}
             />
-            {refreshing ? 'Refreshing' : 'Refresh now'}
+            {refreshing
+              ? 'Refreshing'
+              : online
+                ? 'Refresh now'
+                : 'Refresh when online'}
           </button>
           <a
             href="https://github.com/mattschwen/launchwatch"

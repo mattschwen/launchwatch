@@ -131,6 +131,7 @@ export default function LaunchDetailClient({
   const [briefingOpen, setBriefingOpen] = useState(false);
   const {
     launches: feedLaunches,
+    online,
     loading: feedLoading,
     refreshing: feedRefreshing,
     error: feedError,
@@ -141,7 +142,7 @@ export default function LaunchDetailClient({
     (candidate) => candidate.id === launch.id,
   );
   const feedCanConfirmCurrentState =
-    !feedLoading && !feedError && !feedMeta?.stale;
+    online && !feedLoading && !feedError && !feedMeta?.stale;
   const liveStatusUnconfirmed = Boolean(
     launch.isLive &&
       !feedLoading &&
@@ -447,11 +448,11 @@ export default function LaunchDetailClient({
               ref={feedRetryRef}
               type="button"
               onClick={() => {
-                if (feedRefreshing) return;
+                if (feedRefreshing || !online) return;
                 feedRetryFocusPendingRef.current = true;
                 void refreshFeed();
               }}
-              aria-disabled={feedRefreshing}
+              aria-disabled={feedRefreshing || !online}
               aria-busy={feedRefreshing}
               className="action-button action-button-quiet w-full shrink-0 justify-center whitespace-nowrap text-[var(--console-amber)] aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-auto"
             >
@@ -460,7 +461,11 @@ export default function LaunchDetailClient({
                 size={15}
                 className={feedRefreshing ? 'animate-spin' : ''}
               />
-              {feedRefreshing ? 'Retrying launch feed' : 'Retry launch feed'}
+              {feedRefreshing
+                ? 'Retrying launch feed'
+                : online
+                  ? 'Retry launch feed'
+                  : 'Refresh when online'}
             </button>
           </div>
         ) : null}

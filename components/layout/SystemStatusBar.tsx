@@ -3,30 +3,40 @@
 import UTCClock from '@/components/ui/UTCClock';
 import LaunchTicker from './LaunchTicker';
 import { useLaunchData, useLiveContext } from '@/lib/contexts';
+import { getFeedHealth } from '@/lib/feed-health';
 
 export default function SystemStatusBar(): React.ReactElement {
   const { liveCount } = useLiveContext();
-  const { launches, loading, refreshing, error, meta } = useLaunchData();
-  const unavailable = Boolean(error && launches.length === 0);
-  const caution = Boolean(
-    !unavailable && (error || meta?.partial || meta?.stale || refreshing),
-  );
-  const statusLabel = unavailable
-    ? 'FEED OFFLINE'
-    : loading
+  const { launches, online, loading, refreshing, error, meta } = useLaunchData();
+  const feedHealth = getFeedHealth({
+    hasLaunches: launches.length > 0,
+    online,
+    loading,
+    refreshing,
+    error,
+    partial: Boolean(meta?.partial),
+    stale: Boolean(meta?.stale),
+  });
+  const statusLabel = feedHealth === 'offline'
+    ? launches.length > 0
+      ? 'OFFLINE · RETAINED'
+      : 'FEED OFFLINE'
+    : feedHealth === 'syncing'
       ? 'SYNCING FEED'
-      : refreshing
+      : feedHealth === 'refreshing'
         ? 'REFRESHING'
-        : meta?.stale
+        : feedHealth === 'stale'
           ? 'STALE CACHE'
-          : meta?.partial || error
+          : feedHealth === 'partial'
             ? 'PARTIAL FEED'
             : 'MISSION FEED';
-  const statusClass = unavailable
+  const statusClass = feedHealth === 'offline'
     ? 'status-dot-critical'
-    : loading
+    : feedHealth === 'syncing'
       ? 'status-dot-inactive'
-      : caution
+      : feedHealth === 'refreshing' ||
+          feedHealth === 'stale' ||
+          feedHealth === 'partial'
         ? 'status-dot-caution'
         : 'status-dot-nominal';
 

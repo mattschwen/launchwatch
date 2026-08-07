@@ -25,6 +25,7 @@ interface HeroSectionProps {
   loading: boolean;
   refreshing: boolean;
   error: string | null;
+  offline?: boolean;
   partial: boolean;
   stale?: boolean;
   coverageLoading?: boolean;
@@ -38,6 +39,7 @@ export default function HeroSection({
   loading,
   refreshing,
   error,
+  offline = false,
   partial,
   stale = false,
   coverageLoading = false,
@@ -63,8 +65,9 @@ export default function HeroSection({
     return () => window.cancelAnimationFrame(frame);
   }, [activeLaunch, refreshing]);
 
+  const retryUnavailable = refreshing || offline;
   const retrySchedule = (): void => {
-    if (refreshing) return;
+    if (retryUnavailable) return;
     retryFocusPendingRef.current = true;
     void refresh();
   };
@@ -127,11 +130,15 @@ export default function HeroSection({
         <button
           type="button"
           onClick={retrySchedule}
-          aria-disabled={refreshing}
+          aria-disabled={retryUnavailable}
           aria-busy={refreshing}
           className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          {refreshing ? 'Retrying schedule' : 'Retry schedule'}
+          {refreshing
+            ? 'Retrying schedule'
+            : offline
+              ? 'Reconnect to retry'
+              : 'Retry schedule'}
         </button>
       </section>
     );
@@ -158,24 +165,30 @@ export default function HeroSection({
           <button
             type="button"
             onClick={retrySchedule}
-            aria-disabled={refreshing}
+            aria-disabled={retryUnavailable}
             aria-busy={refreshing}
             className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
-            {refreshing ? 'Refreshing mission queue' : 'Refresh mission queue'}
+            {refreshing
+              ? 'Refreshing mission queue'
+              : offline
+                ? 'Reconnect to refresh'
+                : 'Refresh mission queue'}
           </button>
         </div>
       </section>
     );
   }
 
-  const retained = Boolean(error);
+  const retained = Boolean(error || offline);
   const retainedLive = activeLaunch.isLive && (retained || stale);
   const live = activeLaunch.isLive && !retainedLive;
   const liveSignal = getLaunchLiveSignal(activeLaunch);
   const missionInFlight = liveSignal === 'mission';
-  const feedNotice = retained
-    ? 'Last-known mission · refresh failed'
+  const feedNotice = offline
+    ? 'Last-known mission · device offline'
+    : retained
+      ? 'Last-known mission · refresh failed'
     : stale
       ? 'Last-known mission · stale cache'
       : partial

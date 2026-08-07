@@ -19,6 +19,7 @@ describe('LaunchList', () => {
 
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -46,6 +47,7 @@ describe('LaunchList', () => {
 
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -100,6 +102,7 @@ describe('LaunchList', () => {
           statusName: 'To Be Confirmed',
         },
       ],
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -124,6 +127,7 @@ describe('LaunchList', () => {
   it('reconciles filters when history navigation changes the URL context', () => {
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -169,6 +173,7 @@ describe('LaunchList', () => {
 
     vi.mocked(useLaunches).mockReturnValue({
       launches,
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -213,6 +218,7 @@ describe('LaunchList', () => {
 
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,
+      online: true,
       loading: false,
       refreshing: false,
       error: 'Provider maintenance',
@@ -239,6 +245,35 @@ describe('LaunchList', () => {
     expect(retry).toHaveFocus();
   });
 
+  it('keeps retained missions available without offering an offline retry', async () => {
+    const user = userEvent.setup();
+    const refresh = vi.fn().mockResolvedValue(undefined);
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      online: false,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh,
+    });
+
+    render(<LaunchList />);
+
+    expect(screen.getByText('Device is offline.')).toBeVisible();
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('device offline; showing last-known schedule');
+    const refreshWhenOnline = screen.getByRole('button', {
+      name: 'Refresh when online',
+    });
+    expect(refreshWhenOnline).toHaveAttribute('aria-disabled', 'true');
+    await user.click(refreshWhenOnline);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(screen.getByText('Orbital Dawn')).toBeVisible();
+  });
+
   it('suppresses live claims for missions from a stale provider cache', () => {
     const liveLaunch = {
       ...UPCOMING_LAUNCHES[0],
@@ -249,6 +284,7 @@ describe('LaunchList', () => {
     };
     vi.mocked(useLaunches).mockReturnValue({
       launches: [liveLaunch],
+      online: true,
       loading: false,
       refreshing: false,
       error: null,
@@ -280,6 +316,7 @@ describe('LaunchList', () => {
 
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,
+      online: true,
       loading: false,
       refreshing: false,
       error: 'Provider maintenance',

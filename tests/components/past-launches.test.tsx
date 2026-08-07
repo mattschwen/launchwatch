@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PastLaunches from '@/components/PastLaunches';
@@ -756,6 +756,42 @@ describe('PastLaunches', () => {
     expect(refresh).toHaveAccessibleName('Refresh archive');
     expect(refresh).toHaveFocus();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('retains archive results offline and refreshes them after reconnecting', async () => {
+    const user = userEvent.setup();
+    let online = true;
+    const onlineSpy = vi
+      .spyOn(window.navigator, 'onLine', 'get')
+      .mockImplementation(() => online);
+    const fetchMock = vi.fn().mockResolvedValue(successfulResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+
+    online = false;
+    fireEvent(window, new Event('offline'));
+
+    expect(screen.getByText('Device is offline.')).toBeVisible();
+    const refresh = screen.getByRole('button', {
+      name: 'Refresh when online',
+    });
+    expect(refresh).toHaveAttribute('aria-disabled', 'true');
+    await user.click(refresh);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+
+    online = true;
+    fireEvent(window, new Event('online'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Refresh archive' }),
+      ).toHaveAttribute('aria-disabled', 'false'),
+    );
+    onlineSpy.mockRestore();
   });
 
   it('retains settled records when a successful refresh omits its launch collection', async () => {

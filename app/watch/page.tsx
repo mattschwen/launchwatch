@@ -828,6 +828,7 @@ function WatchContent(): React.ReactElement {
   const requestedId = searchParams.get('id');
   const {
     launches,
+    online,
     loading: feedLoading,
     refreshing,
     error,
@@ -866,9 +867,9 @@ function WatchContent(): React.ReactElement {
   const selectedLaunch =
     selected.launch ?? (requestedUnavailable ? fallbackLaunch : null);
   const retainedSchedule = Boolean(
-    queue.length > 0 && (error || meta?.stale),
+    queue.length > 0 && (!online || error || meta?.stale),
   );
-  const coverageUnconfirmed = Boolean(error || meta?.stale);
+  const coverageUnconfirmed = Boolean(!online || error || meta?.stale);
   const hasLiveCoverage = liveLaunches.length > 0 && !coverageUnconfirmed;
   const inFlightMissionCount = liveLaunches.filter(
     (launch) => getLaunchLiveSignal(launch) === 'mission',
@@ -1027,13 +1028,13 @@ function WatchContent(): React.ReactElement {
   };
 
   const retrySchedule = (): void => {
-    if (refreshing) return;
+    if (refreshing || !online) return;
     retryFocusPendingRef.current = true;
     void refresh();
   };
 
   const retryRetainedSchedule = (): void => {
-    if (refreshing) return;
+    if (refreshing || !online) return;
     retainedRetryFocusPendingRef.current = true;
     void refresh();
   };
@@ -1069,11 +1070,15 @@ function WatchContent(): React.ReactElement {
         <button
           type="button"
           onClick={retrySchedule}
-          aria-disabled={refreshing}
+          aria-disabled={refreshing || !online}
           aria-busy={refreshing}
           className="action-button action-button-secondary mt-6 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          {refreshing ? 'Retrying watch schedule' : 'Retry watch schedule'}
+          {refreshing
+            ? 'Retrying watch schedule'
+            : online
+              ? 'Retry watch schedule'
+              : 'Reconnect to retry'}
         </button>
       </div>
     );
@@ -1159,7 +1164,11 @@ function WatchContent(): React.ReactElement {
               />
               <span>
                 <strong className="font-semibold text-[var(--console-amber)]">
-                  {error ? 'Refresh failed.' : 'Provider cache is stale.'}
+                  {!online
+                    ? 'Device is offline.'
+                    : error
+                      ? 'Refresh failed.'
+                      : 'Provider cache is stale.'}
                 </strong>{' '}
                 Showing the last-known mission schedule.
                 {liveLaunches.length > 0
@@ -1171,7 +1180,7 @@ function WatchContent(): React.ReactElement {
               ref={retainedRetryRef}
               type="button"
               onClick={retryRetainedSchedule}
-              aria-disabled={refreshing}
+              aria-disabled={refreshing || !online}
               aria-busy={refreshing}
               className="action-button action-button-quiet w-full shrink-0 justify-center whitespace-nowrap text-[var(--console-amber)] aria-disabled:cursor-wait aria-disabled:opacity-60 sm:w-auto"
             >
@@ -1180,7 +1189,11 @@ function WatchContent(): React.ReactElement {
                 size={15}
                 className={refreshing ? 'animate-spin' : ''}
               />
-              {refreshing ? 'Retrying feed' : 'Retry feed'}
+              {refreshing
+                ? 'Retrying feed'
+                : online
+                  ? 'Retry feed'
+                  : 'Refresh when online'}
             </button>
           </div>
         ) : null}
@@ -1316,7 +1329,9 @@ function WatchContent(): React.ReactElement {
                 }`}
               />
               {retainedSchedule
-                ? 'Schedule status unconfirmed'
+                ? online
+                  ? 'Schedule status unconfirmed'
+                  : 'Offline · schedule retained'
                 : meta?.partial
                   ? 'Schedule partially available'
                   : 'Schedule online'}

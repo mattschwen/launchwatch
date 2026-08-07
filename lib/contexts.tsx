@@ -13,6 +13,7 @@ import {
 import type { Launch } from './types';
 import { checkAndNotify, clearOldNotificationFlags } from './notifications';
 import { isLaunch } from './launch-contract';
+import { useOnlineStatus } from './online-status';
 
 export interface LaunchFeedMeta {
   generatedAt?: string;
@@ -23,6 +24,7 @@ export interface LaunchFeedMeta {
 
 interface LaunchDataContextValue {
   launches: Launch[];
+  online: boolean;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -116,6 +118,7 @@ export function LaunchDataProvider({
   children: ReactNode;
 }): React.ReactElement {
   const [launches, setLaunches] = useState<Launch[]>([]);
+  const online = useOnlineStatus();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +131,15 @@ export function LaunchDataProvider({
 
   const refresh = useCallback(async (): Promise<void> => {
     if (requestRef.current) return requestRef.current;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      if (launchesRef.current.length === 0) {
+        setError('Device is offline. Reconnect to load launch data.');
+        initialRequestSettledRef.current = true;
+        setLoading(false);
+      }
+      setRefreshing(false);
+      return;
+    }
 
     if (initialRequestSettledRef.current) setRefreshing(true);
 
@@ -190,7 +202,7 @@ export function LaunchDataProvider({
     void refresh();
 
     const interval = window.setInterval(() => {
-      void refresh();
+      if (navigator.onLine) void refresh();
     }, 2 * 60 * 1000);
 
     const revalidateIfStale = (): void => {
@@ -212,8 +224,8 @@ export function LaunchDataProvider({
   }, [refresh]);
 
   const value = useMemo<LaunchDataContextValue>(
-    () => ({ launches, loading, refreshing, error, meta, refresh }),
-    [launches, loading, refreshing, error, meta, refresh]
+    () => ({ launches, online, loading, refreshing, error, meta, refresh }),
+    [launches, online, loading, refreshing, error, meta, refresh]
   );
 
   return (
@@ -237,8 +249,8 @@ interface LiveContextValue {
 }
 
 export function useLiveContext(): LiveContextValue {
-  const { launches, error, meta } = useLaunchData();
-  const feedCanConfirmLiveState = !error && !meta?.stale;
+  const { launches, online, error, meta } = useLaunchData();
+  const feedCanConfirmLiveState = online && !error && !meta?.stale;
   const liveCount = feedCanConfirmLiveState
     ? launches.filter((launch) => launch.isLive).length
     : 0;

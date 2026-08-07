@@ -3,6 +3,7 @@ import { getFeedHealth } from '@/lib/feed-health';
 
 const nominal = {
   hasLaunches: true,
+  online: true,
   loading: false,
   refreshing: false,
   error: null,
@@ -11,6 +12,10 @@ const nominal = {
 };
 
 describe('getFeedHealth', () => {
+  it('reports a connection loss immediately even with retained launches', () => {
+    expect(getFeedHealth({ ...nominal, online: false })).toBe('offline');
+  });
+
   it('distinguishes initial synchronization and a terminal outage', () => {
     expect(
       getFeedHealth({

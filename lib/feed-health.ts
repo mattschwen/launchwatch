@@ -8,6 +8,7 @@ export type FeedHealth =
 
 interface FeedHealthInput {
   hasLaunches: boolean;
+  online: boolean;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -17,12 +18,14 @@ interface FeedHealthInput {
 
 export function getFeedHealth({
   hasLaunches,
+  online,
   loading,
   refreshing,
   error,
   partial,
   stale,
 }: FeedHealthInput): FeedHealth {
+  if (!online) return 'offline';
   if (error && !hasLaunches) return 'offline';
   if (loading && !hasLaunches) return 'syncing';
   if (refreshing) return 'refreshing';

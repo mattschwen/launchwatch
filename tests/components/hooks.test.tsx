@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -49,7 +49,7 @@ function response(body: unknown): Response {
 }
 
 function FeedRetryHarness(): React.ReactElement {
-  const { launches, loading, refreshing, error, refresh } = useLaunches();
+  const { launches, online, loading, refreshing, error, refresh } = useLaunches();
   const { liveCount } = useLiveContext();
 
   return (
@@ -68,6 +68,7 @@ function FeedRetryHarness(): React.ReactElement {
       </p>
       <p data-testid="feed-count">{launches.length}</p>
       <p data-testid="live-count">{liveCount}</p>
+      <p data-testid="network-state">{online ? 'online' : 'offline'}</p>
     </>
   );
 }
@@ -94,6 +95,7 @@ function IntelRetryHarness(): React.ReactElement {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -355,6 +357,38 @@ describe('useLaunchById', () => {
 });
 
 describe('LaunchDataProvider retries', () => {
+  it('immediately suppresses live claims and requests while offline', async () => {
+    const user = userEvent.setup();
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'live' as const,
+      statusName: 'Live',
+      isLive: true,
+      webcastLive: true,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(
+      response({ launches: [liveLaunch] }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('live-count')).toHaveTextContent('1'),
+    );
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+    fireEvent(window, new Event('offline'));
+
+    expect(screen.getByTestId('network-state')).toHaveTextContent('offline');
+    expect(screen.getByTestId('live-count')).toHaveTextContent('0');
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('stops claiming retained live state after a refresh failure', async () => {
     const user = userEvent.setup();
     const liveLaunch = {
@@ -511,6 +545,21 @@ describe('LaunchDataProvider retries', () => {
 });
 
 describe('useLaunchIntel retries', () => {
+  it('does not request mission intelligence while the device is offline', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+
+    render(<IntelRetryHarness />);
+
+    expect(screen.getByTestId('intel-state')).toHaveTextContent('empty');
+    await user.click(
+      screen.getByRole('button', { name: 'Retry intelligence' }),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('retains the degraded state and suppresses duplicate recovery requests', async () => {
     const user = userEvent.setup();
     let resolveRetry: ((value: Response) => void) | undefined;

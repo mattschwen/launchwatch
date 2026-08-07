@@ -166,6 +166,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
 
 - Provider calls happen on the server; browser components do not contact SpaceX or Launch Library 2 directly.
 - Home, Watch, the header, and launch selectors share one deduplicated client request to `type=all`, refreshed every two minutes and when a stale visible tab reconnects.
+- Browser connection changes update feed health immediately: an offline shell
+  retains the last schedule, suppresses live claims, and pauses impossible
+  refresh actions until the connection returns.
 - If the featured feed record lacks a reusable visual, Home requests that one
   canonical launch detail record to acquire richer vehicle-image provenance;
   the server caches the result under the existing detail policy. Detail

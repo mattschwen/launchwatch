@@ -39,6 +39,7 @@ import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 import { isLaunch } from '@/lib/launch-contract';
+import { useOnlineStatus } from '@/lib/online-status';
 
 const PAGE_SIZE = 10;
 const HISTORY_LIMIT = 100;
@@ -476,6 +477,7 @@ export default function PastLaunches({
   initialFilters?: HistoryFilters;
   returnFocusId?: string | null;
 }): React.ReactElement {
+  const online = useOnlineStatus();
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -502,12 +504,32 @@ export default function PastLaunches({
   const returnFocusHandledRef = useRef(false);
   const focusSearchAfterRetryRef = useRef(false);
   const suppressNextUrlWriteRef = useRef(false);
+  const wasOfflineRef = useRef(false);
   const id = useId();
+
+  useEffect(() => {
+    if (!online) {
+      wasOfflineRef.current = true;
+      return;
+    }
+    if (!wasOfflineRef.current) return;
+
+    wasOfflineRef.current = false;
+    setRetrying(true);
+    setReloadKey((key) => key + 1);
+  }, [online]);
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function fetchHistory(): Promise<void> {
+      if (!navigator.onLine) {
+        setError('Device is offline. Reconnect to load the launch archive.');
+        setLoading(false);
+        setRetrying(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const response = await fetch(
@@ -755,7 +777,7 @@ export default function PastLaunches({
   };
 
   const requestHistoryRefresh = (focusSearchOnSuccess: boolean): void => {
-    if (loading || retrying) return;
+    if (loading || retrying || !online) return;
     focusSearchAfterRetryRef.current = focusSearchOnSuccess;
     setRetrying(true);
     setReloadKey((key) => key + 1);
@@ -840,11 +862,15 @@ export default function PastLaunches({
         <button
           type="button"
           onClick={retryHistory}
-          aria-disabled={retrying}
+          aria-disabled={retrying || !online}
           aria-busy={retrying}
           className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
         >
-          {retrying ? 'Retrying archive' : 'Retry archive'}
+          {retrying
+            ? 'Retrying archive'
+            : online
+              ? 'Retry archive'
+              : 'Reconnect to retry'}
         </button>
       </section>
     );
@@ -1069,7 +1095,7 @@ export default function PastLaunches({
               <button
                 type="button"
                 onClick={refreshHistory}
-                aria-disabled={retrying}
+                aria-disabled={retrying || !online}
                 aria-busy={retrying}
                 className="action-button action-button-quiet shrink-0 px-3 aria-disabled:cursor-wait aria-disabled:opacity-60"
               >
@@ -1078,7 +1104,11 @@ export default function PastLaunches({
                   size={16}
                   className={retrying ? 'animate-spin' : ''}
                 />
-                {retrying ? 'Refreshing archive' : 'Refresh archive'}
+                {retrying
+                  ? 'Refreshing archive'
+                  : online
+                    ? 'Refresh archive'
+                    : 'Refresh when online'}
               </button>
               {filtersActive ? (
                 <button
@@ -1096,7 +1126,14 @@ export default function PastLaunches({
         </div>
       </div>
 
-      {error && launches.length > 0 ? (
+      {!online && launches.length > 0 ? (
+        <div className="border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
+          <p role="status" className="text-sm text-[var(--console-amber)]">
+            <strong className="font-semibold">Device is offline.</strong>{' '}
+            Showing retained archive records until the connection returns.
+          </p>
+        </div>
+      ) : error && launches.length > 0 ? (
         <div className="border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-4 py-3">
           <p role="alert" className="text-sm text-[var(--console-amber)]">
             <strong className="font-semibold">Archive refresh failed.</strong>{' '}
@@ -1146,7 +1183,7 @@ export default function PastLaunches({
             aria-label={
               filtersActive ? 'Clear empty-result filters' : undefined
             }
-            aria-disabled={!filtersActive && retrying}
+            aria-disabled={!filtersActive && (retrying || !online)}
             aria-busy={!filtersActive && retrying}
             className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
@@ -1154,7 +1191,9 @@ export default function PastLaunches({
               ? 'Clear archive filters'
               : retrying
                 ? 'Refreshing launch archive'
-                : 'Refresh launch archive'}
+                : online
+                  ? 'Refresh launch archive'
+                  : 'Reconnect to refresh'}
           </button>
         </div>
       ) : (

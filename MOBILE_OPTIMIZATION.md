@@ -46,6 +46,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   non-nominal status without displacing primary navigation. One persistent
   header live region announces feed-state transitions; repeated visual status
   readouts must not create duplicate assistive-technology announcements.
+- A connection loss immediately changes retained mission data to the amber
+  offline state, removes live claims, and labels refresh actions as unavailable
+  until reconnecting. The mission schedule and archive remain readable instead
+  of being replaced by an avoidable error state.
 - The visual feed-health readout is a 44-pixel shortcut to the footer's
   provider breakdown. It moves focus with the viewport without motion and
   keeps source provenance reachable from long routes.
@@ -433,6 +437,8 @@ The optional expanded map remains a modal dialog. It must:
 - Installed mode uses the same responsive layouts and supports both orientations.
 - API responses and navigations are not served from a service-worker cache.
 - Offline navigation displays the static offline document.
+- A loaded shell reacts to connection loss immediately, retains its last-known
+  schedule and archive, and resumes eligible refresh work after reconnecting.
 - A newly available worker is applied explicitly before reloading into a new shell.
 - Bottom navigation and safe-area spacing remain correct in standalone mode.
 

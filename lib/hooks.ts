@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { Launch, LaunchIntel, RocketFact } from './types';
 import { useLaunchData } from './contexts';
 import { isLaunch } from './launch-contract';
+import { useOnlineStatus } from './online-status';
 
 const clockListeners = new Set<() => void>();
 let clockInterval: ReturnType<typeof setInterval> | null = null;
@@ -225,7 +226,7 @@ function enrichCurrentLaunch(
 }
 
 export function useLaunchById(id: string | null | undefined) {
-  const { launches, loading: feedLoading } = useLaunchData();
+  const { launches, online, loading: feedLoading } = useLaunchData();
   const [retryVersion, setRetryVersion] = useState(0);
   const feedLaunch = useMemo(
     () => (id ? launches.find((launch) => launch.id === id) ?? null : null),
@@ -248,6 +249,22 @@ export function useLaunchById(id: string | null | undefined) {
   useEffect(() => {
     if (!id) {
       setRemote(null);
+      return;
+    }
+
+    if (!online) {
+      setRemote((current) =>
+        current?.id === id
+          ? { ...current, loading: false, retrying: false }
+          : {
+              id,
+              launch: null,
+              loading: false,
+              error: null,
+              notFound: false,
+              retrying: false,
+            },
+      );
       return;
     }
 
@@ -322,10 +339,10 @@ export function useLaunchById(id: string | null | undefined) {
 
     void fetchLaunch();
     return () => controller.abort();
-  }, [id, retryVersion]);
+  }, [id, online, retryVersion]);
 
   const retry = (): void => {
-    if (!id || currentRemote?.loading || !currentRemote?.error) return;
+    if (!online || !id || currentRemote?.loading || !currentRemote?.error) return;
 
     setRemote((current) => ({
       id,
@@ -359,6 +376,7 @@ export function useLaunchIntel(
   launch: Launch | null,
   enabled: boolean = true
 ) {
+  const online = useOnlineStatus();
   const launchId = launch?.id ?? null;
   const launchIsLive = Boolean(launch?.isLive);
   const [retryVersion, setRetryVersion] = useState(0);
@@ -377,7 +395,7 @@ export function useLaunchIntel(
   });
 
   useEffect(() => {
-    if (!launchId || !enabled) {
+    if (!launchId || !enabled || !online) {
       return;
     }
 
@@ -454,13 +472,14 @@ export function useLaunchIntel(
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [enabled, launchId, launchIsLive, retryVersion]);
+  }, [enabled, launchId, launchIsLive, online, retryVersion]);
 
   const currentState =
     enabled && intelState.launchId === launchId ? intelState : null;
   const retry = (): void => {
     if (
       !currentState?.error ||
+      !online ||
       currentState.loading ||
       (currentState.retryAt !== null && currentState.retryAt > Date.now())
     ) {
@@ -478,7 +497,7 @@ export function useLaunchIntel(
 
   return {
     intel: currentState?.intel ?? null,
-    loading: Boolean(launchId && enabled) && (
+    loading: Boolean(launchId && enabled && online) && (
       !currentState || currentState.loading
     ),
     error: currentState?.error ?? null,

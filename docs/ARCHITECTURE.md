@@ -152,8 +152,9 @@ See [`API.md`](API.md) for request and response examples.
 - deduplicates concurrent refresh attempts;
 - preserves existing data during background refresh;
 - refreshes every two minutes;
+- pauses periodic and manual network work while the browser is offline;
 - revalidates a stale feed when the tab becomes visible or the browser reconnects;
-- exposes `loading`, `refreshing`, `error`, `meta`, and `refresh`;
+- exposes `online`, `loading`, `refreshing`, `error`, `meta`, and `refresh`;
 - feeds notification checks from the same normalized launch set;
 - checks the selected mission immediately when notification permission is
   granted, instead of waiting for the next two-minute feed refresh.
@@ -206,9 +207,11 @@ flags are migrated in place so an app update does not replay an alert.
   coverage stage, mission badge, and queue remove live claims and autoplay until
   a focus-stable retry restores a current feed.
 - **Retained global mission data** remains linked from the desktop status bar
-  after either a refresh failure or a successful stale-cache response, but the
-  Home schedule and ticker use the amber unconfirmed treatment and suppress
-  live claims until the shared feed is current again.
+  after a connection loss, refresh failure, or successful stale-cache response,
+  but the Home schedule and ticker use the amber unconfirmed treatment and
+  suppress live claims until the shared feed is current again. Browser
+  `online` and `offline` events update this state immediately; archive records
+  stay available offline and resynchronize after reconnecting.
 - **History** provides search, provider/year/outcome filters, a newest/oldest chronology control for the visible feed window, expandable visual summaries, and stable links to details and available replays. Repeated `View mission` actions keep that concise visual label while including the row's mission name in their accessible name, so assistive-technology link lists remain distinguishable. A past-window mission whose provider has not published success or failure is labeled `Outcome unconfirmed`, uses the amber caution treatment, and remains isolatable through the URL-backed Unconfirmed outcome filter instead of inheriting a green success signal from a stale provider status. Filter and chronology context is bounded in the URL and survives mission-detail return navigation; the archive also restores the selected mission's result batch and link focus. When a compact archive record does not include coverage, expansion checks that one canonical detail route on demand and reports checking, a visible amber failure with a focus-stable retry, unavailable, or confirmed-replay state without inflating the 100-record archive request. Its controls expose the current feed's oldest and newest records, and identify when the 100-mission response cap is full, so archive searches never imply unbounded retention.
 - **Detail** resolves current and completed missions with the same layout and actions, keeps valid provider launch windows visible in the primary mission summary, presents one eligible vehicle or mission visual before telemetry and trajectory, then adapts countdown, timeline, video, and return navigation to mission state. Horizontally scrollable provider timelines expose their currently readable event range and total as the viewport changes.
 
