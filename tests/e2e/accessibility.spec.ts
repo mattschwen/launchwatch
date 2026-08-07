@@ -101,7 +101,7 @@ test('@a11y forced colors keeps current and selected controls visible', async ({
     .locator('nav[aria-label="Primary navigation"]:visible')
     .locator('[aria-current="page"]');
   const selectedMission = page
-    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('complementary', { name: 'Mission queue' })
     .getByRole('button', { name: /Orbital Dawn/i });
 
   await expect(currentRoute).toHaveCSS('outline-style', 'solid');
@@ -159,7 +159,7 @@ test('@a11y increased contrast strengthens telemetry and selected surfaces', asy
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
   await expect(
     page
-      .getByRole('complementary', { name: 'Next up' })
+      .getByRole('complementary', { name: 'Mission queue' })
       .getByRole('button', { name: /Orbital Dawn/i }),
   ).toHaveAttribute('aria-pressed', 'true');
   const defaultTheme = await readTheme();

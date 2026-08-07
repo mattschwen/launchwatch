@@ -643,7 +643,7 @@ function MissionQueue({
   const tabStopIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const queueTruncated = launches.length > queuedLaunches.length;
   const queueLabel = selectedMissionAppended
-    ? `${MAX_VISIBLE_QUEUE_MISSIONS - 1} next + selected · ${launches.length} total`
+    ? `${MAX_VISIBLE_QUEUE_MISSIONS - 1} scheduled + selected · ${launches.length} total`
     : `${queuedLaunches.length}${
         queueTruncated ? ` of ${launches.length}` : ''
       } mission${
@@ -696,12 +696,12 @@ function MissionQueue({
 
   return (
     <aside
-      aria-labelledby="next-up-title"
+      aria-labelledby="mission-queue-title"
       className="surface-card holo-card signal-cold overflow-hidden"
     >
       <div className="flex min-h-14 items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
-        <h2 id="next-up-title" className="section-title text-[1.2rem]">
-          Next up
+        <h2 id="mission-queue-title" className="section-title text-[1.2rem]">
+          Mission queue
         </h2>
         <p className="data-label shrink-0 text-[var(--text-muted)]">
           {queueLabel}
@@ -786,6 +786,15 @@ function MissionQueue({
                   <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--console-cyan)]">
                     {launch.provider || launch.rocket}
                   </span>
+                  {selected ? (
+                    <span
+                      aria-hidden="true"
+                      className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)]"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                      On console
+                    </span>
+                  ) : null}
                 </span>
                 <ArrowRight
                   aria-hidden="true"

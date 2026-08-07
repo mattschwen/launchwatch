@@ -3342,7 +3342,7 @@ test('watch enriches the selected mission and switches the mission queue', async
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   const polarisQueueItem = page
-    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('complementary', { name: 'Mission queue' })
     .getByRole('button', { name: /Polaris Relay/i });
   const selectedMission = page.locator('[data-watch-selected-mission]');
   await selectedMission
@@ -3398,7 +3398,7 @@ test('watch reveals a pointer-selected mission on narrow layouts', async ({
 
   const selectedMission = page.locator('[data-watch-selected-mission]');
   const polarisQueueItem = page
-    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('complementary', { name: 'Mission queue' })
     .getByRole('button', { name: /Polaris Relay/i });
   await polarisQueueItem.scrollIntoViewIfNeeded();
 
@@ -3485,8 +3485,8 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
 
   await page.goto('/watch?id=ll2-demo-queue-12');
 
-  const queue = page.getByRole('complementary', { name: 'Next up' });
-  await expect(queue.getByText('9 next + selected · 12 total', { exact: true }))
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  await expect(queue.getByText('9 scheduled + selected · 12 total', { exact: true }))
     .toBeVisible();
   const queueGap = queue.getByRole('separator', {
     name: '2 missions omitted before selected mission 12 of 12',
@@ -3539,6 +3539,8 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   const finalMission = queue.getByRole('button', {
     name: /Queue mission 12/i,
   });
+  await expect(finalMission.getByText('On console', { exact: true }))
+    .toBeVisible();
   const firstMission = queue.getByRole('button').first();
   await expect(firstMission).toHaveAttribute('tabindex', '-1');
   await expect(finalMission).toHaveAttribute('tabindex', '0');
@@ -3652,7 +3654,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
     )
   ).toBeVisible();
 
-  const queue = page.getByRole('complementary', { name: 'Next up' });
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
   const hierarchy = await queue.evaluate((element, visualElement) => {
     const queueBounds = element.getBoundingClientRect();
     const visualBounds = visualElement?.getBoundingClientRect();
