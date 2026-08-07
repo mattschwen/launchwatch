@@ -64,6 +64,43 @@ describe('Footer', () => {
     expect(launchLibrary).toHaveAttribute('target', '_blank');
   });
 
+  it('omits the retired direct SpaceX source when no mirror was requested', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          launches: UPCOMING_LAUNCHES,
+          meta: {
+            ...FEED_META,
+            partial: false,
+            providers: {
+              ...FEED_META.providers,
+              spacex: {
+                state: 'not-requested',
+                cached: false,
+                updatedAt: null,
+              },
+            },
+          },
+        })
+      )
+    );
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    await screen.findByRole('link', {
+      name: /Launch Library 2 source — available.*new tab/i,
+    });
+    expect(
+      screen.queryByRole('link', { name: /SpaceX source/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Launch feed is current.')).toBeInTheDocument();
+  });
+
   it('reports partial provider data instead of a nominal refresh state', async () => {
     vi.stubGlobal(
       'fetch',
@@ -127,17 +164,15 @@ describe('Footer', () => {
       </LaunchDataProvider>
     );
 
+    await screen.findByText('Launch feed is offline.');
     expect(
-      await screen.findByRole('link', {
-        name: /SpaceX source — unavailable.*new tab/i,
-      })
-    ).toHaveTextContent('unavailable');
+      screen.queryByRole('link', { name: /SpaceX source/i })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', {
         name: /Launch Library 2 source — unavailable.*new tab/i,
       })
     ).toHaveTextContent('unavailable');
-    expect(screen.getByText('Launch feed is offline.')).toBeInTheDocument();
     expect(screen.queryByText('syncing')).not.toBeInTheDocument();
   });
 

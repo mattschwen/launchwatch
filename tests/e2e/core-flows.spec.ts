@@ -3113,8 +3113,8 @@ test('home schedule retry reports progress and restores keyboard focus', async (
   await expect(heroRetry).toHaveAccessibleName('Retry schedule');
   await expect(listRetry).toHaveAccessibleName('Retry schedule');
   await expect(
-    page.getByRole('link', { name: /SpaceX source — unavailable.*new tab/i })
-  ).toContainText('unavailable');
+    page.getByRole('link', { name: /SpaceX source/i })
+  ).toHaveCount(0);
   await expect(
     page.getByRole('link', {
       name: /Launch Library 2 source — unavailable.*new tab/i,

@@ -5,7 +5,7 @@ LaunchWatch is a Next.js 16 App Router application. Interactive pages render on 
 ## System Shape
 
 ```text
-SpaceX API                     Launch Library 2
+Optional r/SpaceX mirror       Launch Library 2
      │                                │
      └──────────────┬─────────────────┘
                     ▼
@@ -88,7 +88,8 @@ the same guard before its independent archive state can create mission links.
   seconds, while leaving healthy providers and distinct resources independent;
 - retains a last-known result for stale fallback;
 - attaches provider-level `ok`, `stale`, `error`, or `not-requested` metadata;
-- combines SpaceX and Launch Library 2 upcoming missions;
+- uses Launch Library 2's multi-provider schedule and optionally merges an
+  explicitly configured compatible r/SpaceX mirror;
 - de-duplicates equivalent cross-provider missions, preferring richer LL2 metadata;
 - preserves provider image provenance, attribution, license, and single-use
   metadata without inferring rights from a URL;
@@ -109,8 +110,9 @@ the same guard before its independent archive state can create mission links.
 - derives temporal live state and returns chronologically ordered launches;
 - looks up current or historical records directly by canonical ID.
 
-The historical feed requests previous missions from SpaceX and Launch Library
-2, de-duplicates equivalent provider records, and excludes any record whose
+The historical feed requests previous missions from Launch Library 2 and any
+explicitly configured compatible r/SpaceX mirror, de-duplicates equivalent
+provider records, and excludes any record whose
 normalized coverage state is still live or whose non-terminal provider launch
 window remains open. It is served through
 `/api/launches?type=history`; browser components never call providers directly.
@@ -308,15 +310,17 @@ provider token and never switches traffic to the development service.
 
 `SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` are non-secret, server-only
 integration seams used by the Playwright mock provider and optional controlled
-mirrors. They default to the production provider origins.
+mirrors. The archived public r/SpaceX API is not requested by default; setting
+`SPACEX_API_BASE_URL` opts a compatible mirror into schedule and history
+aggregation. Launch Library 2 defaults to its production origin.
 
 No secret should use a `NEXT_PUBLIC_` prefix. Client components receive only normalized application responses and public links.
 
 ## Known Boundaries
 
 - There is no database, authentication layer, or queue.
-- History merges SpaceX and Launch Library 2 and remains usable when either
-  provider is temporarily unavailable.
+- History uses Launch Library 2 and can merge an explicitly configured SpaceX
+  mirror; it remains usable when either requested provider is unavailable.
 - In-memory cache contents are not shared across serverless instances.
 - Browser notification delivery remains platform-dependent.
 - The mission map is an in-app geographic visualization, not a GIS.

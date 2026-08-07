@@ -12,7 +12,7 @@
 
 ## Overview
 
-LaunchWatch is a responsive Next.js application for following a mission from schedule to replay. It combines SpaceX and Launch Library 2 data behind internal server routes, normalizes provider records into one launch model, and gives every launch a stable provider-qualified ID.
+LaunchWatch is a responsive Next.js application for following a mission from schedule to replay. It uses Launch Library 2's multi-provider schedule behind internal server routes, can merge a compatible r/SpaceX API mirror when one is explicitly configured, normalizes provider records into one launch model, and gives every launch a stable provider-qualified ID.
 
 The interface evolves its green-and-black mission-control identity into a
 cyberpunk signal system while prioritizing clear navigation, readable data,
@@ -113,7 +113,7 @@ X_CONSUMER_KEY_SECRET=your_x_consumer_key_secret
 
 Do not prefix secrets with `NEXT_PUBLIC_`; that makes them eligible for client bundles. Migrate legacy `NEXT_PUBLIC_LL2_API_KEY`, `NEXT_PUBLIC_NASA_API_KEY`, and `NEXT_PUBLIC_YOUTUBE_API_KEY` values to `LL2_API_KEY`, `NASA_API_KEY`, and `YOUTUBE_DATA_API_KEY`.
 
-Launch facts always come from SpaceX or Launch Library 2. xAI is used only as
+Launch facts always come from provider feeds. xAI is used only as
 a fallback for recent official `@SpaceX` posts when no direct official X signal
 was found, a SpaceX mission is within 72 hours of launch or 12 hours after it,
 and the per-runtime daily lookup budget remains. Results are cached for six
@@ -122,9 +122,11 @@ fail closed without affecting the launch feed. The interface labels these as
 LaunchWatch AI-assisted summaries, identifies the official SpaceX source, and
 links to the exact post for verification.
 
-For deterministic browser tests or a controlled provider mirror,
-`SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` can override the server-only
-upstream origins. Normal deployments should keep the production defaults.
+Current schedules come from Launch Library 2. Because the public r/SpaceX API
+is archived, direct SpaceX ingestion is disabled unless
+`SPACEX_API_BASE_URL` points to a compatible controlled mirror.
+`LL2_API_BASE_URL` remains a server-only integration override for deterministic
+tests or a controlled LL2 mirror; normal deployments leave both values unset.
 
 ## Canonical Launch IDs
 

@@ -34,7 +34,9 @@ daily per-runtime budget can be set to `0` for an immediate cost kill switch.
 
 `SPACEX_API_BASE_URL` and `LL2_API_BASE_URL` are optional server-only
 integration overrides for deterministic tests or controlled provider mirrors.
-Leave them unset in normal deployments to use the production providers.
+The public r/SpaceX API is archived, so leaving `SPACEX_API_BASE_URL` unset
+disables that direct source while Launch Library 2 supplies the current
+multi-provider schedule. Set it only to a compatible controlled mirror.
 
 Never configure `NEXT_PUBLIC_LL2_API_KEY`, `NEXT_PUBLIC_NASA_API_KEY`, or `NEXT_PUBLIC_YOUTUBE_API_KEY`. Migrate those legacy values to their server-only equivalents before releasing.
 

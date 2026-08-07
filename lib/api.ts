@@ -27,9 +27,11 @@ export { parseLaunchId, toCanonicalLaunchId } from './launch-id';
 
 // API Configuration
 const SPACEX_PUBLIC_API = 'https://api.spacexdata.com/v4';
+const SPACEX_API_OVERRIDE = process.env.SPACEX_API_BASE_URL?.trim() || '';
 const SPACEX_API = (
-  process.env.SPACEX_API_BASE_URL || SPACEX_PUBLIC_API
+  SPACEX_API_OVERRIDE || SPACEX_PUBLIC_API
 ).replace(/\/+$/, '');
+const SPACEX_MERGED_FEED_ENABLED = Boolean(SPACEX_API_OVERRIDE);
 const LL2_API_KEY = process.env.LL2_API_KEY || '';
 const LL2_PUBLIC_API = 'https://ll.thespacedevs.com/2.3.0';
 const LL2_API = (
@@ -1096,7 +1098,12 @@ function launchScheduleEndUnix(launch: Launch): number {
 export async function getAllUpcomingLaunchesResult(): Promise<LaunchFeedResult<Launch[]>> {
   return withInFlightDedupe('feed:upcoming', async () => {
     const [spacex, ll2] = await Promise.all([
-      getSpaceXUpcomingLaunchesWithMeta(),
+      SPACEX_MERGED_FEED_ENABLED
+        ? getSpaceXUpcomingLaunchesWithMeta()
+        : Promise.resolve({
+            data: [],
+            meta: notRequestedProvider(),
+          } satisfies ProviderDataResult<SpaceXLaunch[]>),
       getLL2UpcomingLaunchesWithMeta(50),
     ]);
     const nowUnix = Date.now() / 1000;
@@ -1130,7 +1137,12 @@ export async function getPastLaunchesResult(limit: number = 50): Promise<LaunchF
   const boundedLimit = Math.min(MAX_HISTORY_LIMIT, Math.max(1, Math.trunc(limit)));
   return withInFlightDedupe(`feed:history:${boundedLimit}`, async () => {
     const [spacex, ll2] = await Promise.all([
-      getSpaceXPastLaunchesWithMeta(boundedLimit),
+      SPACEX_MERGED_FEED_ENABLED
+        ? getSpaceXPastLaunchesWithMeta(boundedLimit)
+        : Promise.resolve({
+            data: [],
+            meta: notRequestedProvider(),
+          } satisfies ProviderDataResult<SpaceXLaunch[]>),
       getLL2PastLaunchesWithMeta(boundedLimit),
     ]);
     const nowUnix = Date.now() / 1000;

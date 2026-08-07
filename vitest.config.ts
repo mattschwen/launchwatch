@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    env: {
+      SPACEX_API_BASE_URL: 'https://api.spacexdata.com/v4',
+    },
     setupFiles: ['./tests/setup.ts'],
     include: [
       'tests/unit/**/*.test.{ts,tsx}',

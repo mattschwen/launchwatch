@@ -76,8 +76,9 @@ Provider `state` is one of:
 
 ### `GET /api/launches?type=all`
 
-Returns merged, normalized, deduplicated upcoming launches from SpaceX and
-Launch Library 2 for the current three-month window. A non-terminal launch with
+Returns normalized, deduplicated upcoming launches from Launch Library 2's
+multi-provider schedule, optionally merged with an explicitly configured
+compatible r/SpaceX mirror, for the current three-month window. A non-terminal launch with
 a valid provider window remains scheduled until that window ends, even after
 its nominal target instant passes.
 
@@ -133,7 +134,8 @@ to `success` because the provider defines it as confirmed payload deployment.
 - `limit` is optional and defaults to `50`.
 - Valid values are integers from `1` through `100`.
 - Launches use canonical provider-qualified IDs such as `spacex-*` and `ll2-*`.
-- Provider metadata reports SpaceX and Launch Library 2 independently.
+- Provider metadata reports Launch Library 2 and any configured SpaceX mirror
+  independently; an unconfigured mirror is `not-requested`.
 
 ```json
 {
@@ -301,7 +303,7 @@ out of both rendered figures and social metadata.
 
 | Provider | Use | Authentication |
 | --- | --- | --- |
-| SpaceX API v4 | Upcoming/history/detail and rocket data | None |
+| Compatible r/SpaceX API mirror | Optional upcoming/history/detail and rocket data | Controlled `SPACEX_API_BASE_URL` |
 | Launch Library 2 | Cross-provider schedule, pads, status, streams, detail | Optional `LL2_API_KEY` |
 | NASA APOD | Optional astronomy fact content | Optional `NASA_API_KEY`, otherwise `DEMO_KEY` |
 | YouTube Data API | Stream discovery and ranking | Optional `YOUTUBE_DATA_API_KEY` |

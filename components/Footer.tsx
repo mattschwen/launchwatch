@@ -72,6 +72,14 @@ function providerStatus(
       };
 }
 
+function providerWasRequested(meta: unknown): boolean {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+    return false;
+  }
+
+  return (meta as Record<string, unknown>).state !== 'not-requested';
+}
+
 function refreshAge(generatedAt: string | undefined, now: number): string {
   if (!generatedAt) return 'pending';
   const timestamp = new Date(generatedAt).getTime();
@@ -100,6 +108,7 @@ export default function Footer(): React.ReactElement {
       : null;
   const providerSyncPending = loading && !meta;
   const providerFeedUnavailable = Boolean(error && !meta);
+  const spacexRequested = providerWasRequested(providers?.spacex);
   const spacexStatus = providerStatus(
     providers?.spacex,
     providerSyncPending,
@@ -160,25 +169,27 @@ export default function Footer(): React.ReactElement {
             className="flex scroll-mt-20 flex-wrap items-center gap-2 rounded-[var(--radius-sm)] outline-none focus:ring-2 focus:ring-[var(--console-cyan)] focus:ring-offset-4 focus:ring-offset-[var(--surface-base)]"
           >
             <span className="data-label mr-0.5">Source feeds</span>
-            <a
-              href="https://github.com/r-spacex/SpaceX-API"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`SpaceX source — ${spacexStatus.label} (opens in a new tab)`}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
-            >
-              <span>SpaceX</span>
-              <span
-                aria-hidden="true"
-                className={`inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] ${spacexStatus.className}`}
+            {spacexRequested ? (
+              <a
+                href="https://github.com/r-spacex/SpaceX-API"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`SpaceX source — ${spacexStatus.label} (opens in a new tab)`}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-raised)] px-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--console-cyan)]"
               >
+                <span>SpaceX</span>
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${spacexStatus.dotClassName}`}
-                />
-                {spacexStatus.label}
-              </span>
-              <ExternalLink aria-hidden="true" size={12} />
-            </a>
+                  aria-hidden="true"
+                  className={`inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] ${spacexStatus.className}`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${spacexStatus.dotClassName}`}
+                  />
+                  {spacexStatus.label}
+                </span>
+                <ExternalLink aria-hidden="true" size={12} />
+              </a>
+            ) : null}
             <a
               href="https://thespacedevs.com/llapi"
               target="_blank"
