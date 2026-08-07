@@ -124,6 +124,7 @@ function HistoryRow({
   const [detailRequestVersion, setDetailRequestVersion] = useState(0);
   const replayLinkRef = useRef<HTMLAnchorElement>(null);
   const replayCheckingRef = useRef<HTMLButtonElement>(null);
+  const replayRetryRef = useRef<HTMLButtonElement>(null);
   const focusReplayAfterRetryRef = useRef(false);
   const replayLaunch = detailState.launch ?? launch;
   const needsReplayDetail = !launch.livestream;
@@ -232,6 +233,16 @@ function HistoryRow({
     );
     return () => window.cancelAnimationFrame(frame);
   }, [detailState.loading]);
+
+  useEffect(() => {
+    if (!focusReplayAfterRetryRef.current || !detailState.error) return;
+
+    focusReplayAfterRetryRef.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      replayRetryRef.current?.focus()
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [detailState.error]);
 
   const retryReplayDetail = (): void => {
     if (detailState.loading) return;
@@ -417,14 +428,34 @@ function HistoryRow({
                   </button>
                 </>
               ) : detailState.error ? (
-                <button
-                  type="button"
-                  onClick={retryReplayDetail}
-                  className="action-button action-button-quiet text-[var(--console-amber)]"
-                >
-                  <RefreshCw aria-hidden="true" size={15} />
-                  Retry replay check
-                </button>
+                <div className="flex w-full min-w-0 flex-col gap-2 lg:items-end">
+                  <p
+                    role="status"
+                    aria-label="Replay check failed"
+                    className="flex min-w-0 max-w-md items-start gap-2 break-words text-left text-xs leading-5 text-[var(--text-secondary)]"
+                  >
+                    <AlertTriangle
+                      aria-hidden="true"
+                      size={15}
+                      className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+                    />
+                    <span>
+                      <strong className="font-semibold text-[var(--console-amber)]">
+                        Replay check failed.
+                      </strong>{' '}
+                      {detailState.error}
+                    </span>
+                  </p>
+                  <button
+                    ref={replayRetryRef}
+                    type="button"
+                    onClick={retryReplayDetail}
+                    className="action-button action-button-quiet text-[var(--console-amber)]"
+                  >
+                    <RefreshCw aria-hidden="true" size={15} />
+                    Retry replay check
+                  </button>
+                </div>
               ) : detailState.notFound || detailState.launch ? (
                 <span className="inline-flex min-h-11 items-center px-3 font-mono text-xs text-[var(--text-muted)]">
                   Replay not confirmed

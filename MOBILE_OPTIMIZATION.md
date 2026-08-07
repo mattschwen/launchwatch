@@ -296,6 +296,9 @@ The optional expanded map remains a modal dialog. It must:
 - When a compact archive record omits replay coverage, expansion checks only
   that canonical mission detail and keeps a 44-pixel checking, retry, or
   confirmed-replay control in the row without inflating the archive feed.
+- A failed replay check keeps its provider explanation visible in the amber
+  caution treatment and restores keyboard focus to the retry action when a
+  subsequent verification attempt also fails.
 - Replay and detail links use canonical provider-qualified IDs.
 - Every detail link retains History as its originating surface. Active archive
   filters travel only as bounded return context, so the explicit return action

@@ -5915,6 +5915,70 @@ test('history reveals replay coverage from canonical mission details', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history explains replay check failures and preserves retry focus', async ({
+  page,
+}) => {
+  const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+    index === 0
+      ? { ...launch, livestream: null, livestreams: null }
+      : launch
+  );
+  let detailRequests = 0;
+  let releaseRetry: () => void = () => undefined;
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: summaryLaunches, meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/spacex-demo-return', async (route) => {
+    detailRequests += 1;
+    if (detailRequests > 1) await retryGate;
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Replay provider maintenance' }),
+    });
+  });
+
+  await page.goto('/history');
+
+  const mission = page
+    .locator('article')
+    .filter({ hasText: 'Demo Return Flight' });
+  const disclosure = mission.getByRole('button', {
+    name: /Demo Return Flight/i,
+  });
+  await disclosure.focus();
+  await disclosure.press('Enter');
+
+  const failure = mission.getByRole('status', {
+    name: 'Replay check failed',
+  });
+  await expect(failure).toContainText(
+    'Replay check failed. Replay provider maintenance'
+  );
+  const retry = mission.getByRole('button', {
+    name: 'Retry replay check',
+  });
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await retry.focus();
+  await retry.press('Enter');
+
+  const checking = mission.getByRole('button', {
+    name: 'Checking replay coverage',
+  });
+  await expect(checking).toBeFocused();
+  releaseRetry();
+  await expect(retry).toBeFocused();
+  await expect(failure).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history retry reports progress and restores keyboard focus', async ({
   page,
 }) => {

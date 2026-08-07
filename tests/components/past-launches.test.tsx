@@ -245,6 +245,11 @@ describe('PastLaunches', () => {
     const retry = await screen.findByRole('button', {
       name: 'Retry replay check',
     });
+    expect(
+      screen.getByRole('status', { name: 'Replay check failed' })
+    ).toHaveTextContent(
+      'Replay check failed. Replay provider maintenance'
+    );
     retry.focus();
     await user.keyboard('{Enter}');
 
@@ -260,6 +265,52 @@ describe('PastLaunches', () => {
 
     const replay = await screen.findByRole('link', { name: 'Watch replay' });
     await waitFor(() => expect(replay).toHaveFocus());
+  });
+
+  it('keeps retry focus when replay verification fails again', async () => {
+    const user = userEvent.setup();
+    const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+      index === 0
+        ? { ...launch, livestream: null, livestreams: null }
+        : launch
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('type=history')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ launches: summaryLaunches, meta: FEED_META }),
+          } as Response;
+        }
+
+        return {
+          ok: false,
+          status: 503,
+          json: async () => ({ error: 'Replay provider maintenance' }),
+        } as Response;
+      })
+    );
+
+    render(<PastLaunches />);
+    await screen.findByText('Demo Return Flight');
+    await user.click(screen.getByRole('button', { name: /Demo Return Flight/i }));
+
+    const retry = await screen.findByRole('button', {
+      name: 'Retry replay check',
+    });
+    retry.focus();
+    await user.keyboard('{Enter}');
+
+    const restoredRetry = await screen.findByRole('button', {
+      name: 'Retry replay check',
+    });
+    await waitFor(() => expect(restoredRetry).toHaveFocus());
+    expect(
+      screen.getByRole('status', { name: 'Replay check failed' })
+    ).toBeVisible();
   });
 
   it('makes the bounded archive feed window visible before filtering', async () => {
