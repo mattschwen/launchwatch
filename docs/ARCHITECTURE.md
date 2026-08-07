@@ -160,13 +160,17 @@ See [`API.md`](API.md) for request and response examples.
 
 `useLaunches`, `useLiveLaunches`, and `useNextLaunch` are selectors over this
 shared state. `useLaunchById` preserves the shared feed record while it calls
-`/api/launches/[id]`, exposes the in-progress enrichment state, and then replaces
-the record with canonical detail. This lets Watch resolve streams, Home acquire
-richer visual provenance only when the feed has no eligible image, and completed
-missions or launches outside the current window resolve. A failed detail check
-keeps the shared feed mission visible and can be retried in place; Watch reports
-the checking, failed, retrying, and recovered coverage states without reloading
-the schedule. `useLaunchIntel` sends only the selected canonical ID.
+`/api/launches/[id]`, exposes the in-progress enrichment state, and then merges
+canonical detail into that record. While a mission remains in the current feed,
+its target, precision, launch window, provider status, and live flags stay
+authoritative; detail can add richer visuals, descriptions, and stream links but
+cannot regress current schedule state. This lets Watch resolve streams, Home
+acquire richer visual provenance only when the feed has no eligible image, and
+completed missions or launches outside the current window resolve. A failed
+detail check keeps the shared feed mission visible and can be retried in place;
+Watch reports the checking, failed, retrying, and recovered coverage states
+without reloading the schedule. `useLaunchIntel` sends only the selected
+canonical ID.
 
 Canonical detail pages retain the richer server detail payload, but reconcile
 its volatile live status with the shared browser feed after that feed settles.

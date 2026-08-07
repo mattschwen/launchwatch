@@ -26,6 +26,12 @@ function HookHarness({
       <p data-testid="selected-stream">
         {result.launch?.livestream ?? 'No stream'}
       </p>
+      <p data-testid="selected-date">{result.launch?.date ?? 'No date'}</p>
+      <p data-testid="selected-status">
+        {result.launch
+          ? `${result.launch.status}:${String(result.launch.isLive)}`
+          : 'No status'}
+      </p>
       <p data-testid="enrichment-state">
         {result.enriching ? 'Acquiring detail' : 'Detail settled'}
       </p>
@@ -191,6 +197,57 @@ describe('useLaunchById', () => {
     );
     expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
       'Detail settled'
+    );
+  });
+
+  it('keeps current feed timing and status authoritative while adding detail enrichment', async () => {
+    const feedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2035-08-03T12:30:00.000Z',
+      dateUnix: 2069776200,
+      status: 'upcoming' as const,
+      statusName: 'Go for Launch',
+      isLive: false,
+      webcastLive: false,
+    };
+    const olderDetail = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2035-08-03T11:30:00.000Z',
+      dateUnix: 2069772600,
+      status: 'live' as const,
+      statusName: 'In Flight',
+      isLive: true,
+      webcastLive: true,
+      livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('?type=all')) {
+          return Promise.resolve(response({ launches: [feedLaunch] }));
+        }
+        return Promise.resolve(response({ launch: olderDetail }));
+      })
+    );
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={feedLaunch.id} />
+      </LaunchDataProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-stream')).toHaveTextContent(
+        olderDetail.livestream
+      )
+    );
+    expect(screen.getByTestId('selected-date')).toHaveTextContent(
+      feedLaunch.date
+    );
+    expect(screen.getByTestId('selected-status')).toHaveTextContent(
+      'upcoming:false'
     );
   });
 

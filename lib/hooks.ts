@@ -203,6 +203,27 @@ export function useNextLaunch() {
   };
 }
 
+function enrichCurrentLaunch(
+  feedLaunch: Launch | null,
+  detailLaunch: Launch | null,
+): Launch | null {
+  if (!detailLaunch) return feedLaunch;
+  if (!feedLaunch) return detailLaunch;
+
+  return {
+    ...detailLaunch,
+    date: feedLaunch.date,
+    dateUnix: feedLaunch.dateUnix,
+    datePrecision: feedLaunch.datePrecision,
+    windowStart: feedLaunch.windowStart,
+    windowEnd: feedLaunch.windowEnd,
+    status: feedLaunch.status,
+    statusName: feedLaunch.statusName,
+    isLive: feedLaunch.isLive,
+    webcastLive: feedLaunch.webcastLive,
+  };
+}
+
 export function useLaunchById(id: string | null | undefined) {
   const { launches, loading: feedLoading } = useLaunchData();
   const [retryVersion, setRetryVersion] = useState(0);
@@ -219,7 +240,10 @@ export function useLaunchById(id: string | null | undefined) {
     retrying: boolean;
   } | null>(null);
   const currentRemote = remote?.id === id ? remote : null;
-  const launch = currentRemote?.launch ?? feedLaunch;
+  const launch = useMemo(
+    () => enrichCurrentLaunch(feedLaunch, currentRemote?.launch ?? null),
+    [currentRemote?.launch, feedLaunch]
+  );
 
   useEffect(() => {
     if (!id) {

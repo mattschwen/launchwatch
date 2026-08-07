@@ -162,7 +162,9 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
 - Home, Watch, the header, and launch selectors share one deduplicated client request to `type=all`, refreshed every two minutes and when a stale visible tab reconnects.
 - If the featured feed record lacks a reusable visual, Home requests that one
   canonical launch detail record to acquire richer vehicle-image provenance;
-  the server caches the result under the existing detail policy.
+  the server caches the result under the existing detail policy. Detail
+  enrichment cannot replace the current feed's target, launch window, status,
+  or live flags.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
 - A failed provider resource enters a bounded 30-second recovery window before
   LaunchWatch attempts that same upstream request again. Other providers remain

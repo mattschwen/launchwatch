@@ -489,6 +489,16 @@ test('@a11y watch estimate countdown has valid time semantics', async ({
     livestream: null,
     livestreams: null,
   };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [estimatedLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    })
+  );
   await page.route(
     '**/api/launches/ll2-demo-orbital-dawn',
     (route) =>
@@ -504,7 +514,10 @@ test('@a11y watch estimate countdown has valid time semantics', async ({
   );
 
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
-  await expect(page.getByText(/≈T−/)).toBeVisible();
+  const coverageCountdown = page
+    .getByRole('region', { name: /Mission coverage/ })
+    .locator('time');
+  await expect(coverageCountdown).toContainText('≈T−');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -371,6 +371,82 @@ test('prelaunch coverage stays distinct from mission flight state', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('detail enrichment cannot regress the current schedule or live state', async ({
+  page,
+}) => {
+  const currentFeedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: '2035-07-28T15:30:00.000Z',
+    dateUnix: 2069259000,
+    windowStart: '2035-07-28T15:30:00.000Z',
+    windowEnd: '2035-07-28T17:30:00.000Z',
+  };
+  const olderDetail = {
+    ...UPCOMING_LAUNCHES[0],
+    status: 'live' as const,
+    statusName: 'In Flight',
+    isLive: true,
+    webcastLive: true,
+    livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+    livestreams: [
+      {
+        url: 'https://x.com/i/broadcasts/orbital-dawn',
+        title: 'Older detail coverage snapshot',
+        isLive: true,
+      },
+    ],
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [currentFeedLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: olderDetail,
+          canonicalId: olderDetail.id,
+          meta: FEED_META,
+        }),
+      })
+  );
+
+  await page.goto('/');
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero.getByText('Next launch', { exact: true })).toBeVisible();
+  await expect(hero.getByText('Coverage live', { exact: true })).toHaveCount(0);
+  await expect(hero.getByText('In flight', { exact: true })).toHaveCount(0);
+  await expect(
+    hero.locator('time[datetime="2035-07-28T15:30:00.000Z"]').first()
+  ).toBeVisible();
+  await expect(
+    hero.locator('time[datetime="2035-07-28T14:30:00.000Z"]')
+  ).toHaveCount(0);
+
+  await page.goto('/watch');
+  await expect(
+    page.getByRole('region', { name: 'Mission coverage scheduled' })
+  ).toBeVisible();
+  await expect(page.getByText('COVERAGE LIVE', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('IN FLIGHT', { exact: true })).toHaveCount(0);
+  await expect(
+    page.locator('time[datetime="2035-07-28T15:30:00.000Z"]').first()
+  ).toBeVisible();
+  await expect(
+    page.locator('time[datetime="2035-07-28T14:30:00.000Z"]')
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('detail suppresses a live server snapshot the current feed cannot confirm', async ({
   page,
 }) => {
