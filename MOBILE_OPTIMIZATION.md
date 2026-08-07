@@ -258,6 +258,9 @@ The optional expanded map remains a modal dialog. It must:
   placeholders stay out of the accessibility tree.
 - Search stays immediately available on narrow screens while secondary
   provider/year/outcome and chronology controls use a touch-safe disclosure.
+- Below 360px, the archive masthead keeps its route identity and title but
+  yields descriptive and repeated source copy to the search-and-results
+  workflow, placing the first recovered mission above fixed navigation.
   Active secondary controls reopen from URL return context and remain visibly
   counted.
 - Search, provider, launch year, outcome, and chronology retain visible field labels as

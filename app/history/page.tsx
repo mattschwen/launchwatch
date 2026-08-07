@@ -23,10 +23,10 @@ export default async function HistoryPage({
   const returnFocusId = readHistoryReturnFocus(resolvedSearchParams);
 
   return (
-    <div className="page-container py-5 sm:py-7 lg:py-9">
-      <header className="route-masthead signal-warm mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="page-container py-4 min-[360px]:py-5 sm:py-7 lg:py-9">
+      <header className="route-masthead signal-warm mb-4 flex flex-col gap-4 min-[360px]:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="data-label mb-3 text-[var(--console-amber)]">
+          <p className="data-label mb-2 text-[var(--console-amber)] min-[360px]:mb-3">
             Archive node // recovered telemetry
           </p>
           <div className="flex items-center gap-3">
@@ -37,12 +37,14 @@ export default async function HistoryPage({
               Launch archive
             </h1>
           </div>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
+          <p className="mt-4 hidden max-w-2xl text-sm leading-6 text-[var(--text-secondary)] min-[360px]:block sm:text-base">
             Search completed missions, inspect outcomes, and reopen official
             launch coverage.
           </p>
         </div>
-        <p className="data-label">Source: public providers</p>
+        <p className="data-label hidden min-[360px]:block">
+          Source: public providers
+        </p>
       </header>
 
       <PastLaunches

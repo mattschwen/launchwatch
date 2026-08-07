@@ -5462,6 +5462,32 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('narrow history introduces a recovered mission above fixed navigation', async ({
+  page,
+}) => {
+  test.skip(!test.info().project.name.startsWith('mobile'));
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/history');
+
+  const firstMissionName = page
+    .locator('article')
+    .first()
+    .getByText('Demo Return Flight', { exact: true });
+  const mobileNav = page.locator('nav.fixed.bottom-0:visible').first();
+  await expect(firstMissionName).toBeVisible();
+
+  const [missionBounds, navBounds] = await Promise.all([
+    firstMissionName.boundingBox(),
+    mobileNav.boundingBox(),
+  ]);
+  expect(missionBounds).not.toBeNull();
+  expect(navBounds).not.toBeNull();
+  expect(missionBounds!.y + missionBounds!.height).toBeLessThanOrEqual(
+    navBounds!.y,
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history uses scannable archive columns at desktop workspace widths', async ({
   page,
 }, testInfo) => {
