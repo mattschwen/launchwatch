@@ -996,7 +996,25 @@ function WatchContent(): React.ReactElement {
       window.matchMedia('(max-width: 1023px)').matches
     ) {
       window.requestAnimationFrame(() => {
-        selectedMissionRef.current?.scrollIntoView({
+        const mission = selectedMissionRef.current;
+        if (!mission) return;
+
+        const missionBounds = mission.getBoundingClientRect();
+        const headerBottom =
+          document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+        const navigationTop = Array.from(
+          document.querySelectorAll<HTMLElement>(
+            'nav[aria-label="Primary navigation"]'
+          )
+        )
+          .map((navigation) => navigation.getBoundingClientRect())
+          .find((bounds) => bounds.height > 0)?.top ?? window.innerHeight;
+        const missionAlreadyVisible =
+          missionBounds.top >= headerBottom - 1 &&
+          missionBounds.bottom <= navigationTop + 1;
+        if (missionAlreadyVisible) return;
+
+        mission.scrollIntoView({
           behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
             ? 'auto'
             : 'smooth',
@@ -1167,23 +1185,29 @@ function WatchContent(): React.ReactElement {
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div
-            ref={selectedMissionRef}
             data-watch-selected-mission
-            className="min-w-0 scroll-mt-20"
+            className="contents lg:block lg:min-w-0"
           >
-            <WatchStage
-              launch={selectedLaunch}
-              detailHref={selectedDetailHref}
-              detailLoading={selected.enriching}
-              detailRetrying={selected.retrying}
-              coverageUnconfirmed={coverageUnconfirmed}
-              coverageRegionRef={coverageRegionRef}
-              onRetryDetails={retryMissionDetails}
-              streamLookupError={selected.launch ? selected.error : null}
-            />
+            <div
+              ref={selectedMissionRef}
+              data-watch-selected-stage
+              className="order-1 min-w-0 scroll-mt-20"
+            >
+              <WatchStage
+                launch={selectedLaunch}
+                detailHref={selectedDetailHref}
+                detailLoading={selected.enriching}
+                detailRetrying={selected.retrying}
+                coverageUnconfirmed={coverageUnconfirmed}
+                coverageRegionRef={coverageRegionRef}
+                onRetryDetails={retryMissionDetails}
+                streamLookupError={selected.launch ? selected.error : null}
+              />
+            </div>
 
             <section
-              className={`surface-card holo-card mt-4 p-5 sm:p-6 ${
+              data-watch-mission-details
+              className={`surface-card holo-card order-3 p-5 sm:p-6 lg:mt-4 ${
                 selectedLiveCoverage
                   ? 'signal-live'
                   : selectedLaunch.isLive && coverageUnconfirmed
@@ -1241,21 +1265,25 @@ function WatchContent(): React.ReactElement {
             </section>
           </div>
 
-          <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
-            <MissionQueue
-              launches={queue}
-              selectedId={selectedLaunch.id}
-              coverageUnconfirmed={coverageUnconfirmed}
-              onSelect={selectLaunch}
-            />
+          <div className="contents lg:col-start-2 lg:row-start-1 lg:block lg:min-w-0 lg:space-y-4">
+            <div className="order-2 min-w-0">
+              <MissionQueue
+                launches={queue}
+                selectedId={selectedLaunch.id}
+                coverageUnconfirmed={coverageUnconfirmed}
+                onSelect={selectLaunch}
+              />
+            </div>
 
-            <WatchMissionVisual
-              key={selectedLaunch.id}
-              launch={selectedLaunch}
-              loading={selected.enriching}
-              error={selected.error}
-              collapsible={Boolean(selectedLaunch.livestream)}
-            />
+            <div className="order-4 min-w-0">
+              <WatchMissionVisual
+                key={selectedLaunch.id}
+                launch={selectedLaunch}
+                loading={selected.enriching}
+                error={selected.error}
+                collapsible={Boolean(selectedLaunch.livestream)}
+              />
+            </div>
           </div>
         </div>
 

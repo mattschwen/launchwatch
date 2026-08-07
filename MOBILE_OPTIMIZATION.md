@@ -160,21 +160,22 @@ The optional expanded map remains a modal dialog. It must:
 - Scheduled provider coverage and completed replays keep the cyan secondary
   signal treatment. Magenta live framing and actions are reserved for a
   provider-confirmed active broadcast.
-- The mission queue follows the selected mission summary and actions on smaller
-  screens, ahead of secondary vehicle imagery, and becomes a side rail on larger
-  screens. Long queues use a bounded four-row-height viewport on smaller screens
-  with a visible count and scroll cue. Mission, timing, and provider identities
-  wrap instead of disappearing behind ellipses, while ten queued missions remain
-  keyboard and touch reachable without pushing coverage intelligence down another
-  viewport. The rail is labeled as a mission queue—not a list of missions after
-  the current selection—and marks the active item with a persistent `On console`
-  cue in addition to its selected surface. When the provider returns more missions,
-  the rail reports the visible and total counts and exposes a 44-pixel path to the
-  full schedule.
+- The mission queue follows primary coverage on smaller screens, ahead of the
+  selected mission briefing and secondary vehicle imagery, so switching missions
+  does not require traversing details for the current selection. It becomes a side
+  rail on larger screens. Long queues use a bounded four-row-height viewport on
+  smaller screens with a visible count and scroll cue. Mission, timing, and
+  provider identities wrap instead of disappearing behind ellipses, while ten
+  queued missions remain keyboard and touch reachable without pushing coverage
+  intelligence down another viewport. The rail is labeled as a mission queue—not
+  a list of missions after the current selection—and marks the active item with a
+  persistent `On console` cue in addition to its selected surface. When the
+  provider returns more missions, the rail reports the visible and total counts
+  and exposes a 44-pixel path to the full schedule.
 - On larger screens, the mission queue and its optional licensed vehicle reference
   share one bounded side rail so secondary context does not create an empty grid
   column or expand ahead of mission intelligence. Their mobile document order
-  remains summary, queue, then visual.
+  remains coverage, queue, summary, then visual.
 - When no reusable Watch visual is available, the side rail keeps an honest
   touch-safe disclosure instead of expanding a non-actionable placeholder.
   Opening it reveals the full rights, missing-source, loading, or degraded state;

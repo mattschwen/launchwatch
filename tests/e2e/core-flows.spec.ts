@@ -3344,8 +3344,8 @@ test('watch enriches the selected mission and switches the mission queue', async
   const polarisQueueItem = page
     .getByRole('complementary', { name: 'Mission queue' })
     .getByRole('button', { name: /Polaris Relay/i });
-  const selectedMission = page.locator('[data-watch-selected-mission]');
-  await selectedMission
+  const missionDetails = page.locator('[data-watch-mission-details]');
+  await missionDetails
     .getByRole('button', { name: 'Calendar', exact: true })
     .click();
   await expect(
@@ -3396,7 +3396,7 @@ test('watch reveals a pointer-selected mission on narrow layouts', async ({
 }) => {
   await page.goto('/watch');
 
-  const selectedMission = page.locator('[data-watch-selected-mission]');
+  const selectedMission = page.locator('[data-watch-selected-stage]');
   const polarisQueueItem = page
     .getByRole('complementary', { name: 'Mission queue' })
     .getByRole('button', { name: /Polaris Relay/i });
@@ -3420,7 +3420,7 @@ test('watch reveals a pointer-selected mission on narrow layouts', async ({
         scrollY: window.scrollY,
       };
     });
-    expect(geometry.scrollY).toBeLessThan(initialScroll);
+    expect(geometry.scrollY).toBeLessThanOrEqual(initialScroll);
     expect(geometry.selectedTop).toBeGreaterThanOrEqual(
       geometry.headerBottom - 1
     );
@@ -3428,6 +3428,42 @@ test('watch reveals a pointer-selected mission on narrow layouts', async ({
     expect(await page.evaluate(() => window.scrollY)).toBe(initialScroll);
   }
 
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch keeps mission selection ahead of secondary details on narrow layouts', async ({
+  page,
+}) => {
+  test.skip(
+    !test.info().project.name.startsWith('mobile'),
+    'Mobile watch information hierarchy'
+  );
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/watch');
+
+  const coverage = page.getByRole('region', {
+    name: 'Mission coverage scheduled',
+  });
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  const missionDetails = page
+    .getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+    .locator('xpath=ancestor::section[1]');
+
+  const hierarchy = await Promise.all(
+    [coverage, queue, missionDetails].map(async (element) => {
+      await expect(element).toBeVisible();
+      const bounds = await element.boundingBox();
+      expect(bounds).not.toBeNull();
+      return bounds!;
+    })
+  );
+
+  expect(hierarchy[0].y + hierarchy[0].height).toBeLessThanOrEqual(
+    hierarchy[1].y
+  );
+  expect(hierarchy[1].y + hierarchy[1].height).toBeLessThanOrEqual(
+    hierarchy[2].y
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
