@@ -5513,6 +5513,10 @@ test('history chronology reverses the visible feed window and survives detail re
 test('history identifies and isolates unconfirmed mission outcomes', async ({
   page,
 }) => {
+  if (test.info().project.name.startsWith('mobile')) {
+    await page.setViewportSize({ width: 320, height: 568 });
+  }
+
   const pendingLaunch = {
     ...HISTORICAL_LAUNCHES[0],
     id: 'll2-demo-outcome-pending',
@@ -5544,6 +5548,24 @@ test('history identifies and isolates unconfirmed mission outcomes', async ({
   await expect(pendingRow).toBeVisible();
   await expect(pendingRow).toContainText('Outcome unconfirmed');
   await expect(pendingRow).not.toContainText('Go for Launch');
+  const visibleOutcome = pendingRow
+    .locator('[data-history-outcome]')
+    .filter({ visible: true });
+  const outcomeLayout = await visibleOutcome.evaluate((element) => {
+    const label = element.lastElementChild as HTMLElement;
+    const style = getComputedStyle(label);
+    return {
+      clientWidth: label.clientWidth,
+      scrollWidth: label.scrollWidth,
+      textOverflow: style.textOverflow,
+      whiteSpace: style.whiteSpace,
+    };
+  });
+  expect(outcomeLayout.scrollWidth).toBeLessThanOrEqual(
+    outcomeLayout.clientWidth + 1,
+  );
+  expect(outcomeLayout.textOverflow).not.toBe('ellipsis');
+  expect(outcomeLayout.whiteSpace).toBe('normal');
   await expect(
     page.locator('article').filter({ hasText: 'Demo Return Flight' }),
   ).toHaveCount(0);

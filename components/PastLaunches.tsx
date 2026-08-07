@@ -305,7 +305,9 @@ function HistoryRow({
                   aria-hidden="true"
                   className={`h-2 w-2 shrink-0 rounded-full ${outcomeDot}`}
                 />
-                <span className="truncate">{outcome}</span>
+                <span className="min-w-0 whitespace-normal break-words leading-4">
+                  {outcome}
+                </span>
               </span>
             </span>
           </span>

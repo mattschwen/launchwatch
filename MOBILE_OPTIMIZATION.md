@@ -260,7 +260,8 @@ The optional expanded map remains a modal dialog. It must:
   values change, so restored or shared archive filters remain self-identifying.
 - Past-window records without a terminal provider result use an amber
   `Outcome unconfirmed` label and can be isolated with the URL-persistent
-  Unconfirmed outcome filter; they never inherit the green success treatment.
+  Unconfirmed outcome filter; the complete label wraps in compact rows instead
+  of being ellipsized, and never inherits the green success treatment.
 - Chronology reverses only the current bounded archive response, explicitly
   offering newest-first or oldest-first scanning without implying access beyond
   the labeled feed window. It survives mission-detail return navigation.
