@@ -110,6 +110,22 @@ describe('AddToCalendar', () => {
     ).toHaveClass('left-1/2', '-translate-x-1/2');
   });
 
+  it('identifies the Google Calendar handoff as a new-tab action', async () => {
+    const user = userEvent.setup();
+
+    render(<AddToCalendar launch={UPCOMING_LAUNCHES[0]} />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add to calendar' })
+    );
+
+    expect(
+      screen.getByRole('button', {
+        name: /Google Calendar.*opens in a new tab/i,
+      })
+    ).toBeVisible();
+  });
+
   it('makes browser launch alerts reachable with honest permission states', async () => {
     const user = userEvent.setup();
     let resolvePermission: ((value: NotificationPermission) => void) | undefined;

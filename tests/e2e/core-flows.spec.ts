@@ -5052,7 +5052,7 @@ test('briefing calendar options stay visible and restore trigger focus', async (
     name: 'Calendar options',
   });
   const firstOption = calendarOptions.getByRole('button', {
-    name: 'Google Calendar',
+    name: /Google Calendar.*opens in a new tab/i,
   });
   await expect(calendarOptions).toBeVisible();
   await expect(firstOption).toBeFocused();
@@ -6609,7 +6609,9 @@ test('upcoming detail keeps mission commands in a touch-safe mobile console', as
   const menu = page.getByRole('group', { name: 'Calendar options' });
   await expect(menu).toBeVisible();
   await expect(
-    menu.getByRole('button', { name: 'Google Calendar' })
+    menu.getByRole('button', {
+      name: /Google Calendar.*opens in a new tab/i,
+    })
   ).toBeFocused();
 
   const placement = await menu.evaluate((element) => {

@@ -8,6 +8,7 @@ import {
   Check,
   CircleAlert,
   Copy,
+  ExternalLink,
   LoaderCircle,
 } from 'lucide-react';
 import type { Launch } from '@/lib/types';
@@ -21,6 +22,7 @@ import {
   hasCalendarReadyLaunchTime,
 } from '@/lib/format';
 import { checkAndNotify } from '@/lib/notifications';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 
 interface AddToCalendarProps {
   launch: Launch;
@@ -315,8 +317,9 @@ export default function AddToCalendar({
             }}
             className="menu-item"
           >
-            <Calendar aria-hidden="true" size={16} />
+            <ExternalLink aria-hidden="true" size={16} />
             Google Calendar
+            <ExternalLinkHint />
           </button>
           <button
             type="button"
