@@ -154,6 +154,10 @@ The optional expanded map remains a modal dialog. It must:
 - When no verified stream is available, the route presents the next mission,
   countdown, provider fallback, and one eligible mission visual instead of an
   empty stage. A verified stream remains the primary visual.
+- At the supported 320-pixel boundary, the standby console removes decorative
+  bulk and compacts its mission context so the primary coverage action remains
+  fully above fixed navigation; wider mobile and desktop stages retain the
+  established media-scale composition.
 - The coverage stage owns Watch's single primary stream or provider action;
   the selected-mission summary keeps briefing and calendar tools without a
   redundant self-link or duplicate fallback.

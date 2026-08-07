@@ -4959,6 +4959,10 @@ test('watch offers a touch-safe recovery from an unavailable deep link', async (
 test('watch labels stream-search and provider-channel fallbacks truthfully', async ({
   page,
 }) => {
+  if (test.info().project.name.startsWith('mobile')) {
+    await page.setViewportSize({ width: 320, height: 568 });
+  }
+
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -5003,6 +5007,22 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
     'href',
     'https://www.youtube.com/results?search_query=Astra+Nova+Orbital+Dawn+launch+livestream'
   );
+  if (test.info().project.name.startsWith('mobile')) {
+    const initialPlacement = await searchFallback.evaluate((element) => {
+      const action = element.getBoundingClientRect();
+      const mobileNavigation = document
+        .querySelector<HTMLElement>('nav.fixed.bottom-0')
+        ?.getBoundingClientRect();
+
+      return {
+        actionBottom: action.bottom,
+        navigationTop: mobileNavigation?.top ?? window.innerHeight,
+      };
+    });
+    expect(initialPlacement.actionBottom).toBeLessThanOrEqual(
+      initialPlacement.navigationTop
+    );
+  }
   await searchFallback.focus();
   await expect(searchFallback).toBeFocused();
   expect((await searchFallback.boundingBox())?.height).toBeGreaterThanOrEqual(44);

@@ -418,7 +418,7 @@ function WatchStage({
       role="region"
       aria-label={coverageLabel}
       tabIndex={-1}
-      className="stream-surface holo-card signal-warm relative flex min-h-[22rem] w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-5 text-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] sm:aspect-video"
+      className="stream-surface holo-card signal-warm relative flex min-h-0 w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-4 py-3 text-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] min-[360px]:min-h-[22rem] min-[360px]:px-5 min-[360px]:py-0 sm:aspect-video"
     >
       <div
         aria-hidden="true"
@@ -428,56 +428,58 @@ function WatchStage({
         aria-hidden="true"
         size={88}
         strokeWidth={0.8}
-        className="absolute bottom-[-0.6rem] right-[7%] text-[var(--border-strong)]"
+        className="absolute bottom-[-0.6rem] right-[7%] hidden text-[var(--border-strong)] min-[360px]:block"
       />
       <div className="relative max-w-xl">
         {detailLoading ? (
           <LoaderCircle
             aria-hidden="true"
-            className="mx-auto animate-spin text-[var(--console-cyan)]"
+            className="mx-auto hidden animate-spin text-[var(--console-cyan)] min-[360px]:block"
             size={34}
           />
         ) : streamLookupError ? (
           <AlertTriangle
             aria-hidden="true"
-            className="mx-auto text-[var(--console-amber)]"
+            className="mx-auto hidden text-[var(--console-amber)] min-[360px]:block"
             size={34}
           />
         ) : (
           <Radio
             aria-hidden="true"
-            className="mx-auto text-[var(--console-amber)]"
+            className="mx-auto hidden text-[var(--console-amber)] min-[360px]:block"
             size={34}
           />
         )}
-        <h2 className="mt-5 text-[clamp(1.65rem,4vw,2.5rem)] font-bold tracking-[-0.035em] text-[var(--text-primary)]">
+        <h2 className="text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] min-[360px]:mt-5 min-[360px]:text-[clamp(1.65rem,4vw,2.5rem)]">
           {detailLoading
             ? 'Checking stream status'
             : streamLookupError
             ? 'Stream status unavailable'
             : 'No live stream right now'}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] min-[360px]:mt-2 min-[360px]:text-sm min-[360px]:leading-6">
           {fallbackDescription}
         </p>
-        <div className="my-6 h-px bg-[var(--border-subtle)]" />
-        <p className="data-label">Next mission</p>
-        <Link
-          href={detailHref}
-          className="mt-1 inline-flex min-h-11 max-w-full items-center justify-center text-xl font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)]"
-        >
-          {primaryMissionName}
-        </Link>
-        <div className="mt-3">
-          <Countdown
-            targetDate={launch.date}
-            precision={launch.datePrecision}
-            windowStart={launch.windowStart}
-            windowEnd={launch.windowEnd}
-            compact
-          />
+        <div className="my-2 h-px bg-[var(--border-subtle)] min-[360px]:my-6" />
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 min-[360px]:contents">
+          <p className="data-label hidden min-[360px]:block">Next mission</p>
+          <Link
+            href={detailHref}
+            className="inline-flex min-h-11 min-w-0 max-w-full items-center justify-center text-base font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)] min-[360px]:mt-1 min-[360px]:text-xl"
+          >
+            {primaryMissionName}
+          </Link>
+          <div className="min-[360px]:mt-3">
+            <Countdown
+              targetDate={launch.date}
+              precision={launch.datePrecision}
+              windowStart={launch.windowStart}
+              windowEnd={launch.windowEnd}
+              compact
+            />
+          </div>
         </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-2 flex flex-wrap justify-center gap-2 min-[360px]:mt-6">
           {fallback.recommendedUrl ? (
             <a
               href={fallback.recommendedUrl}
@@ -1103,7 +1105,7 @@ function WatchContent(): React.ReactElement {
         ) : null}
 
         <div
-          className={`route-masthead mb-6 flex flex-wrap items-center justify-between gap-3 pb-2 ${
+          className={`route-masthead mb-3 flex flex-wrap items-center justify-between gap-2 pb-2 min-[360px]:mb-6 min-[360px]:gap-3 ${
             hasLiveCoverage
               ? 'signal-live'
               : degradedSchedule
@@ -1124,7 +1126,7 @@ function WatchContent(): React.ReactElement {
             <h1 className="section-title mt-1 text-[clamp(1.55rem,4vw,2.4rem)]">
               Watch room
             </h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="mt-1 hidden text-sm text-[var(--text-muted)] min-[360px]:block">
               {hasLiveCoverage
                 ? confirmedLiveSummary
                 : coverageUnconfirmed && liveLaunches.length > 0
