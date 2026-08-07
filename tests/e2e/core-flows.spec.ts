@@ -1777,7 +1777,9 @@ test('unfiltered archive missions retain History navigation context', async ({
     'a[href="/launch/spacex-demo-return?from=history"]',
   );
   await expect(missionDetail).toHaveCount(1);
-  await expect(missionDetail).toHaveAccessibleName('View mission');
+  await expect(missionDetail).toHaveAccessibleName(
+    'View mission Demo Return Flight',
+  );
   await missionDetail.click();
 
   await expect(page).toHaveURL(
@@ -5211,7 +5213,9 @@ test('history search reaches a completed mission detail', async ({ page }) => {
     page.getByRole('searchbox', { name: 'Search missions' })
   ).toHaveValue('Return');
   await expect(archiveResults).toHaveText('1 result');
-  const missionDetail = page.getByRole('link', { name: 'View mission' });
+  const missionDetail = page.getByRole('link', {
+    name: 'View mission Demo Return Flight',
+  });
   await expect(missionDetail).toHaveCount(1);
   await expect(missionDetail).toHaveAttribute(
     'href',
@@ -5451,7 +5455,9 @@ test('history uses scannable archive columns at desktop workspace widths', async
   expect(layout.columns.split(' ').length).toBe(6);
 
   const rowDisclosure = firstRow.getByRole('button');
-  const missionLink = firstRow.getByRole('link', { name: 'View mission' });
+  const missionLink = firstRow.getByRole('link', {
+    name: /^View mission /,
+  });
   await rowDisclosure.focus();
   await expect(rowDisclosure).toBeFocused();
   expect((await rowDisclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
@@ -5483,7 +5489,7 @@ test('history chronology reverses the visible feed window and survives detail re
   await expect(rows.last()).toContainText('Demo Return Flight');
 
   const oldestMission = rows.first().getByRole('link', {
-    name: 'View mission',
+    name: /^View mission /,
   });
   await expect(oldestMission).toHaveAttribute(
     'href',
@@ -6146,7 +6152,7 @@ test('history rejects invalid successful refreshes without erasing settled recor
     page.getByRole('alert').filter({ hasText: 'Archive refresh failed.' })
   ).toBeVisible();
   await expect(mission).toBeVisible();
-  await expect(page.getByRole('link', { name: 'View mission' }).first()).toHaveAttribute(
+  await expect(page.getByRole('link', { name: /^View mission / }).first()).toHaveAttribute(
     'href',
     '/launch/spacex-demo-return?from=history'
   );
@@ -6348,7 +6354,9 @@ test('archive detail return restores the revealed mission result', async ({
   const targetRow = archive.locator('article').filter({
     hasText: 'Archive Return Mission 16',
   });
-  const target = targetRow.getByRole('link', { name: 'View mission' });
+  const target = targetRow.getByRole('link', {
+    name: 'View mission Archive Return Mission 16',
+  });
   await expect(target).toBeVisible();
   await target.click();
 
@@ -7463,7 +7471,7 @@ test('archive stays usable at the desktop-tablet boundary', async ({ page }) => 
   await expect(
     page.getByRole('heading', { level: 1, name: 'Launch archive' })
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'View mission' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: /^View mission / }).first()).toBeVisible();
   const firstRow = page.locator('article').first();
   for (const label of ['Date (UTC)', 'Vehicle', 'Site', 'Outcome']) {
     await expect(firstRow.getByText(label, { exact: true })).toBeVisible();

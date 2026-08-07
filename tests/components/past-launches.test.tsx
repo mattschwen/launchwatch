@@ -54,11 +54,18 @@ describe('PastLaunches', () => {
     expect(await screen.findByText('Demo Return Flight')).toBeVisible();
     expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
     expect(
-      screen.getAllByRole('link', { name: /View mission/i })[0]
+      screen.getByRole('link', {
+        name: 'View mission Demo Return Flight',
+      })
     ).toHaveAttribute(
       'href',
       '/launch/spacex-demo-return?from=history',
     );
+    expect(
+      screen.getByRole('link', {
+        name: 'View mission Pathfinder Qualification',
+      })
+    ).toBeVisible();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search missions' }), 'Return');
 
@@ -371,7 +378,9 @@ describe('PastLaunches', () => {
         name: 'Hide archive filters, 3 active',
       })
     ).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: 'View mission' })).toHaveAttribute(
+    expect(screen.getByRole('link', {
+      name: 'View mission Demo Return Flight',
+    })).toHaveAttribute(
       'href',
       '/launch/spacex-demo-return?from=history&history=q%3DReturn%26provider%3DSpaceX%26year%3D2025%26outcome%3Dsuccess',
     );
@@ -588,7 +597,7 @@ describe('PastLaunches', () => {
       screen.getByText('Launch archive response was incomplete')
     ).toBeVisible();
     expect(
-      screen.queryByRole('link', { name: 'View mission' })
+      screen.queryByRole('link', { name: /^View mission / })
     ).not.toBeInTheDocument();
   });
 
@@ -758,7 +767,7 @@ describe('PastLaunches', () => {
     ).toBeVisible();
     expect(screen.getByText('Demo Return Flight')).toBeVisible();
     expect(
-      screen.getAllByRole('link', { name: 'View mission' })[0]
+      screen.getByRole('link', { name: 'View mission Demo Return Flight' })
     ).toHaveAttribute('href', '/launch/spacex-demo-return?from=history');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });

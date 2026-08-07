@@ -38,7 +38,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Provider-aware detail lookup for current and completed missions
 - Ranked official/provider stream discovery
 - Useful Watch fallback when no verified stream is live
-- Searchable and filterable launch schedule and archive
+- Searchable and filterable launch schedule and archive with mission-specific
+  accessible names on repeated archive actions
 - Mission briefings, coverage, community links, and replay surfaces
 - Consistent screen-reader cues before actions open external coverage, sources,
   or calendar handoffs in a new tab

@@ -55,6 +55,22 @@ for (const route of routes) {
         .evaluate((element) => element.tagName)
     ).toBe('H1');
 
+    if (route.path === '/history') {
+      await expect(
+        page.getByRole('link', {
+          name: 'View mission Demo Return Flight',
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('link', {
+          name: 'View mission Pathfinder Qualification',
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'View mission', exact: true }),
+      ).toHaveCount(0);
+    }
+
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();

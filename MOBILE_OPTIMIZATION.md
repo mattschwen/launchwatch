@@ -278,6 +278,8 @@ The optional expanded map remains a modal dialog. It must:
 - Each archive row keeps the complete mission and provider identity readable,
   wrapping long provider-supplied names instead of hiding them behind
   ellipses, before exposing secondary metadata and the View Mission action.
+  The repeated visible action stays compact while its accessible name includes
+  the corresponding mission, keeping screen-reader link lists clear.
 - At 1120 pixels and wider, the archive switches to its labeled six-column
   mission table so laptop-sized workspaces can scan dates, vehicles, sites,
   and outcomes without retaining the taller compact-card treatment. Its

@@ -333,6 +333,7 @@ function HistoryRow({
         <Link
           ref={detailLinkRef}
           href={detailHref}
+          aria-label={`View mission ${launch.name}`}
           className="action-button action-button-quiet justify-self-start whitespace-nowrap min-[1120px]:justify-self-end"
         >
           View mission
