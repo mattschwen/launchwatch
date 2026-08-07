@@ -508,25 +508,25 @@ export default function LaunchDetailClient({
             ) : null}
             <LaunchWindow launch={presentedLaunch} className="mt-3" />
 
-            {launch.description ? (
-              <MissionDescription
-                description={launch.description}
-                className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7"
-              />
-            ) : (
-              <p className="mt-5 max-w-3xl text-sm leading-6 text-[var(--text-muted)] sm:text-base sm:leading-7">
-                Mission description pending from the provider.
-              </p>
-            )}
-
             <LaunchActions
               launch={presentedLaunch}
               onOpenBriefing={() => setBriefingOpen(true)}
               showCalendar={!completed}
               showShare
               detail
-              className="mt-6"
+              className="mt-5"
             />
+
+            {launch.description ? (
+              <MissionDescription
+                description={launch.description}
+                className="mt-6 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7"
+              />
+            ) : (
+              <p className="mt-6 max-w-3xl text-sm leading-6 text-[var(--text-muted)] sm:text-base sm:leading-7">
+                Mission description pending from the provider.
+              </p>
+            )}
           </div>
 
           <div className="min-w-0 space-y-4">

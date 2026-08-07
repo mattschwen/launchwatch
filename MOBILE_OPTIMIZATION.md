@@ -321,7 +321,10 @@ The optional expanded map remains a modal dialog. It must:
   truthful pending state in the mission hero and briefing instead of appearing
   as substantive mission copy or page metadata.
 - Long names wrap as phrases within the available width.
-- The status, title, description, actions, and telemetry summary stack on narrow screens.
+- The status, title, target time, and mission actions lead the detail hierarchy
+  before provider narrative and telemetry. At the 320px reflow boundary, the
+  primary action remains fully above persistent navigation even when the
+  provider supplies a multi-paragraph mission description.
 - At the desktop split-layout boundary, every T-minus cell remains fully contained
   inside the telemetry card; the visual scale adapts to the narrower side rail
   without shrinking the mobile countdown or clipping digits and unit labels.

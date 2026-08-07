@@ -6724,6 +6724,8 @@ test('upcoming detail keeps mission commands in a touch-safe mobile console', as
     'Mobile detail command layout'
   );
 
+  await page.setViewportSize({ width: 320, height: 568 });
+
   await page.goto('/launch/ll2-demo-orbital-dawn');
 
   const findStream = page.getByRole('link', {
@@ -6761,6 +6763,34 @@ test('upcoming detail keeps mission commands in a touch-safe mobile console', as
     Math.max(...bounds.map((box) => box.width)) -
       Math.min(...bounds.map((box) => box.width))
   ).toBeLessThan(2);
+
+  const initialPriority = await page.evaluate(() => {
+    const primaryAction = document.querySelector<HTMLElement>(
+      '.detail-launch-actions > :first-child'
+    );
+    const description = document.querySelector<HTMLElement>(
+      '[data-mission-description]'
+    );
+    const mobileNavigation = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'nav[aria-label="Primary navigation"]'
+      )
+    ).find((navigation) => navigation.getBoundingClientRect().height > 0);
+
+    return {
+      actionBottom: primaryAction?.getBoundingClientRect().bottom ?? Infinity,
+      descriptionTop: description?.getBoundingClientRect().top ?? 0,
+      navigationTop:
+        mobileNavigation?.getBoundingClientRect().top ?? window.innerHeight,
+    };
+  });
+
+  expect(initialPriority.actionBottom).toBeLessThanOrEqual(
+    initialPriority.navigationTop
+  );
+  expect(initialPriority.descriptionTop).toBeGreaterThan(
+    bounds[3].y + bounds[3].height - 1
+  );
 
   await calendar.focus();
   await calendar.press('Enter');
