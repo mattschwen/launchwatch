@@ -63,6 +63,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   state and keeps official coverage available without autoplay
 - Reduced-motion-safe trajectory drawing, hardware LEDs, holographic surfaces,
   grid texture, and scanlines
+- Windows high-contrast affordances that preserve the current route and
+  selected mission, map site, phase, and view controls without relying on color
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
 - Branded large-image previews for shared routes and canonical mission details

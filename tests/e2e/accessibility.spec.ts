@@ -75,6 +75,25 @@ for (const route of routes) {
   });
 }
 
+test('@a11y forced colors keeps current and selected controls visible', async ({
+  page,
+}) => {
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  const currentRoute = page
+    .locator('nav[aria-label="Primary navigation"]:visible')
+    .locator('[aria-current="page"]');
+  const selectedMission = page
+    .getByRole('complementary', { name: 'Next up' })
+    .getByRole('button', { name: /Orbital Dawn/i });
+
+  await expect(currentRoute).toHaveCSS('outline-style', 'solid');
+  await expect(selectedMission).toHaveCSS('outline-style', 'solid');
+  await expect(currentRoute).toHaveCSS('outline-width', '2px');
+  await expect(selectedMission).toHaveCSS('outline-width', '2px');
+});
+
 test('@a11y home mission visual disclosure has no serious WCAG A/AA violations', async ({
   page,
 }) => {

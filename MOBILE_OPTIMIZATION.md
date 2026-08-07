@@ -366,6 +366,8 @@ The optional expanded map remains a modal dialog. It must:
   same waiting version again without forcing a reload.
 - Do not hide focus outlines.
 - Keep the active navigation item available through `aria-current`.
+- In forced-colors mode, keep current-route and `aria-pressed` selection state
+  visible with system-color outlines instead of authored fills or shadows.
 - Connect disclosures to controlled regions with `aria-expanded` and `aria-controls`.
 - Give icon-only buttons an accessible name.
 - Prevent background scrolling while modal drawers or the expanded map are open.

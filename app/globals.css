@@ -1618,6 +1618,23 @@ select:focus {
   outline-offset: -3px;
 }
 
+/* Windows high-contrast mode removes authored backgrounds and inset shadows.
+   Restore non-color affordances for persistent route and selection state. */
+@media (forced-colors: active) {
+  nav[aria-label='Primary navigation'] [aria-current='page'] {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+    text-decoration: underline;
+    text-decoration-thickness: 0.14em;
+    text-underline-offset: 0.35em;
+  }
+
+  [aria-pressed='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
