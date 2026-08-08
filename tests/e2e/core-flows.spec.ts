@@ -157,6 +157,61 @@ test('shared routes publish the branded LaunchWatch social preview', async ({
   expect((await imageResponse.body()).byteLength).toBeGreaterThan(20_000);
 });
 
+test('launch history publishes a canonical archive social preview', async ({
+  page,
+}) => {
+  await page.goto('/history?provider=spacex&outcome=success');
+
+  const canonicalUrl = 'https://www.launchwatch.io/history';
+  const description =
+    'Search completed launches, inspect mission outcomes, and reopen official coverage from the LaunchWatch archive.';
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'Launch archive | LaunchWatch'
+  );
+  await expect(
+    page.locator('meta[property="og:description"]')
+  ).toHaveAttribute('content', description);
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute(
+    'content',
+    'Launch archive | LaunchWatch'
+  );
+  await expect(
+    page.locator('meta[name="twitter:description"]')
+  ).toHaveAttribute('content', description);
+
+  const openGraphImage = page.locator('meta[property="og:image"]');
+  const twitterImage = page.locator('meta[name="twitter:image"]');
+  await expect(openGraphImage).toHaveAttribute(
+    'content',
+    /\/history\/opengraph-image/
+  );
+  await expect(twitterImage).toHaveAttribute(
+    'content',
+    /\/history\/opengraph-image/
+  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+    'content',
+    'LaunchWatch archive — completed missions, outcomes, and official coverage'
+  );
+
+  const imageUrl = await openGraphImage.getAttribute('content');
+  expect(imageUrl).not.toBeNull();
+  const imageResponse = await page.request.get(imageUrl!);
+  expect(imageResponse.status()).toBe(200);
+  expect(imageResponse.headers()['content-type']).toContain('image/png');
+  expect((await imageResponse.body()).byteLength).toBeGreaterThan(20_000);
+});
+
 test('external actions identify when they open a new tab', async ({ page }) => {
   for (const route of [
     '/',

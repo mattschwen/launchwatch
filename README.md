@@ -71,7 +71,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   boundaries, and persistent selected surfaces while retaining signal colors
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
-- Branded large-image previews for shared routes and canonical mission details
+- Branded large-image previews for shared routes, the launch archive, and
+  canonical mission details; filtered archive URLs consolidate on the stable
+  `/history` canonical route
 
 ## Tech Stack
 

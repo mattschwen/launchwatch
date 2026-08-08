@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Archive } from 'lucide-react';
 import PastLaunches from '@/components/PastLaunches';
 import {
@@ -5,10 +6,26 @@ import {
   readHistoryReturnFocus,
 } from '@/lib/history-return';
 
-export const metadata = {
+const archiveDescription =
+  'Search completed launches, inspect mission outcomes, and reopen official coverage from the LaunchWatch archive.';
+
+export const metadata: Metadata = {
   title: 'Launch History | LaunchWatch',
-  description:
-    'Search completed launches, outcomes, mission details, and recorded coverage.',
+  description: archiveDescription,
+  alternates: {
+    canonical: '/history',
+  },
+  openGraph: {
+    title: 'Launch archive | LaunchWatch',
+    description: archiveDescription,
+    type: 'website',
+    url: '/history',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Launch archive | LaunchWatch',
+    description: archiveDescription,
+  },
 };
 
 export default async function HistoryPage({
