@@ -3863,9 +3863,9 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   await expect(queueGap).toContainText('2 missions omitted');
   await expect(queueGap).toContainText('Selected 12 of 12');
   const fullSchedule = queue.getByRole('link', {
-    name: 'View all 12 missions',
+    name: 'Browse full 12-mission schedule',
   });
-  await expect(fullSchedule).toHaveAttribute('href', '/');
+  await expect(fullSchedule).toHaveAttribute('href', '/#upcoming-launches');
   expect((await fullSchedule.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
   const queueViewport = queue.locator('[data-watch-queue-scroll]');
@@ -3947,6 +3947,24 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   await expect(page).toHaveURL(/\/watch\?id=ll2-demo-queue-10$/);
   await expect(lastChronologicalMission).toHaveAttribute('tabindex', '0');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await fullSchedule.click();
+  await expect(page).toHaveURL(/\/#upcoming-launches$/);
+  const fullScheduleTarget = page.locator('#upcoming-launches');
+  const fullScheduleHeading = page.getByRole('heading', {
+    level: 2,
+    name: 'Upcoming launches',
+  });
+  await expect(fullScheduleTarget).toBeInViewport();
+  await expect(fullScheduleHeading).toBeFocused();
+  const [headerBounds, targetBounds] = await Promise.all([
+    page.locator('header').first().boundingBox(),
+    fullScheduleTarget.boundingBox(),
+  ]);
+  expect(headerBounds).not.toBeNull();
+  expect(targetBounds).not.toBeNull();
+  expect(targetBounds!.y).toBeGreaterThanOrEqual(headerBounds!.height - 1);
+  expect(targetBounds!.y).toBeLessThanOrEqual(headerBounds!.height + 32);
 });
 
 test('watch keeps verified streams primary and offers a rocket visual on demand', async ({

@@ -48,6 +48,7 @@ export default function LaunchList({
     number | null
   >(null);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
+  const scheduleHeadingRef = useRef<HTMLHeadingElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
   const revealedBatchStartRef = useRef<HTMLAnchorElement>(null);
   const batchTabPendingRef = useRef(false);
@@ -152,6 +153,19 @@ export default function LaunchList({
     },
     [],
   );
+
+  useEffect(() => {
+    if (loading || window.location.hash !== '#upcoming-launches') return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('upcoming-launches')?.scrollIntoView({
+        behavior: 'auto',
+        block: 'start',
+      });
+      scheduleHeadingRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading]);
 
   const retrySchedule = (event: MouseEvent<HTMLButtonElement>): void => {
     if (retryUnavailable) return;
@@ -309,14 +323,20 @@ export default function LaunchList({
 
   return (
     <section
+      id="upcoming-launches"
       aria-labelledby="upcoming-launches-title"
       className={`surface-card holo-card ${
         degradedSchedule ? 'signal-warm' : 'signal-nominal'
-      } overflow-hidden`}
+      } scroll-mt-20 overflow-hidden`}
     >
       <header className="flex flex-col gap-4 border-b border-[var(--border-subtle)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
-          <h2 id="upcoming-launches-title" className="section-title">
+          <h2
+            ref={scheduleHeadingRef}
+            id="upcoming-launches-title"
+            tabIndex={-1}
+            className="section-title rounded-[var(--radius-sm)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-base)]"
+          >
             Upcoming launches
           </h2>
           <p

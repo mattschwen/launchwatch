@@ -813,10 +813,10 @@ function MissionQueue({
       {queueTruncated ? (
         <div className="border-t border-[var(--border-subtle)] p-2">
           <Link
-            href="/"
+            href="/#upcoming-launches"
             className="action-button action-button-quiet w-full justify-between px-3"
           >
-            View all {launches.length} missions
+            Browse full {launches.length}-mission schedule
             <ArrowRight aria-hidden="true" size={16} />
           </Link>
         </div>

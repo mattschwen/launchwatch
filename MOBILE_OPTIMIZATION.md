@@ -184,7 +184,8 @@ The optional expanded map remains a modal dialog. It must:
   a list of missions after the current selection—and marks the active item with a
   persistent `On console` cue in addition to its selected surface. When the
   provider returns more missions, the rail reports the visible and total counts
-  and exposes a 44-pixel path to the full schedule.
+  and exposes a 44-pixel path that lands directly on the batched full schedule
+  without implying every provider record will mount at once.
 - On larger screens, the mission queue and its optional licensed vehicle reference
   share one bounded side rail so secondary context does not create an empty grid
   column or expand ahead of mission intelligence. Their mobile document order
