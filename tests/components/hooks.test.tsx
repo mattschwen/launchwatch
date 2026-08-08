@@ -79,7 +79,9 @@ function FeedRetryHarness(): React.ReactElement {
 }
 
 function IntelRetryHarness(): React.ReactElement {
-  const { intel, loading, error, retry } = useLaunchIntel(UPCOMING_LAUNCHES[0]);
+  const { intel, loading, offline, error, retry } = useLaunchIntel(
+    UPCOMING_LAUNCHES[0],
+  );
 
   return (
     <>
@@ -94,6 +96,9 @@ function IntelRetryHarness(): React.ReactElement {
           : error
             ? error
             : intel?.summary.rationale ?? 'empty'}
+      </p>
+      <p data-testid="intel-network-state">
+        {offline ? 'offline' : 'online'}
       </p>
     </>
   );
@@ -564,6 +569,9 @@ describe('useLaunchIntel retries', () => {
     render(<IntelRetryHarness />);
 
     expect(screen.getByTestId('intel-state')).toHaveTextContent('empty');
+    expect(screen.getByTestId('intel-network-state')).toHaveTextContent(
+      'offline',
+    );
     await user.click(
       screen.getByRole('button', { name: 'Retry intelligence' }),
     );

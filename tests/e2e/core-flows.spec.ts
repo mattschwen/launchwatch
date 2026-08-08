@@ -4693,6 +4693,45 @@ test('watch does not show intelligence from the previously selected mission', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps mission intelligence honest while offline', async ({
+  context,
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(
+    intelligence.getByRole('group', { name: 'Coverage signal' }),
+  ).toBeVisible();
+
+  await context.setOffline(true);
+
+  await expect(
+    intelligence.getByRole('status', {
+      name: 'Mission intelligence offline',
+    }),
+  ).toContainText('Showing retained coverage signals');
+
+  await page.getByRole('button', { name: /Polaris Relay/i }).click();
+
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' }),
+  ).toBeVisible();
+  await expect(
+    intelligence.getByRole('status', {
+      name: 'Mission intelligence offline',
+    }),
+  ).toContainText('Reconnect to load mission intelligence');
+  await expect(
+    intelligence.getByText(/No verified stream, coverage, or social signal/),
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await context.setOffline(false);
+});
+
 test('mission intelligence recovers from an incomplete successful response', async ({
   page,
 }) => {

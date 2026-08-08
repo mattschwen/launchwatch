@@ -205,7 +205,10 @@ flags are migrated in place so an app update does not replay an alert.
 - **Retained Watch data** remains actionable after a shared-feed refresh failure,
   but live state is no longer authoritative: global chrome, the Watch masthead,
   coverage stage, mission badge, and queue remove live claims and autoplay until
-  a focus-stable retry restores a current feed.
+  a focus-stable retry restores a current feed. Mission-intelligence requests
+  also pause offline: previously loaded signals remain inspectable with an
+  explicit retained-data warning, while an unqueried mission reports that
+  intelligence is unavailable instead of presenting a verified empty result.
 - **Retained global mission data** remains linked from the desktop status bar
   after a connection loss, refresh failure, or successful stale-cache response,
   but the Home schedule and ticker use the amber unconfirmed treatment and

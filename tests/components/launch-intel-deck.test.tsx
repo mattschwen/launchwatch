@@ -111,6 +111,33 @@ describe('LaunchIntelDeck', () => {
     ).toBeVisible();
   });
 
+  it('distinguishes unavailable and retained intelligence while offline', () => {
+    const { rerender } = render(
+      <LaunchIntelDeck launch={launch} intel={null} offline />
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Mission intelligence offline' }),
+    ).toHaveTextContent('Reconnect to load mission intelligence');
+    expect(
+      screen.queryByText(/No verified stream, coverage, or social signal/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Retry coverage' }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <LaunchIntelDeck launch={launch} intel={LAUNCH_INTEL} offline />
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Mission intelligence offline' }),
+    ).toHaveTextContent('Showing retained coverage signals');
+    expect(
+      screen.getByRole('group', { name: 'Coverage signal' }),
+    ).toBeVisible();
+  });
+
   it('keeps recovery stable and moves focus to restored intelligence', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();

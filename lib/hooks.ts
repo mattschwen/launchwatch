@@ -550,6 +550,7 @@ export function useLaunchIntel(
     loading: Boolean(launchId && enabled && online) && (
       !currentState || currentState.loading
     ),
+    offline: Boolean(launchId && enabled && !online),
     error: currentState?.error ?? null,
     retryAt: currentState?.retryAt ?? null,
     retry,

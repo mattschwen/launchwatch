@@ -180,6 +180,7 @@ export default function LaunchDetailClient({
   const {
     intel,
     loading: intelLoading,
+    offline: intelOffline,
     error: intelError,
     retryAt: intelRetryAt,
     retry: retryIntel,
@@ -648,6 +649,7 @@ export default function LaunchDetailClient({
                 launch={presentedLaunch}
                 intel={intel}
                 loading={intelLoading}
+                offline={intelOffline}
                 error={intelError}
                 retryAt={intelRetryAt}
                 onRetry={retryIntel}

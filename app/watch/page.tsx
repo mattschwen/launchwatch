@@ -911,6 +911,7 @@ function WatchContent(): React.ReactElement {
   const {
     intel,
     loading: intelLoading,
+    offline: intelOffline,
     error: intelError,
     retryAt: intelRetryAt,
     retry: retryIntel,
@@ -1320,6 +1321,7 @@ function WatchContent(): React.ReactElement {
             launch={selectedLaunch}
             intel={intel}
             loading={intelLoading}
+            offline={intelOffline}
             error={intelError}
             retryAt={intelRetryAt}
             onRetry={retryIntel}

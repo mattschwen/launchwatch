@@ -28,6 +28,7 @@ interface LaunchIntelDeckProps {
   launch: Launch;
   intel: LaunchIntel | null;
   loading?: boolean;
+  offline?: boolean;
   error?: string | null;
   retryAt?: number | null;
   onRetry?: () => void;
@@ -199,6 +200,7 @@ export default function LaunchIntelDeck({
   launch,
   intel,
   loading = false,
+  offline = false,
   error = null,
   retryAt = null,
   onRetry,
@@ -289,11 +291,11 @@ export default function LaunchIntelDeck({
         aria-labelledby="mission-intelligence-title"
         aria-busy={loading}
         className={`surface-card holo-card ${
-          error ? 'signal-warm' : 'signal-cold'
+          error || offline ? 'signal-warm' : 'signal-cold'
         } p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 ${className}`}
       >
         <div className="flex items-start gap-3">
-          {error ? (
+          {error || offline ? (
             <AlertTriangle
               aria-hidden="true"
               size={20}
@@ -310,7 +312,19 @@ export default function LaunchIntelDeck({
             <h2 id="mission-intelligence-title" className="section-title">
               Mission intelligence
             </h2>
-            {error ? (
+            {offline ? (
+              <p
+                role="status"
+                aria-label="Mission intelligence offline"
+                className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]"
+              >
+                <strong className="font-semibold text-[var(--console-amber)]">
+                  Device offline.
+                </strong>{' '}
+                Coverage signals cannot be checked right now. Reconnect to load
+                mission intelligence.
+              </p>
+            ) : error ? (
               <p
                 role="alert"
                 className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]"
@@ -328,7 +342,7 @@ export default function LaunchIntelDeck({
                 of truth.
               </p>
             )}
-            {error && onRetry ? (
+            {error && !offline && onRetry ? (
               <IntelligenceRetryButton
                 key={retryAt ?? 'available'}
                 loading={loading}
@@ -366,6 +380,25 @@ export default function LaunchIntelDeck({
       aria-busy={loading}
       className={`surface-card holo-card signal-cold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
     >
+      {offline ? (
+        <div
+          role="status"
+          aria-label="Mission intelligence offline"
+          className="flex items-start gap-2 border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-5 py-3 text-sm leading-5 text-[var(--text-secondary)] sm:px-6"
+        >
+          <AlertTriangle
+            aria-hidden="true"
+            size={16}
+            className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+          />
+          <p>
+            <strong className="font-semibold text-[var(--console-amber)]">
+              Device offline.
+            </strong>{' '}
+            Showing retained coverage signals. Reconnect to verify updates.
+          </p>
+        </div>
+      ) : null}
       <header className="border-b border-[var(--border-subtle)] p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

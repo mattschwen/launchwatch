@@ -142,6 +142,39 @@ test('@a11y retained offline schedule has no serious WCAG A/AA violations', asyn
   await context.setOffline(false);
 });
 
+test('@a11y offline mission intelligence has no serious WCAG A/AA violations', async ({
+  context,
+  page,
+}) => {
+  await page.goto('/watch');
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(
+    intelligence.getByRole('group', { name: 'Coverage signal' }),
+  ).toBeVisible();
+
+  await context.setOffline(true);
+  await page.getByRole('button', { name: /Polaris Relay/i }).click();
+  await expect(
+    intelligence.getByRole('status', {
+      name: 'Mission intelligence offline',
+    }),
+  ).toContainText('Reconnect to load mission intelligence');
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(
+    results.violations.filter(
+      (violation) =>
+        violation.impact === 'serious' || violation.impact === 'critical',
+    ),
+  ).toEqual([]);
+
+  await context.setOffline(false);
+});
+
 test('@a11y increased contrast strengthens telemetry and selected surfaces', async ({
   page,
 }) => {
