@@ -998,6 +998,18 @@ test('home keeps meaningful hierarchy while the launch feed is synchronizing', a
   ).toBeVisible();
   await expect(page.getByText('Synchronizing mission queue')).toBeVisible();
 
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    const pendingMissionPath = page.getByRole('button', {
+      name: 'Mission path pending Waiting for the launch schedule',
+    });
+    await expect(pendingMissionPath).toBeVisible();
+    await expect(pendingMissionPath).toHaveAttribute('aria-disabled', 'true');
+    await expect(pendingMissionPath).not.toHaveAttribute('aria-controls');
+    await pendingMissionPath.focus();
+    await pendingMissionPath.press('Enter');
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+  }
+
   const busyRegions = page.locator('[aria-busy="true"]:visible');
   await expect(busyRegions).toHaveCount(
     test.info().project.name.startsWith('mobile') ? 2 : 3
@@ -1020,6 +1032,13 @@ test('home keeps meaningful hierarchy while the launch feed is synchronizing', a
       name: UPCOMING_LAUNCHES[0].name,
     })
   ).toBeVisible();
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await expect(
+      page.getByRole('button', {
+        name: 'Illustrative mission path Launch site and modeled mission phases',
+      })
+    ).not.toHaveAttribute('aria-disabled');
+  }
 });
 
 test('coarse provider dates stay estimates until T-0 is confirmed', async ({
@@ -3413,6 +3432,36 @@ test('home distinguishes an empty provider schedule and offers recovery', async 
       name: 'No missions match these filters.',
     })
   ).toHaveCount(0);
+
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    const unavailableMissionPath = page.getByRole('button', {
+      name: 'Mission path unavailable No scheduled mission to model',
+    });
+    await expect(unavailableMissionPath).toBeVisible();
+    await expect(unavailableMissionPath).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+    await expect(unavailableMissionPath).not.toHaveAttribute('aria-controls');
+    await unavailableMissionPath.focus();
+    await unavailableMissionPath.press('Enter');
+    await expect(unavailableMissionPath).toBeFocused();
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+  } else {
+    const unavailableMissionPath = page.getByRole('status', {
+      name: 'Mission trajectory unavailable',
+    });
+    await expect(unavailableMissionPath).toBeVisible();
+    await expect(unavailableMissionPath).toContainText(
+      'No scheduled mission to model'
+    );
+    await expect(
+      page.getByRole('button', {
+        name: 'Enlarge illustrative trajectory map',
+      })
+    ).toHaveCount(0);
+    await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
+  }
 
   await page
     .locator('main')

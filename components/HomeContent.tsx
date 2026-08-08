@@ -55,6 +55,46 @@ function TrajectoryLoadingState(): React.ReactElement {
   );
 }
 
+function TrajectoryUnavailableState({
+  scheduleError,
+}: {
+  scheduleError: boolean;
+}): React.ReactElement {
+  return (
+    <div
+      role="status"
+      aria-label="Mission trajectory unavailable"
+      className="surface-card holo-card signal-warm flex min-h-[27.5rem] flex-col overflow-hidden"
+    >
+      <div className="border-b border-[var(--border-subtle)] px-5 py-4">
+        <p className="data-label text-[var(--console-amber)]">
+          Mission path unavailable
+        </p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          {scheduleError
+            ? 'Launch schedule could not be loaded'
+            : 'No scheduled mission to model'}
+        </p>
+      </div>
+      <div className="grid flex-1 place-items-center p-5 text-center">
+        <div className="max-w-sm">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-amber)]">
+            <Globe2 aria-hidden="true" size={25} />
+          </span>
+          <p className="mt-5 font-semibold text-[var(--text-primary)]">
+            Trajectory console on standby
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+            {scheduleError
+              ? 'Mission mapping will return when the launch schedule reconnects.'
+              : 'A trajectory will appear when providers schedule the next mission.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomeWithReturnContext(): React.ReactElement {
   const searchParams = useSearchParams();
   const initialFilters = parseScheduleFilters(searchParams);
@@ -106,6 +146,18 @@ function HomeExperience({
       : null,
   );
   const featuredMission = featuredDetail.launch ?? featuredLaunch;
+  const missionPathTitle = featuredMission
+    ? 'Illustrative mission path'
+    : loading
+      ? 'Mission path pending'
+      : 'Mission path unavailable';
+  const missionPathDetail = featuredMission
+    ? 'Launch site and modeled mission phases'
+    : loading
+      ? 'Waiting for the launch schedule'
+      : error
+        ? 'Launch schedule could not be loaded'
+        : 'No scheduled mission to model';
 
   return (
     <div className="page-container py-4 sm:py-5 lg:py-6">
@@ -135,6 +187,8 @@ function HomeExperience({
         <aside aria-label="Mission trajectory" className="hidden min-w-0 lg:block">
           {loading && !featuredMission ? (
             <TrajectoryLoadingState />
+          ) : !featuredMission ? (
+            <TrajectoryUnavailableState scheduleError={Boolean(error)} />
           ) : desktopMapEnabled ? (
             <MissionTrajectory launch={featuredMission} />
           ) : (
@@ -154,31 +208,50 @@ function HomeExperience({
       <section className="mt-4 lg:hidden">
         <button
           type="button"
-          aria-expanded={mobileMapOpen}
-          aria-controls="mobile-mission-map"
-          onClick={() => setMobileMapOpen((value) => !value)}
-          className="surface-card flex min-h-[4.5rem] w-full items-center gap-3 px-4 text-left transition-colors hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]"
+          aria-expanded={featuredMission ? mobileMapOpen : undefined}
+          aria-controls={featuredMission ? 'mobile-mission-map' : undefined}
+          aria-disabled={featuredMission ? undefined : true}
+          onClick={() => {
+            if (featuredMission) setMobileMapOpen((value) => !value);
+          }}
+          className={`surface-card flex min-h-[4.5rem] w-full items-center gap-3 px-4 text-left transition-colors ${
+            featuredMission
+              ? 'hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]'
+              : loading
+                ? 'cursor-wait'
+                : 'cursor-default'
+          }`}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-green)]">
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] ${
+              featuredMission
+                ? 'text-[var(--console-green)]'
+                : loading
+                  ? 'text-[var(--console-cyan)]'
+                  : 'text-[var(--console-amber)]'
+            }`}
+          >
             <Globe2 aria-hidden="true" size={20} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-semibold text-[var(--text-primary)]">
-              Illustrative mission path
+              {missionPathTitle}
             </span>
             <span className="mt-0.5 block text-sm text-[var(--text-muted)]">
-              Launch site and modeled mission phases
+              {missionPathDetail}
             </span>
           </span>
-          <ChevronDown
-            aria-hidden="true"
-            size={19}
-            className={`shrink-0 text-[var(--text-muted)] transition-transform ${
-              mobileMapOpen ? 'rotate-180' : ''
-            }`}
-          />
+          {featuredMission ? (
+            <ChevronDown
+              aria-hidden="true"
+              size={19}
+              className={`shrink-0 text-[var(--text-muted)] transition-transform ${
+                mobileMapOpen ? 'rotate-180' : ''
+              }`}
+            />
+          ) : null}
         </button>
-        {mobileMapOpen && !desktopMapEnabled ? (
+        {mobileMapOpen && featuredMission && !desktopMapEnabled ? (
           <div id="mobile-mission-map" className="mt-2">
             <MissionTrajectory launch={featuredMission} />
           </div>
