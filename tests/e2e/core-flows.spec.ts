@@ -2311,6 +2311,14 @@ test('short mobile viewports keep featured actions clear of primary navigation',
       );
     })
     .toBe(true);
+  await page.setViewportSize({ width: 385, height: 727 });
+  expect(
+    await missionType.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return range.getClientRects().length;
+    })
+  ).toBe(1);
 
   await page.setViewportSize({ width: 393, height: 851 });
   await expect

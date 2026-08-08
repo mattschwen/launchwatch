@@ -364,7 +364,7 @@ export default function HeroSection({
                 className="mt-1 font-mono text-[0.7rem] leading-4 text-[var(--text-secondary)]"
               />
             </div>
-            <div className="relative min-w-0 pl-6 min-[360px]:px-3 min-[360px]:pl-10">
+            <div className="relative min-w-0 pl-6 min-[360px]:pl-10">
               <MapPin
                 aria-hidden="true"
                 className="absolute left-0 top-0.5 text-[var(--text-muted)] min-[360px]:left-3"
@@ -394,7 +394,7 @@ export default function HeroSection({
                 {vehicleDetail || activeLaunch.provider || 'Vehicle profile'}
               </dd>
             </div>
-            <div className="relative min-w-0 pl-6 min-[360px]:px-3 min-[360px]:pl-10">
+            <div className="relative min-w-0 pl-6 min-[360px]:pl-10">
               <Target
                 aria-hidden="true"
                 className="absolute left-0 top-0.5 text-[var(--text-muted)] min-[360px]:left-3"
