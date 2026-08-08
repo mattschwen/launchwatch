@@ -686,6 +686,13 @@ describe('PastLaunches', () => {
     );
     expect(loadMore).toHaveFocus();
 
+    await user.keyboard('{Tab}');
+    expect(
+      screen.getAllByRole('article')[10].querySelector('button')
+    ).toHaveFocus();
+
+    loadMore.focus();
+
     await user.keyboard('{Enter}');
     expect(screen.getByRole('status')).toHaveTextContent('21 results');
     expect(loadMore).toHaveAccessibleName('All 21 missions loaded');

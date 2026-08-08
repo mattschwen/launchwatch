@@ -3047,17 +3047,37 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   await expect(results).toHaveCount(5);
   await expect(schedule.getByText('Schedule Mission 6')).toHaveCount(0);
 
-  const loadFive = schedule.getByRole('button', { name: 'Load 5 more' });
-  await loadFive.focus();
-  await expect(loadFive).toBeFocused();
-  expect((await loadFive.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-  await loadFive.press('Enter');
+  const loadMore = schedule.locator(
+    'button[aria-controls="upcoming-launch-results"]'
+  );
+  await expect(loadMore).toHaveAccessibleName('Load 5 more');
+  await loadMore.focus();
+  await expect(loadMore).toBeFocused();
+  expect((await loadMore.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await loadMore.press('Enter');
+  await loadMore.press('Tab');
+
+  const firstRevealedMission = schedule.getByRole('link', {
+    name: /Schedule Mission 6/,
+  });
+  await expect(firstRevealedMission).toBeFocused();
+  await expect
+    .poll(() =>
+      firstRevealedMission.evaluate((element) => {
+        const headerBottom = document
+          .querySelector('header')
+          ?.getBoundingClientRect().bottom ?? 0;
+        return element.getBoundingClientRect().top >= headerBottom;
+      })
+    )
+    .toBe(true);
 
   await expect(resultStatus).toHaveText('Showing 10 of 12 missions');
   await expect(results).toHaveCount(10);
-  const loadTwo = schedule.getByRole('button', { name: 'Load 2 more' });
-  await expect(loadTwo).toBeFocused();
-  await loadTwo.press('Enter');
+  await expect(loadMore).toHaveAccessibleName('Load 2 more');
+
+  await loadMore.focus();
+  await loadMore.press('Enter');
 
   await expect(resultStatus).toHaveText('12 missions');
   await expect(results).toHaveCount(12);
@@ -3678,6 +3698,9 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
   );
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/watch');
+  await expect(
+    page.getByRole('link', { name: /Open provider stream/ })
+  ).toBeVisible();
 
   const coverage = page.getByRole('region', {
     name: 'Mission coverage scheduled',
@@ -6680,10 +6703,28 @@ test('history pagination reports progress and keeps terminal focus visible', asy
   await expect(loadMore).toHaveText('Load 10 more');
   await loadMore.focus();
   await loadMore.press('Enter');
+  await loadMore.press('Tab');
+  const firstRevealedMission = page
+    .locator('article')
+    .nth(10)
+    .getByRole('button');
+  await expect(firstRevealedMission).toBeFocused();
+  await expect
+    .poll(() =>
+      firstRevealedMission.evaluate((element) => {
+        const headerBottom = document
+          .querySelector('header')
+          ?.getBoundingClientRect().bottom ?? 0;
+        return element.getBoundingClientRect().top >= headerBottom;
+      })
+    )
+    .toBe(true);
+
   await expect(archiveResults).toHaveText(
     'Showing 20 of 21 results'
   );
-  await expect(loadMore).toBeFocused();
+
+  await loadMore.focus();
   await expect
     .poll(() =>
       loadMore.evaluate((element) => {

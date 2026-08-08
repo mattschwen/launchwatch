@@ -44,8 +44,13 @@ export default function LaunchList({
   const [filterSeed, setFilterSeed] = useState<FilterOptions>(initialFilters);
   const [filterResetKey, setFilterResetKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [revealedBatchStartIndex, setRevealedBatchStartIndex] = useState<
+    number | null
+  >(null);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
+  const revealedBatchStartRef = useRef<HTMLAnchorElement>(null);
+  const batchTabPendingRef = useRef(false);
   const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const returnMissionLinkRef = useRef<HTMLAnchorElement>(null);
@@ -80,6 +85,8 @@ export default function LaunchList({
       setFilterSeed({ ...nextFilters });
       setFiltersOpen(Boolean(serializeScheduleFilters(nextFilters)));
       setVisibleCount(INITIAL_VISIBLE_COUNT);
+      setRevealedBatchStartIndex(null);
+      batchTabPendingRef.current = false;
       setFilterResetKey((value) => value + 1);
     };
     const resetScheduleFilters = (): void => {
@@ -167,6 +174,8 @@ export default function LaunchList({
     setFilters({ ...DEFAULT_FILTERS });
     setFilterSeed({ ...DEFAULT_FILTERS });
     setVisibleCount(INITIAL_VISIBLE_COUNT);
+    setRevealedBatchStartIndex(null);
+    batchTabPendingRef.current = false;
     setFilterResetKey((value) => value + 1);
     requestAnimationFrame(() => focusTarget.current?.focus());
   };
@@ -406,6 +415,8 @@ export default function LaunchList({
             onFilterChange={(next) => {
               setFilters(next);
               setVisibleCount(INITIAL_VISIBLE_COUNT);
+              setRevealedBatchStartIndex(null);
+              batchTabPendingRef.current = false;
             }}
           />
         </div>
@@ -457,7 +468,7 @@ export default function LaunchList({
             <span className="data-label">Status</span>
           </div>
           <div id="upcoming-launch-results">
-            {visibleLaunches.map((launch) => (
+            {visibleLaunches.map((launch, index) => (
               <div
                 key={launch.id}
                 className="mission-row"
@@ -479,7 +490,9 @@ export default function LaunchList({
                   coverageUnconfirmed={retainedSchedule}
                   detailHref={buildScheduleDetailHref(launch.id, filters)}
                   linkRef={
-                    launch.id === returnFocusId
+                    index === revealedBatchStartIndex
+                      ? revealedBatchStartRef
+                      : launch.id === returnFocusId
                       ? returnMissionLinkRef
                       : undefined
                   }
@@ -496,13 +509,33 @@ export default function LaunchList({
                 aria-disabled={allResultsVisible}
                 onClick={() => {
                   if (!allResultsVisible) {
+                    setRevealedBatchStartIndex(visibleLaunches.length);
+                    batchTabPendingRef.current = true;
                     setVisibleCount((count) => count + INITIAL_VISIBLE_COUNT);
-                    requestAnimationFrame(() =>
+                    requestAnimationFrame(() => {
+                      if (!batchTabPendingRef.current) return;
                       loadMoreRef.current?.scrollIntoView?.({
                         block: 'nearest',
-                      })
-                    );
+                      });
+                    });
                   }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Tab' || !batchTabPendingRef.current) {
+                    return;
+                  }
+
+                  batchTabPendingRef.current = false;
+                  if (event.shiftKey || !revealedBatchStartRef.current) return;
+
+                  event.preventDefault();
+                  revealedBatchStartRef.current.focus();
+                  revealedBatchStartRef.current.scrollIntoView?.({
+                    block: 'center',
+                  });
+                }}
+                onBlur={() => {
+                  batchTabPendingRef.current = false;
                 }}
                 className="action-button action-button-secondary aria-disabled:cursor-default aria-disabled:opacity-60"
               >

@@ -95,12 +95,14 @@ function HistoryRow({
   onToggle,
   detailHref,
   detailLinkRef,
+  toggleRef,
 }: {
   launch: Launch;
   expanded: boolean;
   onToggle: () => void;
   detailHref: string;
   detailLinkRef?: Ref<HTMLAnchorElement>;
+  toggleRef?: Ref<HTMLButtonElement>;
 }): React.ReactElement {
   const panelId = `history-${launch.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const outcome = launchOutcomeLabel(launch);
@@ -265,6 +267,7 @@ function HistoryRow({
     >
       <div className="grid items-center gap-3 px-3 py-3 sm:px-4 min-[1120px]:grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem]">
         <button
+          ref={toggleRef}
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
@@ -497,15 +500,25 @@ export default function PastLaunches({
       initialFilters.sortBy !== DEFAULT_HISTORY_FILTERS.sortBy
   );
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [revealedBatchStartIndex, setRevealedBatchStartIndex] = useState<
+    number | null
+  >(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
+  const revealedBatchStartRef = useRef<HTMLButtonElement>(null);
+  const batchTabPendingRef = useRef(false);
   const returnMissionLinkRef = useRef<HTMLAnchorElement>(null);
   const returnFocusHandledRef = useRef(false);
   const focusSearchAfterRetryRef = useRef(false);
   const suppressNextUrlWriteRef = useRef(false);
   const wasOfflineRef = useRef(false);
   const id = useId();
+
+  useEffect(() => {
+    setRevealedBatchStartIndex(null);
+    batchTabPendingRef.current = false;
+  }, [outcome, provider, search, sortBy, year]);
 
   useEffect(() => {
     if (!online) {
@@ -1202,7 +1215,7 @@ export default function PastLaunches({
             Archived launch results
           </h2>
           <div id={`${id}-results`}>
-            {visibleLaunches.map((launch) => (
+            {visibleLaunches.map((launch, index) => (
               <HistoryRow
                 key={launch.id}
                 launch={launch}
@@ -1217,6 +1230,11 @@ export default function PastLaunches({
                 detailLinkRef={
                   launch.id === returnFocusId
                     ? returnMissionLinkRef
+                    : undefined
+                }
+                toggleRef={
+                  index === revealedBatchStartIndex
+                    ? revealedBatchStartRef
                     : undefined
                 }
                 onToggle={() =>
@@ -1236,13 +1254,33 @@ export default function PastLaunches({
                 aria-disabled={allResultsVisible}
                 onClick={() => {
                   if (!allResultsVisible) {
+                    setRevealedBatchStartIndex(visibleLaunches.length);
+                    batchTabPendingRef.current = true;
                     setVisibleCount((count) => count + PAGE_SIZE);
-                    requestAnimationFrame(() =>
+                    requestAnimationFrame(() => {
+                      if (!batchTabPendingRef.current) return;
                       loadMoreRef.current?.scrollIntoView?.({
                         block: 'nearest',
-                      })
-                    );
+                      });
+                    });
                   }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Tab' || !batchTabPendingRef.current) {
+                    return;
+                  }
+
+                  batchTabPendingRef.current = false;
+                  if (event.shiftKey || !revealedBatchStartRef.current) return;
+
+                  event.preventDefault();
+                  revealedBatchStartRef.current.focus();
+                  revealedBatchStartRef.current.scrollIntoView?.({
+                    block: 'center',
+                  });
+                }}
+                onBlur={() => {
+                  batchTabPendingRef.current = false;
                 }}
                 className="action-button action-button-secondary aria-disabled:cursor-default aria-disabled:opacity-60"
               >

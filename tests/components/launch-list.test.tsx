@@ -201,6 +201,13 @@ describe('LaunchList', () => {
     expect(screen.queryByText('Schedule Mission 11')).not.toBeInTheDocument();
     expect(loadMore).toHaveAccessibleName('Load 2 more');
 
+    await user.keyboard('{Tab}');
+    expect(
+      screen.getByRole('link', { name: /Schedule Mission 6/ })
+    ).toHaveFocus();
+
+    loadMore.focus();
+
     await user.keyboard('{Enter}');
 
     expect(loadMore).toHaveFocus();
