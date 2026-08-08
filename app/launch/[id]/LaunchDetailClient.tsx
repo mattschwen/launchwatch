@@ -702,7 +702,7 @@ export default function LaunchDetailClient({
                 className="rounded-none"
               />
             </div>
-            {presentedLaunch.livestream ? (
+            {presentedLaunch.livestream && hasPlayableVideo ? (
               <a
                 href={presentedLaunch.livestream}
                 target="_blank"
@@ -715,17 +715,15 @@ export default function LaunchDetailClient({
                     : 'text-[var(--console-cyan)]'
                 }`}
               >
-                {hasPlayableVideo
-                  ? 'Open official provider video'
-                  : 'Open provider coverage'}
+                Open official provider video
                 <ExternalLink aria-hidden="true" size={15} />
                 <ExternalLinkHint />
               </a>
-            ) : (
+            ) : !presentedLaunch.livestream ? (
               <p className="mt-4 text-sm leading-6 text-[var(--text-muted)]">
                 The provider has not attached a verified stream or replay yet.
               </p>
-            )}
+            ) : null}
           </section>
         </div>
       </div>

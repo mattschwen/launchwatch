@@ -474,14 +474,35 @@ test('detail suppresses a live server snapshot the current feed cannot confirm',
   ).toBeVisible();
   await expect(
     detail.getByRole('link', {
-      name: /Open provider coverage.*new tab/i,
+      name: /Open provider stream.*new tab/i,
     })
   ).toBeVisible();
+  await expect(
+    detail.getByRole('link', {
+      name: /Open provider coverage.*new tab/i,
+    })
+  ).toHaveCount(0);
 
   const retry = detail.getByRole('button', { name: 'Retry launch feed' });
   await retry.focus();
   await expect(retry).toBeFocused();
   expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('detail keeps one direct provider alternative for embedded video', async ({
+  page,
+}) => {
+  await page.goto('/launch/spacex-demo-return?from=history');
+
+  await expect(
+    page.getByRole('button', { name: 'Load video for Demo Return Flight' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', {
+      name: /Open official provider video.*new tab/i,
+    })
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -2702,7 +2723,7 @@ test('history distinguishes archive refresh from the shared schedule refresh', a
 
   await page.goto('/history');
   await expect(
-    page.getByRole('heading', { name: 'Launch archive' })
+    page.getByRole('heading', { name: 'Launch archive', exact: true })
   ).toBeVisible();
   await expect(page.getByText('2 results')).toBeVisible();
   await expect.poll(() => historyRequests).toBeGreaterThan(0);
