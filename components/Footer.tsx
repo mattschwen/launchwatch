@@ -141,19 +141,19 @@ export default function Footer(): React.ReactElement {
   const statusLabel =
     feedHealth === 'offline'
       ? launches.length > 0 && age !== 'pending'
-        ? `Offline · last update ${age}`
-        : 'Feed offline'
+        ? `Schedule offline · last update ${age}`
+        : 'Schedule feed offline'
       : feedHealth === 'syncing'
-        ? 'Syncing feed'
+        ? 'Syncing schedule'
         : feedHealth === 'refreshing'
           ? age === 'pending'
-            ? 'Refreshing feed'
-            : `Refreshing feed · last update ${age}`
+            ? 'Schedule sync pending'
+            : `Schedule sync: ${age}`
           : feedHealth === 'stale'
-            ? `Stale feed · refreshed ${age}`
+            ? `Stale schedule · refreshed ${age}`
             : feedHealth === 'partial'
-              ? `Partial feed · refreshed ${age}`
-              : `Data refresh: ${age}`;
+              ? `Partial schedule · refreshed ${age}`
+              : `Schedule sync: ${age}`;
   const statusAnnouncement =
     feedHealth === 'offline'
       ? 'Launch feed is offline'
@@ -249,6 +249,13 @@ export default function Footer(): React.ReactElement {
             }}
             aria-disabled={refreshing || !online}
             aria-busy={refreshing}
+            aria-label={
+              refreshing
+                ? 'Refreshing launch schedule'
+                : online
+                  ? 'Refresh launch schedule'
+                  : 'Refresh launch schedule when online'
+            }
             className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)] aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
             <RefreshCw
@@ -259,7 +266,7 @@ export default function Footer(): React.ReactElement {
             {refreshing
               ? 'Refreshing'
               : online
-                ? 'Refresh now'
+                ? 'Refresh schedule'
                 : 'Refresh when online'}
           </button>
           <a

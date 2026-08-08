@@ -1316,7 +1316,7 @@ test('shared chrome reports partial feed health on every route', async ({
   });
   await expect(feedAnnouncements).toHaveCount(1);
   const footerStatus = page.locator('footer').getByText('Launch feed is partial.').locator('..');
-  await expect(footerStatus).toContainText('Partial feed · refreshed');
+  await expect(footerStatus).toContainText('Partial schedule · refreshed');
   const visualAge = footerStatus.locator('[aria-hidden="true"]');
   const initialVisualAge = await visualAge.innerText();
   await expect.poll(() => visualAge.innerText()).not.toBe(initialVisualAge);
@@ -1427,7 +1427,7 @@ test('home identifies and recovers retained missions after refresh failure', asy
   await expect(page.getByText('Last-known mission · refresh failed')).toHaveCount(0);
 
   failureEnabled = true;
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const hero = page.locator(
     'section[aria-labelledby="featured-launch-title"]'
@@ -1476,7 +1476,7 @@ test('home rejects incomplete successful refreshes without erasing retained miss
   ).toBeVisible();
 
   incompleteResponseEnabled = true;
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const hero = page.locator(
     'section[aria-labelledby="featured-launch-title"]'
@@ -1512,7 +1512,7 @@ test('home rejects incomplete mission records without erasing retained missions'
   ).toBeVisible();
 
   incompleteRecordEnabled = true;
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const hero = page.locator(
     'section[aria-labelledby="featured-launch-title"]'
@@ -1557,7 +1557,7 @@ test('home rejects noncanonical mission identity without erasing retained missio
   await expect(mission).toBeVisible();
 
   malformedIdentityEnabled = true;
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const hero = page.locator(
     'section[aria-labelledby="featured-launch-title"]'
@@ -1608,7 +1608,9 @@ test('home immediately marks retained mission data offline and recovers on recon
   await expect(
     page.locator('section[aria-labelledby="featured-launch-title"]'),
   ).not.toContainText('device offline');
-  await expect(page.getByRole('button', { name: 'Refresh now' })).toBeEnabled();
+  await expect(
+    page.getByRole('button', { name: 'Refresh launch schedule' })
+  ).toBeEnabled();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -1650,7 +1652,7 @@ test('desktop ticker keeps the last known mission after refresh failure', async 
   );
   await expect(missionLink).not.toHaveAccessibleName(/T−/);
 
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   await expect(statusBar).toContainText('PARTIAL FEED');
   await expect(missionLink).toContainText('LAST KNOWN');
@@ -2591,7 +2593,7 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
     name: /Launch Library 2 source — available.*new tab/i,
     exact: true,
   });
-  await expect(refresh).toHaveText('Refresh now');
+  await expect(refresh).toHaveText('Refresh schedule');
   await refresh.focus();
 
   const placement = await Promise.all(
@@ -2636,14 +2638,93 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
   await expect(refresh).toHaveAttribute('aria-disabled', 'true');
   await expect(refresh).toHaveAttribute('aria-busy', 'true');
   await expect(refresh).toBeFocused();
+  const busyPlacement = await refresh.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const mobileNav = document.querySelector('nav.fixed.bottom-0');
+    const navBounds = mobileNav?.getBoundingClientRect();
+    const statusRail = document.querySelector(
+      'aside[aria-label="Mission status"]'
+    );
+    const statusBounds = statusRail?.getBoundingClientRect();
+    const visibleBottom = Math.min(
+      window.innerHeight,
+      navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight,
+      statusBounds && statusBounds.height > 0
+        ? statusBounds.top
+        : window.innerHeight
+    );
+
+    return {
+      top: bounds.top,
+      bottom: bounds.bottom,
+      visibleBottom,
+    };
+  });
+  expect(busyPlacement.top).toBeGreaterThanOrEqual(0);
+  expect(busyPlacement.bottom).toBeLessThanOrEqual(
+    busyPlacement.visibleBottom
+  );
   await expect.poll(() => feedRequests).toBe(2);
   await refresh.press('Enter');
   expect(feedRequests).toBe(2);
 
-  await expect(refresh).toHaveText('Refresh now');
+  await expect(refresh).toHaveText('Refresh schedule');
   await expect(refresh).toHaveAttribute('aria-disabled', 'false');
   await expect(refresh).toHaveAttribute('aria-busy', 'false');
   await expect(refresh).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history distinguishes archive refresh from the shared schedule refresh', async ({
+  page,
+}) => {
+  let scheduleRequests = 0;
+  let historyRequests = 0;
+  await page.route('**/api/launches**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname !== '/api/launches') {
+      await route.fallback();
+      return;
+    }
+
+    const isHistory = url.searchParams.get('type') === 'history';
+    if (isHistory) historyRequests += 1;
+    else scheduleRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: isHistory ? HISTORICAL_LAUNCHES : UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/history');
+  await expect(
+    page.getByRole('heading', { name: 'Launch archive' })
+  ).toBeVisible();
+  await expect(page.getByText('2 results')).toBeVisible();
+  await expect.poll(() => historyRequests).toBeGreaterThan(0);
+  await expect.poll(() => scheduleRequests).toBeGreaterThan(0);
+  await page.waitForTimeout(100);
+  const historyBaseline = historyRequests;
+  const scheduleBaseline = scheduleRequests;
+
+  const archiveRefresh = page.getByRole('button', {
+    name: 'Refresh archive',
+  });
+  const scheduleRefresh = page.locator('footer').getByRole('button', {
+    name: 'Refresh launch schedule',
+  });
+  await expect(archiveRefresh).toBeVisible();
+  await expect(scheduleRefresh).toHaveText('Refresh schedule');
+  await expect(page.locator('footer')).toContainText('Schedule sync:');
+
+  await scheduleRefresh.click();
+  await expect.poll(() => scheduleRequests).toBeGreaterThan(scheduleBaseline);
+  expect(historyRequests).toBe(historyBaseline);
+  await expect(scheduleRefresh).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -3270,6 +3351,7 @@ test('home distinguishes an empty provider schedule and offers recovery', async 
   ).toHaveCount(0);
 
   await page
+    .locator('main')
     .getByRole('button', { name: 'Refresh launch schedule' })
     .click();
 
@@ -4305,7 +4387,7 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
     page.getByRole('region', { name: 'Mission coverage live' }),
   ).toBeVisible();
 
-  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const retainedNotice = page.getByRole('status').filter({
     hasText:

@@ -133,7 +133,7 @@ describe('Footer', () => {
     const statusText = await screen.findByText('Launch feed is partial.');
     const status = statusText.parentElement;
     expect(status).not.toBeNull();
-    expect(status).toHaveTextContent('Partial feed · refreshed');
+    expect(status).toHaveTextContent('Partial schedule · refreshed');
     expect(status).toHaveClass('text-[var(--console-amber)]');
     expect(status).not.toHaveTextContent('pending');
     expect(status?.lastElementChild).toHaveAttribute('aria-hidden', 'true');
@@ -195,7 +195,7 @@ describe('Footer', () => {
     const visualAge = status?.lastElementChild;
 
     expect(visualAge).toHaveAttribute('aria-hidden', 'true');
-    expect(visualAge).toHaveTextContent('Data refresh:');
+    expect(visualAge).toHaveTextContent('Schedule sync:');
     expect(status).not.toHaveAttribute('aria-live');
     expect(status).not.toHaveAttribute('role');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -221,7 +221,9 @@ describe('Footer', () => {
       </LaunchDataProvider>
     );
 
-    const refresh = await screen.findByRole('button', { name: 'Refresh now' });
+    const refresh = await screen.findByRole('button', {
+      name: 'Refresh launch schedule',
+    });
     refresh.focus();
     await user.keyboard('{Enter}');
 
@@ -241,7 +243,7 @@ describe('Footer', () => {
     await waitFor(() => {
       expect(refresh).toHaveAttribute('aria-disabled', 'false');
       expect(refresh).toHaveAttribute('aria-busy', 'false');
-      expect(refresh).toHaveTextContent('Refresh now');
+      expect(refresh).toHaveTextContent('Refresh schedule');
     });
     expect(refresh).toHaveFocus();
   });

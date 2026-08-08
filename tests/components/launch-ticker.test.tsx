@@ -176,7 +176,9 @@ describe('LaunchTicker', () => {
     const missionLink = await screen.findByRole('link', {
       name: /Orbital Dawn/,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Refresh launch schedule' })
+    );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(missionLink).toHaveTextContent('LAST KNOWN');
@@ -215,7 +217,9 @@ describe('LaunchTicker', () => {
     const missionLink = await screen.findByRole('link', {
       name: /Orbital Dawn/,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Refresh launch schedule' })
+    );
 
     await waitFor(() =>
       expect(missionLink).toHaveTextContent('Coverage unconfirmed')
