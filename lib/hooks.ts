@@ -8,32 +8,75 @@ import { useOnlineStatus } from './online-status';
 
 const clockListeners = new Set<() => void>();
 let clockInterval: ReturnType<typeof setInterval> | null = null;
-let currentTime = Date.now();
+let clockSnapshot = { now: Date.now(), revision: 0 };
+
+function updateClock(): void {
+  clockSnapshot = {
+    now: Date.now(),
+    revision: clockSnapshot.revision + 1,
+  };
+  clockListeners.forEach((notify) => notify());
+}
+
+function stopClock(): void {
+  if (!clockInterval) return;
+  clearInterval(clockInterval);
+  clockInterval = null;
+}
+
+function startClock(): void {
+  if (
+    clockInterval ||
+    (typeof document !== 'undefined' && document.visibilityState !== 'visible')
+  ) {
+    return;
+  }
+
+  clockInterval = setInterval(updateClock, 1_000);
+}
+
+function handleClockVisibilityChange(): void {
+  if (document.visibilityState !== 'visible') {
+    stopClock();
+    return;
+  }
+
+  updateClock();
+  startClock();
+}
 
 function subscribeToClock(listener: () => void): () => void {
+  const firstListener = clockListeners.size === 0;
   clockListeners.add(listener);
-  if (!clockInterval) {
-    clockInterval = setInterval(() => {
-      currentTime = Date.now();
-      clockListeners.forEach((notify) => notify());
-    }, 1000);
+
+  // A fresh snapshot forces volatile clock text to reconcile immediately
+  // after hydration, even when the current millisecond has not changed.
+  updateClock();
+  if (firstListener && typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleClockVisibilityChange);
   }
+  startClock();
 
   return () => {
     clockListeners.delete(listener);
-    if (clockListeners.size === 0 && clockInterval) {
-      clearInterval(clockInterval);
-      clockInterval = null;
+    if (clockListeners.size === 0) {
+      stopClock();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener(
+          'visibilitychange',
+          handleClockVisibilityChange,
+        );
+      }
     }
   };
 }
 
-function getClockSnapshot(): number {
-  return currentTime;
+function getClockSnapshot(): typeof clockSnapshot {
+  return clockSnapshot;
 }
 
-function getServerClockSnapshot(): number {
-  return currentTime;
+function getServerClockSnapshot(): typeof clockSnapshot {
+  return clockSnapshot;
 }
 
 export function useCurrentTime(): number {
@@ -41,7 +84,7 @@ export function useCurrentTime(): number {
     subscribeToClock,
     getClockSnapshot,
     getServerClockSnapshot
-  );
+  ).now;
 }
 
 function checkedMessage(payload: unknown, fallback: string): string {

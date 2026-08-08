@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LaunchDataProvider, useLiveContext } from '@/lib/contexts';
-import { useLaunchById, useLaunchIntel, useLaunches } from '@/lib/hooks';
+import {
+  useCurrentTime,
+  useLaunchById,
+  useLaunchIntel,
+  useLaunches,
+} from '@/lib/hooks';
 import { LAUNCH_INTEL, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 function HookHarness({
@@ -92,6 +97,11 @@ function IntelRetryHarness(): React.ReactElement {
       </p>
     </>
   );
+}
+
+function ClockHarness(): React.ReactElement {
+  const now = useCurrentTime();
+  return <time>{new Date(now).toISOString()}</time>;
 }
 
 afterEach(() => {
@@ -596,5 +606,47 @@ describe('useLaunchIntel retries', () => {
         LAUNCH_INTEL.summary.rationale
       )
     );
+  });
+});
+
+describe('useCurrentTime visibility lifecycle', () => {
+  it('pauses while hidden and resynchronizes immediately on return', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2035-07-26T12:00:00.000Z'));
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    });
+
+    const { unmount } = render(<ClockHarness />);
+
+    try {
+      expect(screen.getByText('2035-07-26T12:00:00.000Z')).toBeVisible();
+      expect(vi.getTimerCount()).toBe(1);
+
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'hidden',
+      });
+      fireEvent(document, new Event('visibilitychange'));
+
+      expect(vi.getTimerCount()).toBe(0);
+
+      vi.setSystemTime(new Date('2035-07-26T12:05:00.000Z'));
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'visible',
+      });
+      fireEvent(document, new Event('visibilitychange'));
+
+      expect(screen.getByText('2035-07-26T12:05:00.000Z')).toBeVisible();
+      expect(vi.getTimerCount()).toBe(1);
+
+      unmount();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      unmount();
+      Reflect.deleteProperty(document, 'visibilityState');
+    }
   });
 });
