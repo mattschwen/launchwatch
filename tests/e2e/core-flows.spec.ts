@@ -761,6 +761,103 @@ test('short landscape keeps mission telemetry clear of duplicate bottom chrome',
     .toBe('44px');
 });
 
+test('short mobile landscape moves primary navigation into the unused header', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 667, height: 375 });
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          {
+            ...UPCOMING_LAUNCHES[0],
+            status: 'live',
+            isLive: true,
+            webcastLive: true,
+          },
+          UPCOMING_LAUNCHES[1],
+        ],
+        meta: { ...FEED_META, partial: true },
+      }),
+    }),
+  );
+  await page.goto('/');
+
+  const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
+  if (await toast.isVisible()) {
+    await toast.getByRole('button', { name: 'Dismiss system status' }).click();
+  }
+
+  const header = page.locator('header');
+  const headerNavigation = header.getByRole('navigation', {
+    name: 'Primary navigation',
+  });
+  const bottomNavigation = page.locator(
+    'nav[aria-label="Primary navigation"].fixed:visible',
+  );
+
+  await expect(headerNavigation).toBeVisible();
+  await expect(bottomNavigation).toHaveCount(0);
+  await expect(
+    header.getByRole('link', { name: '1 active live signal' }),
+  ).toBeVisible();
+  await expect(
+    header.getByRole('button', {
+      name: 'Partial feed — view provider status',
+    }),
+  ).toBeVisible();
+
+  const layout = await page.evaluate(() => {
+    const headerBounds = document.querySelector('header')?.getBoundingClientRect();
+    const navigationBounds = document
+      .querySelector<HTMLElement>('header nav[aria-label="Primary navigation"]')
+      ?.getBoundingClientRect();
+    const footer = document.querySelector('footer');
+
+    return {
+      navigationInsideHeader: Boolean(
+        headerBounds &&
+          navigationBounds &&
+          navigationBounds.left >= headerBounds.left &&
+          navigationBounds.right <= headerBounds.right &&
+          navigationBounds.top >= headerBounds.top &&
+          navigationBounds.bottom <= headerBounds.bottom,
+      ),
+      persistentBottomClearance: getComputedStyle(
+        document.documentElement,
+      ).getPropertyValue('--persistent-bottom-clearance'),
+      footerPaddingBottom: footer
+        ? getComputedStyle(footer).paddingBottom
+        : null,
+    };
+  });
+
+  expect(layout).toEqual({
+    navigationInsideHeader: true,
+    persistentBottomClearance: '0px',
+    footerPaddingBottom: '0px',
+  });
+
+  for (const destination of ['Home', 'Watch', 'History']) {
+    const link = headerNavigation.getByRole('link', { name: destination });
+    expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  const watch = headerNavigation.getByRole('link', { name: 'Watch' });
+  await watch.focus();
+  await watch.press('Enter');
+  await expect(page).toHaveURL(/\/watch$/);
+  await expect(watch).toHaveAttribute('aria-current', 'page');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.setViewportSize({ width: 480, height: 320 });
+  await expect(headerNavigation).toBeVisible();
+  await expect(header.locator('.header-instruments:visible')).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('tablet watch commands stay clear of redundant bottom status chrome', async ({
   page,
 }) => {

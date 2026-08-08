@@ -27,7 +27,7 @@ function MobileNavContents({
   return (
     <nav
       aria-label="Primary navigation"
-      className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl md:hidden"
+      className="mobile-primary-nav safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl md:hidden"
     >
       <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around px-2">
         {PRIMARY_NAV_ITEMS.map((link) => {

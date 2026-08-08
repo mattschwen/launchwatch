@@ -147,7 +147,7 @@ function TopNavContents({
 
         <nav
           aria-label="Primary navigation"
-          className="ml-10 hidden h-[4.375rem] items-stretch gap-5 md:flex lg:ml-16"
+          className="desktop-primary-nav ml-10 hidden h-[4.375rem] items-stretch gap-5 md:flex lg:ml-16"
         >
           {PRIMARY_NAV_ITEMS.map((link) => {
             const isActive = isNavItemActive(

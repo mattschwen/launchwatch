@@ -1599,6 +1599,42 @@ select:focus {
   }
 }
 
+/* Phone-sized landscape viewports have enough horizontal room for the primary
+   routes in the header but very little vertical room for a second fixed bar. */
+@media (min-width: 30rem) and (max-width: 47.999rem) and (max-height: 31rem) and (orientation: landscape) {
+  :root {
+    --persistent-bottom-clearance: 0px;
+  }
+
+  .app-shell {
+    padding-bottom: 0;
+  }
+
+  .desktop-primary-nav {
+    display: flex;
+    gap: clamp(0.125rem, 1vw, 0.75rem);
+    margin-left: clamp(0.75rem, 3vw, 1.5rem);
+  }
+
+  .mobile-primary-nav {
+    display: none;
+  }
+
+  .site-footer {
+    padding-bottom: 0;
+  }
+
+  html[data-boot-status='visible'] .desktop-primary-nav {
+    visibility: hidden;
+  }
+}
+
+@media (min-width: 30rem) and (max-width: 35.999rem) and (max-height: 31rem) and (orientation: landscape) {
+  .header-instruments {
+    display: none;
+  }
+}
+
 .skip-link {
   transform: translateY(-5rem);
   transition: transform 180ms var(--ease-out-quart);

@@ -26,6 +26,11 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   navigation, and release the duplicate bottom bar so it cannot cover primary
   mission telemetry.
 - Mobile uses a safe-area-aware fixed bottom navigation with the same three destinations.
+- Short phone-landscape viewports move those same three destinations into the
+  otherwise unused header and remove the duplicate bottom overlay, preserving
+  44-pixel controls while giving mission content the full constrained height.
+  At the narrowest landscape boundary, the auxiliary clock yields before route
+  labels or controls can clip.
 - Route content hands off directly to the footer instead of reserving a second
   fixed-navigation gap. The footer owns the bottom-navigation and safe-area
   clearance, so its final controls remain visible without adding an empty band
