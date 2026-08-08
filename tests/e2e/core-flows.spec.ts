@@ -4592,6 +4592,7 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(
     page.getByRole('region', { name: 'Mission coverage live' }),
   ).toBeVisible();
+  await expect.poll(() => feedRequests).toBe(1);
 
   await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 

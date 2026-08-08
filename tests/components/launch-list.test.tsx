@@ -5,6 +5,34 @@ import LaunchList from '@/components/LaunchList';
 import { useLaunches } from '@/lib/hooks';
 import { FEED_META, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
+vi.mock('next/link', async () => {
+  const React = await import('react');
+
+  return {
+    default: React.forwardRef<
+      HTMLAnchorElement,
+      React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+        href: string;
+        prefetch?: boolean | null;
+      }
+    >(function MockLink(
+      { children, href, prefetch, ...props },
+      ref,
+    ) {
+      return (
+        <a
+          {...props}
+          ref={ref}
+          href={href}
+          data-prefetch={prefetch === null ? 'auto' : String(prefetch)}
+        >
+          {children}
+        </a>
+      );
+    }),
+  };
+});
+
 vi.mock('@/lib/hooks', () => ({
   useLaunches: vi.fn(),
 }));
@@ -14,6 +42,26 @@ afterEach(() => {
 });
 
 describe('LaunchList', () => {
+  it('loads secondary mission details only after activation', () => {
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    for (const launch of UPCOMING_LAUNCHES) {
+      expect(
+        screen.getByRole('link', { name: new RegExp(launch.name) })
+      ).toHaveAttribute('data-prefetch', 'false');
+    }
+  });
+
   it('finds missions by profile and orbit metadata', async () => {
     const user = userEvent.setup();
 

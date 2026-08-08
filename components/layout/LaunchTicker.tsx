@@ -25,6 +25,7 @@ function NextLaunchStatus({
   return (
     <Link
       href={launch.isLive ? `/watch?id=${launch.id}` : `/launch/${launch.id}`}
+      prefetch={launch.isLive ? undefined : false}
       className="flex min-h-11 min-w-0 max-w-full items-center gap-2 whitespace-nowrap text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
     >
       <span

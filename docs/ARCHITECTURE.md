@@ -173,6 +173,13 @@ Watch reports the checking, failed, retrying, and recovered coverage states
 without reloading the schedule. `useLaunchIntel` sends only the selected
 canonical ID.
 
+Home keeps dynamic detail acquisition on demand: its featured title, compact
+schedule rows, and desktop ticker load their provider-backed detail route only
+after activation. The featured mission can still use the bounded client detail
+API when coverage or reusable visual metadata needs enrichment. This prevents a
+visible batch of mission links from speculatively resolving canonical detail
+routes before the user chooses one.
+
 Canonical detail pages retain the richer server detail payload, but reconcile
 its volatile live status with the shared browser feed after that feed settles.
 A server-rendered live snapshot is not allowed to keep magenta
