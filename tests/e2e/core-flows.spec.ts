@@ -5115,6 +5115,11 @@ test('watch recovers failed detail enrichment without reloading the schedule', a
   const retry = page.getByRole('button', {
     name: /^Retry(?:ing)? mission details$/,
   });
+  await expect(
+    page
+      .getByRole('region', { name: 'Mission coverage unavailable' })
+      .locator('.lucide-rocket')
+  ).toBeHidden();
   const initialDetailRequests = detailRequests;
   await retry.focus();
   await expect(retry).toBeFocused();

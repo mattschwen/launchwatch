@@ -424,12 +424,14 @@ function WatchStage({
         aria-hidden="true"
         className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,196,92,0.025)_1px,transparent_1px)] bg-[size:34px_34px]"
       />
-      <Rocket
-        aria-hidden="true"
-        size={88}
-        strokeWidth={0.8}
-        className="absolute bottom-[-0.6rem] right-[7%] hidden text-[var(--border-strong)] min-[360px]:block"
-      />
+      {!streamLookupError && !detailRetrying ? (
+        <Rocket
+          aria-hidden="true"
+          size={88}
+          strokeWidth={0.8}
+          className="absolute bottom-[-0.6rem] right-[7%] hidden text-[var(--border-strong)] min-[360px]:block"
+        />
+      ) : null}
       <div className="relative max-w-xl">
         {detailLoading ? (
           <LoaderCircle
