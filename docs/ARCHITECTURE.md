@@ -201,7 +201,9 @@ flags are migrated in place so an app update does not replay an alert.
   building source-specific caches and searches. News and community candidates
   must match a distinctive mission phrase, identifier, or multiple mission
   terms; provider and vehicle overlap alone cannot populate the panel, so an
-  honest empty state replaces cross-mission coverage.
+  honest empty state replaces cross-mission coverage. Upstream news actions are
+  also accepted only as credential-free HTTPS URLs, preventing malformed source
+  records from becoming executable or credential-bearing client handoffs.
 - **Retained Watch data** remains actionable after a shared-feed refresh failure,
   but live state is no longer authoritative: global chrome, the Watch masthead,
   coverage stage, mission badge, and queue remove live claims and autoplay until

@@ -208,6 +208,20 @@ function escapeQuery(query: string): string {
   return query.replace(/\s+/g, ' ').trim();
 }
 
+function safeNewsUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:' || url.username || url.password) {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 function normalizeForMatch(text: string): string {
   return text
     .toLowerCase()
@@ -767,14 +781,19 @@ async function fetchLaunchNews(launch: Launch): Promise<LaunchNewsItem[]> {
     }>(`https://api.spaceflightnewsapi.net/v4/articles/?${params.toString()}`);
 
     return (result.results || [])
-      .map((item) => ({
-        id: String(item.id),
-        title: item.title,
-        url: item.url,
-        source: item.news_site,
-        publishedAt: item.published_at,
-        summary: item.summary || null,
-      }))
+      .flatMap((item) => {
+        const url = safeNewsUrl(item.url);
+        return url
+          ? [{
+              id: String(item.id),
+              title: item.title,
+              url,
+              source: item.news_site,
+              publishedAt: item.published_at,
+              summary: item.summary || null,
+            }]
+          : [];
+      })
       .filter((item) =>
         isMissionSpecificCoverage(
           launch,

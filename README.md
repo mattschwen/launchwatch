@@ -55,7 +55,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation
 - Discrete stream, news, and community coverage signals based on available
-  records rather than synthetic strength percentages
+  records rather than synthetic strength percentages; external news actions
+  are limited to credential-free HTTPS destinations
 - Live provider coverage remains distinct from vehicle flight state: a
   prelaunch broadcast keeps the mission countdown visible until the provider
   explicitly reports the mission in flight

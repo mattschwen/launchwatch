@@ -196,4 +196,55 @@ describe('mission intelligence relevance', () => {
     expect(iqpsIntel.newsItems.map((item) => item.id)).toEqual(['39244']);
     expect(celesteIntel.newsItems.map((item) => item.id)).toEqual(['39245']);
   });
+
+  it('rejects unsafe news handoffs from the upstream article feed', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-06T08:00:00.000Z'));
+    const launch: Launch = {
+      ...iqpsLaunch,
+      id: 'll2-sentinel-safety-beacon-42',
+      sourceId: 'sentinel-safety-beacon-42',
+      name: 'Electron | Sentinel Safety Beacon 42',
+      missionName: 'Sentinel Safety Beacon 42',
+    };
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      if (String(input).includes('spaceflightnewsapi.net')) {
+        return Response.json({
+          results: [
+            {
+              id: 41001,
+              title: 'Sentinel Safety Beacon 42 launch update',
+              url: 'javascript:alert(document.domain)',
+              news_site: 'Unsafe News',
+              published_at: '2026-08-06T07:30:00.000Z',
+            },
+            {
+              id: 41002,
+              title: 'Sentinel Safety Beacon 42 provider handoff',
+              url: 'https://operator:secret@example.test/private',
+              news_site: 'Credentialed News',
+              published_at: '2026-08-06T07:32:00.000Z',
+            },
+            {
+              id: 41003,
+              title: 'Sentinel Safety Beacon 42 launch coverage',
+              url: 'https://example.test/sentinel-safety-beacon-42',
+              news_site: 'SpaceNews',
+              published_at: '2026-08-06T07:35:00.000Z',
+            },
+          ],
+        });
+      }
+
+      return Response.json({ data: { children: [] } });
+    });
+
+    const intel = await getLaunchIntel(launch);
+
+    expect(intel.newsItems).toHaveLength(1);
+    expect(intel.newsItems[0]).toMatchObject({
+      id: '41003',
+      url: 'https://example.test/sentinel-safety-beacon-42',
+    });
+  });
 });
