@@ -41,6 +41,7 @@ import MissionDescription from '@/components/MissionDescription';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { isLaunch } from '@/lib/launch-contract';
 import { useOnlineStatus } from '@/lib/online-status';
+import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { generateYouTubeSearchUrl } from '@/lib/youtube';
 
 const PAGE_SIZE = 10;
@@ -539,6 +540,7 @@ export default function PastLaunches({
   >(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchShortcutPendingRef = useRef(false);
   const loadMoreRef = useRef<HTMLButtonElement>(null);
   const revealedBatchStartRef = useRef<HTMLButtonElement>(null);
   const batchTabPendingRef = useRef(false);
@@ -553,6 +555,28 @@ export default function PastLaunches({
     setRevealedBatchStartIndex(null);
     batchTabPendingRef.current = false;
   }, [outcome, provider, search, sortBy, year]);
+
+  useMissionSearchShortcut(() => {
+    if (searchRef.current) {
+      searchRef.current.focus();
+      searchRef.current.scrollIntoView?.({ block: 'nearest' });
+      return;
+    }
+
+    searchShortcutPendingRef.current = true;
+  });
+
+  useEffect(() => {
+    if (!searchShortcutPendingRef.current || loading || error) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      if (!searchRef.current) return;
+      searchShortcutPendingRef.current = false;
+      searchRef.current.focus();
+      searchRef.current.scrollIntoView?.({ block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, loading]);
 
   useEffect(() => {
     if (!online) {
@@ -949,6 +973,7 @@ export default function PastLaunches({
                   ref={searchRef}
                   id={`${id}-search`}
                   type="search"
+                  aria-keyshortcuts="/"
                   maxLength={120}
                   value={search}
                   onChange={(event) => {
@@ -956,8 +981,14 @@ export default function PastLaunches({
                     setVisibleCount(PAGE_SIZE);
                   }}
                   placeholder="Mission, profile, orbit, vehicle, or site"
-                  className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+                  className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:pr-12"
                 />
+                <kbd
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 top-1/2 hidden h-6 min-w-6 -translate-y-1/2 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-raised)] px-1.5 font-mono text-[0.65rem] text-[var(--text-muted)] sm:inline-flex"
+                >
+                  /
+                </kbd>
               </div>
             </div>
             <div className="md:hidden">

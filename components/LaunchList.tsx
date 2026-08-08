@@ -23,6 +23,7 @@ import {
   parseScheduleFilters,
   serializeScheduleFilters,
 } from '@/lib/schedule-return';
+import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { RESET_SCHEDULE_FILTERS_EVENT } from './layout/navigation';
 
 const INITIAL_VISIBLE_COUNT = 5;
@@ -54,6 +55,7 @@ export default function LaunchList({
   const batchTabPendingRef = useRef(false);
   const retainedRetryRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchShortcutPendingRef = useRef(false);
   const returnMissionLinkRef = useRef<HTMLAnchorElement>(null);
   const returnFocusHandledRef = useRef(false);
   const retryFocusPendingRef = useRef(false);
@@ -79,6 +81,29 @@ export default function LaunchList({
       )].sort((a, b) => a.localeCompare(b)),
     [launches]
   );
+
+  useMissionSearchShortcut(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+      searchInputRef.current.scrollIntoView?.({ block: 'nearest' });
+      return;
+    }
+
+    searchShortcutPendingRef.current = true;
+    setFiltersOpen(true);
+  });
+
+  useEffect(() => {
+    if (!searchShortcutPendingRef.current || loading || !filtersOpen) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      if (!searchInputRef.current) return;
+      searchShortcutPendingRef.current = false;
+      searchInputRef.current.focus();
+      searchInputRef.current.scrollIntoView?.({ block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [filtersOpen, loading]);
 
   useEffect(() => {
     const applyNavigationFilters = (nextFilters: FilterOptions): void => {

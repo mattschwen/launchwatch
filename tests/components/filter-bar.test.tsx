@@ -23,6 +23,9 @@ describe('FilterBar', () => {
       screen.getByRole('searchbox', { name: 'Search launches' })
     ).toHaveAttribute('maxlength', '120');
     expect(
+      screen.getByRole('searchbox', { name: 'Search launches' })
+    ).toHaveAttribute('aria-keyshortcuts', '/');
+    expect(
       screen.getByRole('option', { name: 'Timing pending' })
     ).toHaveValue('tbd');
   });

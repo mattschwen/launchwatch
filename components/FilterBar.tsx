@@ -83,12 +83,19 @@ export default function FilterBar({
             ref={resolvedSearchInputRef}
             id={`${id}-search`}
             type="search"
+            aria-keyshortcuts="/"
             maxLength={SCHEDULE_SEARCH_MAX_LENGTH}
             value={filters.search}
             onChange={(event) => update('search', event.target.value)}
             placeholder="Mission, profile, orbit, vehicle, site, or provider"
-            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:pr-12"
           />
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none absolute right-3 top-1/2 hidden h-6 min-w-6 -translate-y-1/2 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-raised)] px-1.5 font-mono text-[0.65rem] text-[var(--text-muted)] sm:inline-flex"
+          >
+            /
+          </kbd>
         </div>
       </div>
 

@@ -40,6 +40,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Useful Watch fallback when no verified stream is live
 - Searchable and filterable launch schedule and archive with mission-specific
   accessible names on repeated archive actions
+- A route-aware `/` shortcut opens and focuses mission search on the schedule
+  and archive without intercepting editable controls
 - Mission briefings, coverage, community links, and replay surfaces
 - Consistent screen-reader cues before actions open external coverage, sources,
   or calendar handoffs in a new tab

@@ -3006,6 +3006,37 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('slash focuses mission search without intercepting editable controls', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const scheduleSearch = page.getByRole('searchbox', {
+    name: 'Search launches',
+  });
+  await expect(scheduleSearch).toHaveCount(0);
+  await page.keyboard.press('/');
+  await expect(scheduleSearch).toBeVisible();
+  await expect(scheduleSearch).toBeFocused();
+  await expect(scheduleSearch).toHaveAttribute('aria-keyshortcuts', '/');
+
+  await scheduleSearch.fill('Polaris');
+  await page.keyboard.press('/');
+  await expect(scheduleSearch).toHaveValue('Polaris/');
+  await expect(scheduleSearch).toBeFocused();
+
+  await page.goto('/history');
+  const archiveSearch = page.getByRole('searchbox', {
+    name: 'Search missions',
+  });
+  await expect(archiveSearch).toBeVisible();
+  await expect(archiveSearch).toHaveAttribute('aria-keyshortcuts', '/');
+  await page.getByRole('button', { name: 'Refresh archive' }).focus();
+  await page.keyboard.press('/');
+  await expect(archiveSearch).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home brand navigation clears same-route schedule context', async ({
   page,
 }) => {
