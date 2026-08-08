@@ -1,14 +1,22 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 
 export default function ErrorBoundary({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }): React.ReactElement {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, [error]);
+
   return (
     <div className="page-container py-16 text-center" role="alert">
       <AlertTriangle
@@ -16,7 +24,11 @@ export default function ErrorBoundary({
         className="mx-auto text-[var(--console-amber)]"
         size={40}
       />
-      <h1 className="mt-5 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]">
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mt-5 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]"
+      >
         Mission control hit a fault.
       </h1>
       <p className="mx-auto mt-2 max-w-lg text-[var(--text-secondary)]">
