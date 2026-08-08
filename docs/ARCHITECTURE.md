@@ -281,6 +281,8 @@ The service worker is deliberately narrow:
 - `/api/*` always goes to the network;
 - Next.js flight and router-prefetch requests are never cached;
 - navigations are network-first and fall back only to `offline.html`;
+- same-path query, fragment, and route-reset links stay inside the loaded client
+  so retained mission data is not replaced by the offline document;
 - arbitrary same-origin GET requests and URLs with query strings are not cached;
 - explicit shell icons and the offline document are pre-cached;
 - only content-hashed `/_next/static/*` assets use cache-first storage;

@@ -442,7 +442,8 @@ The optional expanded map remains a modal dialog. It must:
 
 - Installed mode uses the same responsive layouts and supports both orientations.
 - API responses and navigations are not served from a service-worker cache.
-- Offline navigation displays the static offline document.
+- Offline cross-route navigation displays the static offline document. Links
+  that remain on the loaded route preserve its retained mission state.
 - A loaded shell reacts to connection loss immediately, retains its last-known
   schedule and archive, and resumes eligible refresh work after reconnecting.
 - A newly available worker is applied explicitly before reloading into a new shell.

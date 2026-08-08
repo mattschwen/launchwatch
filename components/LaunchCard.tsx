@@ -19,6 +19,7 @@ interface LaunchCardProps {
   detailHref?: string;
   coverageUnconfirmed?: boolean;
   linkRef?: Ref<HTMLAnchorElement>;
+  prefetch?: boolean;
 }
 
 export default function LaunchCard({
@@ -27,6 +28,7 @@ export default function LaunchCard({
   detailHref,
   coverageUnconfirmed = false,
   linkRef,
+  prefetch,
 }: LaunchCardProps): React.ReactElement {
   const history = variant === 'history';
   const liveUnconfirmed = !history && launch.isLive && coverageUnconfirmed;
@@ -74,6 +76,7 @@ export default function LaunchCard({
       <Link
         ref={linkRef}
         href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
+        prefetch={prefetch}
         className="focus-ring-inset grid min-h-[4rem] grid-cols-[minmax(7.25rem,.7fr)_minmax(0,1.3fr)] items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface-subtle)] sm:px-4 lg:grid-cols-[minmax(9.5rem,.8fr)_minmax(12rem,1.45fr)_minmax(9rem,.8fr)_minmax(12rem,1fr)_minmax(11rem,.72fr)]"
       >
         <div className="flex min-w-0 items-center gap-3">

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Link from 'next/link';
 
 describe('RegisterServiceWorker', () => {
   const originalSecureContext = window.isSecureContext;
@@ -177,5 +178,52 @@ describe('RegisterServiceWorker', () => {
       await screen.findByRole('button', { name: 'Update now' })
     ).toBeVisible();
     expect(workflowControl).toHaveFocus();
+  });
+
+  it('handles same-route navigation inside the retained app while offline', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const registration = {
+      waiting: null,
+      installing: null,
+      update: vi.fn().mockResolvedValue(undefined),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        controller: {},
+        register: vi.fn().mockResolvedValue(registration),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+
+    const { default: RegisterServiceWorker } = await import('@/app/register-sw');
+    render(
+      <>
+        <Link href="/?search=polaris">Refine current schedule</Link>
+        <RegisterServiceWorker />
+      </>
+    );
+
+    const link = screen.getByRole('link', {
+      name: 'Refine current schedule',
+    });
+    const popState = vi.fn();
+    window.addEventListener('popstate', popState);
+    const click = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+    });
+
+    expect(link.dispatchEvent(click)).toBe(false);
+    expect(click.defaultPrevented).toBe(true);
+    expect(window.location.search).toBe('?search=polaris');
+    expect(popState).toHaveBeenCalledOnce();
+
+    window.removeEventListener('popstate', popState);
+    window.history.replaceState(null, '', '/');
   });
 });

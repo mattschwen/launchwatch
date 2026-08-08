@@ -264,6 +264,7 @@ export default function HeroSection({
               detailHref ??
               `/launch/${encodeURIComponent(activeLaunch.id)}`
             }
+            prefetch={!offline}
             className="group inline-flex min-h-11 w-fit max-w-full items-center"
           >
             <h1

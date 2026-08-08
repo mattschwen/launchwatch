@@ -509,6 +509,7 @@ export default function LaunchList({
                   launch={launch}
                   coverageUnconfirmed={retainedSchedule}
                   detailHref={buildScheduleDetailHref(launch.id, filters)}
+                  prefetch={online}
                   linkRef={
                     index === revealedBatchStartIndex
                       ? revealedBatchStartRef

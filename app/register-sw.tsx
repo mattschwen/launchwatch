@@ -158,12 +158,29 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
       }
 
       const currentUrl = new URL(window.location.href);
+      const staysOnCurrentRoute =
+        destination.pathname === currentUrl.pathname;
       const isSameDocumentFragment =
-        destination.pathname === currentUrl.pathname &&
+        staysOnCurrentRoute &&
         destination.search === currentUrl.search &&
         Boolean(destination.hash);
 
       if (isSameDocumentFragment) {
+        return;
+      }
+
+      if (staysOnCurrentRoute) {
+        // Keep query changes and route resets inside the loaded client so
+        // Next.js does not issue an impossible flight request while offline.
+        event.preventDefault();
+        const currentPath = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+        const nextPath = `${destination.pathname}${destination.search}${destination.hash}`;
+        if (nextPath !== currentPath) {
+          window.history.pushState(window.history.state, '', nextPath);
+          window.dispatchEvent(
+            new PopStateEvent('popstate', { state: window.history.state })
+          );
+        }
         return;
       }
 
