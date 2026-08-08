@@ -397,6 +397,71 @@ test('@a11y enriched archive replay has no serious WCAG A/AA violations', async 
   ).toEqual([]);
 });
 
+test('@a11y archive replay search fallback has no serious WCAG A/AA violations', async ({
+  page,
+}) => {
+  const historicalLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    id: 'll2-demo-history-replay-search',
+    sourceId: 'demo-history-replay-search',
+    date: '2035-07-20T14:30:00.000Z',
+    dateUnix: 2068554600,
+    status: 'success' as const,
+    statusName: 'Launch Successful',
+    isLive: false,
+    webcastLive: false,
+    livestream: null,
+    livestreams: null,
+  };
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [historicalLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-history-replay-search', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: historicalLaunch,
+        canonicalId: historicalLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/history');
+  await page.getByRole('button', { name: /Orbital Dawn/i }).click();
+  await expect(
+    page.getByRole('status', { name: 'Replay not confirmed' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', {
+      name: 'Search for replay (opens in a new tab)',
+    })
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y archive replay failure has no serious WCAG A/AA violations', async ({
   page,
 }) => {

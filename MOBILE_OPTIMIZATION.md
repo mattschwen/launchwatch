@@ -272,6 +272,10 @@ The optional expanded map remains a modal dialog. It must:
 - Initial archive synchronization exposes a visible section heading, truthful
   provider-acquisition copy, and a named busy region while decorative result
   placeholders stay out of the accessibility tree.
+- An expanded mission with no verified replay keeps that state explicit and
+  offers a 44-pixel mission-specific replay search. If a retry reaches this
+  final state, keyboard focus follows the changing recovery control to the
+  search handoff instead of falling back to the document.
 - Search stays immediately available on narrow screens while secondary
   provider/year/outcome and chronology controls use a touch-safe disclosure.
 - Below 360px, the archive masthead keeps its route identity and title but

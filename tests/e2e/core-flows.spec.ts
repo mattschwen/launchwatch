@@ -6531,6 +6531,91 @@ test('history explains replay check failures and preserves retry focus', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('history turns a confirmed replay dead end into a focused search handoff', async ({
+  page,
+}) => {
+  const summaryLaunches = HISTORICAL_LAUNCHES.map((launch, index) =>
+    index === 0
+      ? { ...launch, livestream: null, livestreams: null }
+      : launch
+  );
+  const detailWithoutReplay = {
+    ...HISTORICAL_LAUNCHES[0],
+    livestream: null,
+    livestreams: null,
+  };
+  let detailRequests = 0;
+  let releaseRetry: () => void = () => undefined;
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: summaryLaunches, meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/spacex-demo-return', async (route) => {
+    detailRequests += 1;
+    if (detailRequests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Replay provider maintenance' }),
+      });
+      return;
+    }
+
+    await retryGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: detailWithoutReplay,
+        canonicalId: detailWithoutReplay.id,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/history');
+
+  const mission = page
+    .locator('article')
+    .filter({ hasText: 'Demo Return Flight' });
+  await mission.getByRole('button', { name: /Demo Return Flight/i }).click();
+
+  const retry = mission.getByRole('button', {
+    name: 'Retry replay check',
+  });
+  await retry.focus();
+  await retry.press('Enter');
+  await expect(
+    mission.getByRole('button', { name: 'Checking replay coverage' })
+  ).toBeFocused();
+
+  releaseRetry();
+
+  const search = mission.getByRole('link', {
+    name: 'Search for replay (opens in a new tab)',
+  });
+  await expect(search).toBeFocused();
+  await expect(search).toHaveAttribute('target', '_blank');
+  await expect(search).toHaveAttribute('rel', 'noopener noreferrer');
+  expect((await search.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  const destination = new URL(await search.getAttribute('href') as string);
+  expect(destination.origin).toBe('https://www.youtube.com');
+  expect(destination.searchParams.get('search_query')).toContain(
+    'Demo Return Flight'
+  );
+  await expect(
+    mission.getByRole('status', { name: 'Replay not confirmed' })
+  ).toContainText('No verified replay is attached to this mission.');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history retry reports progress and restores keyboard focus', async ({
   page,
 }) => {

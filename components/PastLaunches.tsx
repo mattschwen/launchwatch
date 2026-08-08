@@ -38,8 +38,10 @@ import {
 import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { isLaunch } from '@/lib/launch-contract';
 import { useOnlineStatus } from '@/lib/online-status';
+import { generateYouTubeSearchUrl } from '@/lib/youtube';
 
 const PAGE_SIZE = 10;
 const HISTORY_LIMIT = 100;
@@ -126,6 +128,7 @@ function HistoryRow({
   }>({ launch: null, loading: false, error: null, notFound: false });
   const [detailRequestVersion, setDetailRequestVersion] = useState(0);
   const replayLinkRef = useRef<HTMLAnchorElement>(null);
+  const replaySearchRef = useRef<HTMLAnchorElement>(null);
   const replayCheckingRef = useRef<HTMLButtonElement>(null);
   const replayRetryRef = useRef<HTMLButtonElement>(null);
   const focusReplayAfterRetryRef = useRef(false);
@@ -246,6 +249,20 @@ function HistoryRow({
     );
     return () => window.cancelAnimationFrame(frame);
   }, [detailState.error]);
+
+  useEffect(() => {
+    const replaySearchReady = Boolean(
+      detailState.notFound ||
+      (detailState.launch && !detailState.launch.livestream)
+    );
+    if (!focusReplayAfterRetryRef.current || !replaySearchReady) return;
+
+    focusReplayAfterRetryRef.current = false;
+    const frame = window.requestAnimationFrame(() =>
+      replaySearchRef.current?.focus()
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [detailState.launch, detailState.notFound]);
 
   const retryReplayDetail = (): void => {
     if (detailState.loading) return;
@@ -461,9 +478,26 @@ function HistoryRow({
                   </button>
                 </div>
               ) : detailState.notFound || detailState.launch ? (
-                <span className="inline-flex min-h-11 items-center px-3 font-mono text-xs text-[var(--text-muted)]">
-                  Replay not confirmed
-                </span>
+                <div className="flex w-full min-w-0 flex-col items-start gap-2 lg:items-end">
+                  <p
+                    role="status"
+                    aria-label="Replay not confirmed"
+                    className="max-w-md text-left text-xs leading-5 text-[var(--text-secondary)] lg:text-right"
+                  >
+                    No verified replay is attached to this mission.
+                  </p>
+                  <a
+                    ref={replaySearchRef}
+                    href={generateYouTubeSearchUrl(launch)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="action-button action-button-quiet text-[var(--console-cyan)]"
+                  >
+                    <Search aria-hidden="true" size={15} />
+                    Search for replay
+                    <ExternalLinkHint />
+                  </a>
+                </div>
               ) : null}
             </div>
           </div>
