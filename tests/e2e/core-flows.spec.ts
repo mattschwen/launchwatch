@@ -4322,7 +4322,24 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
   const loadButton = page.getByRole('button', {
     name: 'Load mission trajectory',
   });
-  await loadButton.focus();
+  await page.keyboard.press('Tab');
+  const browseArchive = page.getByRole('link', {
+    name: 'Browse launch archive',
+  });
+  await browseArchive.focus();
+  await expect(browseArchive).toBeFocused();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+      })
+  );
+  await expect(pendingTrajectory).toBeVisible();
+  await expect(trajectoryMap).toHaveCount(0);
+
+  await browseArchive.press('Tab');
   await expect(loadButton).toBeFocused();
   expect((await loadButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(pendingTrajectory).toBeVisible();

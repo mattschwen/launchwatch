@@ -105,6 +105,17 @@ function DeferredWatchTrajectory({
 
   useEffect(() => {
     if (enabled) return;
+
+    const preserveKeyboardPath = (event: globalThis.KeyboardEvent): void => {
+      if (event.key === 'Tab') keyboardEncounteredRef.current = true;
+    };
+
+    window.addEventListener('keydown', preserveKeyboardPath);
+    return () => window.removeEventListener('keydown', preserveKeyboardPath);
+  }, [enabled]);
+
+  useEffect(() => {
+    if (enabled) return;
     if (typeof IntersectionObserver === 'undefined') {
       const timeout = window.setTimeout(() => setEnabled(true), 0);
       return () => window.clearTimeout(timeout);
