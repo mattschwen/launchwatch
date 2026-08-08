@@ -471,9 +471,9 @@ body::before {
 }
 
 @keyframes countdown-digit-tick {
-  from { opacity: 0.2; transform: translateY(-0.28em); filter: blur(2px); }
-  58% { opacity: 1; transform: translateY(0.04em); filter: blur(0); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  from { opacity: 0.7; transform: translateY(-0.16em); }
+  58% { opacity: 1; transform: translateY(0.025em); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in { animation: fade-in 0.42s var(--ease-out-quart); }

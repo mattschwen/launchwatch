@@ -1199,6 +1199,21 @@ test('timed estimates retain a live approximate countdown', async ({
       )
     )
     .toBeGreaterThan(0.25);
+  const tickStart = await seconds.evaluate((element) => {
+    const animation = element.getAnimations()[0];
+    if (!animation) return null;
+
+    animation.pause();
+    animation.currentTime = 0;
+    const style = getComputedStyle(element);
+    return {
+      filter: style.filter,
+      opacity: Number.parseFloat(style.opacity),
+    };
+  });
+  expect(tickStart).not.toBeNull();
+  expect(tickStart?.filter).toBe('none');
+  expect(tickStart?.opacity).toBeGreaterThanOrEqual(0.65);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect
