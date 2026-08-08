@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useLaunchIntel } from '@/lib/hooks';
 import {
   LAUNCH_INTEL,
@@ -13,6 +13,10 @@ function intelResponse(intel: LaunchIntel): Response {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('useLaunchIntel', () => {
   it('rejects an incomplete successful intelligence response', async () => {
@@ -107,5 +111,53 @@ describe('useLaunchIntel', () => {
     });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('does not auto-poll before a server retry window expires', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2035-07-26T12:00:00.000Z'));
+    const liveLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      isLive: true,
+    };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: 'Too many intelligence requests. Try again later.',
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': '600',
+            },
+          },
+        ),
+      )
+      .mockResolvedValue(intelResponse(LAUNCH_INTEL));
+
+    const { result } = renderHook(() => useLaunchIntel(liveLaunch));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.error).toBe(
+      'Too many intelligence requests. Try again later.',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(8 * 60_000);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2 * 60_000);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.intel).toEqual(LAUNCH_INTEL);
   });
 });

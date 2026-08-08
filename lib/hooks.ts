@@ -400,8 +400,11 @@ export function useLaunchIntel(
     }
 
     const controller = new AbortController();
+    let retryNotBefore = 0;
 
     async function fetchIntel(): Promise<void> {
+      if (retryNotBefore > Date.now()) return;
+
       try {
         const response = await fetch(
           `/api/launch-intel?id=${encodeURIComponent(launchId!)}`,
@@ -414,6 +417,8 @@ export function useLaunchIntel(
         const payload: unknown = await response.json().catch(() => null);
         if (!response.ok) {
           if (controller.signal.aborted) return;
+          const retryAt = retryAtFromResponse(response);
+          retryNotBefore = retryAt ?? 0;
           setIntelState((current) => ({
             launchId,
             intel: current.launchId === launchId ? current.intel : null,
@@ -422,7 +427,7 @@ export function useLaunchIntel(
               payload,
               `Mission intelligence unavailable (${response.status})`
             ),
-            retryAt: retryAtFromResponse(response),
+            retryAt,
           }));
           return;
         }
@@ -440,6 +445,7 @@ export function useLaunchIntel(
           throw new Error('Mission intelligence response was incomplete');
         }
 
+        retryNotBefore = 0;
         setIntelState({
           launchId,
           intel: result,
@@ -449,6 +455,7 @@ export function useLaunchIntel(
         });
       } catch (requestError) {
         if (controller.signal.aborted) return;
+        retryNotBefore = 0;
         const message =
           requestError instanceof Error
             ? requestError.message
