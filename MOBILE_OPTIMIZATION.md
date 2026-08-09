@@ -376,7 +376,9 @@ The optional expanded map remains a modal dialog. It must:
   destination. Mission-map zoom controls follow the same boundary behavior.
 - Video and intelligence sections become a single column.
 - Every canonical detail renders exactly one selected-mission trajectory before
-  timeline and intelligence support.
+  timeline and intelligence support. Its map bundle loads only as the stable,
+  named trajectory panel approaches the viewport; the pending panel preserves
+  section-index focus, responsive height, and honest loading semantics.
 - Rate-limited mission intelligence remains in an honest standby state until
   its panel approaches the viewport, then begins acquisition early enough to
   resolve before the user reaches its coverage actions.

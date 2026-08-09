@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -26,7 +27,6 @@ import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LocalLaunchTime from '@/components/LocalLaunchTime';
 import MissionDescription from '@/components/MissionDescription';
-import MissionTrajectory from '@/components/MissionTrajectory';
 import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
@@ -51,6 +51,136 @@ import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
 
 const TIMELINE_EVENT_WIDTH_PX = 176;
 const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
+
+function DetailTrajectoryLoadingState(): React.ReactElement {
+  return (
+    <div
+      className="surface-card holo-card signal-cold min-h-[32rem] overflow-hidden"
+    >
+      <header className="border-b border-[var(--border-subtle)] px-4 py-4 sm:px-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]">
+            Mission trajectory
+          </h2>
+          <span className="rounded border border-[rgba(88,200,232,0.3)] bg-[rgba(88,200,232,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-cyan)]">
+            Loading model
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          Preparing the reported site and modeled mission phases
+        </p>
+      </header>
+
+      <div aria-hidden="true">
+        <div className="skeleton aspect-[2/1] min-h-[10rem] rounded-none sm:h-[clamp(22rem,48vw,34rem)] sm:aspect-auto" />
+        <div className="grid border-t border-[var(--border-subtle)] md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className={`flex min-h-[6.25rem] items-start gap-3 px-4 py-4 sm:px-5 ${
+                index > 0
+                  ? 'border-t border-[var(--border-subtle)] md:border-l md:border-t-0'
+                  : ''
+              }`}
+            >
+              <div className="skeleton h-9 w-9 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="skeleton h-3 w-3/4 rounded" />
+                <div className="skeleton h-3 w-full rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 border-t border-[var(--border-subtle)] md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className={`min-h-[4.5rem] px-4 py-3 sm:px-5 ${
+                index % 2 ? 'border-l border-[var(--border-subtle)]' : ''
+              } ${
+                index >= 2
+                  ? 'border-t border-[var(--border-subtle)] md:border-t-0'
+                  : ''
+              } ${index > 0 ? 'md:border-l md:border-[var(--border-subtle)]' : ''}`}
+            >
+              <div className="skeleton h-2.5 w-16 rounded" />
+              <div className="skeleton mt-2 h-3 w-full rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="flex h-10 items-center border-t border-[var(--border-subtle)] px-4 sm:px-5">
+          <div className="skeleton h-2.5 w-[min(28rem,80%)] rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const MissionTrajectory = dynamic(
+  () => import('@/components/MissionTrajectory'),
+  {
+    loading: DetailTrajectoryLoadingState,
+    ssr: false,
+  },
+);
+
+function DeferredDetailTrajectory({
+  launch,
+}: {
+  launch: Launch;
+}): React.ReactElement {
+  const [enabled, setEnabled] = useState(false);
+  const [ready, setReady] = useState(false);
+  const hostRef = useRef<HTMLElement>(null);
+
+  const handleTrajectoryReady = useCallback((): void => {
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (enabled) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      const timeout = window.setTimeout(() => setEnabled(true), 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    const host = hostRef.current;
+    if (!host) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setEnabled(true);
+        observer.disconnect();
+      },
+      { rootMargin: '320px 0px' },
+    );
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [enabled]);
+
+  return (
+    <section
+      ref={hostRef}
+      id="mission-trajectory"
+      tabIndex={-1}
+      aria-label={ready ? 'Mission trajectory' : 'Loading mission trajectory'}
+      aria-busy={ready ? undefined : 'true'}
+      className="mt-5 scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
+    >
+      {enabled ? (
+        <MissionTrajectory
+          embedded
+          launch={launch}
+          onReady={handleTrajectoryReady}
+          variant="detail"
+        />
+      ) : (
+        <DetailTrajectoryLoadingState />
+      )}
+    </section>
+  );
+}
 
 const DETAIL_SECTION_LINKS = [
   { id: 'mission-summary', label: 'Summary', timelineOnly: false },
@@ -584,12 +714,7 @@ export default function LaunchDetailClient({
           </div>
         </nav>
 
-        <MissionTrajectory
-          launch={presentedLaunch}
-          sectionId="mission-trajectory"
-          variant="detail"
-          className="mt-5 scroll-mt-20 lg:scroll-mt-24"
-        />
+        <DeferredDetailTrajectory launch={presentedLaunch} />
 
         {launch.timeline?.length ? (
           <section

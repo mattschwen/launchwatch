@@ -47,7 +47,9 @@ import type { Launch } from '@/lib/types';
 
 interface MissionTrajectoryProps {
   className?: string;
+  embedded?: boolean;
   launch: Launch | null;
+  onReady?: () => void;
   sectionId?: string;
   variant?: 'compact' | 'detail';
 }
@@ -319,9 +321,12 @@ function MapToolbar({
 function MissionTrajectoryController({
   launch,
   className = '',
+  embedded = false,
+  onReady,
   sectionId,
   variant = 'compact',
 }: MissionTrajectoryProps): React.ReactElement {
+  const Root = embedded ? 'div' : 'section';
   const rawInstanceId = useId();
   const instanceId = rawInstanceId.replaceAll(':', '');
   const sectionTitleId = `${instanceId}-mission-trajectory-title`;
@@ -364,6 +369,10 @@ function MissionTrajectoryController({
     () => zoomViewport(baseViewport, zoomLevel),
     [baseViewport, zoomLevel]
   );
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   const resetMap = useCallback((): void => {
     setViewMode(canFocus ? 'focus' : 'world');
@@ -582,10 +591,10 @@ function MissionTrajectoryController({
 
   return (
     <>
-      <section
-        id={sectionId}
-        tabIndex={sectionId ? -1 : undefined}
-        aria-labelledby={sectionTitleId}
+      <Root
+        id={embedded ? undefined : sectionId}
+        tabIndex={!embedded && sectionId ? -1 : undefined}
+        aria-labelledby={embedded ? undefined : sectionTitleId}
         className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
           variant === 'detail'
             ? 'min-h-[32rem]'
@@ -661,7 +670,7 @@ function MissionTrajectoryController({
         {variant === 'compact' ? (
           <CompactFacts launch={launch} trajectory={trajectory} />
         ) : null}
-      </section>
+      </Root>
       {dialog}
     </>
   );

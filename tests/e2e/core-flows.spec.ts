@@ -8065,6 +8065,49 @@ test('watch keeps a pending calendar explanation inside the mobile viewport', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission detail defers trajectory code behind a stable loading state', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    class IdleIntersectionObserver implements IntersectionObserver {
+      readonly root = null;
+      readonly rootMargin = '0px';
+      readonly thresholds = [0];
+
+      disconnect(): void {}
+      observe(): void {}
+      takeRecords(): IntersectionObserverEntry[] {
+        return [];
+      }
+      unobserve(): void {}
+    }
+
+    Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      writable: true,
+      value: IdleIntersectionObserver,
+    });
+  });
+  await page.goto(`/launch/${UPCOMING_LAUNCHES[0].id}`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+
+  const loadingTrajectory = page.getByRole('region', {
+    name: 'Loading mission trajectory',
+  });
+  await expect(loadingTrajectory).toBeVisible();
+  await expect(loadingTrajectory).toHaveAttribute('aria-busy', 'true');
+  await expect(loadingTrajectory).toHaveAttribute('id', 'mission-trajectory');
+  expect((await loadingTrajectory.boundingBox())?.height).toBeGreaterThanOrEqual(
+    512
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.getByRole('link', { name: 'Trajectory', exact: true }).click();
+  await expect(loadingTrajectory).toBeFocused();
+});
+
 test('mission detail index moves focus among available sections', async ({
   page,
 }) => {
@@ -8073,7 +8116,7 @@ test('mission detail index moves focus among available sections', async ({
 
   const sectionIndex = page.getByRole('navigation', {
     name: 'Mission sections',
-  });
+  }).last();
   await expect(sectionIndex).toContainText('5 sections');
   const sectionLinks = sectionIndex.getByRole('link');
   await expect(sectionLinks).toHaveCount(5);
@@ -8088,7 +8131,7 @@ test('mission detail index moves focus among available sections', async ({
 
   for (const [label, id] of destinations) {
     const link = sectionIndex.getByRole('link', { name: label, exact: true });
-    const target = page.locator(`#${id}`);
+    const target = page.locator(`#${id}`).last();
     const linkBounds = await link.boundingBox();
     expect(linkBounds).not.toBeNull();
     expect(linkBounds!.height).toBeGreaterThanOrEqual(44);
@@ -8116,7 +8159,7 @@ test('mission detail index moves focus among available sections', async ({
   await page.goto('/launch/spacex-demo-return');
   const archiveIndex = page.getByRole('navigation', {
     name: 'Mission sections',
-  });
+  }).last();
   await expect(archiveIndex).toContainText('4 sections');
   await expect(archiveIndex.getByRole('link')).toHaveCount(4);
   await expect(
@@ -8285,9 +8328,14 @@ test('upcoming and historical details place one trajectory before mission suppor
       page.getByRole('heading', { level: 1, name: mission })
     ).toBeVisible();
 
+    await page
+      .getByRole('navigation', { name: 'Mission sections' })
+      .last()
+      .getByRole('link', { name: 'Trajectory', exact: true })
+      .click();
     const trajectory = page.getByRole('region', {
       name: 'Mission trajectory',
-    });
+    }).last();
     await expect(trajectory).toHaveCount(1);
     await expect(trajectory).toBeVisible();
     const visual = page.locator('figure[data-visual-kind]');
@@ -8523,22 +8571,23 @@ test('upcoming and historical details place one trajectory before mission suppor
       await expect(briefing).toHaveCount(0);
     }
 
-    const order = await page.evaluate(() => {
-      const mapSection = document.querySelector(
-        'section[aria-labelledby$="-mission-trajectory-title"]'
+    const order = await page.evaluate((missionName) => {
+      const currentMain = [...document.querySelectorAll('main')].find(
+        (main) => main.querySelector('h1')?.textContent?.trim() === missionName
       );
-      const timelineSection = document.querySelector(
+      const mapSection = currentMain?.querySelector('#mission-trajectory') ?? null;
+      const timelineSection = currentMain?.querySelector(
         'section[aria-labelledby="launch-timeline-title"]'
-      );
-      const intelSection = document.querySelector(
+      ) ?? null;
+      const intelSection = currentMain?.querySelector(
         'section[aria-labelledby="mission-intelligence-title"]'
-      );
-      const visualElement = document.querySelector(
+      ) ?? null;
+      const visualElement = currentMain?.querySelector(
         'figure[data-visual-kind], [aria-label="Mission visual unavailable"]'
-      );
-      const telemetrySection = document.querySelector(
+      ) ?? null;
+      const telemetrySection = currentMain?.querySelector(
         'section[aria-label="Mission telemetry"]'
-      );
+      ) ?? null;
       const appearsBefore = (
         first: Element | null,
         second: Element | null
@@ -8556,7 +8605,7 @@ test('upcoming and historical details place one trajectory before mission suppor
         mapBeforeTimeline: appearsBefore(mapSection, timelineSection),
         mapBeforeIntel: appearsBefore(mapSection, intelSection),
       };
-    });
+    }, mission);
 
     expect(order.telemetryBeforeVisual).toBe(telemetryFirst);
     expect(order.visualBeforeMap).toBe(true);
@@ -8802,7 +8851,12 @@ test('reported launch coordinates hand off to an exact external site map', async
   expect(compactBounds!.height).toBeGreaterThanOrEqual(44);
 
   await page.goto('/launch/ll2-demo-orbital-dawn');
-  const detailSiteMap = page.locator(siteMapSelector);
+  await page
+    .getByRole('navigation', { name: 'Mission sections' })
+    .last()
+    .getByRole('link', { name: 'Trajectory', exact: true })
+    .click();
+  const detailSiteMap = page.locator(siteMapSelector).last();
   await expect(detailSiteMap).toBeVisible();
   await expect(detailSiteMap).toHaveAttribute('href', siteMapUrl);
   await detailSiteMap.focus();
