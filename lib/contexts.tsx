@@ -70,7 +70,12 @@ function readLaunches(payload: unknown): {
   valid: boolean;
 } {
   if (Array.isArray(payload)) {
-    return { launches: payload as Launch[], meta: null, valid: true };
+    const valid = payload.every(isLaunch);
+    return {
+      launches: valid ? payload : [],
+      meta: null,
+      valid,
+    };
   }
 
   if (!payload || typeof payload !== 'object') {

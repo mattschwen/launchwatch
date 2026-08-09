@@ -1784,7 +1784,7 @@ test('home rejects incomplete successful refreshes without erasing retained miss
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('home rejects incomplete mission records without erasing retained missions', async ({
+test('home rejects invalid legacy array records without erasing retained missions', async ({
   page,
 }) => {
   let incompleteRecordEnabled = false;
@@ -1792,12 +1792,11 @@ test('home rejects incomplete mission records without erasing retained missions'
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        launches: incompleteRecordEnabled
+      body: JSON.stringify(
+        incompleteRecordEnabled
           ? [{ id: UPCOMING_LAUNCHES[0].id }]
-          : UPCOMING_LAUNCHES,
-        meta: FEED_META,
-      }),
+          : { launches: UPCOMING_LAUNCHES, meta: FEED_META },
+      ),
     });
   });
 

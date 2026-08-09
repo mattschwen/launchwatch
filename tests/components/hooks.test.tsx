@@ -557,6 +557,29 @@ describe('LaunchDataProvider retries', () => {
     ).resolves.toBeVisible();
     expect(screen.getByTestId('feed-count')).toHaveTextContent('2');
   });
+
+  it('rejects an invalid legacy array response without erasing settled missions', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ launches: UPCOMING_LAUNCHES }))
+      .mockResolvedValueOnce(response([{ id: UPCOMING_LAUNCHES[0].id }]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>
+    );
+
+    await expect(screen.findByText('2 launches')).resolves.toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await expect(
+      screen.findByText('Launch feed response was incomplete')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('feed-count')).toHaveTextContent('2');
+  });
 });
 
 describe('useLaunchIntel retries', () => {
