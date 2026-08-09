@@ -54,6 +54,7 @@ import { getFallbackLaunchSummary } from '@/lib/launch-action';
 import { parseLaunchId } from '@/lib/launch-id';
 import { selectLaunchVisual } from '@/lib/launch-visual';
 import type { Launch } from '@/lib/types';
+import { getWatchDocumentTitle } from '@/lib/watch-title';
 
 const MissionTrajectory = dynamic(
   () => import('@/components/MissionTrajectory'),
@@ -955,7 +956,10 @@ function WatchContent(): React.ReactElement {
   useEffect(() => {
     if (!selectedLaunch) return;
 
-    const missionTitle = `${selectedLaunch.name} | Watch | LaunchWatch`;
+    const missionTitle = getWatchDocumentTitle(
+      selectedLaunch,
+      coverageUnconfirmed,
+    );
     const maintainMissionTitle = (): void => {
       if (document.title !== missionTitle) document.title = missionTitle;
     };
@@ -968,7 +972,7 @@ function WatchContent(): React.ReactElement {
       characterData: true,
     });
     return () => titleObserver.disconnect();
-  }, [selectedLaunch]);
+  }, [coverageUnconfirmed, selectedLaunch]);
 
   useEffect(() => {
     if (!selectedLaunch || !retryFocusPendingRef.current) return;

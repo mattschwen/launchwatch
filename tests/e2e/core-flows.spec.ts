@@ -604,6 +604,9 @@ test('prelaunch coverage stays distinct from mission flight state', async ({
 
   await expect(page.getByText('1 live broadcast')).toBeVisible();
   await expect(page.getByText('COVERAGE LIVE', { exact: true })).toBeVisible();
+  await expect(page).toHaveTitle(
+    'COVERAGE LIVE · Orbital Dawn | LaunchWatch'
+  );
   await expect(page.getByText('1 mission live')).toHaveCount(0);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
@@ -4814,6 +4817,9 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(
     page.getByRole('region', { name: 'Mission coverage live' }),
   ).toBeVisible();
+  await expect(page).toHaveTitle(
+    'COVERAGE LIVE · Polaris Relay | LaunchWatch'
+  );
   await expect.poll(() => feedRequests).toBe(1);
 
   await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
@@ -4834,6 +4840,9 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(masthead).toHaveClass(/signal-warm/);
   await expect(masthead).not.toHaveClass(/signal-live/);
   await expect(page.getByText('LIVE', { exact: true })).toHaveCount(0);
+  await expect(page).toHaveTitle(
+    'LAST KNOWN · Polaris Relay | Watch | LaunchWatch'
+  );
 
   const retry = retainedNotice.locator('button');
   await expect(retry).toHaveAccessibleName('Retry feed');
@@ -4853,6 +4862,9 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(
     page.getByRole('region', { name: 'Mission coverage live' }),
   ).toBeVisible();
+  await expect(page).toHaveTitle(
+    'COVERAGE LIVE · Polaris Relay | LaunchWatch'
+  );
   await expect(masthead).toHaveClass(/signal-live/);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
   expect(
