@@ -42,6 +42,7 @@ import {
   formatPrimaryMissionName,
   getLaunchSiteDisplay,
   getLaunchLiveSignal,
+  isCompletedLaunch,
   isCriticalLaunchStatusName,
 } from '@/lib/format';
 import {
@@ -77,6 +78,7 @@ const MAX_VISIBLE_QUEUE_MISSIONS = 10;
 function getVisibleQueue(
   launches: Launch[],
   selectedId: string | null,
+  selectedLaunch: Launch | null,
 ): Launch[] {
   const firstMissions = launches.slice(0, MAX_VISIBLE_QUEUE_MISSIONS);
   if (
@@ -86,12 +88,14 @@ function getVisibleQueue(
     return firstMissions;
   }
 
-  const selectedLaunch = launches.find((launch) => launch.id === selectedId);
-  if (!selectedLaunch) return firstMissions;
+  const selectedQueueLaunch =
+    launches.find((launch) => launch.id === selectedId) ??
+    (selectedLaunch?.id === selectedId ? selectedLaunch : null);
+  if (!selectedQueueLaunch) return firstMissions;
 
   return [
     ...firstMissions.slice(0, MAX_VISIBLE_QUEUE_MISSIONS - 1),
-    selectedLaunch,
+    selectedQueueLaunch,
   ];
 }
 
@@ -629,11 +633,13 @@ function WatchMissionVisual({
 
 function MissionQueue({
   launches,
+  selectedLaunch,
   selectedId,
   coverageUnconfirmed,
   onSelect,
 }: {
   launches: Launch[];
+  selectedLaunch: Launch;
   selectedId: string | null;
   coverageUnconfirmed: boolean;
   onSelect: (
@@ -642,7 +648,11 @@ function MissionQueue({
     historyMode?: 'push' | 'replace',
   ) => void;
 }): React.ReactElement {
-  const queuedLaunches = getVisibleQueue(launches, selectedId);
+  const queuedLaunches = getVisibleQueue(
+    launches,
+    selectedId,
+    selectedLaunch,
+  );
   const viewportRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const selectedIndex = queuedLaunches.findIndex(
@@ -651,24 +661,35 @@ function MissionQueue({
   const selectedFeedIndex = launches.findIndex(
     (launch) => launch.id === selectedId
   );
+  const selectedOutsideSchedule = selectedFeedIndex < 0;
+  const selectedArchiveReplay =
+    selectedOutsideSchedule && isCompletedLaunch(selectedLaunch);
   const selectedMissionAppended =
-    selectedFeedIndex >= MAX_VISIBLE_QUEUE_MISSIONS &&
+    (selectedOutsideSchedule ||
+      selectedFeedIndex >= MAX_VISIBLE_QUEUE_MISSIONS) &&
     queuedLaunches.at(-1)?.id === selectedId;
-  const omittedBeforeSelected = selectedMissionAppended
+  const omittedBeforeSelected =
+    selectedFeedIndex >= MAX_VISIBLE_QUEUE_MISSIONS
     ? selectedFeedIndex - (MAX_VISIBLE_QUEUE_MISSIONS - 1)
     : 0;
   const omittedMissionLabel = `${omittedBeforeSelected} mission${
     omittedBeforeSelected === 1 ? '' : 's'
   } omitted`;
   const tabStopIndex = selectedIndex >= 0 ? selectedIndex : 0;
-  const queueTruncated = launches.length > queuedLaunches.length;
-  const queueLabel = selectedMissionAppended
-    ? `${MAX_VISIBLE_QUEUE_MISSIONS - 1} scheduled + selected · ${launches.length} total`
-    : `${queuedLaunches.length}${
+  const scheduledVisibleCount =
+    queuedLaunches.length - (selectedOutsideSchedule ? 1 : 0);
+  const queueTruncated = launches.length > scheduledVisibleCount;
+  const queueLabel = selectedOutsideSchedule
+    ? `${scheduledVisibleCount}${
         queueTruncated ? ` of ${launches.length}` : ''
-      } mission${
-        queuedLaunches.length === 1 ? '' : 's'
-      }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
+      } scheduled + ${selectedArchiveReplay ? 'replay' : 'selected'}`
+    : selectedMissionAppended
+      ? `${MAX_VISIBLE_QUEUE_MISSIONS - 1} scheduled + selected · ${launches.length} total`
+      : `${queuedLaunches.length}${
+          queueTruncated ? ` of ${launches.length}` : ''
+        } mission${
+          queuedLaunches.length === 1 ? '' : 's'
+        }${queuedLaunches.length > 4 ? ' · scroll' : ''}`;
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -738,7 +759,11 @@ function MissionQueue({
         <p id="watch-queue-instructions" className="sr-only">
           Use the Up and Down arrow keys to move between missions. Use Home or
           End to jump to the first or last visible mission.
-          {selectedMissionAppended
+          {selectedOutsideSchedule
+            ? ` The scheduled missions are followed by the selected ${
+                selectedArchiveReplay ? 'archive replay' : 'mission'
+              }, ${selectedLaunch.name}.`
+            : selectedMissionAppended
             ? ` The first ${MAX_VISIBLE_QUEUE_MISSIONS - 1} missions are followed by the selected mission at position ${selectedFeedIndex + 1} of ${launches.length}.`
             : ''}
         </p>
@@ -749,14 +774,30 @@ function MissionQueue({
               {selectedMissionAppended && index === selectedIndex ? (
                 <div
                   role="separator"
-                  aria-label={`${omittedMissionLabel} before selected mission ${selectedFeedIndex + 1} of ${launches.length}`}
+                  aria-label={
+                    selectedOutsideSchedule
+                      ? `Selected ${
+                          selectedArchiveReplay
+                            ? 'archive replay'
+                            : 'mission outside the current schedule'
+                        } ${selectedLaunch.name}`
+                      : `${omittedMissionLabel} before selected mission ${selectedFeedIndex + 1} of ${launches.length}`
+                  }
                   className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-y border-dashed border-[var(--console-cyan)]/25 bg-[var(--console-cyan)]/[0.035] px-4 py-2.5"
                 >
                   <span className="data-label text-[var(--text-muted)]">
-                    {omittedMissionLabel}
+                    {selectedOutsideSchedule
+                      ? selectedArchiveReplay
+                        ? 'Archive replay'
+                        : 'Outside current schedule'
+                      : omittedMissionLabel}
                   </span>
                   <span className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--console-cyan)]">
-                    Selected {selectedFeedIndex + 1} of {launches.length}
+                    {selectedOutsideSchedule
+                      ? selectedArchiveReplay
+                        ? 'Selected replay'
+                        : 'Selected mission'
+                      : `Selected ${selectedFeedIndex + 1} of ${launches.length}`}
                   </span>
                 </div>
               ) : null}
@@ -812,7 +853,7 @@ function MissionQueue({
                       className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[var(--console-cyan)]"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                      On console
+                      {selectedArchiveReplay ? 'Replay on console' : 'On console'}
                     </span>
                   ) : null}
                 </span>
@@ -1341,6 +1382,7 @@ function WatchContent(): React.ReactElement {
             <div className="order-2 min-w-0">
               <MissionQueue
                 launches={queue}
+                selectedLaunch={selectedLaunch}
                 selectedId={selectedLaunch.id}
                 coverageUnconfirmed={coverageUnconfirmed}
                 onSelect={selectLaunch}

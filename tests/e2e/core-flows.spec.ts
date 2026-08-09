@@ -4051,6 +4051,46 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(page).toHaveTitle('Launch History | LaunchWatch');
 });
 
+test('watch anchors a selected archive replay in the mission queue', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await page.goto('/watch?id=spacex-demo-return');
+
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Demo Return Flight' })
+  ).toBeVisible();
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  await expect(queue).toContainText('2 scheduled + replay');
+  await expect(
+    queue.getByRole('separator', {
+      name: 'Selected archive replay Demo Return Flight',
+    })
+  ).toBeVisible();
+
+  const selectedReplay = queue.getByRole('button', {
+    name: /Demo Return Flight/i,
+  });
+  await expect(selectedReplay).toHaveAttribute('aria-pressed', 'true');
+  await expect(selectedReplay).toContainText('Replay on console');
+  await selectedReplay.focus();
+  await selectedReplay.press('ArrowUp');
+
+  await expect(page).toHaveURL(/\/watch\?id=spacex-demo-polaris$/);
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Polaris Relay' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('watch reveals a pointer-selected mission on narrow layouts', async ({
   page,
 }) => {
