@@ -8112,7 +8112,7 @@ test('narrow mission telemetry keeps every countdown label readable', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await page.goto('/launch/ll2-demo-hour-estimate');
 
   const telemetry = page.getByRole('region', {
     name: 'Mission telemetry',
@@ -8143,6 +8143,39 @@ test('narrow mission telemetry keeps every countdown label readable', async ({
       (unit) => unit.scrollWidth <= unit.clientWidth + 1
     )
   ).toBe(true);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('narrow mission details keep unavailable visuals inside their card', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/launch/spacex-demo-return');
+
+  const unavailableVisual = page.getByRole('status', {
+    name: 'Mission visual unavailable',
+  });
+  await expect(unavailableVisual).toBeVisible();
+
+  const layout = await unavailableVisual.evaluate((element) => {
+    const viewport = element.querySelector<HTMLElement>(
+      '.mission-visual-placeholder-viewport'
+    );
+    const cardBounds = element.getBoundingClientRect();
+    const viewportBounds = viewport?.getBoundingClientRect();
+
+    return {
+      cardRight: cardBounds.right,
+      viewportRight: viewportBounds?.right ?? 0,
+      viewportScrollWidth: viewport?.scrollWidth ?? 0,
+      viewportClientWidth: viewport?.clientWidth ?? 0,
+    };
+  });
+
+  expect(layout.viewportRight).toBeLessThanOrEqual(layout.cardRight + 1);
+  expect(layout.viewportScrollWidth).toBeLessThanOrEqual(
+    layout.viewportClientWidth + 1
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

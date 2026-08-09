@@ -818,6 +818,9 @@ html[data-boot-status='visible'] .header-instruments {
 .mission-visual-placeholder-viewport {
   position: relative;
   isolation: isolate;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 10rem;
   aspect-ratio: 16 / 9;
   overflow: hidden;
