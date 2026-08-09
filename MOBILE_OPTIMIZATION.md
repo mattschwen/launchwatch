@@ -433,6 +433,9 @@ The optional expanded map remains a modal dialog. It must:
   footer status non-live and its ticking visual age out of the accessibility
   tree; assistive technology should hear each feed-state transition once, not
   a duplicate announcement or a new age every second.
+- Below `384px`, keep the footer feed status on its own line and pair the
+  refresh and repository actions beneath it. This prevents the repository
+  action from becoming a stranded third row while retaining 44-pixel targets.
 - At widths below `360px`, prioritize readable live and degraded-feed labels in
   the mobile header and defer the UTC clock until the header has room for all
   three signals without horizontal overflow.

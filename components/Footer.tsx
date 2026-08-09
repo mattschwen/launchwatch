@@ -231,9 +231,12 @@ export default function Footer(): React.ReactElement {
             </a>
           </nav>
         </div>
-        <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+        <div
+          data-footer-controls
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 min-[384px]:flex min-[384px]:flex-wrap min-[384px]:gap-3 sm:justify-end"
+        >
           <span
-            className={`font-mono ${statusClass}`}
+            className={`col-span-2 font-mono min-[384px]:col-auto ${statusClass}`}
           >
             <span className="sr-only">{statusAnnouncement}. </span>
             <span aria-hidden="true">{statusLabel}</span>
@@ -273,7 +276,7 @@ export default function Footer(): React.ReactElement {
             href="https://github.com/mattschwen/launchwatch"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)]"
+            className="inline-flex min-h-11 items-center gap-2 justify-self-end font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)] min-[384px]:justify-self-auto"
           >
             Source
             <ExternalLink aria-hidden="true" size={13} />

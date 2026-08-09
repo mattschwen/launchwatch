@@ -2982,6 +2982,57 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('narrow footer keeps refresh and repository actions grouped beneath feed status', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 780 });
+  await page.goto('/');
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn' }).first()
+  ).toBeVisible();
+
+  const controls = page.locator('[data-footer-controls]');
+  const status = controls.locator(':scope > span').first();
+  const refresh = controls.getByRole('button', {
+    name: 'Refresh launch schedule',
+  });
+  const source = controls.getByRole('link', {
+    name: /^Source.*new tab/i,
+  });
+  await controls.scrollIntoViewIfNeeded();
+
+  const geometry = await Promise.all(
+    [controls, status, refresh, source].map((element) =>
+      element.evaluate((node) => {
+        const bounds = node.getBoundingClientRect();
+        return {
+          top: bounds.top,
+          right: bounds.right,
+          bottom: bounds.bottom,
+          left: bounds.left,
+          width: bounds.width,
+          height: bounds.height,
+        };
+      })
+    )
+  );
+  const [controlBounds, statusBounds, refreshBounds, sourceBounds] = geometry;
+
+  expect(statusBounds.bottom).toBeLessThanOrEqual(refreshBounds.top + 1);
+  expect(Math.abs(refreshBounds.top - sourceBounds.top)).toBeLessThan(1);
+  expect(Math.abs(refreshBounds.bottom - sourceBounds.bottom)).toBeLessThan(1);
+  expect(refreshBounds.height).toBeGreaterThanOrEqual(44);
+  expect(sourceBounds.height).toBeGreaterThanOrEqual(44);
+  expect(refreshBounds.left).toBeGreaterThanOrEqual(controlBounds.left);
+  expect(sourceBounds.right).toBeLessThanOrEqual(controlBounds.right + 1);
+
+  await refresh.focus();
+  await expect(refresh).toBeFocused();
+  await source.focus();
+  await expect(source).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history distinguishes archive refresh from the shared schedule refresh', async ({
   page,
 }) => {
