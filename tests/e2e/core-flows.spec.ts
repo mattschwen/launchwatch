@@ -1916,7 +1916,7 @@ test('watch mission details return to the same selected mission', async ({
   });
   await expect(returnLink).toHaveAttribute(
     'href',
-    '/watch?id=ll2-demo-orbital-dawn'
+    '/watch?id=ll2-demo-orbital-dawn&focus=ll2-demo-orbital-dawn'
   );
   const visualName = page.getByText('Astra Nova launch vehicle', {
     exact: true,
@@ -1939,10 +1939,14 @@ test('watch mission details return to the same selected mission', async ({
   expect((await returnLink.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await returnLink.press('Enter');
 
-  await expect(page).toHaveURL(/\/watch\?id=ll2-demo-orbital-dawn$/);
-  await expect(
-    page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
-  ).toBeVisible();
+  await expect(page).toHaveURL(
+    /\/watch\?id=ll2-demo-orbital-dawn&focus=ll2-demo-orbital-dawn$/
+  );
+  const returnedMissionLink = page
+    .getByRole('heading', { level: 2, name: 'Orbital Dawn' })
+    .locator('xpath=ancestor::a[1]');
+  await expect(returnedMissionLink).toBeVisible();
+  await expect(returnedMissionLink).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

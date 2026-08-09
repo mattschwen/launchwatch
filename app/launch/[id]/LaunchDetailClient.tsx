@@ -245,7 +245,7 @@ export default function LaunchDetailClient({
           : 'signal-cold';
   const liveSignal = getLaunchLiveSignal(presentedLaunch);
   const returnHref = returnToWatch
-    ? `/watch?id=${encodeURIComponent(launch.id)}`
+    ? `/watch?id=${encodeURIComponent(launch.id)}&focus=${encodeURIComponent(launch.id)}`
     : historyReturnHref ?? scheduleReturnHref ?? (completed ? '/history' : '/');
   const returnLabel = returnToWatch
     ? 'Back to watch room'

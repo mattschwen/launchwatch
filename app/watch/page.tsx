@@ -51,6 +51,7 @@ import {
   useLiveLaunches,
 } from '@/lib/hooks';
 import { getFallbackLaunchSummary } from '@/lib/launch-action';
+import { parseLaunchId } from '@/lib/launch-id';
 import { selectLaunchVisual } from '@/lib/launch-visual';
 import type { Launch } from '@/lib/types';
 
@@ -839,6 +840,13 @@ function MissionQueue({
 function WatchContent(): React.ReactElement {
   const searchParams = useSearchParams();
   const requestedId = searchParams.get('id');
+  const parsedFocus =
+    searchParams.getAll('focus').length === 1
+      ? parseLaunchId(searchParams.get('focus'))
+      : null;
+  const requestedFocusId = parsedFocus?.legacy
+    ? null
+    : parsedFocus?.canonicalId ?? null;
   const {
     launches,
     online,
@@ -858,6 +866,7 @@ function WatchContent(): React.ReactElement {
   const retryFocusPendingRef = useRef(false);
   const retainedRetryFocusPendingRef = useRef(false);
   const detailRetryFocusPendingRef = useRef(false);
+  const returnFocusHandledRef = useRef(false);
 
   const queue = useMemo(() => {
     const byId = new Map<string, Launch>();
@@ -970,6 +979,33 @@ function WatchContent(): React.ReactElement {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [selectedLaunch]);
+
+  useEffect(() => {
+    if (
+      !selectedLaunch ||
+      selected.enriching ||
+      returnFocusHandledRef.current ||
+      requestedFocusId !== selectedLaunch.id
+    ) {
+      return;
+    }
+
+    let focusFrame = 0;
+    const revealFrame = window.requestAnimationFrame(() => {
+      focusFrame = window.requestAnimationFrame(() => {
+        const missionLink = missionLinkRef.current;
+        if (!missionLink) return;
+
+        returnFocusHandledRef.current = true;
+        missionLink.focus({ preventScroll: true });
+        missionLink.scrollIntoView?.({ block: 'nearest' });
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(revealFrame);
+      window.cancelAnimationFrame(focusFrame);
+    };
+  }, [requestedFocusId, selected.enriching, selectedLaunch]);
 
   useEffect(() => {
     if (!retainedRetryFocusPendingRef.current || refreshing) return;
