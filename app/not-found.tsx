@@ -1,7 +1,16 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Archive, CalendarDays, Radar } from 'lucide-react';
 
 export default function NotFound(): React.ReactElement {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, []);
+
   return (
     <div className="page-container py-16 text-center">
       <Radar
@@ -10,7 +19,11 @@ export default function NotFound(): React.ReactElement {
         size={44}
       />
       <p className="data-label mt-5">Signal 404</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]">
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mt-2 text-3xl font-bold tracking-[-0.035em] text-[var(--text-primary)]"
+      >
         This mission path is off course.
       </h1>
       <p className="mx-auto mt-2 max-w-lg text-[var(--text-secondary)]">

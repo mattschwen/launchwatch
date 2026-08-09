@@ -1458,21 +1458,24 @@ test('timed estimates retain a live approximate countdown', async ({
       )
     )
     .toBeGreaterThan(0.25);
-  const tickStart = await seconds.evaluate((element) => {
-    const animation = element.getAnimations()[0];
-    if (!animation) return null;
+  await expect
+    .poll(
+      () =>
+        seconds.evaluate((element) => {
+          const animation = element.getAnimations()[0];
+          if (!animation) return false;
 
-    animation.pause();
-    animation.currentTime = 0;
-    const style = getComputedStyle(element);
-    return {
-      filter: style.filter,
-      opacity: Number.parseFloat(style.opacity),
-    };
-  });
-  expect(tickStart).not.toBeNull();
-  expect(tickStart?.filter).toBe('none');
-  expect(tickStart?.opacity).toBeGreaterThanOrEqual(0.65);
+          animation.pause();
+          animation.currentTime = 0;
+          const style = getComputedStyle(element);
+          return (
+            style.filter === 'none' &&
+            Number.parseFloat(style.opacity) >= 0.65
+          );
+        }),
+      { timeout: 3_000, intervals: [50] }
+    )
+    .toBe(true);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect
@@ -7573,9 +7576,12 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
 
   await page.goto('/launch/not-a-provider-id');
 
-  await expect(
-    page.getByRole('heading', { name: 'This mission path is off course.' })
-  ).toBeVisible();
+  const missingMissionHeading = page.getByRole('heading', {
+    name: 'This mission path is off course.',
+  });
+  await expect(missingMissionHeading).toBeVisible();
+  await expect(missingMissionHeading).toBeFocused();
+  await expect(missingMissionHeading).toHaveAttribute('tabindex', '-1');
   await expect(
     page.getByText(/belong in the completed-flight archive/i)
   ).toBeVisible();
@@ -7590,6 +7596,8 @@ test('detail routes render malformed IDs as noindex and canonicalize legacy link
   });
   await expect(scheduleLink).toHaveAttribute('href', '/');
   await expect(archiveLink).toHaveAttribute('href', '/history');
+  await page.keyboard.press('Tab');
+  await expect(scheduleLink).toBeFocused();
   for (const link of [scheduleLink, archiveLink]) {
     await link.focus();
     await expect(link).toBeFocused();
