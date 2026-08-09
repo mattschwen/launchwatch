@@ -8226,6 +8226,54 @@ test('mission detail defers trajectory code behind a stable loading state', asyn
   await expect(loadingTrajectory).toBeFocused();
 });
 
+test('mission trajectory loading frame stays contained at 200 percent text scaling', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    class IdleIntersectionObserver implements IntersectionObserver {
+      readonly root = null;
+      readonly rootMargin = '0px';
+      readonly thresholds = [0];
+
+      disconnect(): void {}
+      observe(): void {}
+      takeRecords(): IntersectionObserverEntry[] {
+        return [];
+      }
+      unobserve(): void {}
+    }
+
+    Object.defineProperty(window, 'IntersectionObserver', {
+      configurable: true,
+      writable: true,
+      value: IdleIntersectionObserver,
+    });
+  });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto(`/launch/${UPCOMING_LAUNCHES[0].id}`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  await page.locator('html').evaluate((root) => {
+    root.style.fontSize = '32px';
+  });
+
+  const loadingTrajectory = page.getByRole('region', {
+    name: 'Loading mission trajectory',
+  });
+  await expect(loadingTrajectory).toBeVisible();
+  const loadingLayout = await loadingTrajectory
+    .locator('[aria-hidden="true"] > .skeleton')
+    .first()
+    .evaluate((element) => ({
+      right: element.getBoundingClientRect().right,
+      width: element.getBoundingClientRect().width,
+      containerWidth: element.parentElement?.clientWidth ?? 0,
+    }));
+  expect(loadingLayout.width).toBeLessThanOrEqual(loadingLayout.containerWidth);
+  expect(loadingLayout.right).toBeLessThanOrEqual(320);
+});
+
 test('mission detail index moves focus among available sections', async ({
   page,
 }) => {

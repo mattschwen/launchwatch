@@ -204,12 +204,12 @@ export default function MissionMapCanvas({
   const mapSizeClass = expanded
     ? 'h-full min-h-0'
     : variant === 'detail'
-      ? 'aspect-[2/1] min-h-[10rem] sm:h-[clamp(22rem,48vw,34rem)] sm:aspect-auto'
+      ? 'h-[10rem] sm:h-[clamp(22rem,48vw,34rem)]'
       : 'aspect-[2/1] min-h-[12rem] lg:aspect-auto lg:flex-1';
 
   return (
     <div
-      className={`mission-map-display relative min-h-0 overflow-hidden bg-[#050811] ${mapSizeClass}`}
+      className={`mission-map-display relative min-h-0 w-full min-w-0 max-w-full overflow-hidden bg-[#050811] ${mapSizeClass}`}
       data-map-availability={trajectory?.availability || 'none'}
     >
       <svg

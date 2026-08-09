@@ -55,7 +55,7 @@ const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
 function DetailTrajectoryLoadingState(): React.ReactElement {
   return (
     <div
-      className="surface-card holo-card signal-cold min-h-[32rem] overflow-hidden"
+      className="surface-card holo-card signal-cold min-h-[32rem] w-full min-w-0 max-w-full overflow-hidden"
     >
       <header className="border-b border-[var(--border-subtle)] px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -72,7 +72,7 @@ function DetailTrajectoryLoadingState(): React.ReactElement {
       </header>
 
       <div aria-hidden="true">
-        <div className="skeleton aspect-[2/1] min-h-[10rem] rounded-none sm:h-[clamp(22rem,48vw,34rem)] sm:aspect-auto" />
+        <div className="skeleton h-[10rem] w-full min-w-0 max-w-full rounded-none sm:h-[clamp(22rem,48vw,34rem)]" />
         <div className="grid border-t border-[var(--border-subtle)] md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <div
