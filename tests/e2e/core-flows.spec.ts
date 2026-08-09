@@ -118,6 +118,188 @@ test('first visit confirms synchronization without covering the active route', a
   ).toBeVisible();
 });
 
+test('installed PWA chrome respects simulated device safe areas', async ({
+  page,
+}) => {
+  const mobile = test.info().project.name.startsWith('mobile');
+  const viewport = mobile
+    ? { width: 393, height: 727 }
+    : { width: 844, height: 390 };
+  const insets = mobile
+    ? { top: 28, right: 18, bottom: 30, left: 18 }
+    : { top: 24, right: 32, bottom: 16, left: 48 };
+
+  await page.setViewportSize(viewport);
+  await page.addInitScript(() => {
+    window.localStorage.removeItem('launchwatch.boot-sequence.v3');
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
+  await expect(toast).toBeVisible();
+  await page.locator('html').evaluate((root, safeInsets) => {
+    root.style.setProperty('--safe-area-top', `${safeInsets.top}px`);
+    root.style.setProperty('--safe-area-right', `${safeInsets.right}px`);
+    root.style.setProperty('--safe-area-bottom', `${safeInsets.bottom}px`);
+    root.style.setProperty('--safe-area-left', `${safeInsets.left}px`);
+  }, insets);
+
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+    'content',
+    /viewport-fit=cover/
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(({ mobile, insets }) => {
+        const brand = document
+          .querySelector<HTMLElement>('header a[aria-label="LaunchWatch home"]')
+          ?.getBoundingClientRect();
+        const heading = document
+          .querySelector<HTMLElement>('main h1')
+          ?.getBoundingClientRect();
+        const header = document
+          .querySelector<HTMLElement>('header')
+          ?.getBoundingClientRect();
+        return Boolean(
+          brand &&
+            heading &&
+            header &&
+            brand.left >= insets.left &&
+            brand.top >= insets.top &&
+            heading.left >= insets.left &&
+            Math.abs(
+              header.height - ((mobile ? 56 : 70) + insets.top + 1)
+            ) < 0.5
+        );
+      }, { mobile, insets })
+    )
+    .toBe(true);
+  const geometry = await page.evaluate(({ mobile, insets }) => {
+    const bounds = (selector: string): DOMRect | null =>
+      document.querySelector<HTMLElement>(selector)?.getBoundingClientRect() ??
+      null;
+    const navigation = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'nav[aria-label="Primary navigation"]'
+      )
+    ).find((element) => element.getBoundingClientRect().height > 0);
+    const navigationLinks = navigation
+      ? Array.from(navigation.querySelectorAll<HTMLElement>('a')).map((link) =>
+          link.getBoundingClientRect()
+        )
+      : [];
+
+    return {
+      brand: bounds('header a[aria-label="LaunchWatch home"]'),
+      heading: bounds('main h1'),
+      header: bounds('header'),
+      navigation: navigation?.getBoundingClientRect() ?? null,
+      firstNavigationLink: navigationLinks.at(0) ?? null,
+      lastNavigationLink: navigationLinks.at(-1) ?? null,
+      expectedHeaderHeight: (mobile ? 56 : 70) + insets.top + 1,
+    };
+  }, { mobile, insets });
+
+  expect(geometry.brand).not.toBeNull();
+  expect(geometry.heading).not.toBeNull();
+  expect(geometry.header).not.toBeNull();
+  expect(geometry.brand!.left).toBeGreaterThanOrEqual(insets.left);
+  expect(geometry.brand!.top).toBeGreaterThanOrEqual(insets.top);
+  expect(geometry.heading!.left).toBeGreaterThanOrEqual(insets.left);
+  expect(geometry.header!.height).toBeCloseTo(
+    geometry.expectedHeaderHeight,
+    0
+  );
+
+  const toastBounds = await toast.boundingBox();
+  expect(toastBounds).not.toBeNull();
+  expect(toastBounds!.y).toBeGreaterThanOrEqual(insets.top);
+  expect(toastBounds!.x + toastBounds!.width).toBeLessThanOrEqual(
+    viewport.width - insets.right
+  );
+
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+  await skipLink.focus();
+  await expect(skipLink).toBeFocused();
+  await expect
+    .poll(async () => (await skipLink.boundingBox())?.y ?? -Infinity)
+    .toBeGreaterThanOrEqual(insets.top);
+  const skipBounds = await skipLink.boundingBox();
+  expect(skipBounds).not.toBeNull();
+  expect(skipBounds!.x).toBeGreaterThanOrEqual(insets.left);
+  expect(skipBounds!.y).toBeGreaterThanOrEqual(insets.top);
+
+  if (mobile) {
+    expect(geometry.navigation).not.toBeNull();
+    expect(geometry.firstNavigationLink).not.toBeNull();
+    expect(geometry.lastNavigationLink).not.toBeNull();
+    expect(geometry.navigation!.bottom).toBeCloseTo(viewport.height, 0);
+    expect(geometry.navigation!.height).toBeCloseTo(
+      68 + insets.bottom + 1,
+      0
+    );
+    expect(geometry.firstNavigationLink!.left).toBeGreaterThanOrEqual(
+      insets.left
+    );
+    expect(geometry.lastNavigationLink!.right).toBeLessThanOrEqual(
+      viewport.width - insets.right
+    );
+  } else {
+    expect(
+      await page.locator('footer').evaluate(
+        (footer) => Number.parseFloat(getComputedStyle(footer).paddingBottom)
+      )
+    ).toBe(insets.bottom);
+
+    const wideViewport = { width: 1180, height: 820 };
+    const wideBottomInset = 20;
+    await page.setViewportSize(wideViewport);
+    await page.goto('/');
+    await page.locator('html').evaluate((root, bottomInset) => {
+      root.style.setProperty('--safe-area-top', '0px');
+      root.style.setProperty('--safe-area-right', '0px');
+      root.style.setProperty('--safe-area-bottom', `${bottomInset}px`);
+      root.style.setProperty('--safe-area-left', '0px');
+    }, wideBottomInset);
+
+    const statusBar = page.getByRole('complementary', {
+      name: 'Mission status',
+    });
+    await expect(statusBar).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(({ viewportHeight, bottomInset }) => {
+          const status = document
+            .querySelector<HTMLElement>('.system-status-bar')
+            ?.getBoundingClientRect();
+          const shellPadding = Number.parseFloat(
+            getComputedStyle(
+              document.querySelector<HTMLElement>('.app-shell')!
+            ).paddingBottom
+          );
+          const footerPadding = Number.parseFloat(
+            getComputedStyle(
+              document.querySelector<HTMLElement>('footer')!
+            ).paddingBottom
+          );
+          return Boolean(
+            status &&
+              Math.abs(status.bottom - viewportHeight) < 0.5 &&
+              Math.abs(status.height - (44 + bottomInset)) < 0.5 &&
+              Math.abs(shellPadding - (44 + bottomInset)) < 0.5 &&
+              Math.abs(footerPadding - bottomInset) < 0.5
+          );
+        }, {
+          viewportHeight: wideViewport.height,
+          bottomInset: wideBottomInset,
+        })
+      )
+      .toBe(true);
+  }
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {

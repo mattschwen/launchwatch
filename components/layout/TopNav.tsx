@@ -123,7 +123,7 @@ function TopNavContents({
   const feedStatusLabel = `${feedStatus.label} — view provider status`;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
+    <header className="safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
       <span
         role="status"
         aria-live="polite"

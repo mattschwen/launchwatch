@@ -176,7 +176,7 @@ export default function Footer(): React.ReactElement {
           : '';
 
   return (
-    <footer className="site-footer mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+    <footer className="site-footer mt-auto border-t border-[var(--border-subtle)] bg-[var(--surface-base)] pb-[calc(4.25rem+var(--safe-area-bottom))] md:pb-[var(--safe-area-bottom)]">
       <div className="page-container flex min-h-14 flex-col gap-3 py-3 text-xs text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           <p className="leading-5">

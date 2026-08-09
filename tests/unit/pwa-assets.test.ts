@@ -110,6 +110,11 @@ describe('PWA install assets', () => {
     expect(offline).toMatch(/<!doctype html>/i);
     expect(offline).toContain('LaunchWatch');
     expect(offline).toContain('href="/"');
+    expect(offline).toContain('viewport-fit=cover');
+    expect(offline).toContain('env(safe-area-inset-top, 0px)');
+    expect(offline).toContain('env(safe-area-inset-right, 0px)');
+    expect(offline).toContain('env(safe-area-inset-bottom, 0px)');
+    expect(offline).toContain('env(safe-area-inset-left, 0px)');
     expect(offline).not.toMatch(/<script[^>]+src=/i);
     expect(offline).not.toMatch(/<link[^>]+rel=["']stylesheet/i);
   });

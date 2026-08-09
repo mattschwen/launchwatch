@@ -294,7 +294,7 @@ export default function RegisterServiceWorker(): React.ReactElement | null {
     <aside
       ref={updateCardRef}
       aria-labelledby="pwa-update-title"
-      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-[70] mx-auto flex max-w-xl flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--border-accent)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-elevated)] sm:left-auto sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))] md:bottom-12"
+      className="fixed bottom-[calc(5rem+var(--safe-area-bottom))] left-[max(0.75rem,var(--safe-area-left))] right-[max(0.75rem,var(--safe-area-right))] z-[70] mx-auto flex max-w-xl flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--border-accent)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-elevated)] sm:left-auto sm:right-[max(1rem,var(--safe-area-right))] sm:w-[min(28rem,calc(100vw-2rem))] md:bottom-[calc(3rem+var(--safe-area-bottom))]"
     >
       <div className="min-w-0">
         <p

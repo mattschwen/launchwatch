@@ -29,7 +29,7 @@ function MobileNavContents({
       aria-label="Primary navigation"
       className="mobile-primary-nav safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl md:hidden"
     >
-      <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around px-2">
+      <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around pl-[max(0.5rem,var(--safe-area-left))] pr-[max(0.5rem,var(--safe-area-right))]">
         {PRIMARY_NAV_ITEMS.map((link) => {
           const isActive = isNavItemActive(
             pathname,

@@ -94,7 +94,7 @@ export default function MissionBootSequence(): React.ReactElement | null {
       ref={statusRef}
       aria-label="MISSION CONTROL"
       aria-describedby="mission-sync-message"
-      className="fixed right-3 top-1.5 z-[60] flex h-11 min-w-0 max-w-[13rem] animate-fade-in items-center rounded-[var(--radius-sm)] border border-[var(--border-accent)] bg-[var(--surface-raised)] shadow-[var(--shadow-elevated)] sm:right-5 sm:top-[0.8125rem] sm:max-w-[17rem] lg:max-w-[22rem]"
+      className="fixed right-[max(0.75rem,var(--safe-area-right))] top-[calc(0.375rem+var(--safe-area-top))] z-[60] flex h-11 min-w-0 max-w-[13rem] animate-fade-in items-center rounded-[var(--radius-sm)] border border-[var(--border-accent)] bg-[var(--surface-raised)] shadow-[var(--shadow-elevated)] sm:right-[max(1.25rem,var(--safe-area-right))] sm:top-[calc(0.8125rem+var(--safe-area-top))] sm:max-w-[17rem] lg:max-w-[22rem]"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 pl-2 sm:gap-3 sm:pl-3">
         <span

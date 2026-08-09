@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#05060a">
     <title>Signal Lost — LaunchWatch</title>
     <style>
@@ -29,7 +29,11 @@
         margin: 0;
         display: grid;
         place-items: center;
-        padding: 24px;
+        padding:
+          max(24px, env(safe-area-inset-top, 0px))
+          max(24px, env(safe-area-inset-right, 0px))
+          max(24px, env(safe-area-inset-bottom, 0px))
+          max(24px, env(safe-area-inset-left, 0px));
         overflow-x: hidden;
         overflow-y: auto;
         color: var(--text);
