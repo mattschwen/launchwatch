@@ -8472,6 +8472,45 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await expect(expandButton).toBeFocused();
 });
 
+test('reported launch coordinates hand off to an exact external site map', async ({
+  page,
+}) => {
+  const siteMapUrl =
+    'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774';
+
+  await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page
+      .locator('button[aria-controls="mobile-mission-map"]:visible')
+      .click();
+  }
+
+  const siteMapSelector =
+    'a[title="Open reported launch site in OpenStreetMap"]:visible';
+  const compactSiteMap = page.locator(siteMapSelector);
+  await expect(compactSiteMap).toBeVisible();
+  await expect(compactSiteMap).toHaveAttribute('href', siteMapUrl);
+  await expect(compactSiteMap).toHaveAttribute('target', '_blank');
+  await expect(compactSiteMap).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(compactSiteMap).toHaveAccessibleName(
+    /28\.5619°N.*80\.5774°W.*opens in a new tab/i
+  );
+  const compactBounds = await compactSiteMap.boundingBox();
+  expect(compactBounds).not.toBeNull();
+  expect(compactBounds!.height).toBeGreaterThanOrEqual(44);
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  const detailSiteMap = page.locator(siteMapSelector);
+  await expect(detailSiteMap).toBeVisible();
+  await expect(detailSiteMap).toHaveAttribute('href', siteMapUrl);
+  await detailSiteMap.focus();
+  await expect(detailSiteMap).toBeFocused();
+  const detailBounds = await detailSiteMap.boundingBox();
+  expect(detailBounds).not.toBeNull();
+  expect(detailBounds!.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('expanded trajectory keeps long mission context readable', async ({
   page,
 }) => {

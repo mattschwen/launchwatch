@@ -42,6 +42,14 @@ describe('MissionTrajectory', () => {
         '[data-trajectory-marker="reported-launch-site"]'
       )
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: /28\.5619°N.*80\.5774°W.*opens in a new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774'
+    );
   });
 
   it('opens a focus-managed full-map dialog and closes with Escape', async () => {
@@ -283,6 +291,9 @@ describe('MissionTrajectory', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('list', { name: 'Mission model phases' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTitle('Open reported launch site in OpenStreetMap')
     ).not.toBeInTheDocument();
   });
 

@@ -1,7 +1,9 @@
 'use client';
 
-import { MapPin, Orbit, Route } from 'lucide-react';
+import { ExternalLink, MapPin, Orbit, Route } from 'lucide-react';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { getLaunchSiteDisplay, isMeaningfulLaunchValue } from '@/lib/format';
+import { buildReportedSiteMapUrl } from '@/lib/site-map';
 import type { IllustrativeTrajectory } from '@/lib/trajectory';
 import type { Launch } from '@/lib/types';
 import type { MissionMapSelection } from './MissionMapCanvas';
@@ -24,7 +26,7 @@ interface PhaseItem {
 
 function formatCoordinate(value: number, positive: string, negative: string): string {
   const direction = value >= 0 ? positive : negative;
-  return `${Math.abs(value).toFixed(4)}° ${direction}`;
+  return `${Math.abs(value).toFixed(4)}°${direction}`;
 }
 
 export function formatLaunchCoordinates(launch: Launch): string {
@@ -47,6 +49,7 @@ export default function MissionPhaseRail({
   const site = getLaunchSiteDisplay(launch);
   const reportedSiteLabel =
     site.primary === 'Location pending' ? trajectory.siteLabel : site.label;
+  const reportedSiteMapUrl = buildReportedSiteMapUrl(launch.location);
 
   if (trajectory.launchPoint) {
     items.push({
@@ -198,6 +201,7 @@ export default function MissionPhaseRail({
             label: 'Coordinates',
             value: formatLaunchCoordinates(launch),
             warning: !launch.location,
+            href: reportedSiteMapUrl,
           },
           {
             label: 'Data source',
@@ -223,7 +227,21 @@ export default function MissionPhaseRail({
                   : 'text-[var(--text-primary)]'
               }`}
             >
-              {fact.value}
+              {'href' in fact && fact.href ? (
+                <a
+                  href={fact.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open reported launch site in OpenStreetMap"
+                  className="-my-2 inline-flex min-h-11 max-w-full items-center gap-1.5 text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)]"
+                >
+                  <span>{fact.value}</span>
+                  <ExternalLink aria-hidden="true" className="shrink-0" size={13} />
+                  <ExternalLinkHint />
+                </a>
+              ) : (
+                fact.value
+              )}
             </dd>
           </div>
         ))}

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ExternalLink,
   Focus,
   Globe2,
   Info,
@@ -19,6 +20,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import MissionMapCanvas, {
   type MissionMapSelection,
 } from '@/components/mission-map/MissionMapCanvas';
@@ -40,6 +42,7 @@ import {
   TRAJECTORY_DISCLOSURE,
   type IllustrativeTrajectory,
 } from '@/lib/trajectory';
+import { buildReportedSiteMapUrl } from '@/lib/site-map';
 import type { Launch } from '@/lib/types';
 
 interface MissionTrajectoryProps {
@@ -99,6 +102,7 @@ function CompactFacts({
   launch: Launch | null;
   trajectory: IllustrativeTrajectory | null;
 }): React.ReactElement {
+  const reportedSiteMapUrl = buildReportedSiteMapUrl(launch?.location);
   const facts = launch && trajectory
     ? [
         {
@@ -136,6 +140,7 @@ function CompactFacts({
           className: launch.location
             ? 'text-[var(--text-primary)]'
             : 'text-[var(--console-amber)]',
+          href: reportedSiteMapUrl,
         },
       ]
     : [
@@ -162,7 +167,21 @@ function CompactFacts({
           <dd
             className={`mt-1 break-words text-[11px] font-semibold leading-4 ${fact.className}`}
           >
-            {fact.value}
+            {'href' in fact && fact.href ? (
+              <a
+                href={fact.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open reported launch site in OpenStreetMap"
+                className="-my-2 inline-flex min-h-11 max-w-full items-center gap-1.5 text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                <span>{fact.value}</span>
+                <ExternalLink aria-hidden="true" className="shrink-0" size={12} />
+                <ExternalLinkHint />
+              </a>
+            ) : (
+              fact.value
+            )}
           </dd>
         </div>
       ))}

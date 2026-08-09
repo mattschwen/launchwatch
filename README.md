@@ -56,7 +56,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   remains the authoritative schedule time; UTC users and coarse provider
   estimates keep the existing single-time presentation
 - Responsive selected-mission trajectory map on Watch and every detail route,
-  with a collapsed Home mobile presentation
+  with a collapsed Home mobile presentation and a coordinate-validated
+  OpenStreetMap handoff for provider-reported launch sites
 - Discrete stream, news, and community coverage signals based on available
   records rather than synthetic strength percentages; external news actions
   are limited to credential-free HTTPS destinations
