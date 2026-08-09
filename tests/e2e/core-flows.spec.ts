@@ -4242,6 +4242,42 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps keyboard-focused queue missions below sticky navigation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/watch');
+  await page.locator('html').evaluate((root) => {
+    root.style.setProperty('--safe-area-top', '24px');
+  });
+
+  const selectedMission = page
+    .getByRole('complementary', { name: 'Mission queue' })
+    .getByRole('button', { name: /Orbital Dawn/i });
+  for (let step = 0; step < 20; step += 1) {
+    await page.keyboard.press('Tab');
+    const queueFocused = await selectedMission.evaluate(
+      (element) => document.activeElement === element
+    );
+    if (queueFocused) break;
+  }
+
+  await expect(selectedMission).toBeFocused();
+  await expect
+    .poll(() =>
+      selectedMission.evaluate((element) => {
+        const headerBottom =
+          document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+        return element.getBoundingClientRect().top - headerBottom;
+      })
+    )
+    .toBeGreaterThanOrEqual(15);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps long standby missions readable at the 320px boundary', async ({
   page,
 }) => {
