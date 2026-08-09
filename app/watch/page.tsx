@@ -476,11 +476,14 @@ function WatchStage({
           {fallbackDescription}
         </p>
         <div className="my-2 h-px bg-[var(--border-subtle)] min-[360px]:my-6" />
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 min-[360px]:contents">
+        <div
+          data-watch-standby-context
+          className="grid min-w-0 grid-cols-1 items-center gap-1 min-[360px]:contents"
+        >
           <p className="data-label hidden min-[360px]:block">Next mission</p>
           <Link
             href={detailHref}
-            className="inline-flex min-h-11 min-w-0 max-w-full items-center justify-center text-base font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)] min-[360px]:mt-1 min-[360px]:text-xl"
+            className="inline-flex min-h-11 min-w-0 max-w-full items-center justify-center break-words text-center text-base font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--console-cyan)] max-[359px]:w-full min-[360px]:mt-1 min-[360px]:text-xl"
           >
             {primaryMissionName}
           </Link>

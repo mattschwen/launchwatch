@@ -4080,6 +4080,79 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps long standby missions readable at the 320px boundary', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  const longMission = {
+    ...UPCOMING_LAUNCHES[0],
+    name: 'Long March 7A | International Orbital Demonstration Payload',
+    missionName: null,
+    rocket: 'Long March 7A',
+    livestream: null,
+    livestreams: null,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [longMission, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: longMission,
+        canonicalId: longMission.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const standby = page.getByRole('region', {
+    name: 'Mission coverage standby',
+  });
+  await expect(
+    standby.getByRole('heading', { name: 'No live stream right now' })
+  ).toBeVisible();
+  const missionLink = standby.getByRole('link', {
+    name: longMission.name,
+  });
+  const countdown = standby.locator('[data-watch-standby-context] time');
+  await expect(missionLink).toBeVisible();
+  await expect(countdown).toBeVisible();
+
+  const layout = await Promise.all([
+    missionLink.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        bottom: bounds.bottom,
+        height: bounds.height,
+        width: bounds.width,
+        clientWidth: element.clientWidth,
+        scrollWidth: element.scrollWidth,
+      };
+    }),
+    countdown.evaluate((element) => element.getBoundingClientRect().top),
+  ]);
+
+  expect(layout[0].width).toBeGreaterThanOrEqual(44);
+  expect(layout[0].height).toBeGreaterThanOrEqual(44);
+  expect(layout[0].scrollWidth).toBeLessThanOrEqual(
+    layout[0].clientWidth + 1
+  );
+  expect(layout[1]).toBeGreaterThanOrEqual(layout[0].bottom);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps long mission queues compact and keyboard-reachable', async ({
   page,
 }) => {
