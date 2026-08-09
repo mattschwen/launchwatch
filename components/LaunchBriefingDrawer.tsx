@@ -145,7 +145,7 @@ export default function LaunchBriefingDrawer({
         aria-labelledby={titleId}
         className="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-l border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
       >
-        <header className="flex items-start gap-4 border-b border-[var(--border-subtle)] px-5 py-4 sm:px-6">
+        <header className="flex items-start gap-4 border-b border-[var(--border-subtle)] pb-4 pl-[max(1.25rem,var(--safe-area-left))] pr-[max(1.25rem,var(--safe-area-right))] pt-[calc(1rem+var(--safe-area-top))] sm:pl-6 sm:pr-[max(1.5rem,var(--safe-area-right))]">
           <div className="min-w-0 flex-1">
             <p className="data-label">Mission briefing</p>
             <h2
@@ -169,7 +169,7 @@ export default function LaunchBriefingDrawer({
         <div
           tabIndex={0}
           aria-label="Mission briefing details"
-          className="flex-1 overflow-y-auto px-5 py-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:px-6 sm:py-6"
+          className="flex-1 overflow-y-auto py-5 pl-[max(1.25rem,var(--safe-area-left))] pr-[max(1.25rem,var(--safe-area-right))] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:py-6 sm:pl-6 sm:pr-[max(1.5rem,var(--safe-area-right))]"
         >
           <StatusBadge status={launch.status} statusName={launch.statusName} />
 
@@ -330,7 +330,7 @@ export default function LaunchBriefingDrawer({
           ) : null}
         </div>
 
-        <footer className="relative z-10 flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 px-5 py-4 sm:px-6">
+        <footer className="relative z-10 flex flex-wrap items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-raised)]/65 pb-[calc(1rem+var(--safe-area-bottom))] pl-[max(1.25rem,var(--safe-area-left))] pr-[max(1.25rem,var(--safe-area-right))] pt-4 sm:pl-6 sm:pr-[max(1.5rem,var(--safe-area-right))]">
           <Link
             href={detailHref ?? `/launch/${encodeURIComponent(launch.id)}`}
             onClick={closeDrawer}

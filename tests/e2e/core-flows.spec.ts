@@ -300,6 +300,75 @@ test('installed PWA chrome respects simulated device safe areas', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission briefing keeps controls clear of simulated PWA safe areas', async ({
+  page,
+}) => {
+  const viewport = { width: 393, height: 727 };
+  const insets = { top: 28, right: 26, bottom: 30, left: 24 };
+
+  await page.setViewportSize(viewport);
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/');
+  await page.locator('html').evaluate((root, safeInsets) => {
+    root.style.setProperty('--safe-area-top', `${safeInsets.top}px`);
+    root.style.setProperty('--safe-area-right', `${safeInsets.right}px`);
+    root.style.setProperty('--safe-area-bottom', `${safeInsets.bottom}px`);
+    root.style.setProperty('--safe-area-left', `${safeInsets.left}px`);
+  }, insets);
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await expect(dialog).toBeVisible();
+
+  const geometry = await dialog.evaluate((element, safeInsets) => {
+    const header = element.querySelector<HTMLElement>('header')!;
+    const footer = element.querySelector<HTMLElement>('footer')!;
+    const details = element.querySelector<HTMLElement>(
+      '[aria-label="Mission briefing details"]',
+    )!;
+    const heading = element.querySelector<HTMLElement>('h2')!;
+    const close = element.querySelector<HTMLElement>(
+      'button[aria-label="Close mission briefing"]',
+    )!;
+    const primaryAction = element.querySelector<HTMLElement>('footer a')!;
+    const rect = (target: HTMLElement): DOMRect =>
+      target.getBoundingClientRect();
+
+    return {
+      headerPaddingTop: Number.parseFloat(getComputedStyle(header).paddingTop),
+      footerPaddingBottom: Number.parseFloat(
+        getComputedStyle(footer).paddingBottom,
+      ),
+      detailsPaddingLeft: Number.parseFloat(
+        getComputedStyle(details).paddingLeft,
+      ),
+      detailsPaddingRight: Number.parseFloat(
+        getComputedStyle(details).paddingRight,
+      ),
+      heading: rect(heading),
+      close: rect(close),
+      primaryAction: rect(primaryAction),
+      expectedHeaderPadding: 16 + safeInsets.top,
+      expectedFooterPadding: 16 + safeInsets.bottom,
+    };
+  }, insets);
+
+  expect(geometry.headerPaddingTop).toBe(geometry.expectedHeaderPadding);
+  expect(geometry.footerPaddingBottom).toBe(geometry.expectedFooterPadding);
+  expect(geometry.detailsPaddingLeft).toBe(insets.left);
+  expect(geometry.detailsPaddingRight).toBe(insets.right);
+  expect(geometry.heading.left).toBeGreaterThanOrEqual(insets.left);
+  expect(geometry.close.right).toBeLessThanOrEqual(
+    viewport.width - insets.right,
+  );
+  expect(geometry.primaryAction.left).toBeGreaterThanOrEqual(insets.left);
+  expect(geometry.primaryAction.bottom).toBeLessThanOrEqual(
+    viewport.height - insets.bottom,
+  );
+});
+
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {
