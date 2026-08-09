@@ -169,13 +169,13 @@ export function getGoogleCalendarUrl(launch: Launch): string {
 }
 
 /**
- * Copy launch details to clipboard
+ * Format the portable mission brief used by clipboard and manual-copy flows.
  */
-export async function copyToClipboard(launch: Launch): Promise<boolean> {
+export function formatLaunchDetails(launch: Launch): string {
   const launchWindow = formatLaunchWindow(launch);
   const launchSite = getLaunchSiteDisplay(launch).label;
   const missionUrl = getMissionUrl(launch);
-  const text = [
+  return [
     `🚀 ${launch.name}`,
     ``,
     `📅 Target: ${formatLaunchDate(launch.date, launch.datePrecision)}`,
@@ -186,6 +186,13 @@ export async function copyToClipboard(launch: Launch): Promise<boolean> {
     `\n🔗 Mission details: ${missionUrl}`,
     launch.livestream ? `\n🎥 Watch: ${launch.livestream}` : '',
   ].filter(Boolean).join('\n');
+}
+
+/**
+ * Copy launch details to clipboard
+ */
+export async function copyToClipboard(launch: Launch): Promise<boolean> {
+  const text = formatLaunchDetails(launch);
 
   try {
     await navigator.clipboard.writeText(text);

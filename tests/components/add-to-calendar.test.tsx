@@ -110,6 +110,58 @@ describe('AddToCalendar', () => {
     ).toHaveClass('left-1/2', '-translate-x-1/2');
   });
 
+  it('keeps expanded top menus below the sticky header', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(851);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        if (this.tagName === 'HEADER') {
+          return {
+            bottom: 70,
+            height: 70,
+            left: 0,
+            right: 393,
+            top: 0,
+            width: 393,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          };
+        }
+        return {
+          bottom: 474,
+          height: 44,
+          left: 32,
+          right: 192,
+          top: 430,
+          width: 160,
+          x: 32,
+          y: 430,
+          toJSON: () => ({}),
+        };
+      }
+    );
+
+    render(
+      <div className="app-shell">
+        <header />
+        <AddToCalendar
+          launch={UPCOMING_LAUNCHES[0]}
+          menuPlacement="top"
+        />
+      </div>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
+
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' })
+    ).toHaveStyle({ maxHeight: '352px' });
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' })
+    ).toHaveClass('bottom-full', 'overflow-y-auto', 'overscroll-contain');
+  });
+
   it('identifies the Google Calendar handoff as a new-tab action', async () => {
     const user = userEvent.setup();
 
@@ -313,9 +365,26 @@ describe('AddToCalendar', () => {
     expect(copy).toHaveAttribute('aria-busy', 'false');
     expect(
       screen.getByText(
-        'Could not copy launch details. Try again or use a calendar option.'
+        'Could not copy launch details. A selectable manual copy fallback is available.'
       )
     ).toBeInTheDocument();
+    const fallback = screen.getByRole('textbox', {
+      name: 'Manual copy fallback',
+    });
+    expect((fallback as HTMLTextAreaElement).value).toContain(
+      'Mission details: https://www.launchwatch.io/launch/ll2-demo-orbital-dawn'
+    );
+    expect(fallback).toHaveAccessibleDescription(
+      'Select the mission brief below if clipboard access stays blocked.'
+    );
+
+    await user.click(fallback);
+    expect(fallback).toHaveFocus();
+    expect(fallback).toHaveProperty('selectionStart', 0);
+    expect(fallback).toHaveProperty(
+      'selectionEnd',
+      (fallback as HTMLTextAreaElement).value.length
+    );
 
     await user.click(copy);
 

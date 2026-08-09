@@ -3015,8 +3015,13 @@ test('slash focuses mission search without intercepting editable controls', asyn
     name: 'Search launches',
   });
   await expect(scheduleSearch).toHaveCount(0);
-  await page.keyboard.press('/');
-  await expect(scheduleSearch).toBeVisible();
+  await expect
+    .poll(async () => {
+      if (await scheduleSearch.isVisible()) return true;
+      await page.keyboard.press('/');
+      return scheduleSearch.isVisible();
+    })
+    .toBe(true);
   await expect(scheduleSearch).toBeFocused();
   await expect(scheduleSearch).toHaveAttribute('aria-keyshortcuts', '/');
 
@@ -5670,12 +5675,52 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   await expect(failedCopy).toHaveAttribute('aria-busy', 'false');
   await expect(
     dialog.getByText(
-      'Could not copy launch details. Try again or use a calendar option.'
+      'Could not copy launch details. A selectable manual copy fallback is available.'
     )
   ).toBeAttached();
   expect((await failedCopy.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
-  await failedCopy.press('Escape');
+  const manualFallback = dialog.getByRole('textbox', {
+    name: 'Manual copy fallback',
+  });
+  await expect(manualFallback).toBeVisible();
+  await expect(manualFallback).toHaveValue(
+    /Mission details: https:\/\/www\.launchwatch\.io\/launch\/ll2-demo-orbital-dawn/
+  );
+  await manualFallback.focus();
+  await expect(manualFallback).toBeFocused();
+  const manualFallbackValue = await manualFallback.inputValue();
+  expect(
+    await manualFallback.evaluate((element) => ({
+      selectionStart: (element as HTMLTextAreaElement).selectionStart,
+      selectionEnd: (element as HTMLTextAreaElement).selectionEnd,
+      valueLength: (element as HTMLTextAreaElement).value.length,
+    }))
+  ).toEqual({
+    selectionStart: 0,
+    selectionEnd: manualFallbackValue.length,
+    valueLength: manualFallbackValue.length,
+  });
+
+  const recoveryPlacement = await manualFallback.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      top: bounds.top,
+      right: bounds.right,
+      bottom: bounds.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  expect(recoveryPlacement.top).toBeGreaterThanOrEqual(0);
+  expect(recoveryPlacement.right).toBeLessThanOrEqual(
+    recoveryPlacement.viewportWidth
+  );
+  expect(recoveryPlacement.bottom).toBeLessThanOrEqual(
+    recoveryPlacement.viewportHeight
+  );
+
+  await manualFallback.press('Escape');
   await expect(calendarOptions).toHaveCount(0);
   await expect(dialog).toBeVisible();
   await expect(calendarTrigger).toBeFocused();

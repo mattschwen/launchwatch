@@ -15,6 +15,7 @@ import type { Launch } from '@/lib/types';
 import {
   copyToClipboard,
   downloadICS,
+  formatLaunchDetails,
   getGoogleCalendarUrl,
 } from '@/lib/calendar';
 import {
@@ -33,6 +34,7 @@ interface AddToCalendarProps {
 
 type CopyState = 'idle' | 'copying' | 'success' | 'error';
 type MenuAlignment = NonNullable<AddToCalendarProps['menuAlign']>;
+type MenuPlacement = NonNullable<AddToCalendarProps['menuPlacement']>;
 type AlertState =
   | NotificationPermission
   | 'requesting'
@@ -69,6 +71,53 @@ function resolveMenuAlignment(
   );
 }
 
+function visibleChromeEdge(selector: string, edge: 'top' | 'bottom'): number | null {
+  const elements = Array.from(document.querySelectorAll<HTMLElement>(selector));
+  const visible = elements
+    .filter((element) => window.getComputedStyle(element).display !== 'none')
+    .map((element) => element.getBoundingClientRect())
+    .filter((rect) => rect.width > 0 && rect.height > 0);
+
+  if (visible.length === 0) return null;
+  return edge === 'top'
+    ? Math.max(...visible.map((rect) => rect.bottom))
+    : Math.min(...visible.map((rect) => rect.top));
+}
+
+function resolveMenuViewport(
+  trigger: DOMRect,
+  preferred: MenuPlacement
+): { placement: MenuPlacement; maxHeight: number } {
+  const gutter = 8;
+  if (trigger.width <= 0 || trigger.height <= 0) {
+    return {
+      placement: preferred,
+      maxHeight: Math.max(96, window.innerHeight - gutter * 2),
+    };
+  }
+  const topEdge =
+    visibleChromeEdge('.app-shell > header', 'top') ?? gutter;
+  const bottomEdge =
+    visibleChromeEdge('.mobile-primary-nav, .system-status-bar', 'bottom') ??
+    window.innerHeight - gutter;
+  const available = {
+    top: Math.max(0, trigger.top - topEdge - gutter),
+    bottom: Math.max(0, bottomEdge - trigger.bottom - gutter),
+  };
+  const alternate: MenuPlacement = preferred === 'top' ? 'bottom' : 'top';
+  const minimumUsefulHeight = 160;
+  const placement =
+    available[preferred] < minimumUsefulHeight &&
+    available[alternate] > available[preferred]
+      ? alternate
+      : preferred;
+
+  return {
+    placement,
+    maxHeight: Math.max(96, Math.floor(available[placement])),
+  };
+}
+
 export default function AddToCalendar({
   launch,
   variant = 'button',
@@ -80,8 +129,14 @@ export default function AddToCalendar({
   const [alertState, setAlertState] = useState<AlertState>('unsupported');
   const [resolvedMenuAlign, setResolvedMenuAlign] =
     useState<MenuAlignment>(menuAlign);
+  const [resolvedMenuPlacement, setResolvedMenuPlacement] =
+    useState<MenuPlacement>(menuPlacement);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | undefined>();
   const menuId = useId();
+  const copyRecoveryId = useId();
+  const copyRecoveryDescriptionId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
   const copyResetTimeoutRef = useRef<number | undefined>(undefined);
@@ -119,6 +174,16 @@ export default function AddToCalendar({
       document.removeEventListener('keydown', closeOnEscape, true);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (copyState !== 'error') return;
+    const frame = window.requestAnimationFrame(() => {
+      if (menuRef.current) {
+        menuRef.current.scrollTop = menuRef.current.scrollHeight;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [copyState]);
 
   const close = (): void => {
     setOpen(false);
@@ -268,12 +333,19 @@ export default function AddToCalendar({
                 : window.Notification.permission
             );
             if (triggerRef.current) {
+              const triggerBounds = triggerRef.current.getBoundingClientRect();
               setResolvedMenuAlign(
                 resolveMenuAlignment(
-                  triggerRef.current.getBoundingClientRect(),
+                  triggerBounds,
                   variant === 'compact' ? 'center' : menuAlign
                 )
               );
+              const viewport = resolveMenuViewport(
+                triggerBounds,
+                menuPlacement
+              );
+              setResolvedMenuPlacement(viewport.placement);
+              setMenuMaxHeight(viewport.maxHeight);
             }
           }
           setOpen((value) => !value);
@@ -291,17 +363,21 @@ export default function AddToCalendar({
 
       {open ? (
         <div
+          ref={menuRef}
           id={menuId}
           role="group"
           aria-label="Calendar options"
-          className={`panel absolute z-[70] w-[min(14rem,calc(100vw-1rem))] rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
+          style={{ maxHeight: menuMaxHeight }}
+          className={`panel absolute z-[70] w-[min(14rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-[var(--radius-md)] p-1.5 shadow-[var(--shadow-elevated)] ${
             resolvedMenuAlign === 'center'
               ? 'left-1/2 -translate-x-1/2'
               : resolvedMenuAlign === 'left'
                 ? 'left-0'
               : 'right-0'
           } ${
-            menuPlacement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+            resolvedMenuPlacement === 'top'
+              ? 'bottom-full mb-2'
+              : 'top-full mt-2'
           }`}
         >
           <button
@@ -394,11 +470,42 @@ export default function AddToCalendar({
                   ? 'Copy failed — try again'
                   : 'Copy launch details'}
           </button>
+          {copyState === 'error' ? (
+            <div
+              data-calendar-copy-recovery="true"
+              className="mx-1 mt-1 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-amber)_32%,var(--border-subtle))] bg-[var(--surface-accent)] p-2.5"
+            >
+              <label
+                htmlFor={copyRecoveryId}
+                className="data-label text-[var(--console-amber)]"
+              >
+                Manual copy fallback
+              </label>
+              <p
+                id={copyRecoveryDescriptionId}
+                className="mt-1 text-[0.68rem] leading-4 text-[var(--text-secondary)]"
+              >
+                Select the mission brief below if clipboard access stays
+                blocked.
+              </p>
+              <textarea
+                id={copyRecoveryId}
+                readOnly
+                spellCheck={false}
+                rows={3}
+                value={formatLaunchDetails(launch)}
+                aria-describedby={copyRecoveryDescriptionId}
+                onFocus={(event) => event.currentTarget.select()}
+                onClick={(event) => event.currentTarget.select()}
+                className="mt-2 min-h-20 w-full resize-y rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-2.5 py-2 font-mono text-[0.68rem] leading-4 text-[var(--console-cyan)] outline-none selection:bg-[var(--console-cyan)] selection:text-black focus-visible:border-[var(--console-cyan)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--console-cyan)_34%,transparent)]"
+              />
+            </div>
+          ) : null}
           <span className="sr-only" aria-live="polite">
             {copyState === 'success'
               ? 'Launch details copied to clipboard'
               : copyState === 'error'
-                ? 'Could not copy launch details. Try again or use a calendar option.'
+                ? 'Could not copy launch details. A selectable manual copy fallback is available.'
                 : alertState === 'granted'
                   ? 'Browser launch alerts enabled while LaunchWatch is open.'
                   : alertState === 'denied'
