@@ -131,7 +131,7 @@ describe('LaunchActions', () => {
 
     expect(container.firstChild).toHaveClass(
       'detail-launch-actions',
-      'grid-cols-2'
+      'grid'
     );
 
     await user.click(

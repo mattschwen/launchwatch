@@ -162,6 +162,7 @@ export default function Countdown({
   const values = [days, hours, minutes, seconds].map((value) =>
     String(value).padStart(2, '0')
   );
+  const wideDayCount = days >= 1_000;
 
   if (compact) {
     const compactValue = estimated
@@ -210,9 +211,6 @@ export default function Countdown({
     { label: 'sec', value: values[3] },
   ];
   const units = allUnits;
-  const gridColumns =
-    'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))]';
-
   return (
     <time
       dateTime={targetDate}
@@ -225,7 +223,7 @@ export default function Countdown({
       <span
         aria-hidden="true"
         suppressHydrationWarning
-        className={`countdown-display grid w-full ${gridColumns} items-stretch gap-1 font-medium leading-none tabular-nums sm:gap-2 ${
+        className={`countdown-display grid w-full grid-cols-[auto_minmax(0,1fr)] items-stretch gap-1 font-medium leading-none tabular-nums sm:gap-2 ${
           featured
             ? 'max-w-[30rem] text-[clamp(1.6rem,3.6vw,3.25rem)]'
             : 'max-w-[36rem] text-[clamp(1.7rem,5vw,4.25rem)]'
@@ -240,33 +238,41 @@ export default function Countdown({
         >
           {estimated ? '≈T−' : 'T−'}
         </span>
-        {units.map((unit) => (
-          <span
-            key={unit.label}
-            className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] max-[359px]:px-0.5 sm:px-2 sm:py-2.5 ${
-              estimated
-                ? 'border-[color-mix(in_srgb,var(--console-amber)_25%,transparent)] bg-[linear-gradient(180deg,rgba(244,185,95,0.075),rgba(7,11,18,0.72))]'
-                : 'border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))]'
-            }`}
-          >
+        <span
+          className={`countdown-units grid min-w-0 gap-1 sm:gap-2 ${
+            wideDayCount
+              ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,4ch),1fr))]'
+              : 'grid-cols-[repeat(auto-fit,minmax(min(100%,3.25ch),1fr))]'
+          }`}
+        >
+          {units.map((unit) => (
             <span
-              key={`${unit.label}-${unit.value}`}
-              className={`countdown-digits block text-center tracking-[-0.055em] ${
-                animated ? 'countdown-digit-tick' : ''
-              } ${
+              key={unit.label}
+              className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] max-[430px]:px-0.5 sm:px-2 sm:py-2.5 ${
                 estimated
-                  ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
-                  : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'
+                  ? 'border-[color-mix(in_srgb,var(--console-amber)_25%,transparent)] bg-[linear-gradient(180deg,rgba(244,185,95,0.075),rgba(7,11,18,0.72))]'
+                  : 'border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))]'
               }`}
-              suppressHydrationWarning
             >
-              {unit.value}
+              <span
+                key={`${unit.label}-${unit.value}`}
+                className={`countdown-digits block text-center tracking-[-0.055em] ${
+                  animated ? 'countdown-digit-tick' : ''
+                } ${
+                  estimated
+                    ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
+                    : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'
+                }`}
+                suppressHydrationWarning
+              >
+                {unit.value}
+              </span>
+              <span className="countdown-unit-label mt-1 block text-center text-[0.32em] font-semibold uppercase leading-none tracking-[0.14em] text-[var(--text-muted)]">
+                {unit.label}
+              </span>
             </span>
-            <span className="countdown-unit-label mt-1 block text-center text-[0.32em] font-semibold uppercase leading-none tracking-[0.14em] text-[var(--text-muted)]">
-              {unit.label}
-            </span>
-          </span>
-        ))}
+          ))}
+        </span>
       </span>
       {estimated ? (
         <span

@@ -39,6 +39,7 @@ describe('Countdown', () => {
     expect(time).not.toHaveAttribute('aria-label');
     expect(display).toBeInTheDocument();
     expect(display).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.countdown-units')).toBeInTheDocument();
     expect(container.querySelector('.countdown-prefix')).toHaveTextContent('T−');
     expect(units).toHaveLength(4);
     expect(
@@ -71,7 +72,29 @@ describe('Countdown', () => {
       container.querySelector('.countdown-digits')
     ).toHaveTextContent('123');
     expect(container.querySelector('.countdown-display')).toHaveClass(
-      'grid-cols-[auto_minmax(3ch,1.2fr)_repeat(3,minmax(2ch,1fr))]'
+      'grid-cols-[auto_minmax(0,1fr)]'
+    );
+  });
+
+  it('gives four-digit mission days enough intrinsic room to reflow', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 1_234,
+      hours: 9,
+      minutes: 8,
+      seconds: 7,
+      total: 10660087,
+      now: Date.now(),
+    });
+
+    const { container } = render(
+      <Countdown targetDate="2039-01-01T00:00:00.000Z" featured />
+    );
+
+    expect(container.querySelector('.countdown-units')).toHaveClass(
+      'grid-cols-[repeat(auto-fit,minmax(min(100%,4ch),1fr))]'
+    );
+    expect(container.querySelector('.countdown-digits')).toHaveTextContent(
+      '1234'
     );
   });
 

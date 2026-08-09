@@ -52,17 +52,22 @@ export default function MissionVisualDisclosure({
         aria-controls={regionId}
         aria-label={`${open ? 'Hide' : 'Show'} mission visual for ${launch.name}`}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-[4.5rem] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+        className="flex min-h-[4.5rem] w-full flex-wrap items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-subtle)]"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
-          <ImageIcon aria-hidden="true" size={19} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="data-label block text-[var(--console-cyan)]">
-            {archiveLabel}
+        <span
+          data-visual-summary="true"
+          className="flex min-w-0 flex-[1_1_12rem] items-center gap-3"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
+            <ImageIcon aria-hidden="true" size={19} />
           </span>
-          <span className="mt-1 block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
-            {summary}
+          <span className="min-w-0 flex-1">
+            <span className="data-label block break-words text-[var(--console-cyan)]">
+              {archiveLabel}
+            </span>
+            <span className="mt-1 block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
+              {summary}
+            </span>
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2 font-mono text-xs uppercase tracking-[0.08em] text-[var(--console-cyan)]">

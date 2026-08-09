@@ -234,10 +234,10 @@ function HomeExperience({
             <Globe2 aria-hidden="true" size={20} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold text-[var(--text-primary)]">
+            <span className="block break-words font-semibold text-[var(--text-primary)]">
               {missionPathTitle}
             </span>
-            <span className="mt-0.5 block text-sm text-[var(--text-muted)]">
+            <span className="mt-0.5 block break-words text-sm text-[var(--text-muted)]">
               {missionPathDetail}
             </span>
           </span>

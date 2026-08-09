@@ -1250,6 +1250,88 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('dense mission consoles reflow at 200% text size', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 851 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+
+  const applyTextResize = async (): Promise<void> => {
+    await page.addStyleTag({
+      content: ':root { font-size: 32px !important; }',
+    });
+    await page.waitForTimeout(50);
+  };
+  const expectContentFits = async (selector: string): Promise<void> => {
+    await expect
+      .poll(() =>
+        page.locator(selector).evaluateAll((elements) =>
+          elements.every(
+            (element) => element.scrollWidth <= element.clientWidth + 1
+          )
+        )
+      )
+      .toBe(true);
+  };
+
+  await page.goto('/');
+  await applyTextResize();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  await expectContentFits('.countdown-display, .countdown-unit');
+  await expectContentFits('.compact-hero-telemetry > div');
+  await expectContentFits('.launch-card-grid');
+  await expectContentFits('.mission-row h3, .mission-row [data-launch-status]');
+  await expectContentFits(
+    'section[aria-label="Mission visual archive"] .data-label'
+  );
+  await expect
+    .poll(() =>
+      page.locator('.mission-row h3').first().evaluate((element) =>
+        element.getBoundingClientRect().width
+      )
+    )
+    .toBeGreaterThan(200);
+  await expect
+    .poll(() =>
+      page.locator('[data-visual-summary]').evaluate((element) =>
+        element.getBoundingClientRect().width
+      )
+    )
+    .toBeGreaterThan(200);
+  await expect(
+    page
+      .locator('header time[aria-label^="Current UTC time"]')
+      .filter({ visible: true })
+  ).toHaveText(/\d{2}:\d{2}Z/);
+
+  await page.goto('/watch');
+  await applyTextResize();
+  await expect(page.getByRole('heading', { name: 'Watch room' })).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  await expectContentFits('.compact-launch-actions .action-button');
+  await expectContentFits('.coverage-signal-count');
+
+  await page.goto('/history');
+  await applyTextResize();
+  await expect(page.getByRole('heading', { name: 'Launch archive' })).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  await expectContentFits('label[for$="-search"]');
+
+  await page.setViewportSize({ width: 1180, height: 820 });
+  for (const route of ['/', '/watch', '/history']) {
+    await page.goto(route);
+    await applyTextResize();
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+    if (route === '/') await expectContentFits('.launch-card-grid');
+  }
+  await expect(page.locator('.archive-table-header')).toBeHidden();
+  await expect(page.locator('.archive-row-compact').first()).toBeVisible();
+  await expectContentFits('.archive-row-grid');
+});
+
 test('primary navigation follows the brand before mission content', async ({
   page,
 }) => {

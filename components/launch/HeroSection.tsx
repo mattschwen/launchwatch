@@ -338,7 +338,7 @@ export default function HeroSection({
             />
           </div>
 
-          <dl className="compact-hero-telemetry grid grid-cols-2 gap-y-5">
+          <dl className="compact-hero-telemetry grid gap-y-5">
             <div className="relative min-w-0 border-r border-[var(--border-subtle)] pr-3 pl-7">
               <CalendarDays
                 aria-hidden="true"

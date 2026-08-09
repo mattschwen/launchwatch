@@ -123,7 +123,7 @@ function TopNavContents({
   const feedStatusLabel = `${feedStatus.label} — view provider status`;
 
   return (
-    <header className="safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
+    <header className="top-nav-shell safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
       <span
         role="status"
         aria-live="polite"
@@ -199,15 +199,20 @@ function TopNavContents({
             onClick={revealProviderStatus}
             aria-label={feedStatusLabel}
             title="View provider status"
-            className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2 font-mono text-xs font-medium transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
+            className={`header-feed-status inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2 font-mono text-xs font-medium transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
           >
             <span
               aria-hidden="true"
               className={`h-2 w-2 rounded-full ${feedStatus.dotClass}`}
             />
-            {feedStatus.label}
+            <span className="header-feed-status-label">{feedStatus.label}</span>
           </button>
-          <UTCClock showLabel className="hardware-clock px-2 py-1" />
+          <UTCClock
+            compact
+            showIndicator={false}
+            showLabel={false}
+            className="hardware-clock min-w-0 py-1"
+          />
         </div>
 
         <div className="header-instruments ml-auto flex min-w-0 items-center gap-1 md:hidden">
@@ -242,8 +247,10 @@ function TopNavContents({
             </button>
           ) : null}
           <UTCClock
+            compact
+            showIndicator={false}
             showLabel={false}
-            className="hardware-clock hidden h-10 px-2 text-[var(--console-cyan)] min-[360px]:flex"
+            className="hardware-clock hidden h-10 min-w-0 text-[var(--console-cyan)] min-[360px]:flex"
           />
         </div>
       </div>
