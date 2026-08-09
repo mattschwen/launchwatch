@@ -139,11 +139,28 @@ export function formatPrimaryMissionName(
     : providerName;
 }
 
-export function matchesLaunchSearch(launch: Launch, query: string): boolean {
-  const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return true;
+function normalizeLaunchSearchText(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/\p{M}+/gu, '')
+    .toLocaleLowerCase()
+    .replace(/['’`]/g, '')
+    .replace(/(\p{L})(\p{N})/gu, '$1 $2')
+    .replace(/(\p{N})(\p{L})/gu, '$1 $2')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
 
-  const profile = [
+export function matchesLaunchSearch(launch: Launch, query: string): boolean {
+  const rawQuery = query.trim();
+  if (!rawQuery) return true;
+
+  const terms = normalizeLaunchSearchText(rawQuery)
+    .split(/\s+/)
+    .filter(Boolean);
+  if (terms.length === 0) return false;
+
+  const normalizedProfileValues = [
     launch.name,
     launch.missionName,
     launch.missionType,
@@ -159,10 +176,15 @@ export function matchesLaunchSearch(launch: Launch, query: string): boolean {
     launch.statusName,
   ]
     .filter((value): value is string => Boolean(value?.trim()))
-    .join(' ')
-    .toLocaleLowerCase();
+    .map(normalizeLaunchSearchText);
+  const profile = normalizedProfileValues.join(' ');
+  const compactProfile = normalizedProfileValues
+    .map((value) => value.replace(/\s+/g, ''))
+    .join(' ');
 
-  return terms.every((term) => profile.includes(term));
+  return terms.every(
+    (term) => profile.includes(term) || compactProfile.includes(term),
+  );
 }
 
 export function formatLaunchDate(

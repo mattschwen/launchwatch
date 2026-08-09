@@ -41,7 +41,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Searchable and filterable launch schedule and archive with mission-specific
   accessible names on repeated archive actions
 - A route-aware `/` shortcut opens and focuses mission search on the schedule
-  and archive without intercepting editable controls
+  and archive without intercepting editable controls; shared search tolerates
+  provider punctuation, accents, and joined vehicle designations
 - Mission briefings, coverage, community links, and replay surfaces
 - Consistent screen-reader cues before actions open external coverage, sources,
   or calendar handoffs in a new tab

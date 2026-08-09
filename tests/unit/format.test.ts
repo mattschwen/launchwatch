@@ -294,6 +294,22 @@ describe('launch formatting', () => {
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
   });
 
+  it('matches provider punctuation, accents, and letter-number joins forgivingly', () => {
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      name: "H3-22 | Chang'e 7",
+      missionName: "Chang'e 7",
+      provider: 'Agence Spatiale Démo',
+      rocket: 'H3-22',
+    };
+
+    expect(matchesLaunchSearch(launch, 'change 7')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'h322')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'agence demo')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'h3–22 chang’e')).toBe(true);
+    expect(matchesLaunchSearch(launch, '---')).toBe(false);
+  });
+
   it('labels terminal and unconfirmed outcomes consistently', () => {
     expect(isCompletedLaunch(HISTORICAL_LAUNCHES[0])).toBe(true);
     expect(launchOutcomeLabel(HISTORICAL_LAUNCHES[0])).toBe('Success');

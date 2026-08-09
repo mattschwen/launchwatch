@@ -6099,7 +6099,7 @@ test('schedule and archive search across mission profile data', async ({
     'placeholder',
     'Mission, profile, orbit, vehicle, site, or provider',
   );
-  await scheduleSearch.fill('communications low earth');
+  await scheduleSearch.fill('astra-nova communications low earth');
 
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' }),
@@ -6126,7 +6126,7 @@ test('schedule and archive search across mission profile data', async ({
     'placeholder',
     'Mission, profile, orbit, vehicle, or site',
   );
-  await archiveSearch.fill('crew demonstration low earth');
+  await archiveSearch.fill('demo-return crew low earth');
 
   await expect(
     page.getByRole('status', { name: 'Archive results' }),
