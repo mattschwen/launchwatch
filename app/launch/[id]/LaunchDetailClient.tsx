@@ -52,6 +52,14 @@ import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
 const TIMELINE_EVENT_WIDTH_PX = 176;
 const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
 
+const DETAIL_SECTION_LINKS = [
+  { id: 'mission-summary', label: 'Summary', timelineOnly: false },
+  { id: 'mission-trajectory', label: 'Trajectory', timelineOnly: false },
+  { id: 'mission-timeline', label: 'Timeline', timelineOnly: true },
+  { id: 'mission-intelligence', label: 'Intelligence', timelineOnly: false },
+  { id: 'mission-coverage', label: 'Coverage', timelineOnly: false },
+] as const;
+
 function IntelligenceStandby({
   launchName,
 }: {
@@ -261,6 +269,9 @@ export default function LaunchDetailClient({
           ? 'Back to history'
           : 'Back to launches';
   const primaryMissionName = formatPrimaryMissionName(presentedLaunch);
+  const detailSectionLinks = DETAIL_SECTION_LINKS.filter(
+    (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
+  );
   const missionVisual = (
     <MissionVisual
       launch={presentedLaunch}
@@ -472,9 +483,10 @@ export default function LaunchDetailClient({
         ) : null}
 
         <section
+          id="mission-summary"
           ref={missionPanelRef}
           tabIndex={-1}
-          className={`surface-card holo-card ${missionTone} grid min-w-0 gap-7 p-5 outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
+          className={`surface-card holo-card ${missionTone} grid min-w-0 scroll-mt-20 gap-7 p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:scroll-mt-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
@@ -541,16 +553,50 @@ export default function LaunchDetailClient({
           </div>
         </section>
 
+        <nav
+          aria-label="Mission sections"
+          className="surface-card holo-card signal-cold mt-5 overflow-hidden"
+        >
+          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
+            <p className="data-label text-[var(--console-cyan)]">
+              Mission index
+            </p>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+              {detailSectionLinks.length} sections
+            </p>
+          </div>
+          <div className="flex overflow-x-auto border-t border-[var(--border-subtle)] overscroll-x-contain">
+            {detailSectionLinks.map((section, index) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="group inline-flex min-h-11 shrink-0 items-center gap-2 border-r border-[var(--border-subtle)] px-4 font-mono text-xs font-semibold text-[var(--text-secondary)] transition-colors last:border-r-0 hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="text-[0.62rem] text-[var(--console-cyan)] group-hover:text-[var(--console-green)]"
+                >
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                {section.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+
         <MissionTrajectory
           launch={presentedLaunch}
+          sectionId="mission-trajectory"
           variant="detail"
-          className="mt-5"
+          className="mt-5 scroll-mt-20 lg:scroll-mt-24"
         />
 
         {launch.timeline?.length ? (
           <section
+            id="mission-timeline"
+            tabIndex={-1}
             aria-labelledby="launch-timeline-title"
-            className="surface-card holo-card signal-warm mt-5 overflow-hidden p-5 sm:p-6"
+            className="surface-card holo-card signal-warm mt-5 scroll-mt-20 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 lg:scroll-mt-24"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id="launch-timeline-title" className="section-title">
@@ -643,7 +689,12 @@ export default function LaunchDetailClient({
         ) : null}
 
         <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)]">
-          <div ref={intelligenceHostRef}>
+          <div
+            id="mission-intelligence"
+            ref={intelligenceHostRef}
+            tabIndex={-1}
+            className="scroll-mt-20 rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
+          >
             {intelligenceEnabled ? (
               <LaunchIntelDeck
                 launch={presentedLaunch}
@@ -660,6 +711,8 @@ export default function LaunchDetailClient({
           </div>
 
           <section
+            id="mission-coverage"
+            tabIndex={-1}
             aria-labelledby={
               liveStatusUnconfirmed ? undefined : 'watch-replay-title'
             }
@@ -668,7 +721,7 @@ export default function LaunchDetailClient({
                 ? 'Mission coverage status unconfirmed'
                 : undefined
             }
-            className={`surface-card holo-card ${
+            className={`surface-card holo-card scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24 ${
               liveStatusUnconfirmed
                 ? 'signal-warm'
                 : presentedLaunch.isLive

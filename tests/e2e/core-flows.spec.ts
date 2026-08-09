@@ -7614,6 +7614,65 @@ test('watch keeps a pending calendar explanation inside the mobile viewport', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission detail index moves focus among available sections', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 851 });
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const sectionIndex = page.getByRole('navigation', {
+    name: 'Mission sections',
+  });
+  await expect(sectionIndex).toContainText('5 sections');
+  const sectionLinks = sectionIndex.getByRole('link');
+  await expect(sectionLinks).toHaveCount(5);
+
+  const destinations = [
+    ['Summary', 'mission-summary'],
+    ['Trajectory', 'mission-trajectory'],
+    ['Timeline', 'mission-timeline'],
+    ['Intelligence', 'mission-intelligence'],
+    ['Coverage', 'mission-coverage'],
+  ] as const;
+
+  for (const [label, id] of destinations) {
+    const link = sectionIndex.getByRole('link', { name: label, exact: true });
+    const target = page.locator(`#${id}`);
+    const linkBounds = await link.boundingBox();
+    expect(linkBounds).not.toBeNull();
+    expect(linkBounds!.height).toBeGreaterThanOrEqual(44);
+    expect(linkBounds!.width).toBeGreaterThanOrEqual(44);
+
+    await link.focus();
+    await link.press('Enter');
+    await expect(page).toHaveURL(new RegExp(`#${id}$`));
+    await expect(target).toBeFocused();
+    const placement = await target.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      const headerBottom =
+        document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+      return {
+        top: bounds.top,
+        headerBottom,
+        visible: bounds.bottom > headerBottom && bounds.top < window.innerHeight,
+      };
+    });
+    expect(placement.visible).toBe(true);
+    expect(placement.top).toBeGreaterThanOrEqual(placement.headerBottom - 1);
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/launch/spacex-demo-return');
+  const archiveIndex = page.getByRole('navigation', {
+    name: 'Mission sections',
+  });
+  await expect(archiveIndex).toContainText('4 sections');
+  await expect(archiveIndex.getByRole('link')).toHaveCount(4);
+  await expect(
+    archiveIndex.getByRole('link', { name: 'Timeline', exact: true })
+  ).toHaveCount(0);
+});
+
 test('detail defers intelligence acquisition until the panel approaches the viewport', async ({
   page,
 }) => {

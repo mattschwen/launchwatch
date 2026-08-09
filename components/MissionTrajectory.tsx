@@ -45,6 +45,7 @@ import type { Launch } from '@/lib/types';
 interface MissionTrajectoryProps {
   className?: string;
   launch: Launch | null;
+  sectionId?: string;
   variant?: 'compact' | 'detail';
 }
 
@@ -299,6 +300,7 @@ function MapToolbar({
 function MissionTrajectoryController({
   launch,
   className = '',
+  sectionId,
   variant = 'compact',
 }: MissionTrajectoryProps): React.ReactElement {
   const rawInstanceId = useId();
@@ -562,8 +564,10 @@ function MissionTrajectoryController({
   return (
     <>
       <section
+        id={sectionId}
+        tabIndex={sectionId ? -1 : undefined}
         aria-labelledby={sectionTitleId}
-        className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden ${
+        className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
           variant === 'detail'
             ? 'min-h-[32rem]'
             : 'lg:h-full lg:min-h-[27.5rem]'
