@@ -1004,10 +1004,10 @@ export default function PastLaunches({
                     : ''
                 }`}
                 onClick={() => setFiltersOpen((open) => !open)}
-                className="action-button action-button-secondary px-3"
+                className="action-button action-button-secondary !px-2.5 min-[360px]:!px-3"
               >
                 <Filter aria-hidden="true" size={16} />
-                <span className="hidden min-[360px]:inline">Filters</span>
+                <span>Filters</span>
                 {secondaryFilterCount > 0 ? (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--console-cyan)]/15 px-1.5 font-mono text-[0.65rem] text-[var(--console-cyan)]">
                     {secondaryFilterCount}

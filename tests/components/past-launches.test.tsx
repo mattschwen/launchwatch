@@ -372,6 +372,7 @@ describe('PastLaunches', () => {
     const controlledId = toggle.getAttribute('aria-controls');
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveTextContent('Filters');
     expect(controlledId).toBeTruthy();
     expect(document.getElementById(controlledId!)).toHaveClass('hidden');
     expect(screen.getByText('Search missions')).toBeVisible();

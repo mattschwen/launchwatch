@@ -278,6 +278,9 @@ The optional expanded map remains a modal dialog. It must:
   search handoff instead of falling back to the document.
 - Search stays immediately available on narrow screens while secondary
   provider/year/outcome and chronology controls use a touch-safe disclosure.
+  The disclosure keeps its visible `Filters` label at the supported 320-pixel
+  boundary, so the archive never relies on a funnel glyph alone to reveal its
+  hidden controls.
 - Below 360px, the archive masthead keeps its route identity and title but
   yields descriptive and repeated source copy to the search-and-results
   workflow, placing the first recovered mission above fixed navigation.

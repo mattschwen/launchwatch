@@ -6261,6 +6261,10 @@ test('schedule and archive search across mission profile data', async ({
 });
 
 test('history keeps secondary filters compact on mobile', async ({ page }) => {
+  const mobile = test.info().project.name.startsWith('mobile');
+  if (mobile) {
+    await page.setViewportSize({ width: 320, height: 568 });
+  }
   await page.goto('/history');
 
   const search = page.getByRole('searchbox', { name: 'Search missions' });
@@ -6277,8 +6281,6 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   const yearLabel = page.locator(`label[for="${await year.getAttribute('id')}"]`);
   const outcomeLabel = page.locator(`label[for="${await outcome.getAttribute('id')}"]`);
   const chronologyLabel = page.locator(`label[for="${await chronology.getAttribute('id')}"]`);
-  const mobile = test.info().project.name.startsWith('mobile');
-
   await expect(searchLabel).toHaveText('Search missions');
   await expect(searchLabel).toBeVisible();
   await expect(archiveCoverage).toContainText('Feed window');
@@ -6301,8 +6303,22 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
   }
 
   await expect(filterToggle).toBeVisible();
+  await expect(filterToggle).toContainText('Filters');
   await expect(filterToggle).toHaveAttribute('aria-expanded', 'false');
   await expect(provider).toBeHidden();
+
+  const [searchBounds, filterBounds] = await Promise.all([
+    search.boundingBox(),
+    filterToggle.boundingBox(),
+  ]);
+  expect(searchBounds).not.toBeNull();
+  expect(filterBounds).not.toBeNull();
+  expect(searchBounds!.width).toBeGreaterThanOrEqual(150);
+  expect(filterBounds!.height).toBeGreaterThanOrEqual(44);
+  expect(filterBounds!.x + filterBounds!.width).toBeLessThanOrEqual(
+    page.viewportSize()!.width,
+  );
+  expect(Math.abs(searchBounds!.y - filterBounds!.y)).toBeLessThanOrEqual(1);
 
   const firstMission = page.locator('article').first();
   const firstMissionBounds = await firstMission.boundingBox();
@@ -6321,6 +6337,7 @@ test('history keeps secondary filters compact on mobile', async ({ page }) => {
     name: 'Hide archive filters',
   });
   await expect(hideFilterToggle).toBeFocused();
+  await expect(hideFilterToggle).toContainText('Filters');
   await expect(hideFilterToggle).toHaveAttribute('aria-expanded', 'true');
   await expect(provider).toBeVisible();
   await expect(provider).toHaveAccessibleName('Provider');
