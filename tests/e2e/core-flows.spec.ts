@@ -1361,6 +1361,7 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
     '/brand/logo_launchwatch_tracked-ascent_20260726_color.svg',
   );
   await expect(mark).toHaveAttribute('alt', '');
+  await expect(mark).toHaveAttribute('loading', 'eager');
   const wordmark = homeLink.locator('.brand-wordmark');
   await expect(wordmark).toHaveText('LaunchWatch');
   await expect

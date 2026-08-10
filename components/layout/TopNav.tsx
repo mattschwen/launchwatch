@@ -154,6 +154,7 @@ function TopNavContents({
               alt=""
               width="32"
               height="32"
+              loading="eager"
             />
           </span>
           <span className="brand-copy min-w-0">
