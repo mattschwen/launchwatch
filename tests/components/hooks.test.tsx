@@ -533,6 +533,33 @@ describe('LaunchDataProvider retries', () => {
     expect(screen.getByTestId('feed-count')).toHaveTextContent('2');
   });
 
+  it('rejects duplicate canonical identities without erasing settled missions', async () => {
+    const user = userEvent.setup();
+    const duplicateLaunches = [
+      UPCOMING_LAUNCHES[0],
+      { ...UPCOMING_LAUNCHES[0], name: 'Conflicting duplicate mission' },
+    ];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ launches: UPCOMING_LAUNCHES }))
+      .mockResolvedValueOnce(response({ launches: duplicateLaunches }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <FeedRetryHarness />
+      </LaunchDataProvider>
+    );
+
+    await expect(screen.findByText('2 launches')).resolves.toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await expect(
+      screen.findByText('Launch feed response was incomplete')
+    ).resolves.toBeVisible();
+    expect(screen.getByTestId('feed-count')).toHaveTextContent('2');
+  });
+
   it('retains settled missions when a successful response contains an incomplete launch record', async () => {
     const user = userEvent.setup();
     const fetchMock = vi

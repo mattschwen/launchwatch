@@ -195,8 +195,8 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   LaunchWatch attempts that same upstream request again. Other providers remain
   independent, and degraded or stale metadata stays visible throughout.
 - Every browser-facing launch collection, including the independent History
-  archive, must pass the shared launch contract and canonical-ID guard before it
-  can replace settled records or create mission links.
+  archive, must pass the shared launch contract and unique canonical-ID guard
+  before it can replace settled records or create mission links.
 - Provider date precision and valid launch windows are normalized with each
   mission. Primary mission summaries retain a supplied window instead of
   reducing it to one target instant. Coarse day, month, quarter, and year

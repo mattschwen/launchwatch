@@ -2228,6 +2228,49 @@ test('home rejects noncanonical mission identity without erasing retained missio
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home rejects duplicate canonical mission identities without erasing retained missions', async ({
+  page,
+}) => {
+  let duplicateIdentityEnabled = false;
+  await page.route('**/api/launches?type=all', (route) => {
+    const launches = duplicateIdentityEnabled
+      ? [
+          UPCOMING_LAUNCHES[0],
+          {
+            ...UPCOMING_LAUNCHES[0],
+            name: 'Conflicting duplicate mission',
+          },
+        ]
+      : UPCOMING_LAUNCHES;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    });
+  });
+
+  await page.goto('/');
+  const mission = page.getByRole('heading', {
+    level: 1,
+    name: UPCOMING_LAUNCHES[0].name,
+  });
+  await expect(mission).toBeVisible();
+
+  duplicateIdentityEnabled = true;
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(mission).toBeVisible();
+  await expect(page.getByText('Conflicting duplicate mission')).toHaveCount(0);
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' })
+  ).toContainText('refresh failed; showing last-known schedule');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home immediately marks retained mission data offline and recovers on reconnect', async ({
   context,
   page,

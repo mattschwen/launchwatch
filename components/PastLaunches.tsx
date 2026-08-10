@@ -40,7 +40,7 @@ import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
-import { isLaunch } from '@/lib/launch-contract';
+import { isLaunch, isLaunchCollection } from '@/lib/launch-contract';
 import { useOnlineStatus } from '@/lib/online-status';
 import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { generateYouTubeSearchUrl } from '@/lib/youtube';
@@ -68,7 +68,7 @@ function readHistoryPayload(payload: unknown): {
       : Array.isArray(nested?.launches)
         ? nested.launches
         : null;
-  const valid = collection !== null && collection.every(isLaunch);
+  const valid = collection !== null && isLaunchCollection(collection);
 
   return {
     launches: valid ? collection : [],

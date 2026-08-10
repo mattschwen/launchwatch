@@ -52,3 +52,15 @@ export function isLaunch(value: unknown): value is Launch {
         )))
   );
 }
+
+export function isLaunchCollection(value: unknown): value is Launch[] {
+  if (!Array.isArray(value)) return false;
+
+  const launchIds = new Set<string>();
+  for (const launch of value) {
+    if (!isLaunch(launch) || launchIds.has(launch.id)) return false;
+    launchIds.add(launch.id);
+  }
+
+  return true;
+}

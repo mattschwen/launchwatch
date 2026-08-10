@@ -653,6 +653,38 @@ describe('PastLaunches', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('rejects duplicate canonical archive identities instead of rendering ambiguous rows', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: [
+            HISTORICAL_LAUNCHES[0],
+            {
+              ...HISTORICAL_LAUNCHES[0],
+              name: 'Conflicting duplicate archive mission',
+            },
+          ],
+          meta: FEED_META,
+        }),
+      })
+    );
+
+    render(<PastLaunches />);
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'The archive could not be synchronized.',
+      })
+    ).toBeVisible();
+    expect(
+      screen.getByText('Launch archive response was incomplete')
+    ).toBeVisible();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+  });
+
   it('announces pagination progress and preserves focus after the final batch', async () => {
     const user = userEvent.setup();
     const launches = Array.from({ length: 21 }, (_, index) => {

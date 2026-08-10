@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isLaunch } from '@/lib/launch-contract';
+import { isLaunch, isLaunchCollection } from '@/lib/launch-contract';
 import { UPCOMING_LAUNCHES } from '@/tests/fixtures/launches';
 
 describe('client launch contract', () => {
@@ -26,5 +26,15 @@ describe('client launch contract', () => {
     },
   ])('rejects a launch with $label', ({ launch }) => {
     expect(isLaunch(launch)).toBe(false);
+  });
+
+  it('requires every collection to contain unique canonical launch IDs', () => {
+    expect(isLaunchCollection(UPCOMING_LAUNCHES)).toBe(true);
+    expect(
+      isLaunchCollection([
+        UPCOMING_LAUNCHES[0],
+        { ...UPCOMING_LAUNCHES[0], name: 'Conflicting duplicate mission' },
+      ])
+    ).toBe(false);
   });
 });

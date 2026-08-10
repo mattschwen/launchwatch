@@ -12,7 +12,7 @@ import {
 } from 'react';
 import type { Launch } from './types';
 import { checkAndNotify, clearOldNotificationFlags } from './notifications';
-import { isLaunch } from './launch-contract';
+import { isLaunchCollection } from './launch-contract';
 import { useOnlineStatus } from './online-status';
 
 export interface LaunchFeedMeta {
@@ -70,7 +70,7 @@ function readLaunches(payload: unknown): {
   valid: boolean;
 } {
   if (Array.isArray(payload)) {
-    const valid = payload.every(isLaunch);
+    const valid = isLaunchCollection(payload);
     return {
       launches: valid ? payload : [],
       meta: null,
@@ -99,7 +99,7 @@ function readLaunches(payload: unknown): {
     (Array.isArray(record.launches) ||
       Array.isArray(record.data) ||
       Array.isArray(nestedData?.launches)) &&
-    launches.every(isLaunch);
+    isLaunchCollection(launches);
 
   const meta =
     record.meta && typeof record.meta === 'object'
