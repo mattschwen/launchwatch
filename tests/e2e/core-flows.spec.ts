@@ -693,7 +693,11 @@ test('prelaunch coverage stays distinct from mission flight state', async ({
   await page.goto('/watch');
 
   await expect(page.getByText('1 live broadcast')).toBeVisible();
-  await expect(page.getByText('COVERAGE LIVE', { exact: true })).toBeVisible();
+  await expect(
+    page
+      .locator('.route-masthead')
+      .getByText('COVERAGE LIVE', { exact: true })
+  ).toBeVisible();
   await expect(page).toHaveTitle(
     'COVERAGE LIVE · Orbital Dawn | LaunchWatch'
   );
@@ -3869,6 +3873,41 @@ test('home surfaces a provider hold in its featured and compact mission states',
     .getByRole('link', { name: /Orbital Dawn/ });
   await expect(compactMission).toContainText('On Hold');
   await expect(compactMission).not.toContainText('TBD');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('watch names every queue status without relying on color', async ({
+  page,
+}) => {
+  const heldLaunch = {
+    ...UPCOMING_LAUNCHES[1],
+    status: 'tbd' as const,
+    statusName: 'On Hold',
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [UPCOMING_LAUNCHES[0], heldLaunch],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/watch');
+
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  const scheduledMission = queue.getByRole('button', {
+    name: /Orbital Dawn/i,
+  });
+  const heldMission = queue.getByRole('button', {
+    name: /Polaris Relay/i,
+  });
+
+  await expect(scheduledMission).toContainText('GO');
+  await expect(heldMission).toContainText('ON HOLD');
+  await expect(heldMission).toHaveAccessibleName(/Polaris Relay.*On Hold/i);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

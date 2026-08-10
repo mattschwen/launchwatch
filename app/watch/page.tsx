@@ -44,7 +44,6 @@ import {
   getLaunchSiteDisplay,
   getLaunchLiveSignal,
   isCompletedLaunch,
-  isCriticalLaunchStatusName,
 } from '@/lib/format';
 import {
   useLaunchById,
@@ -842,21 +841,6 @@ function MissionQueue({
                     : 'hover:bg-[var(--surface-subtle)]'
                 }`}
               >
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 shrink-0 rounded-full ${
-                    launch.isLive
-                      ? coverageUnconfirmed
-                        ? 'bg-[var(--console-amber)]'
-                        : 'status-dot-live bg-[var(--console-magenta)]'
-                      : launch.status === 'failure' ||
-                          isCriticalLaunchStatusName(launch.statusName)
-                        ? 'bg-[var(--console-red)]'
-                        : launch.status === 'tbd'
-                        ? 'bg-[var(--console-amber)]'
-                        : 'bg-[var(--console-green)]'
-                  }`}
-                />
                 <span className="min-w-0 flex-1">
                   <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
                     {launch.name}
@@ -864,8 +848,18 @@ function MissionQueue({
                   <span className="mt-1 block text-xs leading-4 text-[var(--text-muted)]">
                     {formatLaunchDate(launch.date, launch.datePrecision)}
                   </span>
-                  <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--console-cyan)]">
-                    {launch.provider || launch.rocket}
+                  <span className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="break-words text-xs leading-4 text-[var(--console-cyan)]">
+                      {launch.provider || launch.rocket}
+                    </span>
+                    <StatusBadge
+                      status={launch.status}
+                      statusName={launch.statusName}
+                      unconfirmed={Boolean(
+                        launch.isLive && coverageUnconfirmed,
+                      )}
+                      variant="inline"
+                    />
                   </span>
                   {selected ? (
                     <span

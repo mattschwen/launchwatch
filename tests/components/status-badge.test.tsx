@@ -48,4 +48,18 @@ describe('StatusBadge', () => {
       'text-[var(--console-red)]'
     );
   });
+
+  it('supports a compact text-first signal for dense mission controls', () => {
+    render(
+      <StatusBadge
+        status="tbd"
+        statusName="On Hold"
+        variant="inline"
+      />
+    );
+
+    const status = screen.getByText('ON HOLD');
+    expect(status).toHaveClass('text-[var(--console-red)]');
+    expect(status).not.toHaveClass('border');
+  });
 });

@@ -10,6 +10,7 @@ interface StatusBadgeProps {
   statusName?: string | null;
   className?: string;
   unconfirmed?: boolean;
+  variant?: 'badge' | 'inline';
 }
 
 const statusConfig: Record<Launch['status'], { label: string; lightColor: 'green' | 'magenta' | 'red' | 'amber'; textClass: string; bgClass: string; borderClass: string; spinning: boolean }> = {
@@ -60,6 +61,7 @@ export default function StatusBadge({
   statusName,
   className = '',
   unconfirmed = false,
+  variant = 'badge',
 }: StatusBadgeProps): React.ReactElement {
   const criticalOverride =
     status !== 'live' && isCriticalLaunchStatusName(statusName);
@@ -75,10 +77,14 @@ export default function StatusBadge({
     : statusName && status !== 'live'
       ? statusName.toUpperCase()
       : config.label;
+  const presentationClass =
+    variant === 'inline'
+      ? `font-[family-name:var(--font-geist-mono)] text-[0.62rem] font-bold uppercase tracking-[0.09em] ${config.textClass}`
+      : `rounded border px-2 py-1 font-[family-name:var(--font-geist-mono)] text-[11px] font-bold tracking-[0.08em] sm:text-xs ${config.textClass} ${config.bgClass} ${config.borderClass}`;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-[family-name:var(--font-geist-mono)] text-[11px] font-bold tracking-[0.08em] sm:text-xs ${config.textClass} ${config.bgClass} ${config.borderClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 ${presentationClass} ${className}`}
     >
       <WarningLight color={config.lightColor} size="sm" spinning={config.spinning} />
       {displayLabel}
