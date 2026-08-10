@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CalendarDays, ChevronRight } from 'lucide-react';
 import type { Ref } from 'react';
 import type { Launch } from '@/lib/types';
+import LocalLaunchTime from '@/components/LocalLaunchTime';
 import {
   formatLaunchDay,
   formatLaunchTime,
@@ -97,6 +98,13 @@ export default function LaunchCard({
             >
               {launchTime}
             </p>
+            {!history ? (
+              <LocalLaunchTime
+                date={launch.date}
+                precision={launch.datePrecision}
+                className="mt-1 font-mono text-[0.68rem] leading-4 text-[var(--text-secondary)]"
+              />
+            ) : null}
           </div>
         </div>
 

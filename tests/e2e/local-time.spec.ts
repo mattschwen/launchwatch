@@ -40,6 +40,15 @@ test.describe('confirmed launch local time', () => {
       }).format(new Date((element as HTMLTimeElement).dateTime))
     );
     await expect(featuredLocalTime).toHaveText(expectedLocalTime);
+
+    const schedule = page.locator('#upcoming-launch-results');
+    const firstMissionRow = schedule.locator('article').first();
+    await expect(
+      firstMissionRow.getByText('Your time', { exact: true })
+    ).toBeVisible();
+    await expect(
+      firstMissionRow.locator('.local-launch-time time')
+    ).toHaveText(expectedLocalTime);
     await expectContainedPage(page);
 
     await featured.getByRole('button', { name: 'Open briefing' }).click();
@@ -84,6 +93,11 @@ test.describe('UTC launch time', () => {
     await expect(featured.getByText('12:00 UTC', { exact: true })).toBeVisible();
     await expect(
       featured.getByText('Your time', { exact: true })
+    ).toHaveCount(0);
+    await expect(
+      page
+        .locator('#upcoming-launch-results')
+        .getByText('Your time', { exact: true })
     ).toHaveCount(0);
   });
 });

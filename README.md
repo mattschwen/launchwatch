@@ -53,9 +53,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   re-arm the alert thresholds for the new confirmed time, and exported or
   copied mission details retain the canonical LaunchWatch route. Browsers that
   block clipboard writes expose the same mission brief as selectable text
-- Compact local-time context beside exact primary mission targets while UTC
-  remains the authoritative schedule time; UTC users and coarse provider
-  estimates keep the existing single-time presentation
+- Compact local-time context beside exact primary mission targets and upcoming
+  schedule rows while UTC remains the authoritative schedule time; UTC users
+  and coarse provider estimates keep the existing single-time presentation
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation and a coordinate-validated
   OpenStreetMap handoff for provider-reported launch sites. Optional trajectory

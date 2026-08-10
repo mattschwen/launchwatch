@@ -62,6 +62,39 @@ describe('LaunchList', () => {
     }
   });
 
+  it('adds local-time context to exact upcoming mission rows', () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      locale: 'en-US',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+      timeZone: 'America/Denver',
+      hourCycle: 'h12',
+      hour12: true,
+    });
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    for (const launch of UPCOMING_LAUNCHES) {
+      const mission = screen.getByRole('link', {
+        name: new RegExp(launch.name),
+      });
+      expect(mission).toHaveTextContent('Your time');
+      expect(mission.querySelector('.local-launch-time time')).toHaveAttribute(
+        'datetime',
+        launch.date,
+      );
+    }
+  });
+
   it('makes the bounded upcoming feed window visible before filtering', async () => {
     const user = userEvent.setup();
     vi.mocked(useLaunches).mockReturnValue({
