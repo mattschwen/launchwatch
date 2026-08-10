@@ -1029,9 +1029,48 @@ html[data-boot-status='visible'] .header-instruments {
   }
 }
 
+@container (max-width: 28em) {
+  .launch-card-grid {
+    grid-template-areas:
+      "date date"
+      "mission status"
+      "details details";
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 0.65rem;
+  }
+
+  .launch-card-date {
+    grid-area: date;
+  }
+
+  .launch-card-mission {
+    grid-area: mission;
+  }
+
+  .launch-card-status {
+    grid-area: status;
+    justify-self: end;
+    max-width: min(9.5rem, 42cqw);
+  }
+
+  .launch-card-details {
+    grid-area: details;
+  }
+}
+
 @container (max-width: 15em) {
   .launch-card-grid {
+    grid-template-areas:
+      "date"
+      "mission"
+      "status"
+      "details";
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .launch-card-status {
+    justify-self: stretch;
+    max-width: none;
   }
 }
 

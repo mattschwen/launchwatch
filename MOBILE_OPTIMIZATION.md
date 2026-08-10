@@ -89,7 +89,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Upcoming missions render as compact responsive rows while keeping the full
   UTC date, mission, provider, vehicle, launch-site telemetry, and operational
   status readable at every viewport width instead of hiding or clipping
-  provider-supplied values.
+  provider-supplied values. At phone widths, each row gives timing a full-width
+  first scan line, then aligns mission identity with its operational status;
+  enlarged text reflows those regions into a single column.
 - Large mission queues report the visible and total result count, then reveal
   five more rows per touch-safe command instead of mounting the full provider
   schedule at once.

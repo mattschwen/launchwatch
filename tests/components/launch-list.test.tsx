@@ -88,9 +88,18 @@ describe('LaunchList', () => {
         name: new RegExp(launch.name),
       });
       expect(mission).toHaveTextContent('Your time');
-      expect(mission.querySelector('.local-launch-time time')).toHaveAttribute(
-        'datetime',
-        launch.date,
+      const missionTimes = mission.querySelectorAll('time');
+      expect(missionTimes).toHaveLength(3);
+      expect(
+        [...missionTimes].every(
+          (time) => time.getAttribute('datetime') === launch.date,
+        ),
+      ).toBe(true);
+      expect(mission.querySelector('.launch-card-date')).toContainElement(
+        missionTimes[0],
+      );
+      expect(mission.querySelector('.local-launch-time')).toContainElement(
+        missionTimes[2],
       );
     }
   });

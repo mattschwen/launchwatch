@@ -82,22 +82,26 @@ export default function LaunchCard({
         prefetch={prefetch}
         className="launch-card-grid focus-ring-inset grid min-h-[4rem] items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[var(--surface-subtle)] sm:px-4"
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="launch-card-date flex min-w-0 items-center gap-3">
           <CalendarDays
             aria-hidden="true"
             size={17}
             className="shrink-0 text-[var(--text-muted)]"
           />
           <div className="min-w-0">
-            <p className="break-words text-sm font-medium leading-5 text-[var(--text-primary)]">
+            <time
+              dateTime={launch.date}
+              className="block break-words text-sm font-medium leading-5 text-[var(--text-primary)]"
+            >
               {formatLaunchDay(launch.date, launch.datePrecision)}
-            </p>
-            <p
+            </time>
+            <time
+              dateTime={launch.date}
               aria-label={launchTime}
-              className="mt-0.5 font-mono text-xs text-[var(--console-cyan)]"
+              className="mt-0.5 block font-mono text-xs text-[var(--console-cyan)]"
             >
               {launchTime}
-            </p>
+            </time>
             {!history ? (
               <LocalLaunchTime
                 date={launch.date}
@@ -108,7 +112,7 @@ export default function LaunchCard({
           </div>
         </div>
 
-        <div className="min-w-0">
+        <div className="launch-card-mission min-w-0">
           <h3 className="break-words text-base font-semibold leading-5 tracking-[-0.015em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
             {launch.name}
           </h3>
@@ -139,7 +143,7 @@ export default function LaunchCard({
 
         <div
           data-launch-status="true"
-          className="flex min-w-0 items-center justify-between gap-3"
+          className="launch-card-status flex min-w-0 items-center justify-between gap-3"
         >
           <span
             aria-label={
@@ -167,7 +171,7 @@ export default function LaunchCard({
           />
         </div>
 
-        <dl className="col-span-full grid min-w-0 grid-cols-2 gap-4 border-t border-[var(--border-subtle)] pt-2.5 lg:hidden">
+        <dl className="launch-card-details col-span-full grid min-w-0 grid-cols-2 gap-4 border-t border-[var(--border-subtle)] pt-2.5 lg:hidden">
           <div className="min-w-0">
             <dt className="data-label">Vehicle</dt>
             <dd className="mt-1 break-words text-xs leading-4 text-[var(--text-secondary)]">

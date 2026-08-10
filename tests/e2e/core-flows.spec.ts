@@ -1501,6 +1501,48 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
   await expectContentFits('.archive-row-grid');
 });
 
+test('narrow schedule rows keep timing and mission identity in a stable scan path', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/');
+
+  const row = page.locator('.launch-card-grid').first();
+  await expect(row).toBeVisible();
+  await expect(row.locator('time[datetime]')).toHaveCount(3);
+  await expect
+    .poll(() =>
+      row.evaluate((element) => {
+        const styles = getComputedStyle(element);
+        return styles.gridTemplateAreas.replaceAll('"', '').trim();
+      }),
+    )
+    .toBe('date date mission status details details');
+
+  const date = row.locator('.launch-card-date');
+  const mission = row.locator('.launch-card-mission');
+  const status = row.locator('.launch-card-status');
+  const [dateBounds, missionBounds, statusBounds] = await Promise.all([
+    date.boundingBox(),
+    mission.boundingBox(),
+    status.boundingBox(),
+  ]);
+  expect(dateBounds).not.toBeNull();
+  expect(missionBounds).not.toBeNull();
+  expect(statusBounds).not.toBeNull();
+  expect(dateBounds!.width).toBeGreaterThan(missionBounds!.width);
+  expect(dateBounds!.y + dateBounds!.height).toBeLessThanOrEqual(
+    missionBounds!.y + 1,
+  );
+  const missionCenter = missionBounds!.y + missionBounds!.height / 2;
+  const statusCenter = statusBounds!.y + statusBounds!.height / 2;
+  expect(Math.abs(missionCenter - statusCenter)).toBeLessThan(2);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('narrow mission consoles contain 200% text and internal rails', async ({
   page,
 }) => {
