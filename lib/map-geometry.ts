@@ -46,6 +46,7 @@ export interface LabelBox {
 
 export const MAP_WIDTH = 1000;
 export const MAP_HEIGHT = 500;
+export const MAX_MAP_ZOOM = 16;
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -67,7 +68,7 @@ export function getMapViewport(
   center: [number, number],
   zoom: number
 ): MapViewport {
-  const safeZoom = clamp(zoom, 1, 6);
+  const safeZoom = clamp(zoom, 1, MAX_MAP_ZOOM);
   const focalPoint = projectMapPoint(center[0], center[1]);
   const width = MAP_WIDTH / safeZoom;
   const height = MAP_HEIGHT / safeZoom;
@@ -78,6 +79,48 @@ export function getMapViewport(
     width,
     height,
     zoom: safeZoom,
+  };
+}
+
+export function zoomMapViewport(
+  viewport: MapViewport,
+  zoom: number,
+  focalPoint?: MapPoint
+): MapViewport {
+  const safeZoom = clamp(zoom, 1, MAX_MAP_ZOOM);
+  const width = MAP_WIDTH / safeZoom;
+  const height = MAP_HEIGHT / safeZoom;
+  const center = focalPoint || {
+    x: viewport.x + viewport.width / 2,
+    y: viewport.y + viewport.height / 2,
+  };
+
+  return {
+    x: center.x - width / 2,
+    y: clamp(center.y - height / 2, 0, MAP_HEIGHT - height),
+    width,
+    height,
+    zoom: safeZoom,
+  };
+}
+
+export function panMapViewport(
+  viewport: MapViewport,
+  deltaX: number,
+  deltaY: number
+): MapViewport {
+  return {
+    ...viewport,
+    x: clamp(
+      viewport.x + deltaX,
+      -MAP_WIDTH,
+      MAP_WIDTH * 2 - viewport.width
+    ),
+    y: clamp(
+      viewport.y + deltaY,
+      0,
+      MAP_HEIGHT - viewport.height
+    ),
   };
 }
 
@@ -206,7 +249,10 @@ export function getRouteGeometry(
   const routeY = end.y - start.y;
   const routeLength = Math.max(Math.hypot(routeX, routeY), 1);
   const direction = routeIndex % 2 === 0 ? 1 : -1;
-  const bend = ((10 + (routeIndex % 3) * 4) / clamp(zoom, 1, 6)) * direction;
+  const bend =
+    ((10 + (routeIndex % 3) * 4) /
+      clamp(zoom, 1, MAX_MAP_ZOOM)) *
+    direction;
   const control = clampPointToFrame(
     {
       x: (start.x + end.x) / 2 + (-routeY / routeLength) * bend,
@@ -235,7 +281,7 @@ export function getFocusLabelBox(
   labelLength: number,
   zoom: number
 ): LabelBox {
-  const safeZoom = clamp(zoom, 1, 6);
+  const safeZoom = clamp(zoom, 1, MAX_MAP_ZOOM);
   const width = clamp(labelLength * 6.4 + 30, 104, 188) / safeZoom;
   const height = 34 / safeZoom;
   const gap = 17 / safeZoom;

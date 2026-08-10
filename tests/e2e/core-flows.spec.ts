@@ -9673,19 +9673,85 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
 
   const zoomIn = dialog.getByRole('button', { name: 'Zoom map in' });
   await zoomIn.focus();
-  await zoomIn.press('Enter');
-  await zoomIn.press('Enter');
+  for (let step = 0; step < 6; step += 1) {
+    await zoomIn.press('Enter');
+  }
   await expect(zoomIn).toBeFocused();
   await expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
   await expect(zoomIn).not.toHaveAttribute('disabled', '');
   await expect(dialog.getByRole('status')).toHaveText(
-    'Map zoom level 3 of 3.'
+    /Map zoom level 7 of 7\. Map scale \d+\.\d times\./
   );
   await zoomIn.press('Enter');
   await expect(zoomIn).toBeFocused();
 
   await closeButton.click();
   await expect(expandButton).toBeFocused();
+});
+
+test('expanded trajectory map reframes the globe and discloses close site detail', async ({
+  page,
+}) => {
+  await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page
+      .locator('button[aria-controls="mobile-mission-map"]:visible')
+      .click();
+  }
+
+  const expandButton = page.getByRole('button', {
+    name: 'Enlarge illustrative trajectory map',
+  });
+  await expandButton.click();
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const mapSurface = dialog.getByRole('region', {
+    name: 'Interactive flight map',
+  });
+  const map = dialog.locator('[data-trajectory-map]');
+
+  await dialog.getByRole('button', { name: 'Global' }).click();
+  await expect(mapSurface).toHaveAttribute('data-map-mode', 'world');
+  await expect(map).toHaveAttribute(
+    'data-map-view',
+    /^-?\d+\.\d:0\.0:1000\.0:500\.0$/
+  );
+
+  await dialog
+    .getByRole('button', {
+      name: (page.viewportSize()?.width ?? 0) < 768 ? 'Site' : 'Site detail',
+      exact: true,
+    })
+    .click();
+  await expect(mapSurface).toHaveAttribute('data-map-mode', 'site');
+  const siteDetail = dialog.getByRole('complementary', {
+    name: 'Reported launch site detail',
+  });
+  await expect(siteDetail).toBeVisible();
+  await expect(siteDetail.getByText('28.5619°N')).toBeVisible();
+  await expect(siteDetail.getByText('80.5774°W')).toBeVisible();
+  expect(
+    await siteDetail.evaluate((element) => {
+      const map = element.closest('[data-map-interactive="true"]');
+      if (!map) return false;
+      const cardBounds = element.getBoundingClientRect();
+      const mapBounds = map.getBoundingClientRect();
+      return (
+        cardBounds.left >= mapBounds.left &&
+        cardBounds.right <= mapBounds.right &&
+        cardBounds.top >= mapBounds.top &&
+        cardBounds.bottom <= mapBounds.bottom
+      );
+    })
+  ).toBe(true);
+
+  const closeView = await map.getAttribute('data-map-view');
+  await mapSurface.focus();
+  await mapSurface.press('ArrowRight');
+  await expect(map).not.toHaveAttribute('data-map-view', closeView || '');
+  await mapSurface.press('Home');
+  await expect(mapSurface).toHaveAttribute('data-map-mode', 'focus');
+  await expect(siteDetail).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
 test('reported launch coordinates hand off to an exact external site map', async ({

@@ -5,9 +5,12 @@ import {
   getMapViewport,
   getRouteGeometry,
   isPointInFrame,
+  MAX_MAP_ZOOM,
   MAP_WIDTH,
+  panMapViewport,
   projectMapPoint,
   wrapXNear,
+  zoomMapViewport,
 } from '@/lib/map-geometry';
 
 const VANDENBERG: [number, number] = [-120.611, 34.632];
@@ -97,5 +100,25 @@ describe('map geometry', () => {
 
     expect(Math.abs(wrappedWest - eastOfDateLine.x)).toBeLessThan(10);
     expect(wrappedWest).toBeGreaterThan(MAP_WIDTH);
+  });
+
+  it('zooms deeply around a mission focal point without drifting', () => {
+    const world = getMapViewport([0, 0], 1);
+    const site = projectMapPoint(...VANDENBERG);
+    const closeView = zoomMapViewport(world, 12, site);
+
+    expect(closeView.zoom).toBe(12);
+    expect(closeView.width).toBeCloseTo(MAP_WIDTH / 12, 5);
+    expect(closeView.x + closeView.width / 2).toBeCloseTo(site.x, 5);
+    expect(closeView.y + closeView.height / 2).toBeCloseTo(site.y, 5);
+  });
+
+  it('caps deep zoom and panning inside the rendered world copies', () => {
+    const closeView = getMapViewport(VANDENBERG, 100);
+    const panned = panMapViewport(closeView, -5000, 5000);
+
+    expect(closeView.zoom).toBe(MAX_MAP_ZOOM);
+    expect(panned.x).toBe(-MAP_WIDTH);
+    expect(panned.y + panned.height).toBe(500);
   });
 });

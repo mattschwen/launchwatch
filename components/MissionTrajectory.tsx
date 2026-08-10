@@ -14,6 +14,7 @@ import {
   Focus,
   Globe2,
   Info,
+  MapPin,
   Maximize2,
   Minus,
   Plus,
@@ -32,9 +33,14 @@ import {
   isMeaningfulLaunchValue,
 } from '@/lib/format';
 import {
-  clamp,
+  fitMapPoints,
+  getMapViewport,
   MAP_HEIGHT,
   MAP_WIDTH,
+  MAX_MAP_ZOOM,
+  panMapViewport,
+  zoomMapViewport,
+  type MapPoint,
   type MapViewport,
 } from '@/lib/map-geometry';
 import {
@@ -54,7 +60,9 @@ interface MissionTrajectoryProps {
   variant?: 'compact' | 'detail';
 }
 
-type MapViewMode = 'focus' | 'world';
+export type MapViewMode = 'focus' | 'world' | 'site';
+
+const ZOOM_FACTORS = [1, 1.35, 1.8, 2.5, 3.5, 5, 7] as const;
 
 const WORLD_VIEWPORT: MapViewport = {
   x: 0,
@@ -64,25 +72,54 @@ const WORLD_VIEWPORT: MapViewport = {
   zoom: 1,
 };
 
-function zoomViewport(
-  viewport: MapViewport,
-  zoomLevel: number
-): MapViewport {
-  if (!zoomLevel) return viewport;
+function trajectoryPoints(
+  trajectory: IllustrativeTrajectory | null
+): MapPoint[] {
+  if (!trajectory) return [];
 
-  const scale = Math.max(0.58, 1 - zoomLevel * 0.16);
-  const width = viewport.width * scale;
-  const height = viewport.height * scale;
-  const centerX = viewport.x + viewport.width / 2;
-  const centerY = viewport.y + viewport.height / 2;
+  return [
+    trajectory.launchPoint,
+    trajectory.transitionPoint,
+    trajectory.targetPoint,
+  ].filter((point): point is MapPoint => Boolean(point));
+}
+
+function getTrajectoryWorldViewport(
+  trajectory: IllustrativeTrajectory | null
+): MapViewport {
+  const points = trajectoryPoints(trajectory);
+  if (!points.length) return WORLD_VIEWPORT;
+
+  const minX = Math.min(...points.map((point) => point.x));
+  const maxX = Math.max(...points.map((point) => point.x));
 
   return {
-    x: centerX - width / 2,
-    y: clamp(centerY - height / 2, 0, MAP_HEIGHT - height),
-    width,
-    height,
-    zoom: MAP_WIDTH / width,
+    ...WORLD_VIEWPORT,
+    x: (minX + maxX) / 2 - MAP_WIDTH / 2,
   };
+}
+
+function getSelectionViewport(
+  trajectory: IllustrativeTrajectory,
+  selection: MissionMapSelection
+): MapViewport {
+  if (selection === 'reported-site' && trajectory.launchPoint) {
+    const longitude = (trajectory.launchPoint.x / MAP_WIDTH) * 360 - 180;
+    const latitude = 90 - (trajectory.launchPoint.y / MAP_HEIGHT) * 180;
+    return getMapViewport([longitude, latitude], 8);
+  }
+
+  const phase = trajectory.phases.find(({ id }) => id === selection);
+  if (!phase) return trajectory.focusViewport;
+
+  return fitMapPoints(
+    [phase.start, phase.end, phase.labelPoint],
+    {
+      minHeight: 170,
+      minWidth: 340,
+      padding: 54,
+    }
+  );
 }
 
 function statusTone(launch: Launch): string {
@@ -193,6 +230,7 @@ function CompactFacts({
 
 interface MapToolbarProps {
   canFocus: boolean;
+  canInspectSite: boolean;
   disabled: boolean;
   expandButtonRef?: React.RefObject<HTMLButtonElement | null>;
   onEnlarge: () => void;
@@ -201,12 +239,15 @@ interface MapToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   viewMode: MapViewMode;
+  maxZoomLevel: number;
+  zoomScale: number;
   zoomLevel: number;
   showEnlarge?: boolean;
 }
 
 function MapToolbar({
   canFocus,
+  canInspectSite,
   disabled,
   expandButtonRef,
   onEnlarge,
@@ -215,11 +256,13 @@ function MapToolbar({
   onZoomIn,
   onZoomOut,
   viewMode,
+  maxZoomLevel,
+  zoomScale,
   zoomLevel,
   showEnlarge = true,
 }: MapToolbarProps): React.ReactElement {
   const zoomOutUnavailable = disabled || zoomLevel === 0;
-  const zoomInUnavailable = disabled || zoomLevel === 2;
+  const zoomInUnavailable = disabled || zoomLevel === maxZoomLevel;
 
   return (
     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
@@ -256,6 +299,21 @@ function MapToolbar({
           <Globe2 aria-hidden="true" size={14} />
           Global
         </button>
+        <button
+          type="button"
+          aria-pressed={viewMode === 'site'}
+          disabled={!canInspectSite}
+          onClick={() => onViewMode('site')}
+          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
+            viewMode === 'site'
+              ? 'bg-[rgba(244,185,95,0.1)] text-[var(--console-amber)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <MapPin aria-hidden="true" size={14} />
+          <span className="hidden md:inline">Site detail</span>
+          <span className="md:hidden">Site</span>
+        </button>
       </div>
 
       <button
@@ -290,7 +348,8 @@ function MapToolbar({
         aria-atomic="true"
         className="sr-only"
       >
-        Map zoom level {zoomLevel + 1} of 3.
+        Map zoom level {zoomLevel + 1} of {maxZoomLevel + 1}. Map scale{' '}
+        {zoomScale.toFixed(1)} times.
       </span>
       <button
         type="button"
@@ -335,6 +394,7 @@ function MissionTrajectoryController({
   const [expanded, setExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<MapViewMode>('focus');
   const [zoomLevel, setZoomLevel] = useState(0);
+  const [panOffset, setPanOffset] = useState<MapPoint>({ x: 0, y: 0 });
   const [activeSelection, setActiveSelection] =
     useState<MissionMapSelection>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
@@ -348,8 +408,12 @@ function MissionTrajectoryController({
   const canFocus = Boolean(
     trajectory?.launchPoint || trajectory?.phases.length
   );
+  const canInspectSite = Boolean(trajectory?.launchPoint);
   const effectiveViewMode =
-    viewMode === 'focus' && !canFocus ? 'world' : viewMode;
+    (viewMode === 'focus' && !canFocus) ||
+    (viewMode === 'site' && !canInspectSite)
+      ? 'world'
+      : viewMode;
   const activeSelectionAvailable =
     activeSelection === 'reported-site'
       ? Boolean(trajectory?.launchPoint)
@@ -361,13 +425,56 @@ function MissionTrajectoryController({
   const effectiveSelection = activeSelectionAvailable
     ? activeSelection
     : null;
-  const baseViewport =
-    effectiveViewMode === 'focus' && trajectory
-      ? trajectory.focusViewport
-      : WORLD_VIEWPORT;
+  const baseViewport = useMemo(() => {
+    if (!trajectory) return WORLD_VIEWPORT;
+    if (effectiveViewMode === 'world') {
+      return getTrajectoryWorldViewport(trajectory);
+    }
+    if (effectiveViewMode === 'site') {
+      return getSelectionViewport(trajectory, 'reported-site');
+    }
+    return getSelectionViewport(trajectory, effectiveSelection);
+  }, [effectiveSelection, effectiveViewMode, trajectory]);
+  const maxZoomLevel = useMemo(() => {
+    const lastDistinctZoom = ZOOM_FACTORS.findLastIndex(
+      (factor) => baseViewport.zoom * factor < MAX_MAP_ZOOM
+    );
+    return Math.min(
+      ZOOM_FACTORS.length - 1,
+      Math.max(0, lastDistinctZoom + 1)
+    );
+  }, [baseViewport.zoom]);
+  const boundedZoomLevel = Math.min(zoomLevel, maxZoomLevel);
+  const zoomScale = Math.min(
+    MAX_MAP_ZOOM,
+    baseViewport.zoom * ZOOM_FACTORS[boundedZoomLevel]
+  );
+  const zoomFocalPoint = useMemo<MapPoint>(() => {
+    if (effectiveSelection === 'reported-site' && trajectory?.launchPoint) {
+      return trajectory.launchPoint;
+    }
+    const phase = trajectory?.phases.find(
+      ({ id }) => id === effectiveSelection
+    );
+    if (phase) {
+      return {
+        x: (phase.start.x + phase.end.x) / 2,
+        y: (phase.start.y + phase.end.y) / 2,
+      };
+    }
+    return {
+      x: baseViewport.x + baseViewport.width / 2,
+      y: baseViewport.y + baseViewport.height / 2,
+    };
+  }, [baseViewport, effectiveSelection, trajectory]);
   const viewport = useMemo(
-    () => zoomViewport(baseViewport, zoomLevel),
-    [baseViewport, zoomLevel]
+    () =>
+      panMapViewport(
+        zoomMapViewport(baseViewport, zoomScale, zoomFocalPoint),
+        panOffset.x,
+        panOffset.y
+      ),
+    [baseViewport, panOffset, zoomFocalPoint, zoomScale]
   );
 
   useEffect(() => {
@@ -377,12 +484,46 @@ function MissionTrajectoryController({
   const resetMap = useCallback((): void => {
     setViewMode(canFocus ? 'focus' : 'world');
     setZoomLevel(0);
+    setPanOffset({ x: 0, y: 0 });
     setActiveSelection(null);
   }, [canFocus]);
 
   const changeViewMode = useCallback((mode: MapViewMode): void => {
     setViewMode(mode);
     setZoomLevel(0);
+    setPanOffset({ x: 0, y: 0 });
+    setActiveSelection(mode === 'site' ? 'reported-site' : null);
+  }, []);
+
+  const changeSelection = useCallback(
+    (selection: MissionMapSelection): void => {
+      setActiveSelection(selection);
+      setViewMode(
+        selection === 'reported-site'
+          ? 'site'
+          : canFocus
+            ? 'focus'
+            : 'world'
+      );
+      setZoomLevel(0);
+      setPanOffset({ x: 0, y: 0 });
+    },
+    [canFocus]
+  );
+
+  const panMap = useCallback((deltaX: number, deltaY: number): void => {
+    setPanOffset((offset) => ({
+      x: offset.x + deltaX,
+      y: offset.y + deltaY,
+    }));
+  }, []);
+
+  const zoomIn = useCallback((): void => {
+    setZoomLevel((level) => Math.min(maxZoomLevel, level + 1));
+  }, [maxZoomLevel]);
+
+  const zoomOut = useCallback((): void => {
+    setZoomLevel((level) => Math.max(0, level - 1));
   }, []);
 
   const closeExpanded = useCallback((): void => {
@@ -475,15 +616,18 @@ function MissionTrajectoryController({
   const toolbar = (
     <MapToolbar
       canFocus={canFocus}
+      canInspectSite={canInspectSite}
       disabled={!launch}
       expandButtonRef={expandButtonRef}
       onEnlarge={openExpanded}
       onReset={resetMap}
       onViewMode={changeViewMode}
-      onZoomIn={() => setZoomLevel((level) => Math.min(2, level + 1))}
-      onZoomOut={() => setZoomLevel((level) => Math.max(0, level - 1))}
+      onZoomIn={zoomIn}
+      onZoomOut={zoomOut}
       viewMode={effectiveViewMode}
-      zoomLevel={zoomLevel}
+      maxZoomLevel={maxZoomLevel}
+      zoomLevel={boundedZoomLevel}
+      zoomScale={zoomScale}
     />
   );
 
@@ -535,31 +679,39 @@ function MissionTrajectoryController({
               <div className="shrink-0 border-b border-[var(--border-subtle)] px-3 py-2 sm:px-5">
                 <MapToolbar
                   canFocus={canFocus}
+                  canInspectSite={canInspectSite}
                   disabled={!launch}
                   onEnlarge={openExpanded}
                   onReset={resetMap}
                   onViewMode={changeViewMode}
-                  onZoomIn={() =>
-                    setZoomLevel((level) => Math.min(2, level + 1))
-                  }
-                  onZoomOut={() =>
-                    setZoomLevel((level) => Math.max(0, level - 1))
-                  }
+                  onZoomIn={zoomIn}
+                  onZoomOut={zoomOut}
                   showEnlarge={false}
                   viewMode={effectiveViewMode}
-                  zoomLevel={zoomLevel}
+                  maxZoomLevel={maxZoomLevel}
+                  zoomLevel={boundedZoomLevel}
+                  zoomScale={zoomScale}
                 />
               </div>
               <div
-                className="aspect-[2/1] min-h-0 shrink-0 p-3 sm:aspect-auto sm:flex-1 sm:shrink sm:p-4"
+                className={`min-h-0 shrink-0 p-3 sm:aspect-auto sm:h-auto sm:flex-1 sm:shrink sm:p-4 ${
+                  effectiveViewMode === 'site'
+                    ? 'h-[25rem]'
+                    : 'aspect-[2/1]'
+                }`}
                 data-enlarged-map-region
               >
                 <MissionMapCanvas
                   activeSelection={effectiveSelection}
                   expanded
                   launch={launch}
+                  onPan={panMap}
+                  onReset={resetMap}
+                  onZoomIn={zoomIn}
+                  onZoomOut={zoomOut}
                   trajectory={trajectory}
                   variant="detail"
+                  viewMode={effectiveViewMode}
                   viewport={viewport}
                 />
               </div>
@@ -571,7 +723,7 @@ function MissionTrajectoryController({
                   <MissionPhaseRail
                     activeSelection={effectiveSelection}
                     launch={launch}
-                    onSelect={setActiveSelection}
+                    onSelect={changeSelection}
                     trajectory={trajectory}
                   />
                   <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
@@ -646,8 +798,13 @@ function MissionTrajectoryController({
         <MissionMapCanvas
           activeSelection={effectiveSelection}
           launch={launch}
+          onPan={variant === 'detail' ? panMap : undefined}
+          onReset={variant === 'detail' ? resetMap : undefined}
+          onZoomIn={variant === 'detail' ? zoomIn : undefined}
+          onZoomOut={variant === 'detail' ? zoomOut : undefined}
           trajectory={trajectory}
           variant={variant}
+          viewMode={effectiveViewMode}
           viewport={viewport}
         />
 
@@ -655,7 +812,7 @@ function MissionTrajectoryController({
           <MissionPhaseRail
             activeSelection={effectiveSelection}
             launch={launch}
-            onSelect={setActiveSelection}
+            onSelect={changeSelection}
             trajectory={trajectory}
           />
         ) : null}

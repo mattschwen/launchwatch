@@ -135,7 +135,7 @@ describe('MissionTrajectory', () => {
     expect(orbitGroup).toHaveAttribute('opacity', '1');
   });
 
-  it('switches a detail map between mission focus and the global view', async () => {
+  it('switches between trajectory-aware focus and global framing', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <MissionTrajectory launch={makeLaunch()} variant="detail" />
@@ -155,10 +155,10 @@ describe('MissionTrajectory', () => {
 
     expect(global).toHaveAttribute('aria-pressed', 'true');
     expect(focus).toHaveAttribute('aria-pressed', 'false');
-    expect(map).toHaveAttribute(
-      'data-map-view',
-      '0.0:0.0:1000.0:500.0'
-    );
+    const globalView = map?.getAttribute('data-map-view');
+    expect(globalView).toMatch(/^-?\d+\.\d:0\.0:1000\.0:500\.0$/);
+    expect(globalView).not.toBe('0.0:0.0:1000.0:500.0');
+    expect(map?.parentElement).toHaveAttribute('data-map-mode', 'world');
 
     await user.click(focus);
 
@@ -166,7 +166,7 @@ describe('MissionTrajectory', () => {
     expect(map).toHaveAttribute('data-map-view', focusView);
   });
 
-  it('retains focus while removing unavailable map zoom from the tab sequence', async () => {
+  it('offers seven useful zoom steps while retaining control focus', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <MissionTrajectory launch={makeLaunch()} variant="detail" />
@@ -182,14 +182,16 @@ describe('MissionTrajectory', () => {
     expect(zoomIn).not.toHaveAttribute('tabindex');
 
     zoomIn.focus();
-    await user.keyboard('{Enter}{Enter}');
+    for (let step = 0; step < 6; step += 1) {
+      await user.keyboard('{Enter}');
+    }
 
     expect(zoomIn).toHaveFocus();
     expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
     expect(zoomIn).toHaveAttribute('tabindex', '-1');
     expect(zoomIn).not.toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Map zoom level 3 of 3.'
+      /Map zoom level 7 of 7\. Map scale \d+\.\d times\./
     );
     const maximumZoomView = map?.getAttribute('data-map-view');
 
@@ -198,15 +200,87 @@ describe('MissionTrajectory', () => {
     expect(zoomIn).toHaveFocus();
 
     zoomOut.focus();
-    await user.keyboard('{Enter}{Enter}');
+    for (let step = 0; step < 6; step += 1) {
+      await user.keyboard('{Enter}');
+    }
 
     expect(zoomOut).toHaveFocus();
     expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
     expect(zoomOut).toHaveAttribute('tabindex', '-1');
     expect(zoomOut).not.toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Map zoom level 1 of 3.'
+      /Map zoom level 1 of 7\. Map scale \d+\.\d times\./
     );
+  });
+
+  it('opens a close site view with progressively disclosed reported facts', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MissionTrajectory launch={makeLaunch()} variant="detail" />
+    );
+
+    expect(
+      container.querySelector('[data-trajectory-site-detail]')
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /Site detail/i })
+    );
+
+    expect(
+      container.querySelector('[data-map-mode="site"]')
+    ).toBeInTheDocument();
+    const details = screen.getByRole('complementary', {
+      name: 'Reported launch site detail',
+    });
+    expect(details).toBeVisible();
+    expect(within(details).getByText('SLC-40 · Cape Canaveral')).toBeVisible();
+    expect(within(details).getByText('28.5619°N')).toBeVisible();
+    expect(within(details).getByText('80.5774°W')).toBeVisible();
+    expect(
+      within(details).getByRole('link', {
+        name: /Inspect reported coordinates.*opens in a new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774'
+    );
+  });
+
+  it('refits the map when a modeled phase is selected', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MissionTrajectory launch={makeLaunch()} variant="detail" />
+    );
+    const map = container.querySelector('[data-trajectory-map]');
+    const fullMissionView = map?.getAttribute('data-map-view');
+    const rail = screen.getByRole('list', { name: 'Mission model phases' });
+
+    await user.click(
+      within(rail).getByRole('button', { name: /Illustrative ascent/i })
+    );
+
+    expect(map?.getAttribute('data-map-view')).not.toBe(fullMissionView);
+    expect(container.querySelector('[data-map-mode="focus"]')).toBeInTheDocument();
+  });
+
+  it('supports keyboard panning and reset on the interactive map', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MissionTrajectory launch={makeLaunch()} variant="detail" />
+    );
+    const interactiveMap = screen.getByRole('region', {
+      name: 'Interactive flight map',
+    });
+    const map = container.querySelector('[data-trajectory-map]');
+    const initialView = map?.getAttribute('data-map-view');
+
+    interactiveMap.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(map?.getAttribute('data-map-view')).not.toBe(initialView);
+
+    await user.keyboard('{Home}');
+    expect(map).toHaveAttribute('data-map-view', initialView || '');
   });
 
   it('keeps a reported site visible at the antimeridian in global view', async () => {

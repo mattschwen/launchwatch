@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import {
   geoEquirectangular,
   geoGraticule10,
@@ -12,7 +12,7 @@ import type {
   Topology,
 } from 'topojson-specification';
 import countriesTopology from 'world-atlas/countries-110m.json';
-import { MapPin, Route } from 'lucide-react';
+import { ExternalLink, MapPin, Move, Route } from 'lucide-react';
 import {
   getFocusLabelBox,
   getMapFrame,
@@ -21,7 +21,11 @@ import {
   MAP_WIDTH,
   type MapViewport,
 } from '@/lib/map-geometry';
-import { isCriticalLaunchStatusName } from '@/lib/format';
+import {
+  getLaunchSiteDisplay,
+  isCriticalLaunchStatusName,
+} from '@/lib/format';
+import { buildReportedSiteMapUrl } from '@/lib/site-map';
 import type {
   IllustrativeTrajectory,
   TrajectoryPhaseId,
@@ -37,8 +41,13 @@ interface MissionMapCanvasProps {
   activeSelection: MissionMapSelection;
   expanded?: boolean;
   launch: Launch | null;
+  onPan?: (deltaX: number, deltaY: number) => void;
+  onReset?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
   trajectory: IllustrativeTrajectory | null;
   variant: 'compact' | 'detail';
+  viewMode: 'focus' | 'world' | 'site';
   viewport: MapViewport;
 }
 
@@ -80,6 +89,96 @@ function missionSignalColor(launch: Launch | null): string {
   }
   if (launch?.status === 'tbd') return '#ffc45c';
   return '#63f6b2';
+}
+
+function formatCoordinate(
+  value: number,
+  positive: string,
+  negative: string
+): string {
+  return `${Math.abs(value).toFixed(4)}°${
+    value >= 0 ? positive : negative
+  }`;
+}
+
+function SiteDetailOverlay({
+  launch,
+}: {
+  launch: Launch;
+}): React.ReactElement | null {
+  if (!launch.location) return null;
+
+  const site = getLaunchSiteDisplay(launch);
+  const mapUrl = buildReportedSiteMapUrl(launch.location);
+  const source = launch.source === 'll2' ? 'Launch Library 2' : 'SpaceX';
+
+  return (
+    <aside
+      aria-label="Reported launch site detail"
+      data-trajectory-site-detail
+      className="absolute bottom-3 left-3 z-10 w-[min(18rem,calc(100%-1.5rem))] overflow-hidden rounded-md border border-[rgba(244,185,95,0.36)] bg-[rgba(7,11,18,0.96)] shadow-xl backdrop-blur-sm sm:bottom-4 sm:left-4"
+    >
+      <div className="flex items-start gap-3 border-b border-[var(--border-subtle)] px-3 py-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[rgba(244,185,95,0.1)] text-[var(--console-amber)]">
+          <MapPin aria-hidden="true" size={15} />
+        </span>
+        <div className="min-w-0">
+          <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--console-amber)]">
+            Site detail · reported
+          </p>
+          <p className="mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-primary)]">
+            {site.label}
+          </p>
+        </div>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5">
+        <div>
+          <dt className="font-mono text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+            Latitude
+          </dt>
+          <dd className="mt-0.5 font-mono text-[10px] font-semibold text-[var(--text-secondary)]">
+            {formatCoordinate(launch.location.lat, 'N', 'S')}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+            Longitude
+          </dt>
+          <dd className="mt-0.5 font-mono text-[10px] font-semibold text-[var(--text-secondary)]">
+            {formatCoordinate(launch.location.lng, 'E', 'W')}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+            Country
+          </dt>
+          <dd className="mt-0.5 font-mono text-[10px] font-semibold text-[var(--text-secondary)]">
+            {launch.location.countryCode || 'Not supplied'}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+            Source
+          </dt>
+          <dd className="mt-0.5 font-mono text-[10px] font-semibold text-[var(--text-secondary)]">
+            {source}
+          </dd>
+        </div>
+      </dl>
+      {mapUrl ? (
+        <a
+          href={mapUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-11 items-center justify-between gap-3 border-t border-[var(--border-subtle)] px-3 text-xs font-semibold text-[var(--console-cyan)] transition-colors hover:bg-[rgba(88,200,232,0.06)] hover:text-[var(--text-primary)]"
+        >
+          Inspect reported coordinates
+          <ExternalLink aria-hidden="true" size={13} />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      ) : null}
+    </aside>
+  );
 }
 
 function pointInViewport(
@@ -157,10 +256,22 @@ export default function MissionMapCanvas({
   activeSelection,
   expanded = false,
   launch,
+  onPan,
+  onReset,
+  onZoomIn,
+  onZoomOut,
   trajectory,
   variant,
+  viewMode,
   viewport,
 }: MissionMapCanvasProps): React.ReactElement {
+  const dragRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const wheelTimestampRef = useRef(0);
+  const [dragging, setDragging] = useState(false);
   const rawId = useId();
   const id = rawId.replaceAll(':', '');
   const titleId = `${id}-title`;
@@ -201,16 +312,105 @@ export default function MissionMapCanvas({
     [frame, trajectory, viewport.zoom]
   );
   const routeVisible = Boolean(trajectory?.phases.length);
+  const interactive = Boolean(
+    launch && onPan && onReset && onZoomIn && onZoomOut
+  );
+  const showSiteDetail = Boolean(
+    launch?.location &&
+      trajectory?.launchPoint &&
+      visibleLaunchPoint &&
+      viewport.zoom >= 6
+  );
   const mapSizeClass = expanded
     ? 'h-full min-h-0'
     : variant === 'detail'
-      ? 'h-[10rem] sm:h-[clamp(22rem,48vw,34rem)]'
+      ? viewMode === 'site'
+        ? 'h-[24rem] sm:h-[clamp(22rem,48vw,34rem)]'
+        : 'h-[18rem] sm:h-[clamp(22rem,48vw,34rem)]'
       : 'aspect-[2/1] min-h-[12rem] lg:aspect-auto lg:flex-1';
+
+  const finishDrag = (pointerId: number): void => {
+    if (dragRef.current?.pointerId !== pointerId) return;
+    dragRef.current = null;
+    setDragging(false);
+  };
 
   return (
     <div
-      className={`mission-map-display relative min-h-0 w-full min-w-0 max-w-full overflow-hidden bg-[#050811] ${mapSizeClass}`}
+      role={interactive ? 'region' : undefined}
+      aria-label={interactive ? 'Interactive flight map' : undefined}
+      aria-keyshortcuts={
+        interactive ? 'ArrowUp ArrowDown ArrowLeft ArrowRight + - Home' : undefined
+      }
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (!interactive || !onPan || !onReset || !onZoomIn || !onZoomOut) {
+          return;
+        }
+        const step = (event.shiftKey ? 0.24 : 0.1);
+        if (event.key === 'ArrowLeft') onPan(-viewport.width * step, 0);
+        else if (event.key === 'ArrowRight') onPan(viewport.width * step, 0);
+        else if (event.key === 'ArrowUp') onPan(0, -viewport.height * step);
+        else if (event.key === 'ArrowDown') onPan(0, viewport.height * step);
+        else if (event.key === '+' || event.key === '=') onZoomIn();
+        else if (event.key === '-' || event.key === '_') onZoomOut();
+        else if (event.key === 'Home') onReset();
+        else return;
+        event.preventDefault();
+      }}
+      onPointerDown={(event) => {
+        if (!interactive || event.button !== 0) return;
+        if (
+          event.target instanceof Element &&
+          event.target.closest('a, button')
+        ) {
+          return;
+        }
+        dragRef.current = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+        };
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setDragging(true);
+      }}
+      onPointerMove={(event) => {
+        const drag = dragRef.current;
+        if (!drag || drag.pointerId !== event.pointerId || !onPan) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return;
+        onPan(
+          -((event.clientX - drag.x) / bounds.width) * viewport.width,
+          -((event.clientY - drag.y) / bounds.height) * viewport.height
+        );
+        dragRef.current = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+        };
+      }}
+      onPointerUp={(event) => finishDrag(event.pointerId)}
+      onPointerCancel={(event) => finishDrag(event.pointerId)}
+      onWheel={(event) => {
+        if (!interactive || !onZoomIn || !onZoomOut) return;
+        const now = Date.now();
+        if (now - wheelTimestampRef.current < 140) {
+          event.preventDefault();
+          return;
+        }
+        wheelTimestampRef.current = now;
+        if (event.deltaY < 0) onZoomIn();
+        else if (event.deltaY > 0) onZoomOut();
+        else return;
+        event.preventDefault();
+      }}
+      style={{ touchAction: expanded ? 'none' : 'pan-y' }}
+      className={`mission-map-display relative min-h-0 w-full min-w-0 max-w-full overflow-hidden bg-[#050811] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
+        interactive ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''
+      } ${mapSizeClass}`}
       data-map-availability={trajectory?.availability || 'none'}
+      data-map-interactive={interactive ? 'true' : 'false'}
+      data-map-mode={viewMode}
     >
       <svg
         viewBox={viewBox}
@@ -569,6 +769,18 @@ export default function MissionMapCanvas({
           </g>
         ))}
       </svg>
+
+      {interactive && launch && trajectory?.availability === 'ready' ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-3 hidden items-center gap-2 rounded border border-[var(--border-strong)] bg-[rgba(7,11,18,0.88)] px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.08em] text-[var(--text-muted)] backdrop-blur-sm sm:flex"
+        >
+          <Move aria-hidden="true" size={12} />
+          Drag to pan · Scroll to zoom · Arrows to move
+        </div>
+      ) : null}
+
+      {showSiteDetail && launch ? <SiteDetailOverlay launch={launch} /> : null}
 
       {!launch ? (
         <div className="absolute inset-0 grid place-items-center p-6 text-center">
