@@ -10,6 +10,7 @@ import {
 import { AlertTriangle, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import {
+  formatLaunchDay,
   isCriticalLaunchStatusName,
   matchesLaunchSearch,
 } from '@/lib/format';
@@ -248,6 +249,27 @@ export default function LaunchList({
     filtered.length > INITIAL_VISIBLE_COUNT && !allResultsVisible
       ? `Showing ${visibleLaunches.length} of ${filtered.length} missions`
       : `${filtered.length} mission${filtered.length === 1 ? '' : 's'}`;
+  const scheduleCoverage = useMemo(() => {
+    let earliest: (typeof launches)[number] | null = null;
+    let latest: (typeof launches)[number] | null = null;
+    let earliestTime = Number.POSITIVE_INFINITY;
+    let latestTime = Number.NEGATIVE_INFINITY;
+
+    for (const launch of launches) {
+      const time = new Date(launch.date).getTime();
+      if (!Number.isFinite(time)) continue;
+      if (time < earliestTime) {
+        earliest = launch;
+        earliestTime = time;
+      }
+      if (time > latestTime) {
+        latest = launch;
+        latestTime = time;
+      }
+    }
+
+    return earliest && latest ? { earliest, latest } : null;
+  }, [launches]);
 
   useEffect(() => {
     if (
@@ -382,6 +404,34 @@ export default function LaunchList({
                   ? ' · provider data is partial'
                   : ''}
           </p>
+          {scheduleCoverage ? (
+            <p
+              aria-label={`Upcoming feed coverage: ${formatLaunchDay(
+                scheduleCoverage.earliest.date,
+                scheduleCoverage.earliest.datePrecision,
+              )} through ${formatLaunchDay(
+                scheduleCoverage.latest.date,
+                scheduleCoverage.latest.datePrecision,
+              )}`}
+              className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--text-muted)]"
+            >
+              <span className="text-[var(--console-cyan)]">Feed window</span>
+              <span aria-hidden="true">{'//'}</span>
+              <time dateTime={scheduleCoverage.earliest.date}>
+                {formatLaunchDay(
+                  scheduleCoverage.earliest.date,
+                  scheduleCoverage.earliest.datePrecision,
+                )}
+              </time>
+              <span aria-hidden="true">—</span>
+              <time dateTime={scheduleCoverage.latest.date}>
+                {formatLaunchDay(
+                  scheduleCoverage.latest.date,
+                  scheduleCoverage.latest.datePrecision,
+                )}
+              </time>
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <button

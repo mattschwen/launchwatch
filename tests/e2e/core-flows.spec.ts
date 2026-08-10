@@ -4041,7 +4041,8 @@ test('home schedule keeps long mission telemetry readable', async ({
   await page.goto('/');
 
   const schedule = page.getByRole('region', { name: 'Upcoming launches' });
-  const launchDay = schedule.getByText('Jul 28, 2035', { exact: true });
+  const scheduleRow = schedule.locator('article').first();
+  const launchDay = scheduleRow.getByText('Jul 28, 2035', { exact: true });
   const missionName = schedule.getByText(longMissionName, { exact: true });
   const providerName = schedule.getByText(longProviderName, { exact: true });
   const statusName = schedule.getByText(longStatusName, { exact: true });
@@ -4079,7 +4080,6 @@ test('home schedule keeps long mission telemetry readable', async ({
         })
         .filter({ visible: true })
     );
-    const scheduleRow = schedule.locator('article').first();
     await expect(
       scheduleRow.getByText('Vehicle', { exact: true }).filter({ visible: true })
     ).toBeVisible();
@@ -6855,6 +6855,14 @@ test('schedule and archive search across mission profile data', async ({
 }) => {
   await page.goto('/');
 
+  const scheduleCoverage = page.getByLabel(
+    'Upcoming feed coverage: Jul 28, 2035 through Aug 2, 2035'
+  );
+  await expect(scheduleCoverage).toContainText('Feed window');
+  await expect(scheduleCoverage).toContainText('Jul 28, 2035');
+  await expect(scheduleCoverage).toContainText('Aug 2, 2035');
+  await expect(scheduleCoverage.locator('time')).toHaveCount(2);
+
   await page.getByRole('button', { name: 'Filter' }).click();
   const scheduleSearch = page.getByRole('searchbox', {
     name: 'Search launches',
@@ -6868,6 +6876,7 @@ test('schedule and archive search across mission profile data', async ({
   await expect(
     page.getByRole('status', { name: 'Upcoming launch results' }),
   ).toHaveText('1 mission');
+  await expect(scheduleCoverage).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Upcoming launches' }).getByText(
       'Orbital Dawn',

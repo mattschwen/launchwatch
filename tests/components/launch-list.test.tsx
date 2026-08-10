@@ -62,6 +62,44 @@ describe('LaunchList', () => {
     }
   });
 
+  it('makes the bounded upcoming feed window visible before filtering', async () => {
+    const user = userEvent.setup();
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: [...UPCOMING_LAUNCHES].reverse(),
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    const coverage = screen.getByLabelText(
+      'Upcoming feed coverage: Jul 28, 2035 through Aug 2, 2035'
+    );
+    expect(coverage).toHaveTextContent('Feed window');
+    expect(coverage).toHaveTextContent('Jul 28, 2035');
+    expect(coverage).toHaveTextContent('Aug 2, 2035');
+    expect(coverage.querySelectorAll('time')).toHaveLength(2);
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search launches' }),
+      'Polaris',
+    );
+
+    expect(
+      screen.getByLabelText(
+        'Upcoming feed coverage: Jul 28, 2035 through Aug 2, 2035'
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' })
+    ).toHaveTextContent('1 mission');
+  });
+
   it('finds missions by profile and orbit metadata', async () => {
     const user = userEvent.setup();
 
