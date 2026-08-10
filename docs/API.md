@@ -9,9 +9,10 @@ LaunchWatch exposes a small same-origin API for normalized launch data and missi
 - Format: JSON
 - Authentication: none for internal read routes
 - Credentials: optional, server-side provider credentials only
-- Query contracts are exact: duplicate keys, unsupported keys, and `limit`
-  outside the history feed return `400` before provider work begins. This keeps
-  public CDN variants bounded to the documented URLs.
+- Query contracts are exact: duplicate keys, unsupported keys, query parameters
+  on launch-detail paths, and `limit` outside the history feed return `400`
+  before provider work begins. This keeps public CDN variants bounded to the
+  documented URLs.
 
 ## Canonical Launch IDs
 
@@ -193,6 +194,7 @@ Responses to accepted legacy `past-*` IDs include `legacyId: true` and a `Conten
 | Condition | Status |
 | --- | --- |
 | Invalid or unsupported ID | `400` |
+| Any query parameter | `400` |
 | Valid ID with no provider record | `404` |
 | Provider unavailable without cached data | `502` |
 | Unexpected route failure | `500` |

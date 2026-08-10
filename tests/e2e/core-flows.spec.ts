@@ -911,6 +911,29 @@ test('launch intelligence rejects non-canonical cache variants', async ({
   }
 });
 
+test('launch detail rejects cache-fragmenting query variants', async ({
+  request,
+}) => {
+  const canonical = await request.get(
+    `/api/launches/${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`,
+  );
+  expect(canonical.status()).toBe(200);
+
+  for (const query of [
+    'view=compact',
+    'utm_source=cache-fragment',
+    'view=one&view=two',
+  ]) {
+    const response = await request.get(
+      `/api/launches/${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}?${query}`,
+    );
+    expect(response.status()).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Launch detail does not accept query parameters',
+    });
+  }
+});
+
 test('watch prefers official provider coverage over an earlier restream', async ({
   page,
 }) => {

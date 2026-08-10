@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
+import { getLaunchDetailQueryError } from '@/lib/launch-detail-params';
 import { checkRequestRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
 interface RouteContext {
@@ -11,6 +12,11 @@ export async function GET(
   context: RouteContext,
 ): Promise<NextResponse> {
   const { id } = await context.params;
+  const queryError = getLaunchDetailQueryError(request.nextUrl.searchParams);
+  if (queryError) {
+    return NextResponse.json({ error: queryError }, { status: 400 });
+  }
+
   const parsed = parseLaunchId(id);
 
   if (!parsed) {
