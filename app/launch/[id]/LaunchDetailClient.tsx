@@ -29,6 +29,7 @@ import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LocalLaunchTime from '@/components/LocalLaunchTime';
 import MissionDescription from '@/components/MissionDescription';
+import TimelineEventClock from '@/components/TimelineEventClock';
 import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
@@ -43,6 +44,8 @@ import {
   formatTimelineOffset,
   getLaunchSiteDisplay,
   getLaunchLiveSignal,
+  hasCalendarReadyLaunchTime,
+  hasExactLaunchTime,
   isCriticalLaunchStatusName,
   isCompletedLaunch,
 } from '@/lib/format';
@@ -1081,9 +1084,20 @@ export default function LaunchDetailClient({
             className="mission-detail-section-anchor mission-timeline-panel surface-card holo-card signal-warm mt-5 min-w-0 max-w-full overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6"
           >
             <div className="mission-timeline-header flex flex-wrap items-center justify-between gap-3">
-              <h2 id="launch-timeline-title" className="section-title">
-                Launch timeline
-              </h2>
+              <div className="min-w-0">
+                <h2 id="launch-timeline-title" className="section-title">
+                  Launch timeline
+                </h2>
+                <p className="mt-1 font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                  {hasCalendarReadyLaunchTime(presentedLaunch.datePrecision)
+                    ? `Mission clock // derived from ${
+                        hasExactLaunchTime(presentedLaunch.datePrecision)
+                          ? 'provider T-0'
+                          : 'estimated provider T-0'
+                      }`
+                    : 'Event clock pending a minute-level provider target'}
+                </p>
+              </div>
               <div className="mission-timeline-status flex items-center gap-2">
                 <span
                   id="launch-timeline-position"
@@ -1158,6 +1172,12 @@ export default function LaunchDetailClient({
                   <p className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
                     {formatTimelineOffset(event.relativeTime)}
                   </p>
+                  <TimelineEventClock
+                    launchDate={presentedLaunch.date}
+                    precision={presentedLaunch.datePrecision}
+                    relativeTime={event.relativeTime}
+                    className="mt-1.5"
+                  />
                   <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
                     {event.type}
                   </h3>

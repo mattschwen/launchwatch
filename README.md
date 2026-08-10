@@ -48,6 +48,8 @@ short, dismissible status toast; it never blocks the application.
   and archive without intercepting editable controls; shared search tolerates
   provider punctuation, accents, and joined vehicle designations
 - Mission briefings, coverage, community links, and replay surfaces
+- Provider-derived mission clocks translate precise timeline offsets into UTC
+  and local milestone times; coarse targets keep those clocks visibly pending.
 - Consistent screen-reader cues before actions open external coverage, sources,
   or calendar handoffs in a new tab
 - Provider-sourced vehicle and mission imagery with visible creator and license

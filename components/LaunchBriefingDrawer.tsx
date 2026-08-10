@@ -20,10 +20,13 @@ import {
   formatLaunchWindow,
   formatTimelineOffset,
   getLaunchSiteDisplay,
+  hasCalendarReadyLaunchTime,
+  hasExactLaunchTime,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
 import LocalLaunchTime from './LocalLaunchTime';
 import MissionDescription from './MissionDescription';
+import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
 
 interface LaunchBriefingDrawerProps {
@@ -269,6 +272,15 @@ export default function LaunchBriefingDrawer({
               >
                 Launch timeline
               </h3>
+              <p className="mt-1 font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                {hasCalendarReadyLaunchTime(launch.datePrecision)
+                  ? `Mission clock // derived from ${
+                      hasExactLaunchTime(launch.datePrecision)
+                        ? 'provider T-0'
+                        : 'estimated provider T-0'
+                    }`
+                  : 'Event clock pending a minute-level provider target'}
+              </p>
               <ol
                 id={`${titleId}-timeline-events`}
                 className="mission-briefing-timeline mt-3 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]"
@@ -279,10 +291,18 @@ export default function LaunchBriefingDrawer({
                 ).map((event) => (
                   <li
                     key={`${event.relativeTime}-${event.type}`}
-                    className="mission-briefing-event grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 py-3"
+                    className="mission-briefing-event grid grid-cols-[8.5rem_minmax(0,1fr)] gap-3 py-3"
                   >
-                    <span className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
-                      {formatTimelineOffset(event.relativeTime)}
+                    <span className="min-w-0">
+                      <span className="block whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
+                        {formatTimelineOffset(event.relativeTime)}
+                      </span>
+                      <TimelineEventClock
+                        launchDate={launch.date}
+                        precision={launch.datePrecision}
+                        relativeTime={event.relativeTime}
+                        className="mt-1.5"
+                      />
                     </span>
                     <span>
                       <span className="block text-sm font-semibold text-[var(--text-primary)]">

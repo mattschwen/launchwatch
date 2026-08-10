@@ -9448,6 +9448,13 @@ test('upcoming and historical details place one trajectory before mission suppor
         timeline.getByText('T−02:35:00', { exact: true })
       ).toBeVisible();
       await expect(timeline).not.toContainText('-P0D');
+      await expect(
+        timeline.getByText(
+          'Event clock pending a minute-level provider target',
+          { exact: true }
+        )
+      ).toBeVisible();
+      await expect(timeline.locator('[data-timeline-clock]')).toHaveCount(0);
 
       await page.getByRole('button', { name: 'Open briefing' }).click();
       const briefing = page.getByRole('dialog', { name: mission });
@@ -9459,6 +9466,15 @@ test('upcoming and historical details place one trajectory before mission suppor
         name: 'Launch timeline',
       });
       await expect(briefingTimeline.getByRole('listitem')).toHaveCount(8);
+      await expect(
+        briefingTimeline.getByText(
+          'Event clock pending a minute-level provider target',
+          { exact: true }
+        )
+      ).toBeVisible();
+      await expect(
+        briefingTimeline.locator('[data-timeline-clock]')
+      ).toHaveCount(0);
       await expect(
         briefingTimeline.getByText('Payload deployment', { exact: true })
       ).toHaveCount(0);

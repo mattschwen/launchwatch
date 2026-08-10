@@ -25,6 +25,12 @@ const UTC_TIME = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 });
 
+const UTC_SHORT_DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
 const UTC_MONTH = new Intl.DateTimeFormat('en-US', {
   month: 'long',
   year: 'numeric',
@@ -520,6 +526,82 @@ export function formatTimelineOffset(offset: string): string {
     2,
     '0'
   )}:${minutes.padStart(2, '0')}:${secondLabel}`;
+}
+
+function timelineOffsetMilliseconds(offset: string): number | null {
+  const normalized = offset.trim();
+  const durationMatch =
+    /^([+-])?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i.exec(
+      normalized
+    );
+
+  if (
+    durationMatch &&
+    durationMatch.slice(2).some((value) => value !== undefined)
+  ) {
+    const [, sign, days = '0', hours = '0', minutes = '0', seconds = '0'] =
+      durationMatch;
+    const minuteValue = Number(minutes);
+    const secondValue = Number(seconds);
+    if (minuteValue >= 60 || secondValue >= 60) return null;
+
+    const magnitude =
+      Number(days) * 86_400_000 +
+      Number(hours) * 3_600_000 +
+      minuteValue * 60_000 +
+      secondValue * 1_000;
+    return (sign === '-' ? -1 : 1) * magnitude;
+  }
+
+  const clockMatch =
+    /^T\s*([+\-−])\s*(?:(\d+)d\s*)?(\d+):(\d{2})(?::(\d{2}(?:\.\d+)?))?$/i.exec(
+      normalized
+    );
+  if (!clockMatch) return null;
+
+  const [, sign, days = '0', hours, minutes, seconds = '0'] = clockMatch;
+  const minuteValue = Number(minutes);
+  const secondValue = Number(seconds);
+  if (minuteValue >= 60 || secondValue >= 60) return null;
+
+  const magnitude =
+    Number(days) * 86_400_000 +
+    Number(hours) * 3_600_000 +
+    minuteValue * 60_000 +
+    secondValue * 1_000;
+  return (sign === '-' || sign === '−' ? -1 : 1) * magnitude;
+}
+
+export function getTimelineEventDate(
+  launchDate: string,
+  relativeTime: string,
+  precision?: LaunchDatePrecision | null
+): Date | null {
+  if (!hasCalendarReadyLaunchTime(precision)) return null;
+
+  const target = new Date(launchDate);
+  const offset = timelineOffsetMilliseconds(relativeTime);
+  if (Number.isNaN(target.getTime()) || offset === null) return null;
+
+  const eventDate = new Date(target.getTime() + offset);
+  return Number.isNaN(eventDate.getTime()) ? null : eventDate;
+}
+
+export function formatTimelineEventUtcTime(
+  launchDate: string,
+  relativeTime: string,
+  precision?: LaunchDatePrecision | null
+): string | null {
+  const target = new Date(launchDate);
+  const eventDate = getTimelineEventDate(launchDate, relativeTime, precision);
+  if (!eventDate || Number.isNaN(target.getTime())) return null;
+
+  const sameUtcDay =
+    target.getUTCFullYear() === eventDate.getUTCFullYear() &&
+    target.getUTCMonth() === eventDate.getUTCMonth() &&
+    target.getUTCDate() === eventDate.getUTCDate();
+  const time = `${UTC_TIME.format(eventDate)} UTC`;
+  return sameUtcDay ? time : `${UTC_SHORT_DATE.format(eventDate)} · ${time}`;
 }
 
 export function shortenLaunchSite(site: string): string {

@@ -53,11 +53,12 @@ test.describe('confirmed launch local time', () => {
 
     await featured.getByRole('button', { name: 'Open briefing' }).click();
     const briefing = page.getByRole('dialog');
+    const briefingLocalTime = briefing.locator('.local-launch-time');
     await expect(
-      briefing.getByText('Your time', { exact: true })
+      briefingLocalTime.getByText('Your time', { exact: true })
     ).toBeVisible();
     await expect(
-      briefing.getByText(expectedLocalTime, { exact: true })
+      briefingLocalTime.getByText(expectedLocalTime, { exact: true })
     ).toBeVisible();
     await briefing.getByRole('button', { name: 'Close mission briefing' }).click();
 
@@ -76,6 +77,35 @@ test.describe('confirmed launch local time', () => {
     await expect(
       missionPanel.getByText(expectedLocalTime, { exact: true })
     ).toBeVisible();
+    const timeline = page.getByRole('region', { name: 'Launch timeline' });
+    const timelineClocks = timeline.locator('[data-timeline-clock]');
+    await expect(
+      timeline.getByText('Mission clock // derived from provider T-0', {
+        exact: true,
+      })
+    ).toBeVisible();
+    await expect(timelineClocks).toHaveCount(10);
+    const firstTimelineClock = timelineClocks.first();
+    const firstTimelineUtc = firstTimelineClock.locator('time');
+    await expect(firstTimelineUtc).toHaveText('09:25 UTC');
+    const expectedLocalEventTime = await firstTimelineUtc.evaluate((element) =>
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(new Date((element as HTMLTimeElement).dateTime))
+    );
+    await expect(firstTimelineClock).toContainText(expectedLocalEventTime);
+
+    await page.getByRole('button', { name: 'Open briefing' }).click();
+    const detailBriefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+    const briefingTimeline = detailBriefing.getByRole('region', {
+      name: 'Launch timeline',
+    });
+    await expect(
+      briefingTimeline.locator('[data-timeline-clock]')
+    ).toHaveCount(8);
+    await expect(briefingTimeline).toContainText(expectedLocalEventTime);
     await expectContainedPage(page);
     expect(browserErrors).toEqual([]);
   });
@@ -98,6 +128,14 @@ test.describe('UTC launch time', () => {
       page
         .locator('#upcoming-launch-results')
         .getByText('Your time', { exact: true })
+    ).toHaveCount(0);
+
+    await page.goto('/launch/ll2-demo-orbital-dawn');
+    const timeline = page.getByRole('region', { name: 'Launch timeline' });
+    await expect(timeline.locator('[data-timeline-clock]')).toHaveCount(10);
+    await expect(timeline.getByText('09:25 UTC', { exact: true })).toBeVisible();
+    await expect(
+      timeline.getByText('Your time', { exact: true })
     ).toHaveCount(0);
   });
 });

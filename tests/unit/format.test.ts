@@ -12,6 +12,8 @@ import {
   formatLaunchWindow,
   formatLaunchWindowTimes,
   formatTimelineOffset,
+  formatTimelineEventUtcTime,
+  getTimelineEventDate,
   formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
@@ -174,6 +176,43 @@ describe('launch formatting', () => {
     expect(formatTimelineOffset('-P1DT2H3M4.5S')).toBe('T−1d 02:03:04.5');
     expect(formatTimelineOffset('T−00:35:00')).toBe('T−00:35:00');
     expect(formatTimelineOffset(' pending ')).toBe('pending');
+  });
+
+  it('derives precise mission-clock times from provider timeline offsets', () => {
+    expect(
+      formatTimelineEventUtcTime(
+        '2035-07-28T14:30:00.000Z',
+        '-P0DT2H35M'
+      )
+    ).toBe('11:55 UTC');
+    expect(
+      formatTimelineEventUtcTime(
+        '2035-07-28T00:30:00.000Z',
+        'T−02:35:00'
+      )
+    ).toBe('Jul 27 · 21:55 UTC');
+    expect(
+      getTimelineEventDate(
+        '2035-07-28T14:30:00.000Z',
+        'P0DT0H54M12.5S'
+      )?.toISOString()
+    ).toBe('2035-07-28T15:24:12.500Z');
+  });
+
+  it('withholds mission-clock times for coarse or malformed provider timing', () => {
+    expect(
+      formatTimelineEventUtcTime(
+        '2035-07-28T14:30:00.000Z',
+        '-P0DT2H35M',
+        { name: 'Hour', abbrev: 'HR' }
+      )
+    ).toBeNull();
+    expect(
+      formatTimelineEventUtcTime(
+        '2035-07-28T14:30:00.000Z',
+        'provider pending'
+      )
+    ).toBeNull();
   });
 
   it('shortens long launch-site names without losing identity', () => {
