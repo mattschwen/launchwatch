@@ -679,6 +679,11 @@ describe('PastLaunches', () => {
       await screen.findByText('Showing 10 of 21 results')
     ).toBeVisible();
     const loadMore = screen.getByRole('button', { name: 'Load 10 more' });
+    const backToFilters = screen.getByRole('button', {
+      name: 'Back to archive filters',
+    });
+
+    expect(backToFilters).toBeVisible();
 
     loadMore.focus();
     await user.keyboard('{Enter}');
@@ -703,6 +708,17 @@ describe('PastLaunches', () => {
     await user.keyboard('{Enter}');
     expect(screen.getAllByRole('article')).toHaveLength(21);
     expect(loadMore).toHaveFocus();
+
+    backToFilters.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => {
+      expect(
+        screen.getByRole('searchbox', { name: 'Search missions' })
+      ).toHaveFocus();
+    });
+    expect(
+      screen.getByRole('button', { name: 'Hide archive filters' })
+    ).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('refreshes settled records and reports a retained archive after failure', async () => {

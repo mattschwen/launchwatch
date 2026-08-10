@@ -7698,7 +7698,11 @@ test('history pagination reports progress and keeps terminal focus visible', asy
     'Showing 10 of 21 results'
   );
   const loadMore = page.locator('button[aria-controls$="-results"]');
+  const backToFilters = page.getByRole('button', {
+    name: 'Back to archive filters',
+  });
   await expect(loadMore).toHaveText('Load 10 more');
+  await expect(backToFilters).toBeVisible();
   await loadMore.focus();
   await loadMore.press('Enter');
   await loadMore.press('Tab');
@@ -7760,6 +7764,40 @@ test('history pagination reports progress and keeps terminal focus visible', asy
   await loadMore.press('Enter');
   await expect(page.locator('article')).toHaveCount(21);
   await expect(loadMore).toBeFocused();
+
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
+  const returnDistance = await search.evaluate(
+    (element) => Math.abs(element.getBoundingClientRect().top)
+  );
+  expect(returnDistance).toBeGreaterThan(page.viewportSize()?.height ?? 0);
+
+  await backToFilters.focus();
+  await backToFilters.press('Enter');
+  await expect(search).toBeFocused();
+  await expect
+    .poll(() =>
+      search.evaluate((element) => {
+        const control = element.getBoundingClientRect();
+        const headerBottom = document
+          .querySelector('header')
+          ?.getBoundingClientRect().bottom ?? 0;
+        const mobileNav = document.querySelector('nav.fixed.bottom-0');
+        const navBounds = mobileNav?.getBoundingClientRect();
+        const visibleBottom =
+          navBounds && navBounds.height > 0 ? navBounds.top : window.innerHeight;
+        return control.top >= headerBottom && control.bottom <= visibleBottom;
+      })
+    )
+    .toBe(true);
+  if ((page.viewportSize()?.width ?? 0) < 768) {
+    await expect(
+      page.getByRole('button', { name: 'Hide archive filters' })
+    ).toHaveAttribute('aria-expanded', 'true');
+    await expect(
+      page.getByRole('combobox', { name: 'Provider' })
+    ).toBeVisible();
+  }
+  expect((await backToFilters.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

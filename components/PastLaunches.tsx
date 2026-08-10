@@ -13,6 +13,7 @@ import Link from 'next/link';
 import {
   AlertTriangle,
   Archive,
+  ArrowUp,
   ChevronDown,
   Filter,
   RefreshCw,
@@ -856,6 +857,21 @@ export default function PastLaunches({
 
   const retryHistory = (): void => requestHistoryRefresh(true);
   const refreshHistory = (): void => requestHistoryRefresh(false);
+  const returnToArchiveFilters = (): void => {
+    setFiltersOpen(true);
+    window.requestAnimationFrame(() => {
+      const searchInput = searchRef.current;
+      if (!searchInput) return;
+
+      searchInput.focus({ preventScroll: true });
+      searchInput.scrollIntoView?.({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto'
+          : 'smooth',
+        block: 'center',
+      });
+    });
+  };
 
   if (loading && launches.length === 0 && !error) {
     return (
@@ -1311,7 +1327,7 @@ export default function PastLaunches({
             ))}
           </div>
           {filtered.length > PAGE_SIZE ? (
-            <div className="border-t border-[var(--border-subtle)] p-4 text-center">
+            <div className="flex flex-wrap justify-center gap-2 border-t border-[var(--border-subtle)] p-4 text-center">
               <button
                 ref={loadMoreRef}
                 type="button"
@@ -1355,6 +1371,14 @@ export default function PastLaunches({
                       PAGE_SIZE,
                       filtered.length - visibleLaunches.length
                     )} more`}
+              </button>
+              <button
+                type="button"
+                onClick={returnToArchiveFilters}
+                className="action-button action-button-quiet"
+              >
+                <ArrowUp aria-hidden="true" size={16} />
+                Back to archive filters
               </button>
             </div>
           ) : null}
