@@ -815,6 +815,49 @@ test('detail keeps one direct provider alternative for embedded video', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps one direct provider alternative beside embedded video', async ({
+  page,
+}) => {
+  await page.route('https://www.youtube-nocookie.com/**', (route) =>
+    route.abort('blockedbyclient')
+  );
+  await page.goto('/watch?id=spacex-demo-polaris');
+
+  const coverage = page.getByRole('region', {
+    name: 'Mission coverage scheduled',
+  });
+  const providerVideo = coverage.getByRole('link', {
+    name: /Open provider video.*new tab/i,
+  });
+  await expect(providerVideo).toBeVisible();
+  await expect(providerVideo).toHaveAttribute(
+    'href',
+    /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]+$/
+  );
+  await expect(providerVideo).toHaveAttribute('target', '_blank');
+  await expect(providerVideo).toHaveAttribute('rel', 'noopener noreferrer');
+
+  await coverage
+    .getByRole('button', { name: 'Load video for Polaris Relay' })
+    .click();
+  const embeddedVideo = coverage.locator('iframe');
+  await expect(embeddedVideo).toHaveCount(1);
+  await expect(providerVideo).toBeVisible();
+  await embeddedVideo.focus();
+  await page.keyboard.press('Tab');
+  await expect(providerVideo).toBeFocused();
+  await expect
+    .poll(() =>
+      providerVideo.evaluate((link) => ({
+        outlineStyle: getComputedStyle(link).outlineStyle,
+        outlineOffset: getComputedStyle(link).outlineOffset,
+      }))
+    )
+    .toEqual({ outlineStyle: 'solid', outlineOffset: '-3px' });
+  expect((await providerVideo.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('launch feed rejects cache-fragmenting query variants', async ({
   request,
 }) => {

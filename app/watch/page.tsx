@@ -424,6 +424,20 @@ function WatchStage({
             live={liveCoverage}
             className="rounded-none"
           />
+          <a
+            href={launch.livestream}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`focus-ring-inset flex min-h-11 w-full items-center justify-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-4 text-sm font-medium transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] ${
+              liveCoverage
+                ? 'text-[var(--console-magenta)]'
+                : 'text-[var(--console-cyan)]'
+            }`}
+          >
+            Open provider video
+            <ExternalLink aria-hidden="true" size={15} />
+            <ExternalLinkHint />
+          </a>
         </div>
       </div>
     );
