@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ExternalLink, Play, Tv } from 'lucide-react';
+import { ExternalLink, Play, ShieldCheck, Tv } from 'lucide-react';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { extractYouTubeId } from '@/lib/youtube';
 
@@ -25,6 +25,9 @@ export default function VideoPlayer({
   const focusLoadedVideoRef = useRef(false);
   const videoId = url ? extractYouTubeId(url) : null;
   const loaded = Boolean(videoId) && (autoplay || loadedUrl === url);
+  const youtubeWatchUrl = videoId
+    ? `https://www.youtube.com/watch?v=${videoId}`
+    : null;
 
   useEffect(() => {
     if (!loaded || !focusLoadedVideoRef.current) return;
@@ -92,7 +95,7 @@ export default function VideoPlayer({
   if (!loaded) {
     return (
       <div
-        className={`stream-surface relative flex aspect-video w-full items-center justify-center overflow-hidden ${
+        className={`stream-surface relative flex min-h-[13rem] w-full items-center justify-center overflow-hidden px-4 py-5 sm:aspect-video ${
           live
             ? 'signal-live'
             : 'signal-cold'
@@ -102,38 +105,92 @@ export default function VideoPlayer({
           aria-hidden="true"
           className="absolute inset-0 bg-[linear-gradient(rgba(88,230,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,79,216,0.03)_1px,transparent_1px)] bg-[size:34px_34px]"
         />
-        <button
-          type="button"
-          onClick={() => {
-            focusLoadedVideoRef.current = true;
-            setLoadedUrl(url);
-          }}
-          className={`action-button relative ${
-            live ? 'action-button-stream' : 'action-button-secondary'
-          }`}
-          aria-label={`Load video for ${title || 'this launch'}`}
-        >
-          <Play aria-hidden="true" size={17} fill="currentColor" />
-          Load video
-        </button>
+        <div className="relative max-w-xl text-center">
+          <p className="data-label text-[var(--console-cyan)]">
+            Choose playback
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            Play the privacy-enhanced embed here, or continue on YouTube if it
+            asks you to sign in. LaunchWatch never receives your Google
+            credentials.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                focusLoadedVideoRef.current = true;
+                setLoadedUrl(url);
+              }}
+              className={`action-button ${
+                live ? 'action-button-stream' : 'action-button-secondary'
+              }`}
+              aria-label={`Load video for ${title || 'this launch'}`}
+            >
+              <Play aria-hidden="true" size={17} fill="currentColor" />
+              Play here
+            </button>
+            <a
+              href={youtubeWatchUrl ?? url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-button action-button-secondary"
+            >
+              <ExternalLink aria-hidden="true" size={16} />
+              Open on YouTube
+              <ExternalLinkHint />
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className={`video-player-frame aspect-video w-full overflow-hidden bg-black ${className}`}
+      className={`video-player-frame w-full overflow-hidden bg-black ${className}`}
     >
-      <iframe
-        ref={iframeRef}
-        src={embedUrl}
-        title={title || 'Launch stream'}
-        className="h-full w-full"
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
+      <div className="aspect-video w-full">
+        <iframe
+          ref={iframeRef}
+          src={embedUrl}
+          title={title || 'Launch stream'}
+          className="h-full w-full"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+      <div className="flex flex-col gap-3 border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-2.5 text-left">
+          <ShieldCheck
+            aria-hidden="true"
+            size={17}
+            className="mt-0.5 shrink-0 text-[var(--console-green)]"
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              YouTube sign-in stays on YouTube
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-[var(--text-muted)]">
+              If playback is blocked, open this exact video in your current
+              YouTube session.
+            </p>
+          </div>
+        </div>
+        <a
+          href={youtubeWatchUrl ?? url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`action-button w-full shrink-0 sm:w-auto ${
+            live ? 'action-button-stream' : 'action-button-secondary'
+          }`}
+        >
+          <ExternalLink aria-hidden="true" size={16} />
+          Open exact video
+          <ExternalLinkHint />
+        </a>
+      </div>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import CoverageSignal from './CoverageSignal';
 import { publicLaunchIntelRationale } from '@/lib/launch-intel-copy';
+import { extractYouTubeId } from '@/lib/youtube';
 import type {
   Launch,
   LaunchIntel,
@@ -373,6 +374,12 @@ export default function LaunchIntelDeck({
   const publicRationale = publicLaunchIntelRationale(
     intel.summary.rationale
   );
+  const recommendedYouTubeId = intel.summary.recommendedUrl
+    ? extractYouTubeId(intel.summary.recommendedUrl)
+    : null;
+  const recommendedUrl = recommendedYouTubeId
+    ? `https://www.youtube.com/watch?v=${recommendedYouTubeId}`
+    : intel.summary.recommendedUrl;
 
   return (
     <section
@@ -451,25 +458,35 @@ export default function LaunchIntelDeck({
           </div>
         </div>
 
-        {intel.summary.recommendedUrl ? (
-          <a
-            href={intel.summary.recommendedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={
-              intel.summary.streamState === 'live'
-                ? 'action-button action-button-stream mt-4'
-                : 'action-button action-button-secondary mt-4'
-            }
-          >
-            {intel.summary.streamState === 'search' ? (
-              <Search aria-hidden="true" size={16} />
-            ) : (
-              <Radio aria-hidden="true" size={16} />
-            )}
-            {intel.summary.recommendedLabel}
-            <ExternalLinkHint />
-          </a>
+        {recommendedUrl ? (
+          <div className="mt-4 flex flex-col items-start gap-2">
+            <a
+              href={recommendedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={
+                intel.summary.streamState === 'live'
+                  ? 'action-button action-button-stream'
+                  : 'action-button action-button-secondary'
+              }
+            >
+              {intel.summary.streamState === 'search' ? (
+                <Search aria-hidden="true" size={16} />
+              ) : (
+                <Radio aria-hidden="true" size={16} />
+              )}
+              {recommendedYouTubeId
+                ? 'Open exact video on YouTube'
+                : intel.summary.recommendedLabel}
+              <ExternalLinkHint />
+            </a>
+            {recommendedYouTubeId ? (
+              <p className="max-w-xl text-xs leading-5 text-[var(--text-muted)]">
+                Uses your current YouTube session. LaunchWatch never handles
+                your Google sign-in or credentials.
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         <CoverageSignal intel={intel} className="mt-5" />

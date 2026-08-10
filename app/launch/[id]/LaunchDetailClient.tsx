@@ -19,7 +19,6 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   MapPin,
   Orbit,
   Radio,
@@ -34,7 +33,6 @@ import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
-import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
@@ -1241,24 +1239,7 @@ export default function LaunchDetailClient({
                 className="rounded-none"
               />
             </div>
-            {presentedLaunch.livestream && hasPlayableVideo ? (
-              <a
-                href={presentedLaunch.livestream}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium hover:underline ${
-                  liveStatusUnconfirmed
-                    ? 'text-[var(--console-amber)]'
-                    : presentedLaunch.isLive
-                    ? 'text-[var(--console-magenta)]'
-                    : 'text-[var(--console-cyan)]'
-                }`}
-              >
-                Open official provider video
-                <ExternalLink aria-hidden="true" size={15} />
-                <ExternalLinkHint />
-              </a>
-            ) : !presentedLaunch.livestream ? (
+            {!presentedLaunch.livestream ? (
               <p className="mt-4 text-sm leading-6 text-[var(--text-muted)]">
                 The provider has not attached a verified stream or replay yet.
               </p>

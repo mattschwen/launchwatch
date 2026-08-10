@@ -828,14 +828,18 @@ test('detail keeps one direct provider alternative for embedded video', async ({
   page,
 }) => {
   await page.goto('/launch/spacex-demo-return?from=history');
+  const coverage = page.getByRole('region', { name: 'Watch replay' });
 
   await expect(
-    page.getByRole('button', { name: 'Load video for Demo Return Flight' })
+    coverage.getByRole('button', { name: 'Load video for Demo Return Flight' })
   ).toBeVisible();
   await expect(
-    page.getByRole('link', {
-      name: /Open official provider video.*new tab/i,
+    coverage.getByRole('link', {
+      name: /Open on YouTube.*new tab/i,
     })
+  ).toBeVisible();
+  await expect(
+    coverage.getByText(/LaunchWatch never receives your Google credentials/i)
   ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
@@ -852,7 +856,7 @@ test('watch keeps one direct provider alternative beside embedded video', async 
     name: 'Mission coverage scheduled',
   });
   const providerVideo = coverage.getByRole('link', {
-    name: /Open provider video.*new tab/i,
+    name: /Open on YouTube.*new tab/i,
   });
   await expect(providerVideo).toBeVisible();
   await expect(providerVideo).toHaveAttribute(
@@ -877,18 +881,21 @@ test('watch keeps one direct provider alternative beside embedded video', async 
         .evaluate((frame) => getComputedStyle(frame).boxShadow)
     )
     .not.toBe('none');
-  await expect(providerVideo).toBeVisible();
+  const exactVideo = coverage.getByRole('link', {
+    name: /Open exact video.*new tab/i,
+  });
+  await expect(exactVideo).toBeVisible();
   await page.keyboard.press('Tab');
-  await expect(providerVideo).toBeFocused();
+  await expect(exactVideo).toBeFocused();
   await expect
     .poll(() =>
-      providerVideo.evaluate((link) => ({
+      exactVideo.evaluate((link) => ({
         outlineStyle: getComputedStyle(link).outlineStyle,
         outlineOffset: getComputedStyle(link).outlineOffset,
       }))
     )
-    .toEqual({ outlineStyle: 'solid', outlineOffset: '-3px' });
-  expect((await providerVideo.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+    .toEqual({ outlineStyle: 'solid', outlineOffset: '3px' });
+  expect((await exactVideo.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

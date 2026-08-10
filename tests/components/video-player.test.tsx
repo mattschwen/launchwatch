@@ -20,6 +20,57 @@ describe('VideoPlayer coverage state', () => {
     await user.keyboard('{Enter}');
 
     expect(screen.getByTitle('Orbital Dawn')).toHaveFocus();
+    expect(
+      screen.getByRole('link', {
+        name: /Open exact video.*new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=official-mission'
+    );
+  });
+
+  it('offers an exact YouTube handoff before loading the embed', () => {
+    render(
+      <VideoPlayer
+        url="https://youtu.be/official-mission?feature=shared"
+        title="Orbital Dawn"
+      />
+    );
+
+    expect(screen.getByText('Choose playback')).toBeVisible();
+    expect(
+      screen.getByText(/LaunchWatch never receives your Google credentials/i)
+    ).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Open on YouTube.*new tab/i })
+    ).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=official-mission'
+    );
+  });
+
+  it('keeps the exact YouTube recovery visible for autoplaying coverage', () => {
+    render(
+      <VideoPlayer
+        url="https://www.youtube.com/embed/official-live"
+        title="Orbital Dawn"
+        autoplay
+        live
+      />
+    );
+
+    expect(screen.getByTitle('Orbital Dawn')).toHaveAttribute(
+      'referrerpolicy',
+      'strict-origin-when-cross-origin'
+    );
+    expect(screen.getByText('YouTube sign-in stays on YouTube')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Open exact video.*new tab/i })
+    ).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=official-live'
+    );
   });
 
   it('keeps scheduled external coverage distinct from a live broadcast', () => {

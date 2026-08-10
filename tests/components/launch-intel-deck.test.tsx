@@ -295,6 +295,35 @@ describe('LaunchIntelDeck', () => {
     ).toHaveClass('action-button-secondary');
   });
 
+  it('keeps a verified YouTube recommendation on the exact video', () => {
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={{
+          ...LAUNCH_INTEL,
+          summary: {
+            ...LAUNCH_INTEL.summary,
+            streamState: 'live',
+            recommendedLabel: 'Watch Live',
+            recommendedUrl: 'https://youtu.be/official-live?feature=shared',
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('link', {
+        name: /Open exact video on YouTube.*new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://www.youtube.com/watch?v=official-live'
+    );
+    expect(
+      screen.getByText(/LaunchWatch never handles your Google sign-in/i)
+    ).toBeVisible();
+  });
+
   it('keeps complete stream and channel identities readable', () => {
     const streamTitle =
       'Polaris Relay Mission Official Launch Coverage and Preflight Briefing';
