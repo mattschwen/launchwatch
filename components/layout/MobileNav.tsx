@@ -29,7 +29,7 @@ function MobileNavContents({
       aria-label="Primary navigation"
       className="mobile-primary-nav safe-area-pb fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl md:hidden"
     >
-      <div className="mx-auto flex h-[4.25rem] max-w-lg items-stretch justify-around pl-[max(0.5rem,var(--safe-area-left))] pr-[max(0.5rem,var(--safe-area-right))]">
+      <div className="mobile-command-dock mx-auto grid h-[4.25rem] max-w-lg grid-cols-3 items-stretch gap-1 pl-[max(0.5rem,var(--safe-area-left))] pr-[max(0.5rem,var(--safe-area-right))]">
         {PRIMARY_NAV_ITEMS.map((link) => {
           const isActive = isNavItemActive(
             pathname,
@@ -41,6 +41,7 @@ function MobileNavContents({
             <Link
               key={link.href}
               href={link.href}
+              aria-label={link.label}
               onClick={
                 link.href === '/'
                   ? signalScheduleFilterReset
@@ -51,13 +52,16 @@ function MobileNavContents({
                     : undefined
               }
               aria-current={isActive ? 'page' : undefined}
-              className={`relative mx-0.5 flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] py-2 transition-colors ${
+              className={`mobile-command-link relative my-1.5 grid min-h-[44px] grid-cols-[auto_auto] content-center items-center justify-center gap-x-2 px-2 py-1 transition-colors ${
                 isActive
-                  ? 'bg-[var(--surface-accent)] text-[var(--console-green)]'
+                  ? 'mobile-command-link-active text-[var(--console-green)]'
                   : 'text-[var(--text-muted)] active:bg-[var(--surface-subtle)] active:text-[var(--text-primary)]'
               }`}
             >
-              <div className="relative">
+              <span className="mobile-command-index self-end font-mono text-[0.5rem] font-semibold tracking-[0.14em] text-[var(--text-muted)]">
+                {link.code}
+              </span>
+              <div className="relative row-span-2">
                 <Icon size={20} />
                 {link.showLiveStatus && hasLiveLaunches && (
                   <span className="absolute -top-1 -right-1.5 flex h-2.5 w-2.5">
@@ -67,7 +71,7 @@ function MobileNavContents({
                   </span>
                 )}
               </div>
-              <span className="text-[11px] font-medium uppercase tracking-[0.12em] font-[family-name:var(--font-geist-mono)]">
+              <span className="self-start text-[10px] font-semibold uppercase tracking-[0.13em] font-[family-name:var(--font-geist-mono)]">
                 {link.label.toUpperCase()}
               </span>
             </Link>

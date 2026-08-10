@@ -55,6 +55,7 @@ import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
 
 const TIMELINE_EVENT_WIDTH_PX = 176;
 const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
+const SECTION_ACTIVATION_GAP_PX = 32;
 
 function DetailTrajectoryLoadingState(): React.ReactElement {
   return (
@@ -631,7 +632,9 @@ export default function LaunchDetailClient({
         const sectionIndex = sectionIndexNavRef.current;
         if (!target || !sectionIndex) return;
         const targetTop = target.getBoundingClientRect().top;
-        const requiredTop = sectionIndex.getBoundingClientRect().bottom + 16;
+        const requiredTop =
+          sectionIndex.getBoundingClientRect().bottom +
+          SECTION_ACTIVATION_GAP_PX;
         if (targetTop < requiredTop) {
           window.scrollBy({
             top: targetTop - requiredTop,
@@ -659,7 +662,7 @@ export default function LaunchDetailClient({
       const activationLine = Math.max(
         headerBottom,
         sectionIndex?.getBoundingClientRect().bottom ?? headerBottom,
-      ) + 16;
+      ) + SECTION_ACTIVATION_GAP_PX;
       const positions = detailSectionLinks.flatMap((section) => {
         const element = document.getElementById(section.id);
         if (!element) return [];

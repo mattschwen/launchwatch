@@ -29,7 +29,11 @@ surface remains consistent everywhere else.
 - **History** loads completed missions across connected providers through the internal server API and supports search, provider, year, confirmed or unconfirmed outcome, expandable visual summaries, replay links, and mission details. Replay verification failures stay visibly amber and retryable instead of disappearing behind an unlabeled action; a completed check with no verified replay offers an explicitly labeled mission-specific search rather than a dead end. Past-window records without a terminal provider result stay visibly amber instead of implying success. In-flight records stay on Home and Watch until provider coverage is no longer live.
 - **Mission detail** resolves both upcoming and historical launches by canonical ID and combines a licensed vehicle or mission visual, status, trajectory telemetry, timeline, actions, video, and ID-scoped intelligence. A sticky mission index moves keyboard and touch users directly among the available sections, tracks reading progress, and keeps the active destination visible; when that index overflows a narrow screen, it reports the visible range and exposes previous/next controls alongside swipe and arrow-key navigation. The map implementation loads only as its stable telemetry panel approaches the viewport.
 
-The desktop and mobile navigation both expose Home, Watch, and History. The first-visit synchronization message is a short, dismissible status toast; it never blocks the application.
+The desktop and mobile navigation both expose Home, Watch, and History through
+a shared command-deck shell: the brand mark, active operational surface,
+provider uplink, UTC clock, route index, and live state remain legible without
+competing with mission content. The first-visit synchronization message is a
+short, dismissible status toast; it never blocks the application.
 
 ## Core Features
 

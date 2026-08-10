@@ -56,14 +56,35 @@ export function signalHistoryFilterReset(
 export interface PrimaryNavItem {
   href: string;
   label: string;
+  code: string;
+  descriptor: string;
   icon: LucideIcon;
   showLiveStatus?: boolean;
 }
 
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/watch', label: 'Watch', icon: Tv, showLiveStatus: true },
-  { href: '/history', label: 'History', icon: Archive },
+  {
+    href: '/',
+    label: 'Home',
+    code: '01',
+    descriptor: 'Schedule',
+    icon: Home,
+  },
+  {
+    href: '/watch',
+    label: 'Watch',
+    code: '02',
+    descriptor: 'Coverage',
+    icon: Tv,
+    showLiveStatus: true,
+  },
+  {
+    href: '/history',
+    label: 'History',
+    code: '03',
+    descriptor: 'Archive',
+    icon: Archive,
+  },
 ];
 
 export function isNavItemActive(

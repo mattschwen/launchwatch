@@ -1343,8 +1343,14 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
 
   const homeLink = page.getByRole('link', { name: 'LaunchWatch home' });
   await expect(homeLink).toBeVisible();
-  await expect(homeLink.locator('img')).toHaveCount(0);
-  const wordmark = homeLink.locator('span').first();
+  const mark = homeLink.locator('img');
+  await expect(mark).toHaveCount(1);
+  await expect(mark).toHaveAttribute(
+    'src',
+    '/brand/logo_launchwatch_tracked-ascent_20260726_color.svg',
+  );
+  await expect(mark).toHaveAttribute('alt', '');
+  const wordmark = homeLink.locator('.brand-wordmark');
   await expect(wordmark).toHaveText('LaunchWatch');
   await expect
     .poll(async () => (await homeLink.boundingBox())?.height ?? 0)
@@ -1356,6 +1362,43 @@ test('brand wordmark stays legible and tappable in the header', async ({ page })
       )
     )
     .toBeGreaterThanOrEqual(20);
+  await expect(homeLink.locator('.brand-kicker')).toContainText('Mission ops');
+
+  const navigation = page.locator(
+    'nav[aria-label="Primary navigation"]:visible',
+  );
+  for (const destination of ['Home', 'Watch', 'History']) {
+    await expect(
+      navigation.getByRole('link', { name: destination, exact: true }),
+    ).toBeVisible();
+  }
+
+  if (test.info().project.name.startsWith('mobile')) {
+    await expect(navigation.locator('.mobile-command-index')).toHaveText([
+      '01',
+      '02',
+      '03',
+    ]);
+    await expect(
+      navigation.getByRole('link', { name: 'Home', exact: true }),
+    ).toHaveClass(/mobile-command-link-active/);
+  } else {
+    const header = page.locator('header');
+    await expect(header.getByText('Uplink', { exact: true })).toBeVisible();
+    await expect(
+      header.getByText('Coordinated UTC', { exact: true }),
+    ).toBeVisible();
+    await expect(navigation.locator('.command-nav-index')).toHaveText([
+      '01',
+      '02',
+      '03',
+    ]);
+    await expect(navigation.locator('.command-nav-descriptor')).toHaveText([
+      'Schedule',
+      'Coverage',
+      'Archive',
+    ]);
+  }
   await expect(page.locator('link[rel~="icon"][href="/favicon.ico"]')).toHaveCount(
     1
   );
@@ -2054,6 +2097,11 @@ test('narrow mobile chrome keeps concurrent live and degraded states readable', 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await page.setViewportSize({ width: 360, height: 568 });
+  await expect(header.locator('.hardware-clock:visible')).toHaveCount(1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.setViewportSize({ width: 393, height: 727 });
+  await expect(header.locator('.brand-emblem')).toBeVisible();
   await expect(header.locator('.hardware-clock:visible')).toHaveCount(1);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

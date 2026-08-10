@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import UTCClock from '@/components/ui/UTCClock';
@@ -121,6 +122,13 @@ function TopNavContents({
   });
   const feedStatus = FEED_STATUS[feedHealth];
   const feedStatusLabel = `${feedStatus.label} — view provider status`;
+  const activeSurface = PRIMARY_NAV_ITEMS.find((item) =>
+    isNavItemActive(
+      pathname,
+      item.href,
+      detailSource ?? inferredDetailSource,
+    ),
+  );
 
   return (
     <header className="top-nav-shell safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
@@ -133,21 +141,38 @@ function TopNavContents({
       >
         {feedStatus.label}
       </span>
-      <div className="page-container flex h-14 items-center sm:h-[4.375rem]">
+      <div className="header-command-deck page-container flex h-14 items-center sm:h-[4.375rem]">
         <Link
           href="/"
           aria-label="LaunchWatch home"
           onClick={signalScheduleFilterReset}
-          className="group flex min-h-11 flex-shrink-0 items-center"
+          className="brand-lockup group flex min-h-11 flex-shrink-0 items-center gap-2.5"
         >
-          <span className="display-title text-[1.25rem] tracking-[-0.035em] text-[var(--text-primary)] transition-colors group-hover:text-white sm:text-[1.3rem]">
-            Launch<span className="text-[var(--console-green)]">Watch</span>
+          <span className="brand-emblem flex h-8 w-8 shrink-0 items-center justify-center" aria-hidden="true">
+            <Image
+              src="/brand/logo_launchwatch_tracked-ascent_20260726_color.svg"
+              alt=""
+              width="32"
+              height="32"
+            />
+          </span>
+          <span className="brand-copy min-w-0">
+            <span className="brand-wordmark display-title block whitespace-nowrap text-[1.25rem] tracking-[-0.035em] text-[var(--text-primary)] transition-colors group-hover:text-white sm:text-[1.3rem]">
+              Launch<span className="text-[var(--console-green)]">Watch</span>
+            </span>
+            <span className="brand-kicker hidden items-center gap-1.5 whitespace-nowrap font-mono text-[0.56rem] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)] min-[350px]:flex">
+              <span>Mission ops</span>
+              <span aria-hidden="true" className="text-[var(--border-strong)]">{'//'}</span>
+              <span className="text-[var(--console-cyan)]">
+                {activeSurface?.descriptor ?? 'Console'}
+              </span>
+            </span>
           </span>
         </Link>
 
         <nav
           aria-label="Primary navigation"
-          className="desktop-primary-nav ml-10 hidden h-[4.375rem] items-stretch gap-5 md:flex lg:ml-16"
+          className="desktop-primary-nav ml-8 hidden h-[4.375rem] items-center gap-1.5 md:flex lg:ml-12"
         >
           {PRIMARY_NAV_ITEMS.map((link) => {
             const isActive = isNavItemActive(
@@ -160,6 +185,7 @@ function TopNavContents({
               <Link
                 key={link.href}
                 href={link.href}
+                aria-label={link.label}
                 onClick={
                   link.href === '/'
                     ? signalScheduleFilterReset
@@ -170,17 +196,25 @@ function TopNavContents({
                       : undefined
                 }
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative flex min-h-11 items-center gap-2 px-2 py-2 text-sm font-medium transition-colors ${
+                className={`command-nav-link relative grid min-h-11 grid-cols-[auto_auto_1fr] items-center gap-x-2 px-3 py-1.5 transition-colors ${
                   isActive
-                    ? 'text-[var(--console-green)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--console-green)]'
+                    ? 'command-nav-link-active text-[var(--console-green)]'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <Icon size={17} />
-                <span>{link.label}</span>
+                <span className="command-nav-index self-start font-mono text-[0.54rem] font-semibold tracking-[0.12em] text-[var(--text-muted)]">
+                  {link.code}
+                </span>
+                <Icon className="command-nav-icon row-span-2" size={17} />
+                <span className="command-nav-label self-end text-sm font-semibold leading-none">
+                  {link.label}
+                </span>
+                <span className="command-nav-descriptor col-start-3 self-start font-mono text-[0.54rem] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  {link.descriptor}
+                </span>
                 {link.showLiveStatus && hasLiveLaunches && (
                   <span
-                    className="relative ml-0.5 flex h-2 w-2"
+                    className="command-nav-live absolute right-1.5 top-1.5 flex h-2 w-2"
                     aria-label={`${liveCount} live`}
                   >
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
@@ -192,27 +226,32 @@ function TopNavContents({
           })}
         </nav>
 
-        <div className="header-instruments ml-auto hidden items-center gap-2 md:flex">
-          <div className="h-6 w-px bg-[var(--border-subtle)]" aria-hidden="true" />
+        <div className="header-instruments ml-auto hidden items-stretch gap-1.5 md:flex">
           <button
             type="button"
             onClick={revealProviderStatus}
             aria-label={feedStatusLabel}
             title="View provider status"
-            className={`header-feed-status inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2 font-mono text-xs font-medium transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
+            className={`header-instrument-cell header-feed-status inline-flex min-h-11 flex-col items-start justify-center px-3 font-mono transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
           >
-            <span
-              aria-hidden="true"
-              className={`h-2 w-2 rounded-full ${feedStatus.dotClass}`}
-            />
-            <span className="header-feed-status-label">{feedStatus.label}</span>
+            <span className="header-instrument-label">Uplink</span>
+            <span className="flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.1em]">
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 rounded-full ${feedStatus.dotClass}`}
+              />
+              <span className="header-feed-status-label">{feedStatus.label}</span>
+            </span>
           </button>
-          <UTCClock
-            compact
-            showIndicator={false}
-            showLabel={false}
-            className="hardware-clock min-w-0 py-1"
-          />
+          <div className="header-instrument-cell flex min-w-[5.5rem] flex-col items-start justify-center px-3">
+            <span className="header-instrument-label">Coordinated UTC</span>
+            <UTCClock
+              compact
+              showIndicator={false}
+              showLabel={false}
+              className="header-utc-clock min-w-0"
+            />
+          </div>
         </div>
 
         <div className="header-instruments ml-auto flex min-w-0 items-center gap-1 md:hidden">
@@ -220,7 +259,7 @@ function TopNavContents({
             <Link
               href="/watch"
               aria-label={`${liveCount} active live signal${liveCount === 1 ? '' : 's'}`}
-              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
+              className="mobile-header-signal flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-1 text-[10px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
@@ -229,28 +268,26 @@ function TopNavContents({
               <span>LIVE</span>
             </Link>
           )}
-          {feedHealth !== 'nominal' ? (
-            <button
-              type="button"
-              onClick={revealProviderStatus}
-              aria-label={feedStatusLabel}
-              title="View provider status"
-              className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
-            >
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 shrink-0 rounded-full ${feedStatus.dotClass}`}
-              />
-              <span className="hidden max-[359px]:inline min-[370px]:inline">
-                {feedStatus.compactLabel}
-              </span>
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={revealProviderStatus}
+            aria-label={feedStatusLabel}
+            title="View provider status"
+            className={`mobile-header-signal inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${feedStatus.textClass}`}
+          >
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 shrink-0 rounded-full ${feedStatus.dotClass}`}
+            />
+            <span>
+              {feedStatus.compactLabel}
+            </span>
+          </button>
           <UTCClock
             compact
             showIndicator={false}
             showLabel={false}
-            className="hardware-clock hidden h-10 min-w-0 text-[var(--console-cyan)] min-[360px]:flex"
+            className="hardware-clock mobile-header-clock hidden h-10 min-w-0 text-[var(--console-cyan)] min-[360px]:flex"
           />
         </div>
       </div>
