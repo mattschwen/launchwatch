@@ -1,4 +1,5 @@
-import { Launch } from './types';
+import { parseLaunchId } from './launch-id';
+import type { Launch } from './types';
 
 const MAX_LAUNCH_ID_LENGTH = 140;
 
@@ -12,10 +13,20 @@ export function serializeLaunchForIntel(launch: Launch): string {
 }
 
 export function getLaunchIdFromIntelParams(searchParams: URLSearchParams): string | null {
-  const id = searchParams.get('id')?.trim();
-  if (!id || id.length > MAX_LAUNCH_ID_LENGTH) {
+  const idValues = searchParams.getAll('id');
+  if (idValues.length !== 1) {
     return null;
   }
 
-  return id;
+  const id = idValues[0];
+  if (
+    !id ||
+    id !== id.trim() ||
+    id.length > MAX_LAUNCH_ID_LENGTH
+  ) {
+    return null;
+  }
+
+  const parsed = parseLaunchId(id);
+  return parsed && !parsed.legacy && parsed.canonicalId === id ? id : null;
 }

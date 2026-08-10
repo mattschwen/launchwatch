@@ -895,6 +895,22 @@ test('launch feed rejects cache-fragmenting query variants', async ({
   }
 });
 
+test('launch intelligence rejects non-canonical cache variants', async ({
+  request,
+}) => {
+  for (const query of [
+    'id=past-demo-return',
+    'id=%20ll2-demo-orbital-dawn%20',
+  ]) {
+    const response = await request.get(`/api/launch-intel?${query}`);
+
+    expect(response.status()).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'A valid canonical launch ID is required',
+    });
+  }
+});
+
 test('watch prefers official provider coverage over an earlier restream', async ({
   page,
 }) => {
