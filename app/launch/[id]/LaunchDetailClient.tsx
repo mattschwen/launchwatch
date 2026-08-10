@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -316,14 +317,27 @@ export default function LaunchDetailClient({
       ? { ...launch, isLive: false, webcastLive: false }
       : launch;
   const completed = isCompletedLaunch(presentedLaunch);
+  const detailSectionLinks = DETAIL_SECTION_LINKS.filter(
+    (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
+  );
   const { setSource: setDetailNavigationSource } =
     useDetailNavigationContext();
+  const sectionIndexInstructionsId = useId();
+  const sectionIndexTrackId = useId();
+  const [sectionIndexScroll, setSectionIndexScroll] = useState({
+    overflowing: false,
+    canMoveBackward: false,
+    canMoveForward: false,
+    firstVisible: 1,
+    lastVisible: detailSectionLinks.length,
+  });
   const [timelineScroll, setTimelineScroll] = useState({
     canMoveBackward: false,
     canMoveForward: false,
     firstVisible: 1,
     lastVisible: 1,
   });
+  const sectionIndexRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLOListElement>(null);
   const intelligenceHostRef = useRef<HTMLDivElement>(null);
   const missionPanelRef = useRef<HTMLElement>(null);
@@ -416,9 +430,6 @@ export default function LaunchDetailClient({
           ? 'Back to history'
           : 'Back to launches';
   const primaryMissionName = formatPrimaryMissionName(presentedLaunch);
-  const detailSectionLinks = DETAIL_SECTION_LINKS.filter(
-    (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
-  );
   const missionVisual = (
     <MissionVisual
       launch={presentedLaunch}
@@ -502,6 +513,91 @@ export default function LaunchDetailClient({
       </dl>
     </section>
   );
+
+  const updateSectionIndexControls = useCallback((): void => {
+    const track = sectionIndexRef.current;
+    if (!track) return;
+
+    const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
+    const trackBounds = track.getBoundingClientRect();
+    const visibleIndexes = [...track.children].flatMap((child, index) => {
+      const bounds = child.getBoundingClientRect();
+      const visibleWidth = Math.max(
+        0,
+        Math.min(bounds.right, trackBounds.right) -
+          Math.max(bounds.left, trackBounds.left),
+      );
+      return visibleWidth >= bounds.width - 1 ? [index] : [];
+    });
+    const fallbackIndex = Math.min(
+      Math.max(0, detailSectionLinks.length - 1),
+      Math.max(
+        0,
+        Math.round(
+          (track.scrollLeft / Math.max(1, maxScrollLeft)) *
+            Math.max(0, detailSectionLinks.length - 1),
+        ),
+      ),
+    );
+    const firstVisible = (visibleIndexes[0] ?? fallbackIndex) + 1;
+    const lastVisible =
+      (visibleIndexes[visibleIndexes.length - 1] ?? fallbackIndex) + 1;
+    const next = {
+      overflowing: maxScrollLeft > 1,
+      canMoveBackward: track.scrollLeft > 1,
+      canMoveForward: track.scrollLeft < maxScrollLeft - 1,
+      firstVisible,
+      lastVisible,
+    };
+
+    setSectionIndexScroll((current) =>
+      current.overflowing === next.overflowing &&
+      current.canMoveBackward === next.canMoveBackward &&
+      current.canMoveForward === next.canMoveForward &&
+      current.firstVisible === next.firstVisible &&
+      current.lastVisible === next.lastVisible
+        ? current
+        : next,
+    );
+  }, [detailSectionLinks.length]);
+
+  useEffect(() => {
+    const track = sectionIndexRef.current;
+    if (!track) return;
+
+    track.scrollLeft = 0;
+    const frame = window.requestAnimationFrame(updateSectionIndexControls);
+    const resizeObserver = new ResizeObserver(updateSectionIndexControls);
+    resizeObserver.observe(track);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+    };
+  }, [launch.id, detailSectionLinks.length, updateSectionIndexControls]);
+
+  const moveSectionIndex = (direction: -1 | 1): void => {
+    const track = sectionIndexRef.current;
+    if (!track) return;
+
+    track.scrollBy({
+      left: direction * Math.max(120, Math.floor(track.clientWidth * 0.72)),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  };
+
+  const handleSectionIndexKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+  ): void => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+
+    event.preventDefault();
+    moveSectionIndex(event.key === 'ArrowLeft' ? -1 : 1);
+  };
 
   const updateTimelineControls = useCallback((): void => {
     const timeline = timelineRef.current;
@@ -704,15 +800,90 @@ export default function LaunchDetailClient({
           aria-label="Mission sections"
           className="mission-section-index surface-card holo-card signal-cold mt-5 min-w-0 max-w-full overflow-hidden"
         >
-          <div className="mission-section-index-header flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
+          <div className="mission-section-index-header flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5">
             <p className="data-label text-[var(--console-cyan)]">
               Mission index
             </p>
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
-              {detailSectionLinks.length} sections
-            </p>
+            {sectionIndexScroll.overflowing ? (
+              <div className="flex w-full items-center justify-between gap-2 min-[360px]:w-auto min-[360px]:justify-end">
+                <p
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="font-mono text-[0.65rem] uppercase tracking-[0.08em] text-[var(--text-muted)]"
+                >
+                  <span className="sr-only">
+                    {detailSectionLinks.length} sections. Showing{' '}
+                  </span>
+                  {sectionIndexScroll.firstVisible ===
+                  sectionIndexScroll.lastVisible
+                    ? sectionIndexScroll.firstVisible
+                    : `${sectionIndexScroll.firstVisible}–${sectionIndexScroll.lastVisible}`}{' '}
+                  of {detailSectionLinks.length}
+                </p>
+                <div
+                  role="group"
+                  aria-label="Mission index navigation"
+                  className="flex items-center gap-1.5"
+                >
+                  <button
+                    type="button"
+                    aria-label="Previous mission sections"
+                    aria-controls={sectionIndexTrackId}
+                    aria-disabled={!sectionIndexScroll.canMoveBackward}
+                    tabIndex={sectionIndexScroll.canMoveBackward ? undefined : -1}
+                    onClick={() => {
+                      if (sectionIndexScroll.canMoveBackward) {
+                        moveSectionIndex(-1);
+                      }
+                    }}
+                    className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
+                  >
+                    <ChevronLeft aria-hidden="true" size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next mission sections"
+                    aria-controls={sectionIndexTrackId}
+                    aria-disabled={!sectionIndexScroll.canMoveForward}
+                    tabIndex={sectionIndexScroll.canMoveForward ? undefined : -1}
+                    onClick={() => {
+                      if (sectionIndexScroll.canMoveForward) {
+                        moveSectionIndex(1);
+                      }
+                    }}
+                    className="icon-button h-11 w-11 aria-disabled:cursor-default aria-disabled:opacity-35"
+                  >
+                    <ChevronRight aria-hidden="true" size={17} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                {detailSectionLinks.length} sections
+              </p>
+            )}
           </div>
-          <div className="mission-section-index-track flex min-w-0 max-w-full overflow-x-auto border-t border-[var(--border-subtle)] overscroll-x-contain">
+          {sectionIndexScroll.overflowing ? (
+            <p id={sectionIndexInstructionsId} className="sr-only">
+              Use the previous and next buttons, horizontal scrolling, or the
+              left and right arrow keys to reveal every mission section.
+            </p>
+          ) : null}
+          <div
+            id={sectionIndexTrackId}
+            ref={sectionIndexRef}
+            data-mission-section-track
+            tabIndex={sectionIndexScroll.overflowing ? 0 : undefined}
+            aria-describedby={
+              sectionIndexScroll.overflowing
+                ? sectionIndexInstructionsId
+                : undefined
+            }
+            onKeyDown={handleSectionIndexKeyDown}
+            onScroll={updateSectionIndexControls}
+            className="mission-section-index-track flex min-w-0 max-w-full overflow-x-auto border-t border-[var(--border-subtle)] overscroll-x-contain outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+          >
             {detailSectionLinks.map((section, index) => (
               <a
                 key={section.id}

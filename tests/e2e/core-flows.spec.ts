@@ -8781,6 +8781,51 @@ test('mission detail index moves focus among available sections', async ({
   const sectionLinks = sectionIndex.getByRole('link');
   await expect(sectionLinks).toHaveCount(5);
 
+  const sectionTrack = sectionIndex.locator('[data-mission-section-track]');
+  const previousSections = sectionIndex.getByRole('button', {
+    name: 'Previous mission sections',
+  });
+  const nextSections = sectionIndex.getByRole('button', {
+    name: 'Next mission sections',
+  });
+  await expect(previousSections).toHaveAttribute('aria-disabled', 'true');
+  await expect(nextSections).toHaveAttribute('aria-disabled', 'false');
+  expect(
+    await sectionTrack.evaluate((track) => {
+      const link = [...track.querySelectorAll('a')].find(
+        (candidate) => candidate.textContent?.includes('Coverage'),
+      );
+      if (!link) return false;
+      const linkBounds = link.getBoundingClientRect();
+      const trackBounds = track.getBoundingClientRect();
+      return linkBounds.left >= trackBounds.left &&
+        linkBounds.right <= trackBounds.right;
+    }),
+  ).toBe(false);
+
+  await nextSections.click();
+  await expect
+    .poll(() =>
+      sectionTrack.evaluate((track) => {
+        const link = [...track.querySelectorAll('a')].find(
+          (candidate) => candidate.textContent?.includes('Coverage'),
+        );
+        if (!link) return false;
+        const linkBounds = link.getBoundingClientRect();
+        const trackBounds = track.getBoundingClientRect();
+        return linkBounds.left >= trackBounds.left - 1 &&
+          linkBounds.right <= trackBounds.right + 1;
+      }),
+    )
+    .toBe(true);
+  await expect(previousSections).toHaveAttribute('aria-disabled', 'false');
+
+  await sectionTrack.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(() => sectionTrack.evaluate((track) => track.scrollLeft))
+    .toBeLessThanOrEqual(1);
+  await expect(previousSections).toHaveAttribute('aria-disabled', 'true');
+
   const destinations = [
     ['Summary', 'mission-summary'],
     ['Trajectory', 'mission-trajectory'],
