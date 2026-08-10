@@ -107,38 +107,40 @@ export default function VideoPlayer({
         />
         <div className="relative max-w-xl text-center">
           <p className="data-label text-[var(--console-cyan)]">
-            Choose playback
+            Recommended playback
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-            Play the privacy-enhanced embed here, or continue on YouTube if it
-            asks you to sign in. LaunchWatch never receives your Google
-            credentials.
+            Open the exact video on YouTube to use your existing session.
+            Embedded playback can ask you to sign in again even when YouTube is
+            already open; LaunchWatch never receives your Google credentials.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <a
+              href={youtubeWatchUrl ?? url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`action-button ${
+                live ? 'action-button-stream' : 'action-button-primary'
+              }`}
+            >
+              <ExternalLink aria-hidden="true" size={16} />
+              Watch on YouTube
+              <ExternalLinkHint />
+            </a>
             <button
               type="button"
               onClick={() => {
                 focusLoadedVideoRef.current = true;
                 setLoadedUrl(url);
               }}
-              className={`action-button ${
-                live ? 'action-button-stream' : 'action-button-secondary'
+              className="action-button action-button-secondary"
+              aria-label={`Try privacy-enhanced embedded video for ${
+                title || 'this launch'
               }`}
-              aria-label={`Load video for ${title || 'this launch'}`}
             >
               <Play aria-hidden="true" size={17} fill="currentColor" />
-              Play here
+              Try embedded player
             </button>
-            <a
-              href={youtubeWatchUrl ?? url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="action-button action-button-secondary"
-            >
-              <ExternalLink aria-hidden="true" size={16} />
-              Open on YouTube
-              <ExternalLinkHint />
-            </a>
           </div>
         </div>
       </div>
@@ -170,11 +172,11 @@ export default function VideoPlayer({
           />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--text-primary)]">
-              YouTube sign-in stays on YouTube
+              Embedded session blocked?
             </p>
             <p className="mt-0.5 text-xs leading-5 text-[var(--text-muted)]">
-              If playback is blocked, open this exact video in your current
-              YouTube session.
+              Open this exact video on YouTube to use your existing session.
+              LaunchWatch never handles your sign-in.
             </p>
           </div>
         </div>

@@ -831,11 +831,13 @@ test('detail keeps one direct provider alternative for embedded video', async ({
   const coverage = page.getByRole('region', { name: 'Watch replay' });
 
   await expect(
-    coverage.getByRole('button', { name: 'Load video for Demo Return Flight' })
+    coverage.getByRole('button', {
+      name: 'Try privacy-enhanced embedded video for Demo Return Flight',
+    })
   ).toBeVisible();
   await expect(
     coverage.getByRole('link', {
-      name: /Open on YouTube.*new tab/i,
+      name: /Watch on YouTube.*new tab/i,
     })
   ).toBeVisible();
   await expect(
@@ -856,7 +858,7 @@ test('watch keeps one direct provider alternative beside embedded video', async 
     name: 'Mission coverage scheduled',
   });
   const providerVideo = coverage.getByRole('link', {
-    name: /Open on YouTube.*new tab/i,
+    name: /Watch on YouTube.*new tab/i,
   });
   await expect(providerVideo).toBeVisible();
   await expect(providerVideo).toHaveAttribute(
@@ -867,7 +869,7 @@ test('watch keeps one direct provider alternative beside embedded video', async 
   await expect(providerVideo).toHaveAttribute('rel', 'noopener noreferrer');
 
   const loadVideo = coverage.getByRole('button', {
-    name: 'Load video for Polaris Relay',
+    name: 'Try privacy-enhanced embedded video for Polaris Relay',
   });
   await loadVideo.focus();
   await loadVideo.press('Enter');
@@ -4563,7 +4565,9 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.locator('a[href="/watch?id=spacex-demo-polaris"]')
   ).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Load video for Polaris Relay' })
+    page.getByRole('button', {
+      name: 'Try privacy-enhanced embedded video for Polaris Relay',
+    })
   ).toBeVisible();
   await expect(watchTrajectory).toContainText('Polaris Relay');
   await expect(polarisQueueItem).toBeFocused();

@@ -14,7 +14,7 @@ describe('VideoPlayer coverage state', () => {
     );
 
     const loadVideo = screen.getByRole('button', {
-      name: 'Load video for Orbital Dawn',
+      name: 'Try privacy-enhanced embedded video for Orbital Dawn',
     });
     loadVideo.focus();
     await user.keyboard('{Enter}');
@@ -38,16 +38,27 @@ describe('VideoPlayer coverage state', () => {
       />
     );
 
-    expect(screen.getByText('Choose playback')).toBeVisible();
+    expect(screen.getByText('Recommended playback')).toBeVisible();
+    expect(
+      screen.getByText(/Embedded playback can ask you to sign in again/i)
+    ).toBeVisible();
     expect(
       screen.getByText(/LaunchWatch never receives your Google credentials/i)
     ).toBeVisible();
     expect(
-      screen.getByRole('link', { name: /Open on YouTube.*new tab/i })
+      screen.getByRole('link', { name: /Watch on YouTube.*new tab/i })
     ).toHaveAttribute(
       'href',
       'https://www.youtube.com/watch?v=official-mission'
     );
+    expect(
+      screen.getByRole('link', { name: /Watch on YouTube.*new tab/i })
+    ).toHaveClass('action-button-primary');
+    expect(
+      screen.getByRole('button', {
+        name: 'Try privacy-enhanced embedded video for Orbital Dawn',
+      })
+    ).toHaveClass('action-button-secondary');
   });
 
   it('keeps the exact YouTube recovery visible for autoplaying coverage', () => {
@@ -64,7 +75,7 @@ describe('VideoPlayer coverage state', () => {
       'referrerpolicy',
       'strict-origin-when-cross-origin'
     );
-    expect(screen.getByText('YouTube sign-in stays on YouTube')).toBeVisible();
+    expect(screen.getByText('Embedded session blocked?')).toBeVisible();
     expect(
       screen.getByRole('link', { name: /Open exact video.*new tab/i })
     ).toHaveAttribute(
@@ -99,7 +110,7 @@ describe('VideoPlayer coverage state', () => {
     expect(live).toHaveClass('action-button-stream');
   });
 
-  it('uses the same distinction before an embedded provider video loads', () => {
+  it('keeps signed-in YouTube playback primary before an embed loads', () => {
     const { rerender } = render(
       <VideoPlayer
         url="https://www.youtube.com/watch?v=official-mission"
@@ -108,7 +119,12 @@ describe('VideoPlayer coverage state', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'Load video for Orbital Dawn' })
+      screen.getByRole('link', { name: /Watch on YouTube.*new tab/i })
+    ).toHaveClass('action-button-primary');
+    expect(
+      screen.getByRole('button', {
+        name: 'Try privacy-enhanced embedded video for Orbital Dawn',
+      })
     ).toHaveClass('action-button-secondary');
 
     rerender(
@@ -120,8 +136,13 @@ describe('VideoPlayer coverage state', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'Load video for Orbital Dawn' })
+      screen.getByRole('link', { name: /Watch on YouTube.*new tab/i })
     ).toHaveClass('action-button-stream');
+    expect(
+      screen.getByRole('button', {
+        name: 'Try privacy-enhanced embedded video for Orbital Dawn',
+      })
+    ).toHaveClass('action-button-secondary');
   });
 
   it('uses the caution signal when no provider coverage is confirmed', () => {
