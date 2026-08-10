@@ -372,7 +372,28 @@ test('mission briefing keeps controls clear of simulated PWA safe areas', async 
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/?provider=SpaceX&status=live');
+
+  const canonicalUrl = 'https://www.launchwatch.io';
+  const scheduleTitle = 'Launch schedule | LaunchWatch';
+
+  await expect(page).toHaveTitle(scheduleTitle);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    canonicalUrl
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    scheduleTitle
+  );
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute(
+    'content',
+    scheduleTitle
+  );
 
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     'content',

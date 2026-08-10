@@ -82,8 +82,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
 - Device-safe installed-PWA chrome that keeps navigation, status, update, and
   offline controls clear of display cutouts in portrait and landscape
 - Branded large-image previews for shared routes, the launch archive, and
-  canonical mission details; filtered archive URLs consolidate on the stable
-  `/history` canonical route
+  canonical mission details; filtered schedule and archive URLs consolidate on
+  the stable `/` and `/history` canonical routes
 
 ## Tech Stack
 
