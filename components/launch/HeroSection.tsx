@@ -197,6 +197,8 @@ export default function HeroSection({
   const critical =
     activeLaunch.status === 'failure' ||
     isCriticalLaunchStatusName(activeLaunch.statusName);
+  const criticalStatusLabel =
+    activeLaunch.statusName?.trim() || 'Launch status alert';
   const site = getLaunchSiteDisplay(activeLaunch);
   const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
     .filter(Boolean)
@@ -240,6 +242,8 @@ export default function HeroSection({
               className={`data-label ${
                 live
                   ? 'text-[var(--console-magenta)]'
+                  : critical
+                    ? 'text-[var(--console-red)]'
                   : 'text-[var(--console-green)]'
               }`}
             >
@@ -249,6 +253,8 @@ export default function HeroSection({
                   ? missionInFlight
                     ? 'Mission in flight'
                     : 'Coverage live'
+                  : critical
+                    ? 'Launch status alert'
                   : 'Next launch'}
             </p>
             {feedNotice ? (
@@ -323,13 +329,29 @@ export default function HeroSection({
                   </p>
                 </div>
               ) : (
-                <Countdown
-                  targetDate={activeLaunch.date}
-                  precision={activeLaunch.datePrecision}
-                  windowStart={activeLaunch.windowStart}
-                  windowEnd={activeLaunch.windowEnd}
-                  featured
-                />
+                <div>
+                  {critical ? (
+                    <p
+                      role="status"
+                      aria-label={`Launch status: ${criticalStatusLabel}`}
+                      className="mb-3 flex items-center gap-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-[var(--console-red)]"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--console-red)]"
+                      />
+                      {criticalStatusLabel}
+                    </p>
+                  ) : null}
+                  <Countdown
+                    alert={critical}
+                    targetDate={activeLaunch.date}
+                    precision={activeLaunch.datePrecision}
+                    windowStart={activeLaunch.windowStart}
+                    windowEnd={activeLaunch.windowEnd}
+                    featured
+                  />
+                </div>
               )}
             </div>
             <LaunchWindow

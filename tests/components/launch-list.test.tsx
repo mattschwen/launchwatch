@@ -172,6 +172,30 @@ describe('LaunchList', () => {
     expect(confirmed).toHaveAccessibleName(/To be confirmed/);
   });
 
+  it('preserves an actionable provider alert in compact rows', () => {
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: [
+        {
+          ...UPCOMING_LAUNCHES[0],
+          status: 'tbd',
+          statusName: 'On Hold',
+        },
+      ],
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    const mission = screen.getByRole('link', { name: /Orbital Dawn/ });
+    expect(mission).toHaveTextContent('On Hold');
+    expect(mission).not.toHaveTextContent('TBD');
+  });
+
   it('reconciles filters when history navigation changes the URL context', () => {
     vi.mocked(useLaunches).mockReturnValue({
       launches: UPCOMING_LAUNCHES,

@@ -35,9 +35,14 @@ export default function LaunchCard({
   const liveSignal = getLaunchLiveSignal(launch);
   const site = getLaunchSiteDisplay(launch);
   const pendingStatus = getPendingLaunchStatus(launch.statusName);
+  const critical =
+    launch.status === 'failure' ||
+    isCriticalLaunchStatusName(launch.statusName);
   const statusLabel = history
     ? launchOutcomeLabel(launch)
-    : liveUnconfirmed
+    : critical
+      ? launch.statusName?.trim() || 'Launch alert'
+      : liveUnconfirmed
       ? 'Coverage unconfirmed'
       : launch.isLive
         ? liveSignal === 'mission'
@@ -46,9 +51,6 @@ export default function LaunchCard({
         : launch.status === 'tbd'
           ? pendingStatus.label
           : launch.statusName || 'Go for launch';
-  const critical =
-    launch.status === 'failure' ||
-    isCriticalLaunchStatusName(launch.statusName);
   const statusClass =
     critical
       ? 'text-[var(--console-red)]'

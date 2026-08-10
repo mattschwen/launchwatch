@@ -54,6 +54,28 @@ describe('Countdown', () => {
     ).toEqual(['days', 'hrs', 'min', 'sec']);
   });
 
+  it('keeps target timing visible with a critical provider-alert signal', () => {
+    const { container } = render(
+      <Countdown
+        alert
+        targetDate="2035-07-28T14:30:00.000Z"
+      />
+    );
+
+    expect(container.querySelector('.countdown-prefix')).toHaveClass(
+      'text-[var(--console-red)]'
+    );
+    expect(container.querySelector('.countdown-unit')).toHaveClass(
+      'border-[color-mix(in_srgb,var(--console-red)_28%,transparent)]'
+    );
+    expect(container.querySelector('.countdown-digits')).toHaveClass(
+      'text-[var(--console-red)]'
+    );
+    expect(
+      screen.getByText('2 days, 3 hours, 4 minutes, 5 seconds until launch')
+    ).toHaveClass('sr-only', 'countdown-spoken');
+  });
+
   it('preserves three-digit mission days without truncating the value', () => {
     mockedUseCountdown.mockReturnValue({
       days: 123,
@@ -171,6 +193,34 @@ describe('Countdown', () => {
     expect(
       screen.getByRole('status', { name: 'Launch window open' })
     ).toHaveClass('text-[var(--console-green)]');
+  });
+
+  it('does not present an active provider target window as nominal during an alert', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+      now: Date.now(),
+    });
+    const target = new Date(Date.now() - 60_000);
+
+    render(
+      <Countdown
+        alert
+        targetDate={target.toISOString()}
+        windowStart={new Date(target.getTime() - 30 * 60_000).toISOString()}
+        windowEnd={new Date(Date.now() + 30 * 60_000).toISOString()}
+      />
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Provider target window active' })
+    ).toHaveClass('text-[var(--console-red)]');
+    expect(
+      screen.queryByRole('status', { name: 'Launch window open' })
+    ).not.toBeInTheDocument();
   });
 
   it('stops calling a validated provider window open after its end', () => {

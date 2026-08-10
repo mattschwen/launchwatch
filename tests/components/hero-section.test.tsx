@@ -81,6 +81,25 @@ describe('HeroSection', () => {
     ).toHaveClass('signal-critical');
   });
 
+  it('names a provider hold instead of presenting a nominal next launch', () => {
+    const heldLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'tbd' as const,
+      statusName: 'On Hold',
+    };
+
+    render(<HeroSection {...defaultProps} activeLaunch={heldLaunch} />);
+
+    const hero = screen
+      .getByRole('heading', { name: heldLaunch.name })
+      .closest('section');
+    expect(hero).toHaveClass('signal-critical');
+    expect(screen.getByText('Launch status alert')).toBeVisible();
+    expect(
+      screen.getByRole('status', { name: 'Launch status: On Hold' })
+    ).toBeVisible();
+  });
+
   it('uses the magenta live signal treatment for active coverage', () => {
     const liveLaunch = {
       ...UPCOMING_LAUNCHES[0],

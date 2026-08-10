@@ -11,6 +11,7 @@ import {
 import type { LaunchDatePrecision } from '@/lib/types';
 
 interface CountdownProps {
+  alert?: boolean;
   targetDate: string;
   animated?: boolean;
   className?: string;
@@ -57,6 +58,7 @@ function formatSpokenCountdown({
 }
 
 export default function Countdown({
+  alert = false,
   targetDate,
   animated = true,
   className = '',
@@ -132,11 +134,15 @@ export default function Countdown({
     const statusLabel = completedLabel
       ? completedLabel
       : providerWindowOpen
-        ? 'Launch window open'
+        ? alert
+          ? 'Provider target window active'
+          : 'Launch window open'
         : 'Awaiting provider update';
     const statusTone = completedLabel
       ? 'text-[var(--text-secondary)]'
-      : providerWindowOpen
+      : alert
+        ? 'text-[var(--console-red)]'
+        : providerWindowOpen
         ? 'text-[var(--console-green)]'
         : 'text-[var(--console-amber)]';
 
@@ -231,7 +237,9 @@ export default function Countdown({
       >
         <span
           className={`countdown-prefix flex items-center pr-1 text-[0.68em] tracking-[-0.04em] sm:pr-2 ${
-            estimated
+            alert
+              ? 'text-[var(--console-red)]'
+              : estimated
               ? 'text-[var(--console-amber)]'
               : 'text-[var(--console-green)]'
           }`}
@@ -249,7 +257,9 @@ export default function Countdown({
             <span
               key={unit.label}
               className={`countdown-unit relative grid min-w-0 content-center overflow-hidden rounded-[var(--radius-sm)] border px-1.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] max-[430px]:px-0.5 sm:px-2 sm:py-2.5 ${
-                estimated
+                alert
+                  ? 'border-[color-mix(in_srgb,var(--console-red)_28%,transparent)] bg-[linear-gradient(180deg,rgba(255,92,108,0.08),rgba(7,11,18,0.72))]'
+                  : estimated
                   ? 'border-[color-mix(in_srgb,var(--console-amber)_25%,transparent)] bg-[linear-gradient(180deg,rgba(244,185,95,0.075),rgba(7,11,18,0.72))]'
                   : 'border-[color-mix(in_srgb,var(--console-green)_22%,transparent)] bg-[linear-gradient(180deg,rgba(94,230,168,0.075),rgba(7,11,18,0.72))]'
               }`}
@@ -259,7 +269,9 @@ export default function Countdown({
                 className={`countdown-digits block text-center tracking-[-0.055em] ${
                   animated ? 'countdown-digit-tick' : ''
                 } ${
-                  estimated
+                  alert
+                    ? 'text-[var(--console-red)] [text-shadow:0_0_18px_rgba(255,92,108,0.18)]'
+                    : estimated
                     ? 'text-[var(--console-amber)] [text-shadow:0_0_18px_rgba(244,185,95,0.18)]'
                     : 'text-[var(--console-green)] [text-shadow:0_0_18px_rgba(94,230,168,0.2)]'
                 }`}

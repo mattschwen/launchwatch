@@ -3786,6 +3786,44 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home surfaces a provider hold in its featured and compact mission states', async ({
+  page,
+}) => {
+  const heldLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    status: 'tbd' as const,
+    statusName: 'On Hold',
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [heldLaunch, UPCOMING_LAUNCHES[1]],
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Launch status alert');
+  await expect(
+    hero.getByRole('status', { name: 'Launch status: On Hold' })
+  ).toBeVisible();
+  await expect(hero).toHaveClass(/signal-critical/);
+
+  const compactMission = page
+    .locator('section[aria-labelledby="upcoming-launches-title"]')
+    .getByRole('link', { name: /Orbital Dawn/ });
+  await expect(compactMission).toContainText('On Hold');
+  await expect(compactMission).not.toContainText('TBD');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home reveals a large mission queue in honest, touch-safe batches', async ({
   page,
 }) => {
