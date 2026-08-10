@@ -837,13 +837,22 @@ test('watch keeps one direct provider alternative beside embedded video', async 
   await expect(providerVideo).toHaveAttribute('target', '_blank');
   await expect(providerVideo).toHaveAttribute('rel', 'noopener noreferrer');
 
-  await coverage
-    .getByRole('button', { name: 'Load video for Polaris Relay' })
-    .click();
+  const loadVideo = coverage.getByRole('button', {
+    name: 'Load video for Polaris Relay',
+  });
+  await loadVideo.focus();
+  await loadVideo.press('Enter');
   const embeddedVideo = coverage.locator('iframe');
   await expect(embeddedVideo).toHaveCount(1);
+  await expect(embeddedVideo).toBeFocused();
+  await expect
+    .poll(() =>
+      coverage
+        .locator('.video-player-frame')
+        .evaluate((frame) => getComputedStyle(frame).boxShadow)
+    )
+    .not.toBe('none');
   await expect(providerVideo).toBeVisible();
-  await embeddedVideo.focus();
   await page.keyboard.press('Tab');
   await expect(providerVideo).toBeFocused();
   await expect

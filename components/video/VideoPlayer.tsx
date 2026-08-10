@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Play, Tv } from 'lucide-react';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { extractYouTubeId } from '@/lib/youtube';
@@ -21,6 +21,17 @@ export default function VideoPlayer({
   live = false,
 }: VideoPlayerProps): React.ReactElement {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const focusLoadedVideoRef = useRef(false);
+  const videoId = url ? extractYouTubeId(url) : null;
+  const loaded = Boolean(videoId) && (autoplay || loadedUrl === url);
+
+  useEffect(() => {
+    if (!loaded || !focusLoadedVideoRef.current) return;
+
+    focusLoadedVideoRef.current = false;
+    iframeRef.current?.focus({ preventScroll: true });
+  }, [loaded]);
 
   if (!url) {
     return (
@@ -39,7 +50,6 @@ export default function VideoPlayer({
     );
   }
 
-  const videoId = extractYouTubeId(url);
   if (!videoId) {
     return (
       <div
@@ -75,7 +85,6 @@ export default function VideoPlayer({
     );
   }
 
-  const loaded = autoplay || loadedUrl === url;
   const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${
     autoplay ? '1' : '0'
   }&rel=0&modestbranding=1`;
@@ -95,7 +104,10 @@ export default function VideoPlayer({
         />
         <button
           type="button"
-          onClick={() => setLoadedUrl(url)}
+          onClick={() => {
+            focusLoadedVideoRef.current = true;
+            setLoadedUrl(url);
+          }}
           className={`action-button relative ${
             live ? 'action-button-stream' : 'action-button-secondary'
           }`}
@@ -109,8 +121,11 @@ export default function VideoPlayer({
   }
 
   return (
-    <div className={`aspect-video w-full overflow-hidden bg-black ${className}`}>
+    <div
+      className={`video-player-frame aspect-video w-full overflow-hidden bg-black ${className}`}
+    >
       <iframe
+        ref={iframeRef}
         src={embedUrl}
         title={title || 'Launch stream'}
         className="h-full w-full"

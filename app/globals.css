@@ -1818,6 +1818,10 @@ select:focus {
   outline-offset: -3px;
 }
 
+.video-player-frame:focus-within {
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
+}
+
 /* Keep the mission-control palette while honoring an explicit request for
    stronger text, panel, and persistent-state separation. */
 @media (prefers-contrast: more) {

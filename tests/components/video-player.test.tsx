@@ -1,8 +1,27 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import VideoPlayer from '@/components/video/VideoPlayer';
 
 describe('VideoPlayer coverage state', () => {
+  it('moves keyboard focus into a video after deferred loading', async () => {
+    const user = userEvent.setup();
+    render(
+      <VideoPlayer
+        url="https://www.youtube.com/watch?v=official-mission"
+        title="Orbital Dawn"
+      />
+    );
+
+    const loadVideo = screen.getByRole('button', {
+      name: 'Load video for Orbital Dawn',
+    });
+    loadVideo.focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByTitle('Orbital Dawn')).toHaveFocus();
+  });
+
   it('keeps scheduled external coverage distinct from a live broadcast', () => {
     const { rerender } = render(
       <VideoPlayer url="https://x.com/i/broadcasts/scheduled-mission" />
