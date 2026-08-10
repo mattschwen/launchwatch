@@ -6349,6 +6349,68 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission briefing timeline reflows at 200 percent text size', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '32px';
+  });
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const title = dialog.getByRole('heading', {
+    level: 2,
+    name: 'Orbital Dawn',
+  });
+  const details = dialog.locator(
+    '[aria-label="Mission briefing details"]'
+  );
+  const timeline = dialog.getByRole('region', { name: 'Launch timeline' });
+  await timeline.scrollIntoViewIfNeeded();
+
+  await expect
+    .poll(() =>
+      details.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1
+      )
+    )
+    .toBe(true);
+
+  expect(
+    await title.evaluate((element) => {
+      const text = element.firstChild;
+      if (!text) return [];
+      return [
+        [0, 7],
+        [8, 12],
+      ].map(([start, end]) => {
+        const range = document.createRange();
+        range.setStart(text, start);
+        range.setEnd(text, end);
+        return range.getClientRects().length;
+      });
+    })
+  ).toEqual([1, 1]);
+
+  const firstEvent = timeline.getByRole('listitem').first();
+  const eventLayout = await firstEvent.evaluate((element) => {
+    const time = element.firstElementChild?.getBoundingClientRect();
+    const description = element.lastElementChild?.getBoundingClientRect();
+    const bounds = element.getBoundingClientRect();
+    return {
+      contained:
+        Boolean(time && description) &&
+        Math.max(time?.right ?? 0, description?.right ?? 0) <=
+          bounds.right + 1,
+      stacked: Boolean(time && description && description.top >= time.bottom),
+    };
+  });
+  expect(eventLayout).toEqual({ contained: true, stacked: true });
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('copied calendar details retain the canonical mission route', async ({
   page,
 }) => {

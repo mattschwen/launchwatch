@@ -648,6 +648,14 @@ html[data-boot-status='visible'] .header-instruments {
   container: archive-console / inline-size;
 }
 
+.mission-briefing-dialog {
+  container: mission-briefing / inline-size;
+}
+
+.mission-briefing-timeline {
+  container: briefing-timeline / inline-size;
+}
+
 @container top-nav (max-width: 45em) {
   .desktop-primary-nav {
     margin-left: 1rem;
@@ -724,6 +732,23 @@ html[data-boot-status='visible'] .header-instruments {
       auto-fit,
       minmax(min(100%, 4.5em), 1fr)
     );
+  }
+}
+
+@container mission-briefing (max-width: 10.5em) {
+  .mission-briefing-header {
+    flex-direction: column;
+  }
+
+  .mission-briefing-close {
+    align-self: flex-end;
+  }
+}
+
+@container briefing-timeline (max-width: 15em) {
+  .mission-briefing-event {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
   }
 }
 

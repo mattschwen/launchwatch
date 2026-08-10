@@ -143,9 +143,9 @@ export default function LaunchBriefingDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-l border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
+        className="mission-briefing-dialog absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-l border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
       >
-        <header className="flex items-start gap-4 border-b border-[var(--border-subtle)] pb-4 pl-[max(1.25rem,var(--safe-area-left))] pr-[max(1.25rem,var(--safe-area-right))] pt-[calc(1rem+var(--safe-area-top))] sm:pl-6 sm:pr-[max(1.5rem,var(--safe-area-right))]">
+        <header className="mission-briefing-header flex items-start gap-4 border-b border-[var(--border-subtle)] pb-4 pl-[max(1.25rem,var(--safe-area-left))] pr-[max(1.25rem,var(--safe-area-right))] pt-[calc(1rem+var(--safe-area-top))] sm:pl-6 sm:pr-[max(1.5rem,var(--safe-area-right))]">
           <div className="min-w-0 flex-1">
             <p className="data-label">Mission briefing</p>
             <h2
@@ -160,7 +160,7 @@ export default function LaunchBriefingDrawer({
             type="button"
             onClick={closeDrawer}
             aria-label="Close mission briefing"
-            className="icon-button shrink-0"
+            className="mission-briefing-close icon-button shrink-0"
           >
             <X aria-hidden="true" size={18} />
           </button>
@@ -271,7 +271,7 @@ export default function LaunchBriefingDrawer({
               </h3>
               <ol
                 id={`${titleId}-timeline-events`}
-                className="mt-3 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]"
+                className="mission-briefing-timeline mt-3 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]"
               >
                 {(expandedTimelineId === launch.id
                   ? launch.timeline
@@ -279,7 +279,7 @@ export default function LaunchBriefingDrawer({
                 ).map((event) => (
                   <li
                     key={`${event.relativeTime}-${event.type}`}
-                    className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 py-3"
+                    className="mission-briefing-event grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 py-3"
                   >
                     <span className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
                       {formatTimelineOffset(event.relativeTime)}
