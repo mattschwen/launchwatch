@@ -60,6 +60,7 @@ describe('PWA install assets', () => {
   it.each([
     ['/icon-192.png', 192],
     ['/icon-512.png', 512],
+    ['/icon-maskable-512.png', 512],
     ['/apple-touch-icon.png', 180],
     ['/badge-96.png', 96],
   ])('ships %s at its declared dimensions', (src, size) => {
@@ -77,10 +78,9 @@ describe('PWA install assets', () => {
       readFileSync(publicPath('/manifest.json'), 'utf8')
     ) as WebManifest;
 
-    expect(manifest.icons).toHaveLength(2);
+    expect(manifest.icons).toHaveLength(3);
     for (const icon of manifest.icons) {
       expect(icon.type).toBe('image/png');
-      expect(icon.purpose).toBe('any');
       expect(existsSync(publicPath(icon.src))).toBe(true);
       const declaredSize = Number(icon.sizes.split('x')[0]);
       expect(readPngDimensions(publicPath(icon.src))).toEqual({
@@ -88,6 +88,20 @@ describe('PWA install assets', () => {
         height: declaredSize,
       });
     }
+
+    expect(
+      manifest.icons.filter((icon) => icon.purpose === 'any')
+    ).toHaveLength(2);
+    expect(
+      manifest.icons.filter((icon) => icon.purpose === 'maskable')
+    ).toEqual([
+      {
+        src: '/icon-maskable-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
+    ]);
   });
 
   it('ships one effect-free monogram and a branded favicon', () => {
@@ -102,6 +116,25 @@ describe('PWA install assets', () => {
     expect(mark).toContain('#58C8E8');
     expect(mark).toContain('#5EE6A8');
     expect(favicon.subarray(0, 4)).toEqual(Buffer.from([0, 0, 1, 0]));
+  });
+
+  it('keeps the maskable mark on an opaque full-bleed brand field', () => {
+    const maskableSource = readFileSync(
+      publicPath('/brand/icon_launchwatch_maskable_20260810_dark.svg'),
+      'utf8'
+    );
+
+    expect(maskableSource).toContain('LaunchWatch maskable app icon');
+    expect(maskableSource).toContain(
+      '<rect width="64" height="64" fill="#080B10"/>'
+    );
+    expect(maskableSource).toContain(
+      'M17 16V48H28'
+    );
+    expect(maskableSource).toContain(
+      'M28 24L33.5 48L39 31L44.5 48L50 24'
+    );
+    expect(maskableSource).not.toMatch(/<(?:filter|radialGradient)\b/i);
   });
 
   it('ships a standalone offline document without external dependencies', () => {

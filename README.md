@@ -80,7 +80,8 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   countdown, command, signal, archive, and internal scroll-rail instruments
   without clipping or horizontal page drift
 - Partial, stale, offline, empty, error, and retry states
-- Installable PWA shell with network-first navigations and uncached data APIs
+- Installable PWA shell with network-first navigations, uncached data APIs, and
+  a dedicated maskable app icon for adaptive launchers
 - Device-safe installed-PWA chrome that keeps navigation, status, update, and
   offline controls clear of display cutouts in portrait and landscape
 - Branded large-image previews for shared routes, the launch archive, and

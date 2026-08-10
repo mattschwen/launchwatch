@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64" fill="none">
+  <title>LaunchWatch maskable app icon</title>
+  <defs>
+    <linearGradient id="watch-gradient" x1="28" y1="24" x2="50" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5EE6A8"/>
+      <stop offset="1" stop-color="#58C8E8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#080B10"/>
+  <path d="M17 16V48H28" stroke="#F3F6FA" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M28 24L33.5 48L39 31L44.5 48L50 24" stroke="url(#watch-gradient)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
