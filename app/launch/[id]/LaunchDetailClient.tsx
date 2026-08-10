@@ -55,7 +55,7 @@ const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
 function DetailTrajectoryLoadingState(): React.ReactElement {
   return (
     <div
-      className="surface-card holo-card signal-cold min-h-[32rem] w-full min-w-0 max-w-full overflow-hidden"
+      className="mission-trajectory-loading surface-card holo-card signal-cold min-h-[32rem] w-full min-w-0 max-w-full overflow-hidden"
     >
       <header className="border-b border-[var(--border-subtle)] px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -91,11 +91,11 @@ function DetailTrajectoryLoadingState(): React.ReactElement {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 border-t border-[var(--border-subtle)] md:grid-cols-4">
+        <div className="mission-trajectory-loading-facts grid grid-cols-2 border-t border-[var(--border-subtle)] md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className={`min-h-[4.5rem] px-4 py-3 sm:px-5 ${
+              className={`mission-trajectory-loading-fact min-h-[4.5rem] px-4 py-3 sm:px-5 ${
                 index % 2 ? 'border-l border-[var(--border-subtle)]' : ''
               } ${
                 index >= 2
@@ -199,9 +199,9 @@ function IntelligenceStandby({
     <section
       aria-labelledby="mission-intelligence-standby-title"
       data-intelligence-standby="true"
-      className="surface-card holo-card signal-cold p-5 sm:p-6"
+      className="mission-intelligence-standby surface-card holo-card signal-cold overflow-hidden p-5 sm:p-6"
     >
-      <div className="flex items-center gap-3">
+      <div className="mission-intelligence-standby-heading flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
           <Radio aria-hidden="true" size={18} />
         </span>
@@ -217,7 +217,7 @@ function IntelligenceStandby({
           </h2>
         </div>
       </div>
-      <div className="mt-5 flex items-center gap-2 border-y border-[var(--border-subtle)] py-3">
+      <div className="mission-intelligence-standby-status mt-5 flex items-center gap-2 border-y border-[var(--border-subtle)] py-3">
         <span
           aria-hidden="true"
           className="h-2 w-2 shrink-0 rounded-full bg-[var(--console-cyan)]"
@@ -412,7 +412,7 @@ export default function LaunchDetailClient({
   const missionTelemetry = (
     <section
       aria-label="Mission telemetry"
-      className="surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5"
+      className="mission-telemetry-panel surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5"
     >
       {!completed && liveSignal !== 'mission' ? (
         <div className="border-b border-[var(--border-subtle)] pb-5">
@@ -446,7 +446,7 @@ export default function LaunchDetailClient({
       ) : null}
 
       <dl className={`${!completed || presentedLaunch.isLive ? 'mt-5' : ''} space-y-4`}>
-        <div className="relative pl-8">
+        <div className="mission-telemetry-item relative pl-8">
           <MapPin
             aria-hidden="true"
             size={18}
@@ -457,7 +457,7 @@ export default function LaunchDetailClient({
             {getLaunchSiteDisplay(presentedLaunch).label}
           </dd>
         </div>
-        <div className="relative pl-8">
+        <div className="mission-telemetry-item relative pl-8">
           <Rocket
             aria-hidden="true"
             size={18}
@@ -468,7 +468,7 @@ export default function LaunchDetailClient({
             {presentedLaunch.rocket}
           </dd>
         </div>
-        <div className="relative pl-8">
+        <div className="mission-telemetry-item relative pl-8">
           <Orbit
             aria-hidden="true"
             size={18}
@@ -558,7 +558,7 @@ export default function LaunchDetailClient({
 
   return (
     <>
-      <div className="page-container py-4 sm:py-6 lg:py-8">
+      <div className="mission-detail-page page-container py-4 sm:py-6 lg:py-8">
         <Link
           href={returnHref}
           className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
@@ -616,7 +616,7 @@ export default function LaunchDetailClient({
           id="mission-summary"
           ref={missionPanelRef}
           tabIndex={-1}
-          className={`surface-card holo-card ${missionTone} grid min-w-0 scroll-mt-20 gap-7 p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:scroll-mt-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
+          className={`mission-summary-panel surface-card holo-card ${missionTone} grid min-w-0 scroll-mt-20 gap-7 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:scroll-mt-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
@@ -632,7 +632,7 @@ export default function LaunchDetailClient({
               ) : null}
             </div>
 
-            <h1 className="mt-5 max-w-5xl break-words text-[clamp(2.35rem,5vw,5rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
+            <h1 className="mission-summary-title mt-5 max-w-5xl break-words text-[clamp(2.35rem,5vw,5rem)] font-bold leading-[0.98] tracking-[-0.06em] text-[var(--text-primary)]">
               {primaryMissionName}
             </h1>
 
@@ -668,7 +668,7 @@ export default function LaunchDetailClient({
             {launch.description ? (
               <MissionDescription
                 description={launch.description}
-                className="mt-6 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7"
+                className="mission-summary-description mt-6 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base sm:leading-7"
               />
             ) : (
               <p className="mt-6 max-w-3xl text-sm leading-6 text-[var(--text-muted)] sm:text-base sm:leading-7">
@@ -685,9 +685,9 @@ export default function LaunchDetailClient({
 
         <nav
           aria-label="Mission sections"
-          className="surface-card holo-card signal-cold mt-5 overflow-hidden"
+          className="mission-section-index surface-card holo-card signal-cold mt-5 min-w-0 max-w-full overflow-hidden"
         >
-          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
+          <div className="mission-section-index-header flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
             <p className="data-label text-[var(--console-cyan)]">
               Mission index
             </p>
@@ -695,7 +695,7 @@ export default function LaunchDetailClient({
               {detailSectionLinks.length} sections
             </p>
           </div>
-          <div className="flex overflow-x-auto border-t border-[var(--border-subtle)] overscroll-x-contain">
+          <div className="mission-section-index-track flex min-w-0 max-w-full overflow-x-auto border-t border-[var(--border-subtle)] overscroll-x-contain">
             {detailSectionLinks.map((section, index) => (
               <a
                 key={section.id}
@@ -721,13 +721,13 @@ export default function LaunchDetailClient({
             id="mission-timeline"
             tabIndex={-1}
             aria-labelledby="launch-timeline-title"
-            className="surface-card holo-card signal-warm mt-5 scroll-mt-20 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 lg:scroll-mt-24"
+            className="mission-timeline-panel surface-card holo-card signal-warm mt-5 min-w-0 max-w-full scroll-mt-20 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 lg:scroll-mt-24"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="mission-timeline-header flex flex-wrap items-center justify-between gap-3">
               <h2 id="launch-timeline-title" className="section-title">
                 Launch timeline
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="mission-timeline-status flex items-center gap-2">
                 <span
                   id="launch-timeline-position"
                   role="status"
@@ -783,7 +783,7 @@ export default function LaunchDetailClient({
               tabIndex={0}
               onKeyDown={handleTimelineKeyDown}
               onScroll={updateTimelineControls}
-              className="mt-6 flex snap-x snap-proximity gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+              className="mission-timeline-track mt-6 flex min-w-0 max-w-full snap-x snap-proximity gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
             >
               {launch.timeline.map((event, index) => (
                 <li
@@ -813,12 +813,12 @@ export default function LaunchDetailClient({
           </section>
         ) : null}
 
-        <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)]">
+        <div className="mission-support-grid mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)]">
           <div
             id="mission-intelligence"
             ref={intelligenceHostRef}
             tabIndex={-1}
-            className="scroll-mt-20 rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
+            className="min-w-0 max-w-full scroll-mt-20 rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
           >
             {intelligenceEnabled ? (
               <LaunchIntelDeck
@@ -846,7 +846,7 @@ export default function LaunchDetailClient({
                 ? 'Mission coverage status unconfirmed'
                 : undefined
             }
-            className={`surface-card holo-card scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24 ${
+            className={`surface-card holo-card min-w-0 max-w-full overflow-hidden scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24 ${
               liveStatusUnconfirmed
                 ? 'signal-warm'
                 : presentedLaunch.isLive

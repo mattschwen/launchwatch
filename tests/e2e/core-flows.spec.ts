@@ -1384,6 +1384,100 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
   await expectContentFits('.archive-row-grid');
 });
 
+test('narrow mission consoles contain 200% text and internal rails', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+
+  const applyTextResize = async (): Promise<void> => {
+    await page.addStyleTag({
+      content: ':root { font-size: 32px !important; }',
+    });
+    await page.waitForTimeout(50);
+  };
+  const expectInsideViewport = async (
+    locator: Locator,
+  ): Promise<void> => {
+    await expect(locator).toBeVisible();
+    const bounds = await locator.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+  };
+
+  await page.goto('/watch');
+  await applyTextResize();
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  await expect(queue.getByText('2 missions', { exact: true })).toBeVisible();
+  await expectInsideViewport(queue);
+  await expect
+    .poll(() =>
+      queue
+        .locator('.watch-mission-queue-header')
+        .evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+    )
+    .toBe(true);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/history');
+  await applyTextResize();
+  const refreshArchive = page.getByRole('button', { name: 'Refresh archive' });
+  await expectInsideViewport(refreshArchive);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await applyTextResize();
+  const sectionIndex = page
+    .getByRole('navigation', { name: 'Mission sections' })
+    .last();
+  const timeline = page
+    .getByRole('region', { name: 'Launch timeline' })
+    .last();
+  await expectInsideViewport(sectionIndex);
+  await expectInsideViewport(timeline);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  await expect
+    .poll(() =>
+      sectionIndex.evaluate((element) => {
+        const rail = element.lastElementChild;
+        return Boolean(rail && rail.scrollWidth > rail.clientWidth);
+      }),
+    )
+    .toBe(true);
+  await expect
+    .poll(() =>
+      timeline
+        .getByRole('list')
+        .evaluate((element) => element.scrollWidth > element.clientWidth),
+    )
+    .toBe(true);
+
+  await sectionIndex
+    .getByRole('link', { name: 'Trajectory', exact: true })
+    .click();
+  const loadedTrajectory = page
+    .getByRole('region', { name: 'Mission trajectory' })
+    .last();
+  await expect(loadedTrajectory).toBeVisible();
+  await expect(
+    loadedTrajectory.getByRole('list', { name: 'Mission model phases' }),
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await sectionIndex
+    .getByRole('link', { name: 'Intelligence', exact: true })
+    .click();
+  await expect(
+    page.getByRole('region', { name: 'Mission intelligence' }).last(),
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('primary navigation follows the brand before mission content', async ({
   page,
 }) => {

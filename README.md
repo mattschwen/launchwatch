@@ -74,8 +74,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   selected mission, map site, phase, and view controls without relying on color
 - Increased-contrast theming that strengthens muted telemetry, panel
   boundaries, and persistent selected surfaces while retaining signal colors
-- 200% text-size reflow for dense mission telemetry, countdown, command, and
-  signal instruments without clipping or horizontal page drift
+- 200% text-size reflow down to the 320px boundary for dense mission telemetry,
+  countdown, command, signal, archive, and internal scroll-rail instruments
+  without clipping or horizontal page drift
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations and uncached data APIs
 - Device-safe installed-PWA chrome that keeps navigation, status, update, and

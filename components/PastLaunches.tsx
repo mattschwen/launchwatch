@@ -1147,7 +1147,7 @@ export default function PastLaunches({
             </div>
           </div>
 
-          <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 lg:col-span-3 xl:col-span-1 xl:justify-end">
+          <div className="archive-result-actions flex min-h-11 flex-wrap items-center justify-between gap-3 md:col-span-2 lg:col-span-3 xl:col-span-1 xl:justify-end">
             <div className="min-w-0">
               <p
                 role="status"
@@ -1185,7 +1185,7 @@ export default function PastLaunches({
                 </p>
               ) : null}
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="archive-refresh-actions flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={refreshHistory}

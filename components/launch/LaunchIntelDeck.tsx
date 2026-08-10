@@ -249,9 +249,9 @@ export default function LaunchIntelDeck({
         aria-labelledby="mission-intelligence-loading-title"
         aria-describedby="mission-intelligence-loading-description"
         aria-busy="true"
-        className={`surface-card holo-card signal-cold p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
+        className={`mission-intel-deck mission-intel-state-panel surface-card holo-card signal-cold overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
       >
-        <header className="flex items-start gap-3">
+        <header className="mission-intel-state-header flex items-start gap-3">
           <Radio
             aria-hidden="true"
             size={20}
@@ -294,9 +294,9 @@ export default function LaunchIntelDeck({
         aria-busy={loading}
         className={`surface-card holo-card ${
           error || offline ? 'signal-warm' : 'signal-cold'
-        } p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 ${className}`}
+        } mission-intel-deck mission-intel-state-panel overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 ${className}`}
       >
-        <div className="flex items-start gap-3">
+        <div className="mission-intel-state-header flex items-start gap-3">
           {error || offline ? (
             <AlertTriangle
               aria-hidden="true"
@@ -310,7 +310,7 @@ export default function LaunchIntelDeck({
               className="mt-0.5 shrink-0 text-[var(--console-cyan)]"
             />
           )}
-          <div>
+          <div className="min-w-0">
             <h2 id="mission-intelligence-title" className="section-title">
               Mission intelligence
             </h2>
@@ -380,7 +380,7 @@ export default function LaunchIntelDeck({
       tabIndex={-1}
       aria-labelledby="mission-intelligence-title"
       aria-busy={loading}
-      className={`surface-card holo-card signal-cold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
+      className={`mission-intel-deck surface-card holo-card signal-cold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${className}`}
     >
       {offline ? (
         <div

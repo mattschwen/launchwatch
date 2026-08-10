@@ -84,7 +84,7 @@ export default function MissionPhaseRail({
   }
 
   return (
-    <div className="border-t border-[var(--border-subtle)] bg-[rgba(255,255,255,0.012)]">
+    <div className="mission-phase-rail border-t border-[var(--border-subtle)] bg-[rgba(255,255,255,0.012)]">
       {items.length ? (
         <ol
           aria-label="Mission model phases"
@@ -121,7 +121,7 @@ export default function MissionPhaseRail({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onSelect(selected ? null : item.id)}
-                  className={`flex min-h-[6.25rem] w-full items-start gap-3 px-4 py-4 text-left transition-colors sm:px-5 ${
+                  className={`mission-phase-action flex min-h-[6.25rem] w-full items-start gap-3 px-4 py-4 text-left transition-colors sm:px-5 ${
                     selected
                       ? green
                         ? 'bg-[rgba(94,230,168,0.075)]'
@@ -184,7 +184,7 @@ export default function MissionPhaseRail({
         </div>
       )}
 
-      <dl className="grid grid-cols-2 border-t border-[var(--border-subtle)] md:grid-cols-4">
+      <dl className="mission-phase-facts grid grid-cols-2 border-t border-[var(--border-subtle)] md:grid-cols-4">
         {[
           {
             label: 'Reported site',
@@ -211,7 +211,7 @@ export default function MissionPhaseRail({
         ].map((fact, index) => (
           <div
             key={fact.label}
-            className={`min-w-0 px-4 py-3 sm:px-5 ${
+            className={`mission-phase-fact min-w-0 px-4 py-3 sm:px-5 ${
               index % 2 ? 'border-l border-[var(--border-subtle)]' : ''
             } ${index >= 2 ? 'border-t border-[var(--border-subtle)] md:border-t-0' : ''} ${
               index > 0 ? 'md:border-l md:border-[var(--border-subtle)]' : ''

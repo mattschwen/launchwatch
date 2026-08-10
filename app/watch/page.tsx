@@ -189,16 +189,16 @@ function DeferredWatchTrajectory({
   };
 
   return (
-    <div ref={hostRef} className="mt-5">
+    <div ref={hostRef} className="mt-5 min-w-0 max-w-full">
       {enabled ? (
         <MissionTrajectory launch={launch} variant="detail" />
       ) : (
         <section
           aria-labelledby="watch-trajectory-pending-title"
           data-trajectory-pending="true"
-          className="surface-card holo-card signal-cold flex min-h-[21rem] flex-col overflow-hidden p-5 sm:min-h-[52rem] sm:p-6"
+          className="watch-trajectory-pending surface-card holo-card signal-cold flex min-h-[21rem] min-w-0 max-w-full flex-col overflow-hidden p-5 sm:min-h-[52rem] sm:p-6"
         >
-          <div className="max-w-xl">
+          <div className="watch-trajectory-pending-content min-w-0 max-w-xl">
             <p className="data-label text-[var(--console-cyan)]">
               Secondary telemetry
             </p>
@@ -752,13 +752,13 @@ function MissionQueue({
   return (
     <aside
       aria-labelledby="mission-queue-title"
-      className="surface-card holo-card signal-cold overflow-hidden"
+      className="watch-mission-queue surface-card holo-card signal-cold min-w-0 max-w-full overflow-hidden"
     >
-      <div className="flex min-h-14 items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
+      <div className="watch-mission-queue-header flex min-h-14 items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
         <h2 id="mission-queue-title" className="section-title text-[1.2rem]">
           Mission queue
         </h2>
-        <p className="data-label shrink-0 text-[var(--text-muted)]">
+        <p className="watch-mission-queue-count data-label shrink-0 text-[var(--text-muted)]">
           {queueLabel}
         </p>
       </div>
@@ -1198,7 +1198,7 @@ function WatchContent(): React.ReactElement {
 
   return (
     <>
-      <div className="page-container py-4 sm:py-6 lg:py-8">
+      <div className="watch-page page-container py-4 sm:py-6 lg:py-8">
         {requestedUnavailable ? (
           <div
             role="alert"
@@ -1310,7 +1310,7 @@ function WatchContent(): React.ReactElement {
           </div>
         ) : null}
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="watch-primary-grid grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div
             data-watch-selected-mission
             className="contents lg:block lg:min-w-0"
@@ -1334,7 +1334,7 @@ function WatchContent(): React.ReactElement {
 
             <section
               data-watch-mission-details
-              className={`surface-card holo-card order-3 p-5 sm:p-6 lg:mt-4 ${
+              className={`watch-mission-details surface-card holo-card order-3 min-w-0 max-w-full overflow-hidden p-5 sm:p-6 lg:mt-4 ${
                 selectedLiveCoverage
                   ? 'signal-live'
                   : selectedLaunch.isLive && coverageUnconfirmed
@@ -1386,7 +1386,7 @@ function WatchContent(): React.ReactElement {
               {selectedLaunch.description ? (
                 <MissionDescription
                   description={selectedLaunch.description}
-                  className="mt-5 max-w-4xl border-t border-[var(--border-subtle)] pt-5 text-sm leading-6 text-[var(--text-secondary)]"
+                  className="watch-mission-description mt-5 max-w-4xl border-t border-[var(--border-subtle)] pt-5 text-sm leading-6 text-[var(--text-secondary)]"
                 />
               ) : null}
             </section>
@@ -1415,7 +1415,7 @@ function WatchContent(): React.ReactElement {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="watch-support-grid mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <LaunchIntelDeck
             launch={selectedLaunch}
             intel={intel}

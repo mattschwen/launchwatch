@@ -656,6 +656,22 @@ html[data-boot-status='visible'] .header-instruments {
   container: briefing-timeline / inline-size;
 }
 
+.mission-detail-page {
+  container: mission-detail-page / inline-size;
+}
+
+.watch-page {
+  container: watch-page / inline-size;
+}
+
+.watch-mission-queue {
+  container: watch-mission-queue / inline-size;
+}
+
+.mission-intel-deck {
+  container: mission-intel-deck / inline-size;
+}
+
 @container top-nav (max-width: 45em) {
   .desktop-primary-nav {
     margin-left: 1rem;
@@ -700,6 +716,21 @@ html[data-boot-status='visible'] .header-instruments {
 
   .archive-search-controls > :first-child {
     flex: 1 1 12rem;
+  }
+
+  .archive-result-actions,
+  .archive-refresh-actions {
+    width: 100%;
+  }
+
+  .archive-refresh-actions {
+    justify-content: flex-start;
+  }
+
+  .archive-refresh-actions .action-button {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
   }
 }
 
@@ -750,6 +781,157 @@ html[data-boot-status='visible'] .header-instruments {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.25rem;
   }
+}
+
+@container mission-detail-page (max-width: 15em) {
+  .mission-summary-panel,
+  .mission-telemetry-panel,
+  .mission-timeline-panel,
+  .mission-intelligence-standby,
+  .mission-intel-state-panel {
+    padding: 0.75rem;
+  }
+
+  .mission-summary-panel {
+    gap: 0.75rem;
+  }
+
+  .mission-summary-title {
+    font-size: 2rem;
+    line-height: 1.05;
+  }
+
+  .mission-summary-description {
+    overflow-wrap: anywhere;
+  }
+
+  .mission-summary-description li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mission-telemetry-item {
+    padding-top: 2rem;
+    padding-left: 0;
+  }
+
+  .mission-section-index-header,
+  .mission-timeline-header,
+  .mission-timeline-status,
+  .mission-intelligence-standby-heading {
+    align-items: flex-start;
+  }
+
+  .mission-section-index-header,
+  .mission-timeline-status {
+    flex-wrap: wrap;
+  }
+
+  .mission-timeline-status {
+    width: 100%;
+  }
+
+  .mission-intelligence-standby-heading {
+    flex-direction: column;
+  }
+
+  .mission-intelligence-standby-heading > div,
+  .mission-intelligence-standby-status {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mission-intelligence-standby-status {
+    align-items: flex-start;
+  }
+
+  .mission-intelligence-standby-status p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .mission-phase-action,
+  .mission-phase-fact,
+  .mission-trajectory-loading > header,
+  .mission-trajectory-loading-fact {
+    padding-inline: 0.75rem;
+  }
+
+  .mission-phase-facts,
+  .mission-trajectory-loading-facts {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .mission-phase-fact,
+  .mission-trajectory-loading-fact {
+    border-left-width: 0 !important;
+    border-top: 1px solid var(--border-subtle) !important;
+  }
+
+  .mission-phase-fact:first-child,
+  .mission-trajectory-loading-fact:first-child {
+    border-top-width: 0 !important;
+  }
+
+  .mission-support-grid > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@container watch-page (max-width: 15em) {
+  .watch-mission-details,
+  .watch-trajectory-pending,
+  .mission-intel-state-panel {
+    padding: 0.75rem;
+  }
+
+  .watch-mission-description,
+  .watch-trajectory-pending-content {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .watch-mission-description li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+@container watch-mission-queue (max-width: 15em) {
+  .watch-mission-queue-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .watch-mission-queue-count {
+    width: 100%;
+  }
+}
+
+@container mission-intel-deck (max-width: 15em) {
+  .mission-intel-deck > header {
+    padding: 0.75rem;
+  }
+
+  .mission-intel-state-header {
+    flex-direction: column;
+  }
+
+  .mission-intel-state-header > div,
+  .mission-intel-deck > header > div > div:first-child {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.watch-primary-grid > *,
+.watch-support-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .countdown-display {
