@@ -222,6 +222,22 @@ body::before {
   }
 }
 
+.mission-detail-section-anchor {
+  scroll-margin-top: calc(
+    5.5rem + var(--safe-area-top) +
+      var(--mission-section-index-height, 0px)
+  );
+}
+
+@media (min-width: 640px) {
+  .mission-detail-section-anchor {
+    scroll-margin-top: calc(
+      6.375rem + var(--safe-area-top) +
+        var(--mission-section-index-height, 0px)
+    );
+  }
+}
+
 /* ═══════════════════════════════════════════════════
    PANEL STYLES
    ═══════════════════════════════════════════════════ */

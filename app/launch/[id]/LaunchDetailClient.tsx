@@ -5,8 +5,10 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
 } from 'react';
 import Link from 'next/link';
@@ -175,7 +177,7 @@ function DeferredDetailTrajectory({
             : 'Loading mission trajectory'
       }
       aria-busy={!ready && !failed ? 'true' : undefined}
-      className="mt-5 scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
+      className="mission-detail-section-anchor mt-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
     >
       {enabled ? (
         <TrajectoryErrorBoundary
@@ -207,6 +209,7 @@ const DETAIL_SECTION_LINKS = [
   { id: 'mission-intelligence', label: 'Intelligence', timelineOnly: false },
   { id: 'mission-coverage', label: 'Coverage', timelineOnly: false },
 ] as const;
+type DetailSectionId = (typeof DETAIL_SECTION_LINKS)[number]['id'];
 
 function IntelligenceStandby({
   launchName,
@@ -285,6 +288,9 @@ export default function LaunchDetailClient({
   scheduleReturnFiltered?: boolean;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [activeSectionId, setActiveSectionId] =
+    useState<DetailSectionId>('mission-summary');
+  const [sectionIndexHeight, setSectionIndexHeight] = useState(0);
   const {
     launches: feedLaunches,
     online,
@@ -317,8 +323,12 @@ export default function LaunchDetailClient({
       ? { ...launch, isLive: false, webcastLive: false }
       : launch;
   const completed = isCompletedLaunch(presentedLaunch);
-  const detailSectionLinks = DETAIL_SECTION_LINKS.filter(
-    (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
+  const detailSectionLinks = useMemo(
+    () =>
+      DETAIL_SECTION_LINKS.filter(
+        (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
+      ),
+    [launch.timeline?.length],
   );
   const { setSource: setDetailNavigationSource } =
     useDetailNavigationContext();
@@ -338,6 +348,9 @@ export default function LaunchDetailClient({
     lastVisible: 1,
   });
   const sectionIndexRef = useRef<HTMLDivElement>(null);
+  const sectionIndexNavRef = useRef<HTMLElement>(null);
+  const activeSectionIdRef = useRef<DetailSectionId>('mission-summary');
+  const resolvedInitialHashRef = useRef<string | null>(null);
   const timelineRef = useRef<HTMLOListElement>(null);
   const intelligenceHostRef = useRef<HTMLDivElement>(null);
   const missionPanelRef = useRef<HTMLElement>(null);
@@ -576,6 +589,139 @@ export default function LaunchDetailClient({
     };
   }, [launch.id, detailSectionLinks.length, updateSectionIndexControls]);
 
+  useLayoutEffect(() => {
+    const sectionIndex = sectionIndexNavRef.current;
+    if (!sectionIndex) return;
+
+    const updateHeight = (): void => {
+      setSectionIndexHeight((current) => {
+        const next = Math.ceil(sectionIndex.getBoundingClientRect().height);
+        return current === next ? current : next;
+      });
+    };
+    updateHeight();
+    const resizeObserver = new ResizeObserver(updateHeight);
+    resizeObserver.observe(sectionIndex);
+    return () => resizeObserver.disconnect();
+  }, [launch.id, detailSectionLinks.length]);
+
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId;
+  }, [activeSectionId]);
+
+  useEffect(() => {
+    if (sectionIndexHeight <= 0) return;
+
+    const hash = window.location.hash.slice(1) as DetailSectionId;
+    const section = detailSectionLinks.find(({ id }) => id === hash);
+    const resolutionKey = section ? `${launch.id}:${section.id}` : launch.id;
+    if (!section || resolvedInitialHashRef.current === resolutionKey) return;
+
+    resolvedInitialHashRef.current = resolutionKey;
+    activeSectionIdRef.current = section.id;
+    let correctionFrame: number | null = null;
+    const frame = window.requestAnimationFrame(() => {
+      setActiveSectionId(section.id);
+      const target = document.getElementById(section.id);
+      target?.scrollIntoView({
+        behavior: 'auto',
+        block: 'start',
+      });
+      correctionFrame = window.requestAnimationFrame(() => {
+        const sectionIndex = sectionIndexNavRef.current;
+        if (!target || !sectionIndex) return;
+        const targetTop = target.getBoundingClientRect().top;
+        const requiredTop = sectionIndex.getBoundingClientRect().bottom + 16;
+        if (targetTop < requiredTop) {
+          window.scrollBy({
+            top: targetTop - requiredTop,
+            behavior: 'auto',
+          });
+        }
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (correctionFrame !== null) {
+        window.cancelAnimationFrame(correctionFrame);
+      }
+    };
+  }, [detailSectionLinks, launch.id, sectionIndexHeight]);
+
+  useEffect(() => {
+    let frame: number | null = null;
+
+    const updateActiveSection = (): void => {
+      frame = null;
+      const sectionIndex = sectionIndexNavRef.current;
+      const headerBottom =
+        document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+      const activationLine = Math.max(
+        headerBottom,
+        sectionIndex?.getBoundingClientRect().bottom ?? headerBottom,
+      ) + 16;
+      const positions = detailSectionLinks.flatMap((section) => {
+        const element = document.getElementById(section.id);
+        if (!element) return [];
+        const bounds = element.getBoundingClientRect();
+        return [{ id: section.id, top: bounds.top, bottom: bounds.bottom }];
+      });
+      const passed = positions.filter(({ top }) => top <= activationLine + 2);
+      const furthestTop = passed.length
+        ? Math.max(...passed.map(({ top }) => top))
+        : positions[0]?.top;
+      const candidates = positions.filter(
+        ({ top }) => furthestTop !== undefined && Math.abs(top - furthestTop) <= 2,
+      );
+      const focusedSection = positions.find(
+        ({ id, top, bottom }) =>
+          document.activeElement?.id === id &&
+          bottom > activationLine &&
+          top < window.innerHeight,
+      );
+      const next =
+        focusedSection?.id ??
+        candidates.find(({ id }) => id === activeSectionIdRef.current)?.id ??
+        candidates[0]?.id ??
+        'mission-summary';
+
+      if (next !== activeSectionIdRef.current) {
+        activeSectionIdRef.current = next;
+        setActiveSectionId(next);
+      }
+    };
+    const scheduleUpdate = (): void => {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(updateActiveSection);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, [detailSectionLinks, launch.id, sectionIndexHeight]);
+
+  useEffect(() => {
+    const track = sectionIndexRef.current;
+    const link = track?.querySelector<HTMLElement>(
+      `[data-mission-section-id="${activeSectionId}"]`,
+    );
+    if (!track || !link) return;
+
+    const trackBounds = track.getBoundingClientRect();
+    const linkBounds = link.getBoundingClientRect();
+    const leftDelta = linkBounds.left - trackBounds.left;
+    const rightDelta = linkBounds.right - trackBounds.right;
+    if (leftDelta < -1) track.scrollBy({ left: leftDelta, behavior: 'auto' });
+    else if (rightDelta > 1) {
+      track.scrollBy({ left: rightDelta, behavior: 'auto' });
+    }
+  }, [activeSectionId]);
+
   const moveSectionIndex = (direction: -1 | 1): void => {
     const track = sectionIndexRef.current;
     if (!track) return;
@@ -671,7 +817,12 @@ export default function LaunchDetailClient({
 
   return (
     <>
-      <div className="mission-detail-page page-container py-4 sm:py-6 lg:py-8">
+      <div
+        className="mission-detail-page page-container py-4 sm:py-6 lg:py-8"
+        style={{
+          '--mission-section-index-height': `${sectionIndexHeight}px`,
+        } as CSSProperties}
+      >
         <Link
           href={returnHref}
           className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
@@ -729,7 +880,7 @@ export default function LaunchDetailClient({
           id="mission-summary"
           ref={missionPanelRef}
           tabIndex={-1}
-          className={`mission-summary-panel surface-card holo-card ${missionTone} grid min-w-0 scroll-mt-20 gap-7 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:scroll-mt-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
+          className={`mission-detail-section-anchor mission-summary-panel surface-card holo-card ${missionTone} grid min-w-0 gap-7 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
         >
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
@@ -797,8 +948,9 @@ export default function LaunchDetailClient({
         </section>
 
         <nav
+          ref={sectionIndexNavRef}
           aria-label="Mission sections"
-          className="mission-section-index surface-card holo-card signal-cold mt-5 min-w-0 max-w-full overflow-hidden"
+          className="mission-section-index surface-card holo-card signal-cold !sticky top-[calc(3.5rem+var(--safe-area-top))] z-40 mt-5 min-w-0 max-w-full overflow-hidden bg-[color:var(--surface-header)] shadow-[0_10px_24px_rgba(0,0,0,0.34)] sm:top-[calc(4.375rem+var(--safe-area-top))]"
         >
           <div className="mission-section-index-header flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5">
             <p className="data-label text-[var(--console-cyan)]">
@@ -888,11 +1040,27 @@ export default function LaunchDetailClient({
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="group inline-flex min-h-11 shrink-0 items-center gap-2 border-r border-[var(--border-subtle)] px-4 font-mono text-xs font-semibold text-[var(--text-secondary)] transition-colors last:border-r-0 hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+                data-mission-section-id={section.id}
+                aria-current={
+                  activeSectionId === section.id ? 'location' : undefined
+                }
+                onClick={() => {
+                  activeSectionIdRef.current = section.id;
+                  setActiveSectionId(section.id);
+                }}
+                className={`group inline-flex min-h-11 shrink-0 items-center gap-2 border-r border-[var(--border-subtle)] px-4 font-mono text-xs font-semibold transition-colors last:border-r-0 hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
+                  activeSectionId === section.id
+                    ? 'bg-[var(--surface-accent)] text-[var(--console-green)]'
+                    : 'text-[var(--text-secondary)]'
+                }`}
               >
                 <span
                   aria-hidden="true"
-                  className="text-[0.62rem] text-[var(--console-cyan)] group-hover:text-[var(--console-green)]"
+                  className={`text-[0.62rem] group-hover:text-[var(--console-green)] ${
+                    activeSectionId === section.id
+                      ? 'text-[var(--console-green)]'
+                      : 'text-[var(--console-cyan)]'
+                  }`}
                 >
                   {String(index + 1).padStart(2, '0')}
                 </span>
@@ -909,7 +1077,7 @@ export default function LaunchDetailClient({
             id="mission-timeline"
             tabIndex={-1}
             aria-labelledby="launch-timeline-title"
-            className="mission-timeline-panel surface-card holo-card signal-warm mt-5 min-w-0 max-w-full scroll-mt-20 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 lg:scroll-mt-24"
+            className="mission-detail-section-anchor mission-timeline-panel surface-card holo-card signal-warm mt-5 min-w-0 max-w-full overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6"
           >
             <div className="mission-timeline-header flex flex-wrap items-center justify-between gap-3">
               <h2 id="launch-timeline-title" className="section-title">
@@ -1006,7 +1174,7 @@ export default function LaunchDetailClient({
             id="mission-intelligence"
             ref={intelligenceHostRef}
             tabIndex={-1}
-            className="min-w-0 max-w-full scroll-mt-20 rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
+            className="mission-detail-section-anchor min-w-0 max-w-full rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
           >
             {intelligenceEnabled ? (
               <LaunchIntelDeck
@@ -1034,7 +1202,7 @@ export default function LaunchDetailClient({
                 ? 'Mission coverage status unconfirmed'
                 : undefined
             }
-            className={`surface-card holo-card min-w-0 max-w-full overflow-hidden scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24 ${
+            className={`mission-detail-section-anchor surface-card holo-card min-w-0 max-w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
               liveStatusUnconfirmed
                 ? 'signal-warm'
                 : presentedLaunch.isLive

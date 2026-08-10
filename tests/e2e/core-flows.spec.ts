@@ -8766,12 +8766,67 @@ test('mission trajectory loading frame stays contained at 200 percent text scali
     }));
   expect(loadingLayout.width).toBeLessThanOrEqual(loadingLayout.containerWidth);
   expect(loadingLayout.right).toBeLessThanOrEqual(320);
+
+  const enlargedIndex = page.getByRole('navigation', {
+    name: 'Mission sections',
+  }).last();
+  const intelligenceLink = enlargedIndex.getByRole('link', {
+    name: 'Intelligence',
+    exact: true,
+  });
+  await intelligenceLink.click();
+  await expect(intelligenceLink).toHaveAttribute('aria-current', 'location');
+  const enlargedPlacement = await page
+    .locator('#mission-intelligence')
+    .last()
+    .evaluate((element) => ({
+      top: element.getBoundingClientRect().top,
+      indexBottom: Array.from(
+        document.querySelectorAll<HTMLElement>(
+          'nav[aria-label="Mission sections"]'
+        )
+      )
+        .at(-1)
+        ?.getBoundingClientRect().bottom ?? 0,
+      viewportWidth: window.innerWidth,
+      documentWidth: document.documentElement.scrollWidth,
+    }));
+  expect(enlargedPlacement.top).toBeGreaterThanOrEqual(
+    enlargedPlacement.indexBottom - 1
+  );
+  expect(enlargedPlacement.documentWidth).toBeLessThanOrEqual(
+    enlargedPlacement.viewportWidth
+  );
 });
 
 test('mission detail index moves focus among available sections', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 393, height: 851 });
+  await page.goto(
+    '/launch/ll2-demo-orbital-dawn#mission-intelligence'
+  );
+  const directIndex = page.getByRole('navigation', {
+    name: 'Mission sections',
+  }).last();
+  const directIntelligence = page.locator('#mission-intelligence').last();
+  await expect(
+    directIndex.getByRole('link', { name: 'Intelligence', exact: true })
+  ).toHaveAttribute('aria-current', 'location');
+  const directPlacement = await directIntelligence.evaluate((element) => ({
+    top: element.getBoundingClientRect().top,
+    indexBottom: Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'nav[aria-label="Mission sections"]'
+      )
+    )
+      .at(-1)
+      ?.getBoundingClientRect().bottom ?? 0,
+  }));
+  expect(directPlacement.top).toBeGreaterThanOrEqual(
+    directPlacement.indexBottom - 1
+  );
+
   await page.goto('/launch/ll2-demo-orbital-dawn');
 
   const sectionIndex = page.getByRole('navigation', {
@@ -8850,15 +8905,57 @@ test('mission detail index moves focus among available sections', async ({
       const bounds = element.getBoundingClientRect();
       const headerBottom =
         document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
+      const sectionIndex = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          'nav[aria-label="Mission sections"]'
+        )
+      )
+        .at(-1)
+        ?.getBoundingClientRect();
       return {
         top: bounds.top,
         headerBottom,
+        indexBottom: sectionIndex?.bottom ?? headerBottom,
+        indexVisible: Boolean(
+          sectionIndex &&
+            sectionIndex.top >= headerBottom - 1 &&
+            sectionIndex.bottom <= window.innerHeight
+        ),
         visible: bounds.bottom > headerBottom && bounds.top < window.innerHeight,
       };
     });
     expect(placement.visible).toBe(true);
     expect(placement.top).toBeGreaterThanOrEqual(placement.headerBottom - 1);
+    if (id !== 'mission-summary') {
+      expect(placement.indexVisible).toBe(true);
+      expect(placement.top).toBeGreaterThanOrEqual(placement.indexBottom - 1);
+      await expect(link).toHaveAttribute('aria-current', 'location');
+    }
   }
+
+  await page.locator('#mission-summary').focus();
+  await page.locator('#mission-intelligence').evaluate((element) => {
+    window.scrollTo({
+      top: element.getBoundingClientRect().top + window.scrollY + 8,
+      behavior: 'auto',
+    });
+  });
+  const intelligenceLink = sectionIndex.getByRole('link', {
+    name: 'Intelligence',
+    exact: true,
+  });
+  await expect(intelligenceLink).toHaveAttribute('aria-current', 'location');
+  expect(
+    await intelligenceLink.evaluate((link) => {
+      const linkBounds = link.getBoundingClientRect();
+      const trackBounds = link.parentElement?.getBoundingClientRect();
+      return Boolean(
+        trackBounds &&
+          linkBounds.left >= trackBounds.left - 1 &&
+          linkBounds.right <= trackBounds.right + 1
+      );
+    })
+  ).toBe(true);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await page.goto('/launch/spacex-demo-return');
