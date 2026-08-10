@@ -44,10 +44,12 @@ function IntelligenceRetryButton({
   loading,
   retryAt,
   onRetry,
+  className = 'mt-5',
 }: {
   loading: boolean;
   retryAt: number | null;
   onRetry: () => void;
+  className?: string;
 }): React.ReactElement {
   const [now, setNow] = useState(() => Date.now());
 
@@ -71,7 +73,7 @@ function IntelligenceRetryButton({
       }}
       aria-disabled={unavailable}
       aria-busy={loading}
-      className={`action-button action-button-secondary mt-5 aria-disabled:opacity-60 ${
+      className={`action-button action-button-secondary aria-disabled:opacity-60 ${className} ${
         loading
           ? 'aria-disabled:cursor-wait'
           : waiting
@@ -397,6 +399,37 @@ export default function LaunchIntelDeck({
             </strong>{' '}
             Showing retained coverage signals. Reconnect to verify updates.
           </p>
+        </div>
+      ) : error ? (
+        <div
+          role="status"
+          aria-label="Mission intelligence refresh failed"
+          className="flex flex-col gap-3 border-b border-[var(--console-amber)]/30 bg-[var(--console-amber)]/[0.06] px-5 py-3 text-sm leading-5 text-[var(--text-secondary)] sm:flex-row sm:items-center sm:px-6"
+        >
+          <div className="flex min-w-0 flex-1 items-start gap-2">
+            <AlertTriangle
+              aria-hidden="true"
+              size={16}
+              className="mt-0.5 shrink-0 text-[var(--console-amber)]"
+            />
+            <p className="min-w-0">
+              <strong className="font-semibold text-[var(--console-amber)]">
+                Coverage refresh failed.
+              </strong>{' '}
+              Showing last verified signals.
+              <span className="mt-1 block break-words font-mono text-xs text-[var(--text-muted)]">
+                {error}
+              </span>
+            </p>
+          </div>
+          {onRetry ? (
+            <IntelligenceRetryButton
+              loading={loading}
+              retryAt={retryAt}
+              onRetry={retryCoverage}
+              className="w-full shrink-0 sm:w-auto"
+            />
+          ) : null}
         </div>
       ) : null}
       <header className="border-b border-[var(--border-subtle)] p-5 sm:p-6">

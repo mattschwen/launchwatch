@@ -138,6 +138,34 @@ describe('LaunchIntelDeck', () => {
     ).toBeVisible();
   });
 
+  it('marks retained intelligence degraded after a refresh failure', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+
+    render(
+      <LaunchIntelDeck
+        launch={launch}
+        intel={LAUNCH_INTEL}
+        error="Coverage provider maintenance"
+        onRetry={onRetry}
+      />
+    );
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Mission intelligence refresh failed',
+      }),
+    ).toHaveTextContent('Showing last verified signals');
+    expect(screen.getByText('Coverage provider maintenance')).toBeVisible();
+    expect(
+      screen.getByRole('group', { name: 'Coverage signal' }),
+    ).toBeVisible();
+
+    const retry = screen.getByRole('button', { name: 'Retry coverage' });
+    await user.click(retry);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
   it('keeps recovery stable and moves focus to restored intelligence', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();

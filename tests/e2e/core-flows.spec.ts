@@ -5375,6 +5375,68 @@ test('watch keeps mission intelligence honest while offline', async ({
   await context.setOffline(false);
 });
 
+test('mission intelligence exposes retained signals after a refresh failure', async ({
+  context,
+  page,
+}) => {
+  let refreshShouldFail = false;
+  let requestCount = 0;
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await page.route('**/api/launch-intel**', (route) => {
+    requestCount += 1;
+    return route.fulfill({
+      status: refreshShouldFail ? 503 : 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        refreshShouldFail
+          ? { error: 'Coverage provider maintenance' }
+          : LAUNCH_INTEL,
+      ),
+    });
+  });
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(
+    intelligence.getByRole('group', { name: 'Coverage signal' }),
+  ).toBeVisible();
+  const initialRequestCount = requestCount;
+
+  await context.setOffline(true);
+  await expect(
+    intelligence.getByRole('status', {
+      name: 'Mission intelligence offline',
+    }),
+  ).toContainText('Showing retained coverage signals');
+  refreshShouldFail = true;
+  await context.setOffline(false);
+
+  const retainedState = intelligence.getByRole('status', {
+    name: 'Mission intelligence refresh failed',
+  });
+  await expect(retainedState).toContainText('Showing last verified signals');
+  await expect(retainedState).toContainText('Coverage provider maintenance');
+  await expect(
+    intelligence.getByRole('group', { name: 'Coverage signal' }),
+  ).toBeVisible();
+  expect(requestCount).toBe(initialRequestCount + 1);
+
+  const retry = retainedState.getByRole('button', { name: 'Retry coverage' });
+  await retry.focus();
+  refreshShouldFail = false;
+  await retry.press('Enter');
+
+  await expect(retainedState).toHaveCount(0);
+  await expect(intelligence).toBeFocused();
+  expect(requestCount).toBe(initialRequestCount + 2);
+  expect(pageErrors).toEqual([]);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission intelligence recovers from an incomplete successful response', async ({
   page,
 }) => {
@@ -8365,7 +8427,12 @@ test('detail defers intelligence acquisition until the panel approaches the view
     await page.waitForTimeout(250);
     expect(intelligenceRequests).toBe(requestBaseline);
 
-    const standby = page.locator('[data-intelligence-standby="true"]');
+    // The App Router can briefly retain the previous streamed segment while
+    // committing the next detail route. Target the active route's last panel,
+    // matching the section-index coverage above.
+    const standby = page
+      .locator('main [data-intelligence-standby="true"]')
+      .last();
     await expect(standby).toHaveAccessibleName('Mission intelligence');
     await expect(standby).toContainText('Acquisition on standby');
     const standbyPosition = await standby.evaluate((element) => ({
@@ -8379,6 +8446,7 @@ test('detail defers intelligence acquisition until the panel approaches the view
     await expect(
       page
         .getByRole('region', { name: 'Mission intelligence' })
+        .last()
         .getByRole('link', { name: 'Search official coverage' })
     ).toBeVisible();
     expect(intelligenceRequests).toBe(requestBaseline + 1);

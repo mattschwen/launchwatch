@@ -160,4 +160,35 @@ describe('useLaunchIntel', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result.current.intel).toEqual(LAUNCH_INTEL);
   });
+
+  it('retains verified intelligence when a later poll fails', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(intelResponse(LAUNCH_INTEL))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Coverage refresh failed' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+    const { result } = renderHook(() =>
+      useLaunchIntel(UPCOMING_LAUNCHES[0]),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.intel).toEqual(LAUNCH_INTEL);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15 * 60_000);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.intel).toEqual(LAUNCH_INTEL);
+    expect(result.current.error).toBe('Coverage refresh failed');
+  });
 });
