@@ -58,7 +58,9 @@ The desktop and mobile navigation both expose Home, Watch, and History. The firs
   estimates keep the existing single-time presentation
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation and a coordinate-validated
-  OpenStreetMap handoff for provider-reported launch sites
+  OpenStreetMap handoff for provider-reported launch sites. Optional trajectory
+  chunk failures stay contained to a retryable telemetry panel so schedule,
+  coverage, and briefing controls remain usable
 - Discrete stream, news, and community coverage signals based on available
   records rather than synthetic strength percentages; external news actions
   are limited to credential-free HTTPS destinations

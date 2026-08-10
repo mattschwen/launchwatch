@@ -33,6 +33,7 @@ import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
+import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -191,7 +192,12 @@ function DeferredWatchTrajectory({
   return (
     <div ref={hostRef} className="mt-5 min-w-0 max-w-full">
       {enabled ? (
-        <MissionTrajectory launch={launch} variant="detail" />
+        <TrajectoryErrorBoundary
+          resetKey={launch.id}
+          className="sm:min-h-[52rem]"
+        >
+          <MissionTrajectory launch={launch} variant="detail" />
+        </TrajectoryErrorBoundary>
       ) : (
         <section
           aria-labelledby="watch-trajectory-pending-title"

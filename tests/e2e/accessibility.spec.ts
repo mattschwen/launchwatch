@@ -91,6 +91,40 @@ for (const route of routes) {
   });
 }
 
+test('@a11y trajectory failure remains a usable mission panel', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 800, height: 320 });
+  await page.goto('/launch/ll2-demo-orbital-dawn', {
+    waitUntil: 'networkidle',
+  });
+
+  await page.route('**/*.js', (route) => route.abort('failed'));
+  const trajectory = page.locator('#mission-trajectory');
+  await trajectory.scrollIntoViewIfNeeded();
+  await expect(
+    page.getByRole('alert', { name: 'Mission trajectory unavailable' })
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y forced colors keeps current and selected controls visible', async ({
   page,
 }) => {

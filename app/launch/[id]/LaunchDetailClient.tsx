@@ -34,6 +34,7 @@ import MissionVisual from '@/components/launch/MissionVisual';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
+import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import {
   firstLaunchValue,
   formatLaunchDate,
@@ -131,6 +132,7 @@ function DeferredDetailTrajectory({
 }): React.ReactElement {
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   const hostRef = useRef<HTMLElement>(null);
 
   const handleTrajectoryReady = useCallback((): void => {
@@ -164,17 +166,32 @@ function DeferredDetailTrajectory({
       ref={hostRef}
       id="mission-trajectory"
       tabIndex={-1}
-      aria-label={ready ? 'Mission trajectory' : 'Loading mission trajectory'}
-      aria-busy={ready ? undefined : 'true'}
+      aria-label={
+        failed
+          ? 'Mission trajectory unavailable'
+          : ready
+            ? 'Mission trajectory'
+            : 'Loading mission trajectory'
+      }
+      aria-busy={!ready && !failed ? 'true' : undefined}
       className="mt-5 scroll-mt-20 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] lg:scroll-mt-24"
     >
       {enabled ? (
-        <MissionTrajectory
-          embedded
-          launch={launch}
-          onReady={handleTrajectoryReady}
-          variant="detail"
-        />
+        <TrajectoryErrorBoundary
+          resetKey={launch.id}
+          className="min-h-[32rem]"
+          onError={() => {
+            setReady(false);
+            setFailed(true);
+          }}
+        >
+          <MissionTrajectory
+            embedded
+            launch={launch}
+            onReady={handleTrajectoryReady}
+            variant="detail"
+          />
+        </TrajectoryErrorBoundary>
       ) : (
         <DetailTrajectoryLoadingState />
       )}

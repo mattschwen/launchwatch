@@ -7,6 +7,7 @@ import { ChevronDown, Globe2 } from 'lucide-react';
 import HeroSection from '@/components/launch/HeroSection';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import LaunchList from '@/components/LaunchList';
+import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import {
   DEFAULT_FILTERS,
   type FilterOptions,
@@ -190,7 +191,12 @@ function HomeExperience({
           ) : !featuredMission ? (
             <TrajectoryUnavailableState scheduleError={Boolean(error)} />
           ) : desktopMapEnabled ? (
-            <MissionTrajectory launch={featuredMission} />
+            <TrajectoryErrorBoundary
+              resetKey={featuredMission.id}
+              className="min-h-[27.5rem]"
+            >
+              <MissionTrajectory launch={featuredMission} />
+            </TrajectoryErrorBoundary>
           ) : (
             <TrajectoryLoadingState />
           )}
@@ -253,7 +259,9 @@ function HomeExperience({
         </button>
         {mobileMapOpen && featuredMission && !desktopMapEnabled ? (
           <div id="mobile-mission-map" className="mt-2">
-            <MissionTrajectory launch={featuredMission} />
+            <TrajectoryErrorBoundary resetKey={featuredMission.id}>
+              <MissionTrajectory launch={featuredMission} />
+            </TrajectoryErrorBoundary>
           </div>
         ) : null}
       </section>

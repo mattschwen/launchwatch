@@ -8594,6 +8594,51 @@ test('mission detail defers trajectory code behind a stable loading state', asyn
   await expect(loadingTrajectory).toBeFocused();
 });
 
+test('mission detail contains a failed trajectory chunk and offers recovery', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 800, height: 320 });
+  await page.goto('/launch/ll2-demo-orbital-dawn', {
+    waitUntil: 'networkidle',
+  });
+
+  const trajectory = page.locator('#mission-trajectory');
+  await expect(trajectory).toHaveAttribute('aria-busy', 'true');
+
+  let blockSecondaryScripts = true;
+  await page.route('**/*.js', async (route) => {
+    if (blockSecondaryScripts) {
+      await route.abort('failed');
+      return;
+    }
+    await route.continue();
+  });
+
+  await trajectory.scrollIntoViewIfNeeded();
+
+  const unavailable = page.getByRole('alert', {
+    name: 'Mission trajectory unavailable',
+  });
+  await expect(unavailable).toBeVisible();
+  await expect(unavailable).toContainText(
+    'Mission timing, coverage, and briefing data remain available.'
+  );
+  await expect(page.locator('#main-content')).toContainText('Orbital Dawn');
+  await expect(trajectory).not.toHaveAttribute('aria-busy');
+
+  blockSecondaryScripts = false;
+  const retry = unavailable.getByRole('button', {
+    name: 'Retry mission trajectory',
+  });
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await retry.click();
+
+  await expect(
+    page.getByRole('region', { name: 'Mission trajectory' })
+  ).toBeVisible();
+  await expect(unavailable).toHaveCount(0);
+});
+
 test('mission trajectory loading frame stays contained at 200 percent text scaling', async ({
   page,
 }) => {
