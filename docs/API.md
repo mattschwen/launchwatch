@@ -101,6 +101,12 @@ values normalize to `null`; clients must not infer them from launch status.
 The optional `providerUpdatedAt` field is the normalized provider record's
 canonical ISO revision timestamp. It is distinct from response `meta.generatedAt`
 and provider cache metadata, which describe LaunchWatch's own fetch lifecycle.
+Positive LL2 yearly attempt ordinals normalize to
+`orbitalLaunchAttemptCountYear`, `providerLaunchAttemptCountYear`, and
+`padLaunchAttemptCountYear`. They describe the mission's worldwide orbital,
+launch-service-provider, and pad sequence for that UTC year; they are attempt
+numbers, not completion or success counts. Zero, negative, fractional, and
+missing values normalize to `null`.
 When LL2 supplies a valid IANA launch-site time zone, `location.timeZone`
 preserves it for precise pad-local clock context. Empty or invalid zones are
 omitted, and clients must continue treating UTC as the authoritative target.
@@ -317,6 +323,9 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `firstStage` | Optional LL2 detail telemetry for provider-confirmed booster identity, flight number, reuse, and landing attempt/outcome/location |
 | `status`, `statusName` | Normalized status plus the provider's human-readable mission state |
 | `providerUpdatedAt` | Optional canonical ISO timestamp for the provider's last revision to this mission record; distinct from feed generation and cache timestamps |
+| `orbitalLaunchAttemptCountYear` | Optional positive ordinal for the worldwide orbital launch attempt sequence in the mission's UTC year |
+| `providerLaunchAttemptCountYear` | Optional positive ordinal for the launch service provider's attempt sequence in the mission's UTC year |
+| `padLaunchAttemptCountYear` | Optional positive ordinal for the launch pad's attempt sequence in the mission's UTC year |
 | `isLive`, `webcastLive` | Active coverage selection signal plus the provider's explicit webcast flag; an in-flight UI claim still requires an in-flight `statusName` |
 | `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window |
 | `description`, `missionType`, `orbit`, `program` | Mission context |

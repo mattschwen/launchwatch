@@ -12,6 +12,9 @@ const NORMAL_LIST_LAUNCH = {
   id: '8b8a30c5-12b5-4a37-bbea-160d90ec65e5',
   name: 'Falcon 9 Block 5 | Fixture Mission',
   last_updated: '2035-07-29T01:13:00Z',
+  orbital_launch_attempt_count_year: 132,
+  agency_launch_attempt_count_year: 41,
+  pad_launch_attempt_count_year: 19,
   net: '2035-07-29T02:00:00Z',
   net_precision: {
     name: 'Hour',
@@ -390,6 +393,26 @@ describe('Launch Library 2.3 adapter', () => {
     expect(normalized).toMatchObject({
       providerUpdatedAt: '2035-07-29T01:13:00.000Z',
     });
+  });
+
+  it('preserves positive yearly provider attempt ordinals', () => {
+    const normalized = normalizeLL2Launch(NORMAL_LIST_LAUNCH);
+
+    expect(normalized).toMatchObject({
+      orbitalLaunchAttemptCountYear: 132,
+      providerLaunchAttemptCountYear: 41,
+      padLaunchAttemptCountYear: 19,
+    });
+
+    const malformed = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      orbital_launch_attempt_count_year: 0,
+      agency_launch_attempt_count_year: -1,
+      pad_launch_attempt_count_year: 4.5,
+    });
+    expect(malformed.orbitalLaunchAttemptCountYear).toBeNull();
+    expect(malformed.providerLaunchAttemptCountYear).toBeNull();
+    expect(malformed.padLaunchAttemptCountYear).toBeNull();
   });
 
   it('drops malformed provider revision times', () => {

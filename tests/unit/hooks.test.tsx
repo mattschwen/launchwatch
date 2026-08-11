@@ -31,6 +31,9 @@ describe('reconcileCurrentLaunch', () => {
       weatherConcerns: 'Anvil Cloud Rule',
       holdReason: 'Range clearance pending',
       providerUpdatedAt: '2035-07-28T15:12:00.000Z',
+      orbitalLaunchAttemptCountYear: 133,
+      providerLaunchAttemptCountYear: 42,
+      padLaunchAttemptCountYear: 20,
       statusName: 'Target updated',
     };
     const detailLaunch = {
@@ -49,6 +52,11 @@ describe('reconcileCurrentLaunch', () => {
       weatherConcerns: feedLaunch.weatherConcerns,
       holdReason: feedLaunch.holdReason,
       providerUpdatedAt: feedLaunch.providerUpdatedAt,
+      orbitalLaunchAttemptCountYear:
+        feedLaunch.orbitalLaunchAttemptCountYear,
+      providerLaunchAttemptCountYear:
+        feedLaunch.providerLaunchAttemptCountYear,
+      padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
       statusName: feedLaunch.statusName,
       description: detailLaunch.description,
       livestream: detailLaunch.livestream,

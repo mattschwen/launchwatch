@@ -580,6 +580,12 @@ function providerTimestamp(value: string | null | undefined): string | null {
   return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 }
 
+function positiveProviderCount(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
+    ? value
+    : null;
+}
+
 function safeProviderCoverageUrl(
   value: string | null | undefined,
 ): string | null {
@@ -977,6 +983,9 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     status,
     statusName,
     providerUpdatedAt: null,
+    orbitalLaunchAttemptCountYear: null,
+    providerLaunchAttemptCountYear: null,
+    padLaunchAttemptCountYear: null,
     officialMissionUrl: null,
     trajectorySimulationUrl: null,
     missionName: launch.name,
@@ -1166,6 +1175,15 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     status: isLive ? 'live' : sourceStatus,
     statusName: launch.status.name || launch.status.abbrev || null,
     providerUpdatedAt: providerTimestamp(launch.last_updated),
+    orbitalLaunchAttemptCountYear: positiveProviderCount(
+      launch.orbital_launch_attempt_count_year,
+    ),
+    providerLaunchAttemptCountYear: positiveProviderCount(
+      launch.agency_launch_attempt_count_year,
+    ),
+    padLaunchAttemptCountYear: positiveProviderCount(
+      launch.pad_launch_attempt_count_year,
+    ),
     missionName: isMeaningfulLaunchValue(launch.mission?.name)
       ? launch.mission.name.trim()
       : null,

@@ -36,6 +36,7 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
+import LaunchCadenceSignal from '@/components/launch/LaunchCadenceSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
@@ -574,6 +575,7 @@ export default function LaunchDetailClient({
           updatedAt={presentedLaunch.providerUpdatedAt}
           variant="compact"
         />
+        <LaunchCadenceSignal launch={presentedLaunch} variant="compact" />
         <LaunchReadinessSignal launch={presentedLaunch} variant="compact" />
         <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
         <MissionProfileSignal launch={presentedLaunch} variant="compact" />

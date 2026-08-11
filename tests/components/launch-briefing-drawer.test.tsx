@@ -177,4 +177,19 @@ describe('LaunchBriefingDrawer', () => {
       .closest('[data-provider-revision-signal]');
     expect(revision).toHaveTextContent('Jul 26, 2035 · 11:42 UTC');
   });
+
+  it('retains launch cadence in the mission briefing', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    const cadence = screen
+      .getByText('Launch cadence · 2035')
+      .closest('[data-launch-cadence-signal]');
+    expect(cadence).toHaveTextContent('Provider attempt #41');
+    expect(cadence).toHaveTextContent('Pad attempt #19');
+    expect(cadence).toHaveTextContent('Worldwide orbital #132');
+  });
 });

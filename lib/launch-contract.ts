@@ -35,6 +35,14 @@ function isLaunchProbability(value: unknown): boolean {
   );
 }
 
+function isOptionalPositiveInteger(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'number' && Number.isInteger(value) && value > 0)
+  );
+}
+
 function isSafeHttpsUrl(value: unknown): value is string {
   if (typeof value !== 'string' || value !== value.trim()) return false;
 
@@ -194,6 +202,9 @@ export function isLaunch(value: unknown): value is Launch {
     typeof value.launchSite === 'string' &&
     statuses.includes(String(value.status)) &&
     isOptionalProviderTimestamp(value.providerUpdatedAt) &&
+    isOptionalPositiveInteger(value.orbitalLaunchAttemptCountYear) &&
+    isOptionalPositiveInteger(value.providerLaunchAttemptCountYear) &&
+    isOptionalPositiveInteger(value.padLaunchAttemptCountYear) &&
     isSafeNullableUrl(value.livestream) &&
     isSafeLaunchStreams(value.livestreams) &&
     isNullableString(value.description) &&

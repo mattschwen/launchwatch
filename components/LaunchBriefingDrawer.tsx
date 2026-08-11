@@ -27,6 +27,7 @@ import MissionDescription from './MissionDescription';
 import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
+import LaunchCadenceSignal from './launch/LaunchCadenceSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 import MissionOperatorSignal from './launch/MissionOperatorSignal';
@@ -227,6 +228,7 @@ export default function LaunchBriefingDrawer({
               </div>
             ) : null}
             <ProviderRevisionSignal updatedAt={launch.providerUpdatedAt} />
+            <LaunchCadenceSignal launch={launch} />
             <LaunchReadinessSignal launch={launch} />
             <div className="py-4">
               <dt className="flex items-center gap-3">

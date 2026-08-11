@@ -43,6 +43,14 @@ describe('client launch contract', () => {
     expect(
       isLaunch({
         ...UPCOMING_LAUNCHES[0],
+        orbitalLaunchAttemptCountYear: 132,
+        providerLaunchAttemptCountYear: 41,
+        padLaunchAttemptCountYear: 19,
+      }),
+    ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
         missionAgencies: [
           { name: 'European Space Agency', abbrev: 'ESA', type: 'Multinational' },
         ],
@@ -150,6 +158,18 @@ describe('client launch contract', () => {
       }),
     ).toBe(false);
   });
+
+  it.each([0, -1, 4.5, Number.NaN])(
+    'rejects malformed provider attempt ordinal %s',
+    (providerLaunchAttemptCountYear) => {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          providerLaunchAttemptCountYear,
+        }),
+      ).toBe(false);
+    },
+  );
 
   it('rejects malformed provider revision timestamps', () => {
     expect(

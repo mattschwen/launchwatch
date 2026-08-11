@@ -1741,6 +1741,55 @@ test('featured countdown never strands the seconds cell', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('provider attempt sequence stays explicit across mission surfaces', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  const heroCadence = hero.locator('[data-launch-cadence-signal]');
+  if (test.info().project.name.startsWith('mobile')) {
+    await expect(heroCadence).toBeHidden();
+  } else {
+    await expect(heroCadence.getByText('Launch cadence · 2035')).toBeVisible();
+    await expect(
+      heroCadence.getByText('Launch provider attempt number 41 in 2035'),
+    ).toBeAttached();
+    await expect(
+      heroCadence.getByText('Launch pad attempt number 19 in 2035'),
+    ).toBeAttached();
+    await expect(
+      heroCadence.getByText(
+        'Worldwide orbital launch attempt number 132 in 2035',
+      ),
+    ).toBeAttached();
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const briefingCadence = dialog.locator('[data-launch-cadence-signal]');
+  await expect(briefingCadence).toContainText('Provider attempt #41');
+  await expect(
+    briefingCadence.getByText('Launch pad attempt number 19 in 2035'),
+  ).toBeAttached();
+  await dialog.getByRole('button', { name: 'Close mission briefing' }).click();
+
+  await page.goto('/watch');
+  await expect(
+    page.locator('[data-watch-mission-details] [data-launch-cadence-signal]'),
+  ).toContainText('Pad attempt #19');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto(`/launch/${UPCOMING_LAUNCHES[0].id}`);
+  await expect(
+    page.locator('[data-launch-cadence-signal]').first(),
+  ).toContainText('Worldwide orbital #132');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('narrow schedule rows keep timing and mission identity in a stable scan path', async ({
   page,
 }) => {
@@ -3159,9 +3208,9 @@ test('featured mission telemetry stays legible in the split layout', async ({
     const columns = getComputedStyle(element).gridTemplateColumns
       .split(' ')
       .filter(Boolean);
-    const cells = Array.from(element.children).map(
-      (child) => child.getBoundingClientRect().width
-    );
+    const cells = Array.from(element.children)
+      .filter((child) => child.getClientRects().length > 0)
+      .map((child) => child.getBoundingClientRect().width);
 
     return {
       columns: columns.length,

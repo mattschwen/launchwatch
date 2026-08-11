@@ -17,6 +17,7 @@ import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchTimeContext from '@/components/LaunchTimeContext';
 import StatusBadge from '@/components/ui/StatusBadge';
 import LaunchActions from './LaunchActions';
+import LaunchCadenceSignal from './LaunchCadenceSignal';
 import LaunchReadinessSignal from './LaunchReadinessSignal';
 import LaunchWindow from './LaunchWindow';
 import MissionProfileSignal from './MissionProfileSignal';
@@ -433,6 +434,7 @@ export default function HeroSection({
               </dd>
             </div>
             <MissionProfileSignal launch={activeLaunch} variant="hero" />
+            <LaunchCadenceSignal launch={activeLaunch} variant="hero" />
           </dl>
 
           <LaunchActions

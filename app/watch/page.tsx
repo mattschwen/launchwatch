@@ -34,6 +34,7 @@ import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
+import LaunchCadenceSignal from '@/components/launch/LaunchCadenceSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
@@ -1367,6 +1368,10 @@ function WatchContent(): React.ReactElement {
                   <dl className="mt-4 space-y-4 border-t border-[var(--border-subtle)] pt-4">
                     <ProviderRevisionSignal
                       updatedAt={selectedLaunch.providerUpdatedAt}
+                      variant="compact"
+                    />
+                    <LaunchCadenceSignal
+                      launch={selectedLaunch}
                       variant="compact"
                     />
                     <LaunchReadinessSignal

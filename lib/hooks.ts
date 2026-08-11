@@ -196,6 +196,11 @@ export function reconcileCurrentLaunch(
     weatherConcerns: feedLaunch.weatherConcerns,
     holdReason: feedLaunch.holdReason,
     providerUpdatedAt: feedLaunch.providerUpdatedAt,
+    orbitalLaunchAttemptCountYear:
+      feedLaunch.orbitalLaunchAttemptCountYear,
+    providerLaunchAttemptCountYear:
+      feedLaunch.providerLaunchAttemptCountYear,
+    padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
     status: feedLaunch.status,
     statusName: feedLaunch.statusName,
     isLive: feedLaunch.isLive,

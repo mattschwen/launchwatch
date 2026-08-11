@@ -210,6 +210,24 @@ describe('HeroSection', () => {
     expect(screen.queryByText('GO FOR LAUNCH')).not.toBeInTheDocument();
   });
 
+  it('shows provider attempt ordinals as cadence rather than outcomes', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[0]}
+      />
+    );
+
+    const cadence = screen
+      .getByText('Launch cadence · 2035')
+      .closest('[data-launch-cadence-signal]');
+
+    expect(cadence).toHaveTextContent('Provider attempt #41');
+    expect(cadence).toHaveTextContent('Pad attempt #19');
+    expect(cadence).toHaveTextContent('Worldwide orbital #132');
+    expect(cadence).not.toHaveTextContent(/success/i);
+  });
+
   it('keeps the provider launch window visible beside the target time', () => {
     const { rerender } = render(
       <HeroSection
