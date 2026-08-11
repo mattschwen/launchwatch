@@ -50,8 +50,9 @@ short, dismissible status toast; it never blocks the application.
 - Mission briefings, coverage, community links, and replay surfaces
 - Provider-derived mission clocks translate precise timeline offsets into UTC
   and local milestone times; coarse targets keep those clocks visibly pending.
-- Consistent screen-reader cues before actions open external coverage, sources,
-  or calendar handoffs in a new tab
+- External coverage handoffs name the destination before leaving LaunchWatch,
+  with consistent screen-reader cues when coverage, sources, or calendar
+  actions open in a new tab
 - Provider-sourced vehicle and mission imagery with visible creator and license
   attribution, a full-resolution action, and truthful unavailable states
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,

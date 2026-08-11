@@ -86,11 +86,17 @@ describe('VideoPlayer coverage state', () => {
 
   it('keeps scheduled external coverage distinct from a live broadcast', () => {
     const { rerender } = render(
-      <VideoPlayer url="https://x.com/i/broadcasts/scheduled-mission" />
+      <VideoPlayer
+        url="https://x.com/i/broadcasts/scheduled-mission"
+        title="Orbital Dawn"
+      />
     );
 
+    expect(screen.getByText('External coverage')).toBeVisible();
+    expect(screen.getByText('Orbital Dawn')).toBeVisible();
+    expect(screen.getByText('Hosted on X')).toBeVisible();
     const scheduled = screen.getByRole('link', {
-      name: /Open provider stream.*new tab/i,
+      name: /Open X stream.*new tab/i,
     });
     expect(scheduled.closest('.stream-surface')).toHaveClass('signal-cold');
     expect(scheduled).toHaveClass('action-button-secondary');
@@ -99,15 +105,35 @@ describe('VideoPlayer coverage state', () => {
     rerender(
       <VideoPlayer
         url="https://x.com/i/broadcasts/scheduled-mission"
+        title="Orbital Dawn"
         live
       />
     );
 
     const live = screen.getByRole('link', {
-      name: /Open provider stream.*new tab/i,
+      name: /Open X stream.*new tab/i,
     });
     expect(live.closest('.stream-surface')).toHaveClass('signal-live');
     expect(live).toHaveClass('action-button-stream');
+  });
+
+  it('names an unfamiliar external coverage host without exposing its www prefix', () => {
+    render(
+      <VideoPlayer
+        url="https://www.coverage.example/live/orbital-dawn"
+        title="Orbital Dawn"
+      />
+    );
+
+    expect(screen.getByText('Hosted on coverage.example')).toBeVisible();
+    expect(
+      screen.getByRole('link', {
+        name: /Open coverage\.example stream.*new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://www.coverage.example/live/orbital-dawn'
+    );
   });
 
   it('keeps signed-in YouTube playback primary before an embed loads', () => {

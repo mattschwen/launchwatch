@@ -13,6 +13,16 @@ interface VideoPlayerProps {
   live?: boolean;
 }
 
+function externalStreamDestination(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    if (hostname === 'x.com' || hostname === 'twitter.com') return 'X';
+    return hostname || 'provider site';
+  } catch {
+    return 'provider site';
+  }
+}
+
 export default function VideoPlayer({
   url,
   title,
@@ -54,36 +64,55 @@ export default function VideoPlayer({
   }
 
   if (!videoId) {
+    const destination = externalStreamDestination(url);
+
     return (
       <div
         className={`stream-surface ${
           live ? 'signal-live' : 'signal-cold'
-        } flex aspect-video w-full flex-col items-center justify-center gap-4 px-5 text-center ${className}`}
+        } flex min-h-[16rem] w-full flex-col items-center justify-center px-5 py-6 text-center sm:aspect-video sm:min-h-0 ${className}`}
       >
-        <Tv
-          aria-hidden="true"
-          size={32}
-          className={
-            live
-              ? 'text-[var(--console-magenta)]'
-              : 'text-[var(--console-cyan)]'
-          }
-        />
-        <p className="text-sm text-[var(--text-secondary)]">
-          This provider stream opens in a separate window.
-        </p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`action-button ${
-            live ? 'action-button-stream' : 'action-button-secondary'
-          }`}
-        >
-          <ExternalLink aria-hidden="true" size={16} />
-          Open provider stream
-          <ExternalLinkHint />
-        </a>
+        <div className="flex max-w-xl flex-col items-center">
+          <span
+            className={`flex h-11 w-11 items-center justify-center rounded-full border bg-[var(--surface-accent)] ${
+              live
+                ? 'border-[var(--console-magenta)]/35 text-[var(--console-magenta)]'
+                : 'border-[var(--console-cyan)]/30 text-[var(--console-cyan)]'
+            }`}
+          >
+            <Tv aria-hidden="true" size={23} />
+          </span>
+          <p
+            className={`data-label mt-4 ${
+              live
+                ? 'text-[var(--console-magenta)]'
+                : 'text-[var(--console-cyan)]'
+            }`}
+          >
+            External coverage
+          </p>
+          <p className="mt-2 max-w-full break-words text-lg font-semibold leading-6 text-[var(--text-primary)] sm:text-xl">
+            {title || 'Provider stream'}
+          </p>
+          <p className="mt-3 max-w-full break-all font-mono text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            Hosted on {destination}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            This provider stream opens in a separate window.
+          </p>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`action-button mt-5 max-w-full break-all text-center ${
+              live ? 'action-button-stream' : 'action-button-secondary'
+            }`}
+          >
+            <ExternalLink aria-hidden="true" size={16} />
+            Open {destination} stream
+            <ExternalLinkHint />
+          </a>
+        </div>
       </div>
     );
   }

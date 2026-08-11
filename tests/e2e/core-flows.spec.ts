@@ -808,7 +808,7 @@ test('detail suppresses a live server snapshot the current feed cannot confirm',
   ).toBeVisible();
   await expect(
     detail.getByRole('link', {
-      name: /Open provider stream.*new tab/i,
+      name: /Open X stream.*new tab/i,
     })
   ).toBeVisible();
   await expect(
@@ -1017,7 +1017,7 @@ test('watch prefers official provider coverage over an earlier restream', async 
   ).toBeVisible();
   await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
   const primaryCoverage = page.getByRole('link', {
-    name: /Open provider stream.*new tab/i,
+    name: /Open X stream.*new tab/i,
   });
   await expect(primaryCoverage).toHaveAttribute(
     'href',
@@ -4555,10 +4555,13 @@ test('watch enriches the selected mission and switches the mission queue', async
   await page.goto('/watch');
 
   await expect(
-    page.getByText('This provider stream opens in a separate window.')
+    page.getByText('Hosted on X')
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /Open provider stream.*new tab/i })
+    page.getByText('Orbital Dawn', { exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toHaveAttribute(
     'href',
     'https://x.com/i/broadcasts/demo-orbital-dawn'
@@ -4569,7 +4572,7 @@ test('watch enriches the selected mission and switches the mission queue', async
   await expect(scheduledCoverage).toHaveClass(/signal-cold/);
   await expect(scheduledCoverage).not.toHaveClass(/signal-live/);
   await expect(
-    scheduledCoverage.getByRole('link', { name: /Open provider stream.*new tab/i })
+    scheduledCoverage.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toHaveClass(/action-button-secondary/);
   const scheduledSurface = scheduledCoverage.locator('.stream-surface');
   await expect(scheduledSurface).toHaveClass(/signal-cold/);
@@ -4760,9 +4763,10 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
   );
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/watch');
-  await expect(
-    page.getByRole('link', { name: /Open provider stream/ })
-  ).toBeVisible();
+  const externalCoverage = page.getByRole('link', {
+    name: /Open X stream/,
+  });
+  await expect(externalCoverage).toBeVisible();
 
   const coverage = page.getByRole('region', {
     name: 'Mission coverage scheduled',
@@ -4771,6 +4775,21 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
   const missionDetails = page
     .getByRole('heading', { level: 2, name: 'Orbital Dawn' })
     .locator('xpath=ancestor::section[1]');
+
+  await externalCoverage.focus();
+  await expect(externalCoverage).toBeFocused();
+  const handoffGeometry = await Promise.all([
+    coverage.boundingBox(),
+    externalCoverage.boundingBox(),
+  ]);
+  expect(handoffGeometry[0]).not.toBeNull();
+  expect(handoffGeometry[1]).not.toBeNull();
+  expect(handoffGeometry[1]!.height).toBeGreaterThanOrEqual(44);
+  expect(
+    handoffGeometry[1]!.y + handoffGeometry[1]!.height
+  ).toBeLessThanOrEqual(
+    handoffGeometry[0]!.y + handoffGeometry[0]!.height + 1
+  );
 
   const hierarchy = await Promise.all(
     [coverage, queue, missionDetails].map(async (element) => {
@@ -5072,7 +5091,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
 
   await expect(
-    page.getByRole('link', { name: /Open provider stream.*new tab/i })
+    page.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toBeVisible();
   await expect(page.locator('figure[data-visual-kind]')).toHaveCount(0);
   const showVisual = page.getByRole('button', {
@@ -5123,7 +5142,7 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
 
   await expect(
-    page.getByRole('link', { name: /Open provider stream.*new tab/i })
+    page.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toHaveCount(0);
   const visual = page.locator('figure[data-visual-kind="vehicle"]');
   await expect(visual).toHaveCount(1);
@@ -6484,7 +6503,7 @@ test('watch recovers failed detail enrichment without reloading the schedule', a
   await expect(retry).toHaveAttribute('aria-busy', 'true');
   releaseRetry?.();
   await expect(
-    page.getByRole('link', { name: /Open provider stream.*new tab/i })
+    page.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Mission coverage scheduled' })
