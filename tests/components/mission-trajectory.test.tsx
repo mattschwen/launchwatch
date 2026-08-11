@@ -96,6 +96,14 @@ describe('MissionTrajectory', () => {
     expect(screen.getAllByText(TRAJECTORY_DISCLOSURE)).toHaveLength(2);
     expect(container.querySelector('[data-trajectory-map]')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /28\.5619°N.*80\.5774°W.*opens in a new tab/i })).toHaveAttribute('href', 'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774');
+    expect(
+      screen.getByRole('link', {
+        name: /FlightClub simulation.*opens in a new tab/i,
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://flightclub.io/result?llId=demo-orbital-dawn',
+    );
   });
 
   it('loads a continuous open map and a progressively explorable field guide', async () => {

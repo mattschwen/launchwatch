@@ -68,6 +68,36 @@ function CompactFacts({ launch }: { launch: Launch | null }): React.ReactElement
   );
 }
 
+function TrajectoryDisclosure({
+  launch,
+}: {
+  launch: Launch | null;
+}): React.ReactElement {
+  return (
+    <div className="flex flex-col border-t border-[var(--border-subtle)] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5">
+      <p className="flex items-start gap-2 text-[10px] leading-relaxed text-[var(--text-muted)] sm:text-[11px]">
+        <Info
+          aria-hidden="true"
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
+        />
+        {TRAJECTORY_DISCLOSURE}
+      </p>
+      {launch?.trajectorySimulationUrl ? (
+        <a
+          href={launch.trajectorySimulationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 inline-flex min-h-11 shrink-0 items-center gap-1.5 self-start font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)] sm:-my-2 sm:mt-0 sm:self-center"
+        >
+          FlightClub simulation
+          <ExternalLink aria-hidden="true" size={13} />
+          <ExternalLinkHint />
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 export default function MissionTrajectory({
   className = '',
   embedded = false,
@@ -168,7 +198,7 @@ export default function MissionTrajectory({
               </div>
               <MissionMapCanvas activeSelection={activeSelection} launch={launch} trajectory={trajectory} variant="detail" viewMode="focus" viewport={viewport} />
               <MissionPhaseRail activeSelection={activeSelection} launch={launch} onSelect={setActiveSelection} trajectory={trajectory} />
-              <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{TRAJECTORY_DISCLOSURE}</p>
+              <TrajectoryDisclosure launch={launch} />
             </section>
             <section aria-labelledby={`${sectionTitleId}-atlas`}>
               <div className="border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
@@ -183,7 +213,7 @@ export default function MissionTrajectory({
         ) : (
           <>
             <MissionMapCanvas activeSelection={null} launch={launch} trajectory={trajectory} variant="compact" viewMode="focus" viewport={viewport} />
-            <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{TRAJECTORY_DISCLOSURE}</p>
+            <TrajectoryDisclosure launch={launch} />
           </>
         )}
         {variant === 'compact' ? <CompactFacts launch={launch} /> : null}

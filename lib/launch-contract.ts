@@ -204,6 +204,8 @@ export function isLaunch(value: unknown): value is Launch {
     isOptionalNullableString(value.holdReason) &&
     isLaunchMissionAgencies(value.missionAgencies) &&
     isLaunchProviderUpdates(value.providerUpdates) &&
+    isSafeOptionalUrl(value.officialMissionUrl) &&
+    isSafeOptionalUrl(value.trajectorySimulationUrl) &&
     isLaunchFirstStage(value.firstStage) &&
     isLaunchLocation(value.location) &&
     (timeline === undefined ||

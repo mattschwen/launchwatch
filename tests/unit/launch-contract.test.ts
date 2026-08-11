@@ -61,6 +61,28 @@ describe('client launch contract', () => {
         ],
       }),
     ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        officialMissionUrl: 'https://www.spacex.com/launches/demo',
+        trajectorySimulationUrl:
+          'https://flightclub.io/result?llId=demo-orbital-dawn',
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects unsafe provider mission resources', () => {
+    for (const field of [
+      'officialMissionUrl',
+      'trajectorySimulationUrl',
+    ] as const) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          [field]: 'javascript:alert(document.domain)',
+        }),
+      ).toBe(false);
+    }
   });
 
   it('rejects malformed or unsafe provider updates', () => {

@@ -115,6 +115,20 @@ describe('LaunchBriefingDrawer', () => {
     ).toBeVisible();
   });
 
+  it('hands off to the provider-curated official mission page', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    expect(
+      screen.getByRole('link', {
+        name: /Official page.*opens in a new tab/i,
+      })
+    ).toHaveAttribute('href', 'https://example.test/orbital-dawn');
+  });
+
   it('surfaces provider-confirmed first-stage history and recovery plans', () => {
     const launch = UPCOMING_LAUNCHES[0];
 

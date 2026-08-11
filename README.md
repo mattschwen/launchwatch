@@ -77,6 +77,9 @@ short, dismissible status toast; it never blocks the application.
   notes in newest-first order with UTC timestamps and credential-free HTTPS
   source handoffs; the briefing retains only the newest note, and list-only
   missions stay silent instead of implying an update history
+- Provider-curated official mission pages remain available in deep mission
+  actions, while FlightClub handoffs sit beside the illustrative trajectory
+  disclosure so external simulations are never presented as LaunchWatch telemetry
 - Provider launch-readiness reports retain bounded probability, weather
   constraints, and hold reasons across Home, Watch, briefing, and canonical
   detail surfaces; missing or malformed values remain absent rather than being

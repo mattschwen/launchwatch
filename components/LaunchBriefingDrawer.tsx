@@ -372,6 +372,18 @@ export default function LaunchBriefingDrawer({
               menuAlign="right"
             />
           ) : null}
+          {launch.officialMissionUrl ? (
+            <a
+              href={launch.officialMissionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-button action-button-secondary"
+            >
+              Official page
+              <ExternalLink aria-hidden="true" size={17} />
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          ) : null}
           {launch.livestream ? (
             <a
               href={launch.livestream}

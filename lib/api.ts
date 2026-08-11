@@ -599,6 +599,28 @@ function safeProviderCoverageUrl(
   }
 }
 
+function officialMissionUrl(infoUrls: LL2Launch['info_urls']): string | null {
+  if (!Array.isArray(infoUrls)) return null;
+
+  return [...infoUrls]
+    .sort((left, right) => (right?.priority ?? 0) - (left?.priority ?? 0))
+    .flatMap((candidate) => {
+      const type = optionalText(candidate?.type?.name)?.toLocaleLowerCase();
+      const url = safeProviderCoverageUrl(candidate?.url);
+      return type?.includes('official') && url ? [url] : [];
+    })[0] ?? null;
+}
+
+function trajectorySimulationUrl(value: string | null | undefined): string | null {
+  const safeUrl = safeProviderCoverageUrl(value);
+  if (!safeUrl) return null;
+
+  const hostname = new URL(safeUrl).hostname.toLocaleLowerCase();
+  return hostname === 'flightclub.io' || hostname.endsWith('.flightclub.io')
+    ? safeUrl
+    : null;
+}
+
 function normalizeProviderUpdates(
   updates: LL2Launch['updates'],
 ): NonNullable<Launch['providerUpdates']> {
@@ -955,6 +977,8 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     status,
     statusName,
     providerUpdatedAt: null,
+    officialMissionUrl: null,
+    trajectorySimulationUrl: null,
     missionName: launch.name,
     missionAgencies: null,
     livestream: webcast,
@@ -1200,6 +1224,8 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
       })
       : null,
     providerUpdates: providerUpdates.length > 0 ? providerUpdates : null,
+    officialMissionUrl: officialMissionUrl(launch.info_urls),
+    trajectorySimulationUrl: trajectorySimulationUrl(launch.flightclub_url),
     videoThumbnail: livestreams?.[0]?.thumbnail || null,
     source: 'll2',
     ll2Id: launch.id,

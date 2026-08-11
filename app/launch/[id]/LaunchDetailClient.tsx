@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   MapPin,
   Radio,
   RefreshCw,
@@ -41,6 +42,7 @@ import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
 import MissionUpdateLog from '@/components/launch/MissionUpdateLog';
 import StatusBadge from '@/components/ui/StatusBadge';
+import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import {
@@ -579,6 +581,28 @@ export default function LaunchDetailClient({
           missionAgencies={presentedLaunch.missionAgencies}
           compact
         />
+        {presentedLaunch.officialMissionUrl ? (
+          <div className="mission-telemetry-item relative pl-8">
+            <ExternalLink
+              aria-hidden="true"
+              size={18}
+              className="absolute left-0 top-0.5 text-[var(--console-cyan)]"
+            />
+            <dt className="data-label">Mission source</dt>
+            <dd>
+              <a
+                href={presentedLaunch.officialMissionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="-my-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                Official page
+                <ExternalLink aria-hidden="true" size={14} />
+                <ExternalLinkHint />
+              </a>
+            </dd>
+          </div>
+        ) : null}
       </dl>
     </section>
   );

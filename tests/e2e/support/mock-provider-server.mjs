@@ -341,6 +341,17 @@ const ll2Upcoming = ll2Launch({
 ll2Upcoming.probability = 85;
 ll2Upcoming.weather_concerns = 'Cumulus Cloud Rule';
 ll2Upcoming.holdreason = null;
+ll2Upcoming.flightclub_url =
+  'https://flightclub.io/result?llId=demo-orbital-dawn';
+ll2Upcoming.info_urls = [
+  {
+    priority: 10,
+    source: 'example.test',
+    title: 'Orbital Dawn mission page',
+    url: 'https://example.test/orbital-dawn',
+    type: { name: 'Official Page' },
+  },
+];
 ll2Upcoming.updates = [
   {
     id: 4103,

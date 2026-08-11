@@ -31,6 +31,9 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     status: 'upcoming',
     statusName: 'Go',
     providerUpdatedAt: '2035-07-26T11:42:00.000Z',
+    officialMissionUrl: 'https://example.test/orbital-dawn',
+    trajectorySimulationUrl:
+      'https://flightclub.io/result?llId=demo-orbital-dawn',
     missionName: 'Orbital Dawn',
     missionType: 'Communications',
     missionAgencies: [

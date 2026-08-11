@@ -104,6 +104,17 @@ const NORMAL_LIST_LAUNCH = {
 const DETAILED_LAUNCH = {
   ...NORMAL_LIST_LAUNCH,
   id: 'f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
+  flightclub_url:
+    'https://flightclub.io/result?llId=f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
+  info_urls: [
+    {
+      priority: 10,
+      source: 'spacex.com',
+      title: 'Fixture mission',
+      url: 'https://www.spacex.com/launches/fixture-mission',
+      type: { name: 'Official Page' },
+    },
+  ],
   launch_service_provider: {
     name: 'SpaceX',
     logo: {
@@ -213,6 +224,37 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves safe provider-curated mission resources', () => {
+    const normalized = normalizeLL2Launch(DETAILED_LAUNCH);
+
+    expect(normalized).toMatchObject({
+      officialMissionUrl:
+        'https://www.spacex.com/launches/fixture-mission',
+      trajectorySimulationUrl:
+        'https://flightclub.io/result?llId=f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
+    });
+  });
+
+  it('rejects unsafe, mislabeled, and non-FlightClub resource URLs', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      flightclub_url: 'https://example.test/flightclub-lookalike',
+      info_urls: [
+        {
+          url: 'javascript:alert(document.domain)',
+          type: { name: 'Official Page' },
+        },
+        {
+          url: 'https://example.test/community-post',
+          type: { name: 'Community' },
+        },
+      ],
+    });
+
+    expect(normalized.officialMissionUrl).toBeNull();
+    expect(normalized.trajectorySimulationUrl).toBeNull();
+  });
+
   it('preserves a valid launch-site time zone and rejects malformed zones', () => {
     expect(normalizeLL2Launch(NORMAL_LIST_LAUNCH).location).toMatchObject({
       timeZone: 'America/Los_Angeles',

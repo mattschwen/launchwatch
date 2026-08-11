@@ -404,6 +404,56 @@ test('provider first-stage telemetry follows the canonical mission across surfac
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('provider-curated mission resources stay distinct from LaunchWatch telemetry', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto(`/launch/${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`);
+
+  const officialPage = page.getByRole('link', {
+    name: /Official page.*opens in a new tab/i,
+  }).first();
+  await expect(officialPage).toHaveAttribute(
+    'href',
+    'https://example.test/orbital-dawn',
+  );
+  await page
+    .getByRole('navigation', { name: 'Mission sections' })
+    .getByRole('link', { name: 'Trajectory' })
+    .click();
+  await expect(
+    page.getByRole('link', {
+      name: /FlightClub simulation.*opens in a new tab/i,
+    }),
+  ).toHaveAttribute(
+    'href',
+    'https://flightclub.io/result?llId=demo-orbital-dawn',
+  );
+  await expect(page.getByText('Illustrative model')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await expect(
+    briefing.getByRole('link', {
+      name: /Official page.*opens in a new tab/i,
+    }),
+  ).toHaveAttribute('href', 'https://example.test/orbital-dawn');
+  await briefing.getByRole('button', { name: 'Close mission briefing' }).click();
+
+  await page.goto(`/watch?id=${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`);
+  await expect(
+    page
+      .getByRole('heading', { name: 'Source & status' })
+      .locator('..')
+      .getByRole('link', {
+        name: /Official page.*opens in a new tab/i,
+      }),
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {

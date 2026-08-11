@@ -118,6 +118,11 @@ credential-free HTTPS `sourceUrl`. Invalid timestamps and empty or oversized
 comments are rejected; an unsafe source URL is removed without discarding an
 otherwise valid provider note.
 
+Canonical LL2 detail responses may also expose a credential-free HTTPS
+`officialMissionUrl` selected only from provider entries labeled official, and
+a `trajectorySimulationUrl` only when LL2 supplies a FlightClub destination.
+Unsafe, mislabeled, or non-FlightClub simulation URLs normalize to `null`.
+
 ### `GET /api/launches?type=live`
 
 Returns upcoming-feed launches marked live by provider state or the supported webcast/window heuristic.
@@ -321,6 +326,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `vehicleVisual`, `missionVisual` | Optional structured visuals with provider provenance |
 | `timeline` | Optional provider timeline events |
 | `providerUpdates` | Up to five newest LL2 detail notes with timestamp and optional safe cited source |
+| `officialMissionUrl`, `trajectorySimulationUrl` | Optional safe provider-curated official page and FlightClub simulation handoffs |
 
 Fields absent from an upstream provider are represented as `null`, omitted optional fields, or a documented fallback string.
 

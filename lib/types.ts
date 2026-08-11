@@ -110,6 +110,14 @@ export interface LL2Video {
   type?: LL2NamedReference | null;
 }
 
+export interface LL2InfoUrl {
+  url: string;
+  priority?: number | null;
+  source?: string | null;
+  title?: string | null;
+  type?: LL2NamedReference | null;
+}
+
 export interface LL2Launch {
   id: string;
   name: string;
@@ -121,6 +129,8 @@ export interface LL2Launch {
   probability?: number | null;
   weather_concerns?: string | null;
   holdreason?: string | null;
+  flightclub_url?: string | null;
+  info_urls?: LL2InfoUrl[] | null;
   status: {
     id: number;
     name: string;
@@ -388,6 +398,8 @@ export interface Launch {
   program?: string | null;
   timeline?: LaunchTimelineEvent[] | null;
   providerUpdates?: LaunchProviderUpdate[] | null;
+  officialMissionUrl?: string | null;
+  trajectorySimulationUrl?: string | null;
   videoThumbnail?: string | null;
   source: LaunchSource;
   ll2Id?: string | null;
