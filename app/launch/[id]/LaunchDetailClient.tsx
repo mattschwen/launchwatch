@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
 } from 'react';
@@ -44,12 +45,18 @@ import {
   formatTimelineOffset,
   getLaunchSiteDisplay,
   getLaunchLiveSignal,
+  getTimelineEventDate,
+  getTimelineProgress,
   hasCalendarReadyLaunchTime,
   hasExactLaunchTime,
   isCriticalLaunchStatusName,
   isCompletedLaunch,
 } from '@/lib/format';
-import { reconcileCurrentLaunch, useLaunchIntel } from '@/lib/hooks';
+import {
+  reconcileCurrentLaunch,
+  useCurrentTime,
+  useLaunchIntel,
+} from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
 import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
@@ -57,6 +64,7 @@ import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
 const TIMELINE_EVENT_WIDTH_PX = 176;
 const INTELLIGENCE_PRELOAD_MARGIN_PX = 320;
 const SECTION_ACTIVATION_GAP_PX = 32;
+const subscribeToHydration = (): (() => void) => () => undefined;
 
 function DetailTrajectoryLoadingState(): React.ReactElement {
   return (
@@ -348,6 +356,12 @@ export default function LaunchDetailClient({
   const activeSectionIdRef = useRef<DetailSectionId>('mission-summary');
   const resolvedInitialHashRef = useRef<string | null>(null);
   const timelineRef = useRef<HTMLOListElement>(null);
+  const timelineNow = useCurrentTime();
+  const timelineClockReady = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false
+  );
   const intelligenceHostRef = useRef<HTMLDivElement>(null);
   const missionPanelRef = useRef<HTMLElement>(null);
   const feedRetryRef = useRef<HTMLButtonElement>(null);
@@ -406,6 +420,18 @@ export default function LaunchDetailClient({
   }, [intelligenceEnabled, launch.id]);
 
   const timelineEventCount = launch.timeline?.length ?? 0;
+  const timelineProgress = timelineClockReady && launch.timeline
+    ? getTimelineProgress(
+        presentedLaunch.date,
+        launch.timeline,
+        presentedLaunch.datePrecision,
+        timelineNow
+      )
+    : null;
+  const nextTimelineEvent = timelineProgress?.nextIndex === null ||
+    timelineProgress?.nextIndex === undefined
+    ? null
+    : launch.timeline?.[timelineProgress.nextIndex] ?? null;
   const hasPlayableVideo = Boolean(
     presentedLaunch.livestream && extractYouTubeId(presentedLaunch.livestream)
   );
@@ -813,6 +839,18 @@ export default function LaunchDetailClient({
     });
   };
 
+  const revealTimelineEvent = (index: number): void => {
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+
+    timeline.scrollTo({
+      left: Math.max(0, index * TIMELINE_EVENT_WIDTH_PX),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  };
+
   return (
     <>
       <div
@@ -1137,6 +1175,57 @@ export default function LaunchDetailClient({
                 </div>
               </div>
             </div>
+            {timelineProgress ? (
+              nextTimelineEvent && timelineProgress.nextIndex !== null ? (
+                <button
+                  type="button"
+                  data-timeline-progress="next"
+                  aria-label={`Show next mission milestone: ${nextTimelineEvent.type}`}
+                  onClick={() => revealTimelineEvent(timelineProgress.nextIndex!)}
+                  className="mt-4 flex min-h-11 w-full min-w-0 items-center gap-3 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-green)_28%,var(--border-subtle))] bg-[color-mix(in_srgb,var(--console-green)_5%,var(--surface-base))] px-3 py-2 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--console-green)_9%,var(--surface-base))]"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--console-green)] shadow-[0_0_12px_rgba(94,230,168,0.45)]"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="data-label block text-[var(--console-green)]">
+                      Next milestone
+                    </span>
+                    <span className="mt-0.5 block break-words text-sm font-semibold text-[var(--text-primary)]">
+                      {nextTimelineEvent.type}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-mono text-xs font-semibold text-[var(--console-cyan)]">
+                    {formatTimelineOffset(nextTimelineEvent.relativeTime)}
+                  </span>
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={17}
+                    className="shrink-0 text-[var(--text-muted)]"
+                  />
+                </button>
+              ) : (
+                <div
+                  data-timeline-progress="elapsed"
+                  role="status"
+                  className="mt-4 flex min-h-11 min-w-0 items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--console-cyan)]/20 bg-[var(--console-cyan)]/[0.035] px-3 py-2"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--console-cyan)]"
+                  />
+                  <span className="min-w-0">
+                    <span className="data-label block text-[var(--console-cyan)]">
+                      Timed sequence elapsed
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-[var(--text-muted)]">
+                      All {timelineProgress.validCount} provider-timed milestones are in the past; mission outcome remains provider-reported.
+                    </span>
+                  </span>
+                </div>
+              )
+            ) : null}
             <p id="launch-timeline-instructions" className="sr-only">
               Use the previous and next event buttons, horizontal scrolling,
               or the left and right arrow keys to explore all timeline events.
@@ -1150,36 +1239,63 @@ export default function LaunchDetailClient({
               onScroll={updateTimelineControls}
               className="mission-timeline-track mt-6 flex min-w-0 max-w-full snap-x snap-proximity gap-0 overflow-x-auto pb-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
             >
-              {launch.timeline.map((event, index) => (
-                <li
-                  key={`${event.relativeTime}-${event.type}`}
-                  className="relative min-w-[11rem] flex-1 snap-start border-t border-[var(--border-strong)] px-3 pt-5 first:pl-0"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`absolute -top-[5px] left-3 h-2.5 w-2.5 rounded-full border-2 border-[var(--surface-base)] ${
-                      index === 0
-                        ? 'bg-[var(--console-green)]'
-                        : 'bg-[var(--text-muted)]'
-                    } first:left-0`}
-                  />
-                  <p className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
-                    {formatTimelineOffset(event.relativeTime)}
-                  </p>
-                  <TimelineEventClock
-                    launchDate={presentedLaunch.date}
-                    precision={presentedLaunch.datePrecision}
-                    relativeTime={event.relativeTime}
-                    className="mt-1.5"
-                  />
-                  <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
-                    {event.type}
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
-                    {event.description}
-                  </p>
-                </li>
-              ))}
+              {launch.timeline.map((event, index) => {
+                const eventDate = timelineClockReady
+                  ? getTimelineEventDate(
+                      presentedLaunch.date,
+                      event.relativeTime,
+                      presentedLaunch.datePrecision
+                    )
+                  : null;
+                const eventState = !eventDate
+                  ? 'unknown'
+                  : eventDate.getTime() < timelineNow
+                    ? 'elapsed'
+                    : timelineProgress?.nextIndex === index
+                      ? 'next'
+                      : 'upcoming';
+
+                return (
+                  <li
+                    key={`${event.relativeTime}-${event.type}`}
+                    aria-current={eventState === 'next' ? 'step' : undefined}
+                    data-timeline-state={eventState}
+                    className={`relative min-w-[11rem] flex-1 snap-start border-t px-3 pt-5 first:pl-0 ${
+                      eventState === 'next'
+                        ? 'border-[var(--console-green)] bg-[var(--console-green)]/[0.035]'
+                        : eventState === 'elapsed'
+                          ? 'border-[var(--console-cyan)]/35'
+                          : 'border-[var(--border-strong)]'
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`absolute -top-[5px] left-3 h-2.5 w-2.5 rounded-full border-2 border-[var(--surface-base)] ${
+                        eventState === 'next'
+                          ? 'bg-[var(--console-green)] shadow-[0_0_10px_rgba(94,230,168,0.5)]'
+                          : eventState === 'elapsed'
+                            ? 'bg-[var(--console-cyan)] opacity-70'
+                            : 'bg-[var(--text-muted)]'
+                      } first:left-0`}
+                    />
+                    <p className="whitespace-nowrap font-mono text-xs text-[var(--console-cyan)]">
+                      {formatTimelineOffset(event.relativeTime)}
+                    </p>
+                    <TimelineEventClock
+                      launchDate={presentedLaunch.date}
+                      precision={presentedLaunch.datePrecision}
+                      relativeTime={event.relativeTime}
+                      className="mt-1.5"
+                    />
+                    <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+                      {event.type}
+                    </h3>
+                    <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+                      {event.description}
+                    </p>
+                  </li>
+                );
+              })}
             </ol>
           </section>
         ) : null}

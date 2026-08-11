@@ -316,6 +316,23 @@ ll2Upcoming.rocket.configuration.image = {
   single_use: false,
   variants: [],
 };
+const activeTimelineDate = dateFromNow(0, 0.5);
+const ll2ActiveTimeline = {
+  ...ll2Upcoming,
+  id: 'demo-active-timeline',
+  name: 'Active Timeline Mission',
+  net: activeTimelineDate.toISOString(),
+  window_start: new Date(
+    activeTimelineDate.getTime() - 30 * 60 * 1000
+  ).toISOString(),
+  window_end: new Date(
+    activeTimelineDate.getTime() + 90 * 60 * 1000
+  ).toISOString(),
+  mission: {
+    ...ll2Upcoming.mission,
+    name: 'Active Timeline Mission',
+  },
+};
 const ll2RankedCoverage = {
   ...ll2Upcoming,
   id: 'demo-ranked-coverage',
@@ -555,6 +572,8 @@ const server = createServer(async (request, response) => {
           ? ll2HourEstimate
         : id === ll2PrefixedMission.id
           ? ll2PrefixedMission
+        : id === ll2ActiveTimeline.id
+          ? ll2ActiveTimeline
         : id === ll2RankedCoverage.id
           ? ll2RankedCoverage
         : id === ll2StaleLiveDetail.id

@@ -15,6 +15,7 @@ import {
   formatTimelineOffset,
   formatTimelineEventUtcTime,
   getTimelineEventDate,
+  getTimelineProgress,
   formatLaunchValue,
   formatRelativeDate,
   isCompletedLaunch,
@@ -220,6 +221,58 @@ describe('launch formatting', () => {
         'P0DT0H54M12.5S'
       )?.toISOString()
     ).toBe('2035-07-28T15:24:12.500Z');
+  });
+
+  it('identifies the next provider timeline milestone after elapsed events', () => {
+    expect(
+      getTimelineProgress(
+        '2035-07-26T12:30:00.000Z',
+        [
+          { type: 'Propellant load', relativeTime: '-PT35M', description: '' },
+          { type: 'Startup', relativeTime: '-PT1M', description: '' },
+          { type: 'Liftoff', relativeTime: 'P0D', description: '' },
+        ],
+        null,
+        Date.parse('2035-07-26T12:00:00.000Z')
+      )
+    ).toEqual({ completedCount: 1, nextIndex: 1, validCount: 3 });
+  });
+
+  it('withholds timeline progress when provider timing is coarse or unusable', () => {
+    const timeline = [
+      { type: 'Liftoff', relativeTime: 'P0D', description: '' },
+    ];
+
+    expect(
+      getTimelineProgress(
+        '2035-07-26T12:30:00.000Z',
+        timeline,
+        { name: 'Day', abbrev: 'DAY' },
+        Date.parse('2035-07-26T12:00:00.000Z')
+      )
+    ).toBeNull();
+    expect(
+      getTimelineProgress(
+        'not-a-date',
+        timeline,
+        null,
+        Date.parse('2035-07-26T12:00:00.000Z')
+      )
+    ).toBeNull();
+  });
+
+  it('reports an elapsed provider sequence without calling the mission complete', () => {
+    expect(
+      getTimelineProgress(
+        '2035-07-26T11:00:00.000Z',
+        [
+          { type: 'Liftoff', relativeTime: 'P0D', description: '' },
+          { type: 'Deployment', relativeTime: 'PT10M', description: '' },
+        ],
+        null,
+        Date.parse('2035-07-26T12:00:00.000Z')
+      )
+    ).toEqual({ completedCount: 2, nextIndex: null, validCount: 2 });
   });
 
   it('withholds mission-clock times for coarse or malformed provider timing', () => {

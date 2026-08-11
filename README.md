@@ -50,6 +50,10 @@ short, dismissible status toast; it never blocks the application.
 - Mission briefings, coverage, community links, and replay surfaces
 - Provider-derived mission clocks translate precise timeline offsets into UTC
   and local milestone times; coarse targets keep those clocks visibly pending.
+- Precise mission timelines distinguish elapsed, next, and upcoming provider
+  milestones, with a keyboard-accessible jump to the next operation; when every
+  timed event has passed, LaunchWatch says only that the sequence elapsed and
+  leaves mission outcome to the provider.
 - Once a validated launch window opens, shared mission countdowns retain urgency
   with a minute-level time-to-close readout instead of collapsing to a static
   open-window label; confirmed in-flight state and provider alerts keep priority.

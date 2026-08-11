@@ -1641,6 +1641,44 @@ test('narrow schedule rows keep timing and mission identity in a stable scan pat
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission timeline identifies and reveals the next provider milestone', async ({
+  page,
+}) => {
+  await page.goto('/launch/ll2-demo-active-timeline');
+
+  const timeline = page.getByRole('region', { name: 'Launch timeline' });
+  const timelineEvents = timeline.getByRole('list');
+  const milestones = timeline.getByRole('listitem');
+  const nextMilestone = timeline.getByRole('button', {
+    name: 'Show next mission milestone: Strongback retract',
+  });
+
+  await expect(nextMilestone).toBeVisible();
+  await expect(nextMilestone).toContainText('T−00:04:30');
+  expect((await nextMilestone.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(milestones.nth(0)).toHaveAttribute(
+    'data-timeline-state',
+    'elapsed'
+  );
+  await expect(milestones.nth(1)).toHaveAttribute(
+    'data-timeline-state',
+    'elapsed'
+  );
+  await expect(milestones.nth(2)).toHaveAttribute('aria-current', 'step');
+  await expect(milestones.nth(2)).toHaveAttribute(
+    'data-timeline-state',
+    'next'
+  );
+
+  await nextMilestone.focus();
+  await nextMilestone.press('Enter');
+  await expect(nextMilestone).toBeFocused();
+  await expect
+    .poll(() => timelineEvents.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('narrow mission consoles contain 200% text and internal rails', async ({
   page,
 }) => {

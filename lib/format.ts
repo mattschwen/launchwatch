@@ -1,4 +1,8 @@
-import type { Launch, LaunchDatePrecision } from './types';
+import type {
+  Launch,
+  LaunchDatePrecision,
+  LaunchTimelineEvent,
+} from './types';
 
 const UTC_DATE_TIME = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -670,6 +674,43 @@ export function getTimelineEventDate(
 
   const eventDate = new Date(target.getTime() + offset);
   return Number.isNaN(eventDate.getTime()) ? null : eventDate;
+}
+
+export interface TimelineProgress {
+  completedCount: number;
+  nextIndex: number | null;
+  validCount: number;
+}
+
+export function getTimelineProgress(
+  launchDate: string,
+  timeline: readonly LaunchTimelineEvent[],
+  precision?: LaunchDatePrecision | null,
+  now = Date.now()
+): TimelineProgress | null {
+  if (!hasCalendarReadyLaunchTime(precision) || !Number.isFinite(now)) {
+    return null;
+  }
+
+  const events = timeline.flatMap((event, index) => {
+    const date = getTimelineEventDate(
+      launchDate,
+      event.relativeTime,
+      precision
+    );
+    return date ? [{ index, time: date.getTime() }] : [];
+  });
+  if (events.length === 0) return null;
+
+  const nextEvent = events
+    .filter((event) => event.time >= now)
+    .sort((a, b) => a.time - b.time)[0];
+
+  return {
+    completedCount: events.filter((event) => event.time < now).length,
+    nextIndex: nextEvent?.index ?? null,
+    validCount: events.length,
+  };
 }
 
 export function formatTimelineEventUtcTime(
