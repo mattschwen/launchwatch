@@ -3156,6 +3156,97 @@ test('mission program context follows the mission across primary surfaces', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('provider mission operators stay legible across deeper mission surfaces', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const operatorLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    missionAgencies: [
+      {
+        name: 'European Organisation for the Exploitation of Meteorological Satellites',
+        abbrev: 'EUMETSAT',
+        type: 'Multinational',
+      },
+      {
+        name: 'National Aeronautics and Space Administration',
+        abbrev: 'NASA',
+        type: 'Government',
+      },
+    ],
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [operatorLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    }),
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: operatorLaunch,
+        canonicalId: operatorLaunch.id,
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  const assertOperators = async (signal: Locator): Promise<void> => {
+    await expect(signal).toBeVisible();
+    await expect(signal).toContainText('Mission operators');
+    await expect(signal).toContainText('EUMETSAT');
+    await expect(signal).toContainText('Multinational');
+    await expect(signal).toContainText('NASA');
+    await expect(signal).toContainText('Government');
+    expect(
+      await signal.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+  };
+
+  await page.goto('/');
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  await expect(hero.locator('[data-mission-operator-signal]')).toHaveCount(0);
+  const openBriefing = hero.getByRole('button', { name: 'Open briefing' });
+  await openBriefing.focus();
+  await openBriefing.press('Enter');
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await assertOperators(briefing.locator('[data-mission-operator-signal]'));
+  await briefing
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+
+  await page.goto('/watch');
+  await assertOperators(
+    page.locator('main [data-mission-operator-signal]').first(),
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await assertOperators(
+    page
+      .getByRole('region', { name: 'Mission telemetry' })
+      .locator('[data-mission-operator-signal]'),
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('provider readiness follows the mission across primary surfaces', async ({
   page,
 }) => {
@@ -7507,7 +7598,7 @@ test('schedule and archive search across mission profile data', async ({
   });
   await expect(scheduleSearch).toHaveAttribute(
     'placeholder',
-    'Mission, profile, orbit, vehicle, site, or provider',
+    'Mission, operator, profile, orbit, vehicle, site, or provider',
   );
   await scheduleSearch.fill('astra-nova communications low earth');
 
@@ -7535,9 +7626,9 @@ test('schedule and archive search across mission profile data', async ({
   });
   await expect(archiveSearch).toHaveAttribute(
     'placeholder',
-    'Mission, profile, orbit, vehicle, or site',
+    'Mission, operator, profile, orbit, vehicle, or site',
   );
-  await archiveSearch.fill('demo-return crew low earth');
+  await archiveSearch.fill('flight directorate multinational');
 
   await expect(
     page.getByRole('status', { name: 'Archive results' }),

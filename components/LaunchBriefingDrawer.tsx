@@ -29,6 +29,7 @@ import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
+import MissionOperatorSignal from './launch/MissionOperatorSignal';
 
 interface LaunchBriefingDrawerProps {
   launch: Launch | null;
@@ -253,6 +254,7 @@ export default function LaunchBriefingDrawer({
               </dd>
             </div>
             <MissionProfileSignal launch={launch} />
+            <MissionOperatorSignal missionAgencies={launch.missionAgencies} />
           </dl>
 
           {launch.timeline?.length ? (

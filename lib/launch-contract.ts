@@ -76,6 +76,31 @@ function isLaunchFirstStage(value: unknown): boolean {
   );
 }
 
+function isLaunchMissionAgencies(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!Array.isArray(value)) return false;
+
+  const names = new Set<string>();
+  for (const agency of value) {
+    if (
+      !isRecord(agency) ||
+      typeof agency.name !== 'string' ||
+      agency.name !== agency.name.trim() ||
+      agency.name.length === 0 ||
+      !isNullableString(agency.abbrev) ||
+      !isNullableString(agency.type)
+    ) {
+      return false;
+    }
+
+    const normalizedName = agency.name.toLocaleLowerCase();
+    if (names.has(normalizedName)) return false;
+    names.add(normalizedName);
+  }
+
+  return true;
+}
+
 export function isLaunch(value: unknown): value is Launch {
   if (!isRecord(value)) return false;
 
@@ -111,6 +136,7 @@ export function isLaunch(value: unknown): value is Launch {
     isLaunchProbability(value.launchProbability) &&
     isOptionalNullableString(value.weatherConcerns) &&
     isOptionalNullableString(value.holdReason) &&
+    isLaunchMissionAgencies(value.missionAgencies) &&
     isLaunchFirstStage(value.firstStage) &&
     (timeline === undefined ||
       timeline === null ||

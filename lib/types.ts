@@ -190,6 +190,13 @@ export interface LL2Launch {
     name?: string | null;
     description?: string | null;
     type?: string | null;
+    agencies?: Array<{
+      name?: string | null;
+      abbrev?: string | null;
+      type?: {
+        name?: string | null;
+      } | null;
+    }> | null;
     image?: LL2Media | string | null;
     vid_urls?: LL2Video[] | null;
     orbit?: {
@@ -293,6 +300,12 @@ export interface LaunchFirstStage {
   landingTypeAbbrev: string | null;
 }
 
+export interface LaunchMissionAgency {
+  name: string;
+  abbrev: string | null;
+  type: string | null;
+}
+
 export interface LaunchDatePrecision {
   name: string;
   abbrev: string;
@@ -334,6 +347,7 @@ export interface Launch {
   statusName?: string | null;
   missionName?: string | null;
   missionType?: string | null;
+  missionAgencies?: LaunchMissionAgency[] | null;
   windowStart?: string | null;
   windowEnd?: string | null;
   launchProbability?: number | null;

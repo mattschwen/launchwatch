@@ -405,6 +405,8 @@ describe('launch formatting', () => {
     expect(matchesLaunchSearch(launch, 'communications')).toBe(true);
     expect(matchesLaunchSearch(launch, 'low earth orbit')).toBe(true);
     expect(matchesLaunchSearch(launch, 'orbital alliance nova')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'relay authority government')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'ora')).toBe(true);
     expect(matchesLaunchSearch(launch, '  ')).toBe(true);
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
   });

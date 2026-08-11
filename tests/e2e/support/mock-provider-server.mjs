@@ -135,6 +135,7 @@ function ll2Launch({
   longitude,
   missionType,
   description,
+  missionAgencies = [],
 }) {
   const launchDate = dateFromNow(daysFromNow);
   // Keep the synthetic two-hour window on one UTC day so layout tests do not
@@ -203,6 +204,7 @@ function ll2Launch({
       name,
       description,
       type: missionType,
+      agencies: missionAgencies,
       orbit: { name: 'Low Earth Orbit', abbrev: 'LEO' },
     },
     timeline: [
@@ -320,6 +322,18 @@ const ll2Upcoming = ll2Launch({
   missionType: 'Communications',
   description:
     'A communications payload mission opening a new low-Earth-orbit relay corridor.\n\nMission objectives:\n\n* Deploy the relay payload\n* Validate the communications link',
+  missionAgencies: [
+    {
+      name: 'European Organisation for the Exploitation of Meteorological Satellites',
+      abbrev: 'EUMETSAT',
+      type: { name: 'Multinational' },
+    },
+    {
+      name: 'National Aeronautics and Space Administration',
+      abbrev: 'NASA',
+      type: { name: 'Government' },
+    },
+  ],
 });
 
 ll2Upcoming.probability = 85;

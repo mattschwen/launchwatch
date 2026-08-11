@@ -174,6 +174,11 @@ export function matchesLaunchSearch(launch: Launch, query: string): boolean {
     launch.name,
     launch.missionName,
     launch.missionType,
+    ...(launch.missionAgencies ?? []).flatMap((agency) => [
+      agency.name,
+      agency.abbrev,
+      agency.type,
+    ]),
     launch.description,
     launch.program,
     launch.orbit,

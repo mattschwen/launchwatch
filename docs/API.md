@@ -99,6 +99,11 @@ Launch Library 2 records may include `launchProbability` (an integer from 0 to
 readiness facts, not LaunchWatch predictions. Missing, placeholder, or malformed
 values normalize to `null`; clients must not infer them from launch status.
 
+Launch Library 2 mission agencies normalize to `missionAgencies` entries with
+provider-supplied `name`, optional `abbrev`, and optional agency `type`.
+Placeholder or duplicate agency names are omitted, and clients must not infer
+an operator from the launch service provider when the mission record is silent.
+
 ### `GET /api/launches?type=live`
 
 Returns upcoming-feed launches marked live by provider state or the supported webcast/window heuristic.
@@ -295,6 +300,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `isLive`, `webcastLive` | Active coverage selection signal plus the provider's explicit webcast flag; an in-flight UI claim still requires an in-flight `statusName` |
 | `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window |
 | `description`, `missionType`, `orbit`, `program` | Mission context |
+| `missionAgencies` | Optional provider-reported mission operators with name, abbreviation, and agency type |
 | `image`, `missionPatch`, `videoThumbnail` | Optional media |
 | `rocketImageUrl`, `launchImageUrl`, `padMapImage`, `providerLogo` | Backward-compatible optional media URLs |
 | `vehicleVisual`, `missionVisual` | Optional structured visuals with provider provenance |

@@ -45,6 +45,13 @@ const NORMAL_LIST_LAUNCH = {
     name: 'Fixture Mission',
     type: 'Communications',
     description: 'A realistic LL2 2.3 normal-mode fixture.',
+    agencies: [
+      {
+        name: 'European Organisation for the Exploitation of Meteorological Satellites',
+        abbrev: 'EUMETSAT',
+        type: { name: 'Multinational' },
+      },
+    ],
     orbit: {
       name: 'Low Earth Orbit',
       abbrev: 'LEO',
@@ -196,6 +203,38 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves distinct provider mission operators and rejects placeholders', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      mission: {
+        ...NORMAL_LIST_LAUNCH.mission,
+        agencies: [
+          ...NORMAL_LIST_LAUNCH.mission.agencies,
+          {
+            name: 'european organisation for the exploitation of meteorological satellites',
+            abbrev: 'Duplicate',
+            type: { name: 'Multinational' },
+          },
+          { name: 'N/A', abbrev: 'TBD', type: { name: 'Unknown' } },
+          { name: 'National Aeronautics and Space Administration', abbrev: 'NASA' },
+        ],
+      },
+    });
+
+    expect(normalized.missionAgencies).toEqual([
+      {
+        name: 'European Organisation for the Exploitation of Meteorological Satellites',
+        abbrev: 'EUMETSAT',
+        type: 'Multinational',
+      },
+      {
+        name: 'National Aeronautics and Space Administration',
+        abbrev: 'NASA',
+        type: null,
+      },
+    ]);
+  });
+
   it('preserves provider launch probability and readiness constraints', () => {
     const normalized = normalizeLL2Launch({
       ...NORMAL_LIST_LAUNCH,

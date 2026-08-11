@@ -87,7 +87,7 @@ export default function FilterBar({
             maxLength={SCHEDULE_SEARCH_MAX_LENGTH}
             value={filters.search}
             onChange={(event) => update('search', event.target.value)}
-            placeholder="Mission, profile, orbit, vehicle, site, or provider"
+            placeholder="Mission, operator, profile, orbit, vehicle, site, or provider"
             className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:pr-12"
           />
           <kbd

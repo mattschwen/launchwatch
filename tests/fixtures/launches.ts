@@ -32,6 +32,13 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     statusName: 'Go',
     missionName: 'Orbital Dawn',
     missionType: 'Communications',
+    missionAgencies: [
+      {
+        name: 'Orbital Relay Authority',
+        abbrev: 'ORA',
+        type: 'Government',
+      },
+    ],
     windowStart: '2035-07-28T14:30:00.000Z',
     windowEnd: '2035-07-28T16:30:00.000Z',
     launchProbability: 85,
@@ -187,6 +194,13 @@ export const HISTORICAL_LAUNCHES: Launch[] = [
     statusName: 'Success',
     missionName: 'Demo Return Flight',
     missionType: 'Crewed',
+    missionAgencies: [
+      {
+        name: 'International Flight Directorate',
+        abbrev: 'IFD',
+        type: 'Multinational',
+      },
+    ],
     livestream: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
     livestreams: null,
     description: 'A completed crew demonstration mission with a nominal return.',

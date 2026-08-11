@@ -905,6 +905,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     status,
     statusName,
     missionName: launch.name,
+    missionAgencies: null,
     livestream: webcast,
     livestreams: webcast ? [{
       url: webcast,
@@ -1045,6 +1046,34 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
           landingTypeAbbrev,
         }
       : null;
+  const missionAgencies = (Array.isArray(launch.mission?.agencies)
+    ? launch.mission.agencies
+    : []
+  ).reduce<NonNullable<Launch['missionAgencies']>>((agencies, agency) => {
+    const name = isMeaningfulLaunchValue(agency?.name)
+      ? agency.name.trim()
+      : null;
+    if (
+      !name ||
+      agencies.some(
+        (candidate) =>
+          candidate.name.localeCompare(name, undefined, {
+            sensitivity: 'base',
+          }) === 0,
+      )
+    ) {
+      return agencies;
+    }
+
+    const abbrev = isMeaningfulLaunchValue(agency?.abbrev)
+      ? agency.abbrev.trim()
+      : null;
+    const type = isMeaningfulLaunchValue(agency?.type?.name)
+      ? agency.type.name.trim()
+      : null;
+    agencies.push({ name, abbrev, type });
+    return agencies;
+  }, []);
 
   return {
     id: toCanonicalLaunchId('ll2', launch.id),
@@ -1063,6 +1092,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     missionType: isMeaningfulLaunchValue(launch.mission?.type)
       ? launch.mission.type.trim()
       : null,
+    missionAgencies: missionAgencies.length > 0 ? missionAgencies : null,
     windowStart: launch.window_start || null,
     windowEnd: launch.window_end || null,
     launchProbability:

@@ -36,6 +36,7 @@ import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
+import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
@@ -1377,6 +1378,10 @@ function WatchContent(): React.ReactElement {
                     <MissionProfileSignal
                       launch={selectedLaunch}
                       variant="compact"
+                    />
+                    <MissionOperatorSignal
+                      missionAgencies={selectedLaunch.missionAgencies}
+                      compact
                     />
                   </dl>
                 </div>

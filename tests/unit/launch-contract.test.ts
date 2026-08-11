@@ -40,6 +40,32 @@ describe('client launch contract', () => {
         },
       }),
     ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        missionAgencies: [
+          { name: 'European Space Agency', abbrev: 'ESA', type: 'Multinational' },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects malformed or duplicate mission operators', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        missionAgencies: [{ name: ' NASA ', abbrev: 'NASA', type: 'Government' }],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        missionAgencies: [
+          { name: 'European Space Agency', abbrev: 'ESA', type: 'Multinational' },
+          { name: 'european space agency', abbrev: null, type: null },
+        ],
+      }),
+    ).toBe(false);
   });
 
   it('rejects malformed first-stage provider facts', () => {

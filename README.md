@@ -70,6 +70,9 @@ short, dismissible status toast; it never blocks the application.
   featured mission while Watch, briefing, and detail telemetry retain the
   complete type, program, and target-orbit profile; absent or duplicate
   provider values collapse without invented labels
+- Provider-reported mission operators remain distinct from the launch service
+  provider across Watch, briefing, detail, and mission search; names,
+  abbreviations, and agency types stay attributable without inferred ownership
 - Provider launch-readiness reports retain bounded probability, weather
   constraints, and hold reasons across Home, Watch, briefing, and canonical
   detail surfaces; missing or malformed values remain absent rather than being
