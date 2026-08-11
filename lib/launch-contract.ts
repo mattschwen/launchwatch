@@ -1,4 +1,4 @@
-import type { Launch } from './types';
+import type { Launch, LaunchIntel } from './types';
 import { parseLaunchId } from './launch-id';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -7,6 +7,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
+}
+
+function isSafeHttpsUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value !== value.trim()) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function isSafeOptionalUrl(value: unknown): boolean {
+  return value === undefined || value === null || isSafeHttpsUrl(value);
 }
 
 export function isLaunch(value: unknown): value is Launch {
@@ -63,4 +78,69 @@ export function isLaunchCollection(value: unknown): value is Launch[] {
   }
 
   return true;
+}
+
+export function isLaunchIntel(value: unknown): value is LaunchIntel {
+  if (!isRecord(value)) return false;
+
+  const summary = value.summary;
+  const quickLinks = value.quickLinks;
+  const streamStates = ['live', 'upcoming', 'standby', 'search', 'none'];
+  const streamSources = [
+    'provided',
+    'youtube-api',
+    'provider-channel',
+    'search',
+  ];
+  const confidenceLevels = ['high', 'medium', 'low'];
+  const liveStates = ['live', 'upcoming', 'ended', 'unknown'];
+
+  return (
+    isRecord(summary) &&
+    streamStates.includes(String(summary.streamState)) &&
+    typeof summary.recommendedLabel === 'string' &&
+    (summary.recommendedUrl === null ||
+      isSafeHttpsUrl(summary.recommendedUrl)) &&
+    typeof summary.rationale === 'string' &&
+    typeof summary.lastUpdated === 'string' &&
+    Array.isArray(value.streamCandidates) &&
+    value.streamCandidates.every(
+      (candidate) =>
+        isRecord(candidate) &&
+        typeof candidate.id === 'string' &&
+        typeof candidate.title === 'string' &&
+        isSafeHttpsUrl(candidate.url) &&
+        typeof candidate.channelTitle === 'string' &&
+        isSafeOptionalUrl(candidate.channelUrl) &&
+        isSafeOptionalUrl(candidate.thumbnail) &&
+        streamSources.includes(String(candidate.source)) &&
+        confidenceLevels.includes(String(candidate.confidence)) &&
+        liveStates.includes(String(candidate.liveStatus)),
+    ) &&
+    Array.isArray(value.newsItems) &&
+    value.newsItems.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === 'string' &&
+        typeof item.title === 'string' &&
+        isSafeHttpsUrl(item.url) &&
+        typeof item.source === 'string' &&
+        typeof item.publishedAt === 'string',
+    ) &&
+    Array.isArray(value.socialItems) &&
+    value.socialItems.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === 'string' &&
+        (item.platform === 'reddit' || item.platform === 'x') &&
+        typeof item.title === 'string' &&
+        isSafeHttpsUrl(item.url),
+    ) &&
+    isRecord(quickLinks) &&
+    isSafeHttpsUrl(quickLinks.youtubeSearch) &&
+    (quickLinks.providerChannel === null ||
+      isSafeHttpsUrl(quickLinks.providerChannel)) &&
+    isSafeHttpsUrl(quickLinks.redditSearch) &&
+    isSafeHttpsUrl(quickLinks.xSearch)
+  );
 }

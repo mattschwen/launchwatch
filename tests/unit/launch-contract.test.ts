@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { isLaunch, isLaunchCollection } from '@/lib/launch-contract';
-import { UPCOMING_LAUNCHES } from '@/tests/fixtures/launches';
+import {
+  isLaunch,
+  isLaunchCollection,
+  isLaunchIntel,
+} from '@/lib/launch-contract';
+import {
+  LAUNCH_INTEL,
+  UPCOMING_LAUNCHES,
+} from '@/tests/fixtures/launches';
 
 describe('client launch contract', () => {
   it('accepts a normalized launch with canonical provider identity', () => {
@@ -36,5 +43,80 @@ describe('client launch contract', () => {
         { ...UPCOMING_LAUNCHES[0], name: 'Conflicting duplicate mission' },
       ])
     ).toBe(false);
+  });
+
+  it('accepts mission intelligence with credential-free HTTPS destinations', () => {
+    expect(isLaunchIntel(LAUNCH_INTEL)).toBe(true);
+  });
+
+  it.each([
+    {
+      label: 'executable recommended action',
+      intel: {
+        ...LAUNCH_INTEL,
+        summary: {
+          ...LAUNCH_INTEL.summary,
+          recommendedUrl: 'javascript:alert(document.domain)',
+        },
+      },
+    },
+    {
+      label: 'credential-bearing stream',
+      intel: {
+        ...LAUNCH_INTEL,
+        streamCandidates: [
+          {
+            id: 'unsafe-stream',
+            title: 'Unsafe stream',
+            url: 'https://user:secret@example.test/coverage',
+            channelTitle: 'Fixture channel',
+            source: 'provided',
+            confidence: 'high',
+            liveStatus: 'live',
+          },
+        ],
+      },
+    },
+    {
+      label: 'insecure news item',
+      intel: {
+        ...LAUNCH_INTEL,
+        newsItems: [
+          {
+            id: 'unsafe-news',
+            title: 'Unsafe news',
+            url: 'http://example.test/mission',
+            source: 'Fixture news',
+            publishedAt: '2035-07-26T12:00:00.000Z',
+          },
+        ],
+      },
+    },
+    {
+      label: 'executable social item',
+      intel: {
+        ...LAUNCH_INTEL,
+        socialItems: [
+          {
+            id: 'unsafe-social',
+            platform: 'x',
+            title: 'Unsafe social signal',
+            url: 'data:text/html,unsafe',
+          },
+        ],
+      },
+    },
+    {
+      label: 'insecure search fallback',
+      intel: {
+        ...LAUNCH_INTEL,
+        quickLinks: {
+          ...LAUNCH_INTEL.quickLinks,
+          redditSearch: 'http://example.test/search',
+        },
+      },
+    },
+  ])('rejects mission intelligence with $label', ({ intel }) => {
+    expect(isLaunchIntel(intel)).toBe(false);
   });
 });

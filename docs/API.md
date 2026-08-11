@@ -258,6 +258,12 @@ The route adds:
 - `X-LaunchWatch-Canonical-Id`
 - `X-LaunchWatch-Data-State: fresh|stale`
 
+Every external destination in a successful intelligence response must be a
+credential-free HTTPS URL. The browser validates the complete response before
+rendering any recommendation, stream, news, social, or quick-link action; an
+unsafe or malformed destination moves the panel to its retryable degraded state
+instead of exposing a partial set of links.
+
 | Condition | Status |
 | --- | --- |
 | Missing or invalid ID | `400` |

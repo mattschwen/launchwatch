@@ -5916,6 +5916,40 @@ test('mission intelligence recovers from an incomplete successful response', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission intelligence rejects unsafe external destinations', async ({
+  page,
+}) => {
+  await page.route('**/api/launch-intel**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LAUNCH_INTEL,
+        summary: {
+          ...LAUNCH_INTEL.summary,
+          recommendedLabel: 'Open provider payload',
+          recommendedUrl: 'javascript:document.body.dataset.compromised=true',
+        },
+      }),
+    }),
+  );
+
+  await page.goto('/watch');
+
+  const intelligence = page.getByRole('region', {
+    name: 'Mission intelligence',
+  });
+  await expect(intelligence.getByRole('alert')).toContainText(
+    'Mission intelligence response was incomplete',
+  );
+  await expect(
+    intelligence.getByRole('button', { name: 'Retry coverage' }),
+  ).toBeVisible();
+  await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+  expect(await page.locator('body').getAttribute('data-compromised')).toBeNull();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission intelligence recovers without losing keyboard context', async ({
   page,
 }) => {
