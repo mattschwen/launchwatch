@@ -73,11 +73,20 @@ describe('PastLaunches', () => {
     expect(screen.queryByText('Pathfinder Qualification')).not.toBeInTheDocument();
     expect(screen.getByText('1 result')).toBeVisible();
 
-    await user.click(screen.getByRole('button', { name: /Demo Return Flight/i }));
+    const disclosure = screen.getByRole('button', {
+      name: 'Show mission details for Demo Return Flight',
+    });
+    expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(disclosure);
 
     expect(
       screen.getByText(/completed crew demonstration mission/i)
     ).toBeVisible();
+    expect(disclosure).toHaveAccessibleName(
+      'Hide mission details for Demo Return Flight'
+    );
+    expect(disclosure).toHaveAttribute('aria-expanded', 'true');
     expect(
       screen.getAllByRole('link', { name: /View mission/i })[0]
     ).toHaveAttribute(

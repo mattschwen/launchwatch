@@ -288,6 +288,7 @@ function HistoryRow({
         <button
           ref={toggleRef}
           type="button"
+          aria-label={`${expanded ? 'Hide' : 'Show'} mission details for ${launch.name}`}
           aria-expanded={expanded}
           aria-controls={panelId}
           onClick={onToggle}

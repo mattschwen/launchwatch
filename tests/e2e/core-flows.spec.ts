@@ -7577,11 +7577,17 @@ test('history loads licensed mission imagery only after archive expansion', asyn
   const returnMission = page
     .locator('article')
     .filter({ hasText: 'Demo Return Flight' });
-  const disclosure = returnMission.getByRole('button', {
-    name: /Demo Return Flight/i,
-  });
+  const disclosure = returnMission.locator(
+    'button[aria-controls^="history-"]'
+  );
+  await expect(disclosure).toHaveAccessibleName(
+    'Show mission details for Demo Return Flight'
+  );
   await disclosure.focus();
   await disclosure.press('Enter');
+  await expect(disclosure).toHaveAccessibleName(
+    'Hide mission details for Demo Return Flight'
+  );
   await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
 
   const visual = returnMission.locator(
