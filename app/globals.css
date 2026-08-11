@@ -1331,7 +1331,22 @@ html[data-boot-status='visible'] .header-instruments {
 }
 
 .countdown-display {
+  container: countdown-display / inline-size;
   filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.34));
+}
+
+.countdown-units {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container countdown-display (min-width: 7em) {
+  .countdown-units {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .countdown-units-wide {
+    grid-template-columns: minmax(4ch, 1.35fr) repeat(3, minmax(0, 1fr));
+  }
 }
 
 .countdown-unit {

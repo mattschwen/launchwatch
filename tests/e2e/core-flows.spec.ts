@@ -1684,6 +1684,62 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
   await expectContentFits('.archive-row-grid');
 });
 
+test('featured countdown never strands the seconds cell', async ({ page }) => {
+  const targetDate = new Date(
+    Date.now() + 7 * 24 * 60 * 60 * 1_000
+  ).toISOString();
+  const nearLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: targetDate,
+    windowStart: targetDate,
+    windowEnd: new Date(
+      Date.parse(targetDate) + 2 * 60 * 60 * 1_000
+    ).toISOString(),
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [nearLaunch], meta: FEED_META }),
+    })
+  );
+
+  const readGrid = async (): Promise<{ columns: number; rows: number }> => {
+    const units = page.locator(
+      'section[aria-labelledby="featured-launch-title"] .countdown-unit'
+    );
+    await expect(units).toHaveCount(4);
+
+    return units.evaluateAll((elements) => {
+      const positions = elements.map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          x: Math.round(bounds.x),
+          y: Math.round(bounds.y),
+        };
+      });
+
+      return {
+        columns: new Set(positions.map(({ x }) => x)).size,
+        rows: new Set(positions.map(({ y }) => y)).size,
+      };
+    });
+  };
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect.poll(readGrid).toEqual({ columns: 4, rows: 1 });
+
+  await page.setViewportSize({ width: 393, height: 851 });
+  await expect.poll(readGrid).toEqual({ columns: 4, rows: 1 });
+
+  await page.addStyleTag({
+    content: ':root { font-size: 32px !important; }',
+  });
+  await expect.poll(readGrid).toEqual({ columns: 2, rows: 2 });
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('narrow schedule rows keep timing and mission identity in a stable scan path', async ({
   page,
 }) => {

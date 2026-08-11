@@ -270,9 +270,7 @@ export default function Countdown({
         </span>
         <span
           className={`countdown-units grid min-w-0 gap-1 sm:gap-2 ${
-            wideDayCount
-              ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,4ch),1fr))]'
-              : 'grid-cols-[repeat(auto-fit,minmax(min(100%,3.25ch),1fr))]'
+            wideDayCount ? 'countdown-units-wide' : ''
           }`}
         >
           {units.map((unit) => (
@@ -289,6 +287,10 @@ export default function Countdown({
               <span
                 key={`${unit.label}-${unit.value}`}
                 className={`countdown-digits block text-center tracking-[-0.055em] ${
+                  wideDayCount && unit.label === 'days'
+                    ? 'text-[0.72em]'
+                    : ''
+                } ${
                   animated ? 'countdown-digit-tick' : ''
                 } ${
                   alert

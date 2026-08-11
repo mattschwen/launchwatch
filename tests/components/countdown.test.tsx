@@ -39,7 +39,9 @@ describe('Countdown', () => {
     expect(time).not.toHaveAttribute('aria-label');
     expect(display).toBeInTheDocument();
     expect(display).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelector('.countdown-units')).toBeInTheDocument();
+    expect(container.querySelector('.countdown-units')).not.toHaveClass(
+      'countdown-units-wide'
+    );
     expect(container.querySelector('.countdown-prefix')).toHaveTextContent('T−');
     expect(units).toHaveLength(4);
     expect(
@@ -98,7 +100,7 @@ describe('Countdown', () => {
     );
   });
 
-  it('gives four-digit mission days enough intrinsic room to reflow', () => {
+  it('marks four-digit mission days for a wider first track', () => {
     mockedUseCountdown.mockReturnValue({
       days: 1_234,
       hours: 9,
@@ -113,7 +115,10 @@ describe('Countdown', () => {
     );
 
     expect(container.querySelector('.countdown-units')).toHaveClass(
-      'grid-cols-[repeat(auto-fit,minmax(min(100%,4ch),1fr))]'
+      'countdown-units-wide'
+    );
+    expect(container.querySelector('.countdown-digits')).toHaveClass(
+      'text-[0.72em]'
     );
     expect(container.querySelector('.countdown-digits')).toHaveTextContent(
       '1234'
