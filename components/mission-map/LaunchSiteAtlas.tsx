@@ -17,12 +17,12 @@ import {
   Satellite,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent } from 'maplibre-gl';
+import type { LayerGroup, Map as LeafletMap, TileLayer } from 'leaflet';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import { selectLaunchVisualAsset } from '@/lib/launch-visual';
 import type { Launch, LaunchSite, LaunchSiteAtlasResponse } from '@/lib/types';
 
-const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+const OPEN_MAP_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 function distanceKm(a: { lat: number; lng: number }, b: LaunchSite): number {
   const radius = 6_371;
@@ -39,23 +39,6 @@ function mapUrl(site: LaunchSite): string {
   return `https://www.openstreetmap.org/?mlat=${site.latitude}&mlon=${site.longitude}#map=15/${site.latitude}/${site.longitude}`;
 }
 
-function sitesGeoJson(sites: LaunchSite[], selectedId: string | null) {
-  return {
-    type: 'FeatureCollection' as const,
-    features: sites.map((site) => ({
-      type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: [site.longitude, site.latitude] },
-      properties: {
-        id: site.id,
-        name: site.name,
-        active: site.active ? 1 : 0,
-        selected: site.id === selectedId ? 1 : 0,
-        launches: site.totalLaunchCount,
-      },
-    })),
-  };
-}
-
 function fact(value: number): string {
   return new Intl.NumberFormat('en-US').format(value);
 }
@@ -68,9 +51,10 @@ export default function LaunchSiteAtlas({
   launch: Launch;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
-  const sitesRef = useRef<LaunchSite[]>([]);
-  const selectedIdRef = useRef<string | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerLayerRef = useRef<LayerGroup | null>(null);
+  const tileLayerRef = useRef<TileLayer | null>(null);
+  const leafletRef = useRef<typeof import('leaflet') | null>(null);
   const [sites, setSites] = useState<LaunchSite[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dataState, setDataState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
@@ -86,13 +70,6 @@ export default function LaunchSiteAtlas({
   const selectedSite = sites.find((site) => site.id === selectedId) || sortedSites[0] || null;
   const selectedIndex = selectedSite ? sortedSites.findIndex((site) => site.id === selectedSite.id) : -1;
   const visual = selectedSite?.image ? selectLaunchVisualAsset(selectedSite.image) : null;
-
-  useEffect(() => {
-    sitesRef.current = sites;
-  }, [sites]);
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
 
   useEffect(() => {
     if (!location) {
@@ -136,89 +113,41 @@ export default function LaunchSiteAtlas({
   useEffect(() => {
     if (!containerRef.current || !location) return;
     let disposed = false;
-    let map: MapLibreMap | null = null;
+    let map: LeafletMap | null = null;
     const fallbackTimer = window.setTimeout(() => {
       if (!disposed) setMapState((state) => state === 'ready' ? state : 'degraded');
-    }, 8_000);
+    }, 10_000);
 
-    void import('maplibre-gl').then((maplibregl) => {
+    void import('leaflet').then((leafletModule) => {
       if (disposed || !containerRef.current) return;
-      map = new maplibregl.Map({
-        container: containerRef.current,
-        style: MAP_STYLE,
-        center: [location.lng, location.lat],
+      const L = leafletModule.default;
+      leafletRef.current = L;
+      map = L.map(containerRef.current, {
+        attributionControl: true,
+        center: [location.lat, location.lng],
+        keyboard: true,
+        minZoom: 2,
+        maxZoom: 18,
+        scrollWheelZoom: true,
         zoom: 8,
-        minZoom: 1.5,
-        maxZoom: 17,
-        attributionControl: false,
-        cooperativeGestures: true,
+        zoomControl: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-      map.on('zoom', () => setZoom(map?.getZoom() || 8));
-      map.on('error', () => setMapState((state) => state === 'ready' ? state : 'degraded'));
-      map.on('load', () => {
-        if (!map) return;
+      markerLayerRef.current = L.layerGroup().addTo(map);
+      const tiles = L.tileLayer(OPEN_MAP_TILES, {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
+      tileLayerRef.current = tiles;
+      map.on('zoomend', () => setZoom(map?.getZoom() || 8));
+      tiles.once('load', () => {
         window.clearTimeout(fallbackTimer);
         setMapState('ready');
-        const canvas = map.getCanvas();
-        canvas.setAttribute('aria-label', `Interactive launch-site map for ${launch.name}`);
-        canvas.setAttribute('role', 'application');
-        map.addSource('launch-sites', {
-          type: 'geojson',
-          data: sitesGeoJson(sitesRef.current, selectedIdRef.current),
-          cluster: true,
-          clusterMaxZoom: 11,
-          clusterRadius: 48,
-        });
-        map.addLayer({
-          id: 'site-clusters', type: 'circle', source: 'launch-sites', filter: ['has', 'point_count'],
-          paint: {
-            'circle-color': '#112b2d', 'circle-stroke-color': '#58c8e8', 'circle-stroke-width': 2,
-            'circle-radius': ['step', ['get', 'point_count'], 18, 10, 23, 30, 29],
-          },
-        });
-        map.addLayer({
-          id: 'site-cluster-count', type: 'symbol', source: 'launch-sites', filter: ['has', 'point_count'],
-          layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 },
-          paint: { 'text-color': '#f4f7f8' },
-        });
-        map.addLayer({
-          id: 'site-points', type: 'circle', source: 'launch-sites', filter: ['!', ['has', 'point_count']],
-          paint: {
-            'circle-color': ['case', ['==', ['get', 'selected'], 1], '#5ee6a8', ['==', ['get', 'active'], 1], '#58c8e8', '#f4b95f'],
-            'circle-radius': ['case', ['==', ['get', 'selected'], 1], 9, 6],
-            'circle-stroke-color': '#05060a', 'circle-stroke-width': 2,
-          },
-        });
-        map.addLayer({
-          id: 'site-labels', type: 'symbol', source: 'launch-sites', filter: ['!', ['has', 'point_count']],
-          minzoom: 10,
-          layout: {
-            'text-field': ['get', 'name'], 'text-size': 11, 'text-offset': [0, 1.25],
-            'text-anchor': 'top', 'text-max-width': 15, 'text-optional': true,
-          },
-          paint: { 'text-color': '#f4f7f8', 'text-halo-color': '#05060a', 'text-halo-width': 1.5 },
-        });
-        map.on('click', 'site-clusters', async (event: MapMouseEvent) => {
-          const feature = map?.queryRenderedFeatures(event.point, { layers: ['site-clusters'] })[0];
-          if (!feature) return;
-          const clusterId = feature?.properties?.cluster_id;
-          const source = map?.getSource('launch-sites') as GeoJSONSource | undefined;
-          if (!source || typeof clusterId !== 'number') return;
-          const expansionZoom = await source.getClusterExpansionZoom(clusterId);
-          const coordinates = (feature.geometry as GeoJSON.Point).coordinates;
-          map?.easeTo({ center: [coordinates[0], coordinates[1]], zoom: expansionZoom, duration: 500 });
-        });
-        map.on('click', 'site-points', (event: MapMouseEvent) => {
-          const id = map?.queryRenderedFeatures(event.point, { layers: ['site-points'] })[0]?.properties?.id;
-          if (typeof id === 'string') setSelectedId(id);
-        });
-        for (const layer of ['site-clusters', 'site-points']) {
-          map.on('mouseenter', layer, () => { if (map) map.getCanvas().style.cursor = 'pointer'; });
-          map.on('mouseleave', layer, () => { if (map) map.getCanvas().style.cursor = ''; });
-        }
       });
+      tiles.on('tileerror', () => setMapState((state) => state === 'ready' ? state : 'degraded'));
+      const mapElement = map.getContainer();
+      mapElement.setAttribute('aria-label', `Interactive launch-site map for ${launch.name}`);
+      mapElement.setAttribute('role', 'application');
     }).catch(() => setMapState('degraded'));
 
     return () => {
@@ -226,26 +155,50 @@ export default function LaunchSiteAtlas({
       window.clearTimeout(fallbackTimer);
       map?.remove();
       mapRef.current = null;
+      markerLayerRef.current = null;
+      tileLayerRef.current = null;
+      leafletRef.current = null;
     };
   }, [launch.name, location]);
 
   useEffect(() => {
-    const source = mapRef.current?.getSource('launch-sites') as GeoJSONSource | undefined;
-    source?.setData(sitesGeoJson(sites, selectedId));
-  }, [selectedId, sites]);
+    const L = leafletRef.current;
+    const layer = markerLayerRef.current;
+    if (!L || !layer) return;
+    layer.clearLayers();
+    sites.forEach((site) => {
+      const selected = site.id === selectedId;
+      const marker = L.circleMarker([site.latitude, site.longitude], {
+        bubblingMouseEvents: false,
+        color: '#05060a',
+        fillColor: selected ? '#5ee6a8' : site.active ? '#58c8e8' : '#f4b95f',
+        fillOpacity: 0.95,
+        radius: selected ? 9 : 6,
+        weight: 2,
+      });
+      marker.bindTooltip(site.name, {
+        className: 'launch-site-label',
+        direction: 'top',
+        offset: [0, -8],
+        opacity: 1,
+        permanent: zoom >= 10,
+      });
+      marker.on('click', () => setSelectedId(site.id));
+      marker.addTo(layer);
+    });
+  }, [selectedId, sites, zoom]);
 
   const focusSite = useCallback((site: LaunchSite) => {
     setSelectedId(site.id);
-    mapRef.current?.flyTo({ center: [site.longitude, site.latitude], zoom: Math.max(13, mapRef.current.getZoom()), duration: 700 });
+    mapRef.current?.flyTo([site.latitude, site.longitude], Math.max(13, mapRef.current.getZoom()), { duration: 0.7 });
   }, []);
 
   const fitRegion = useCallback(() => {
     const map = mapRef.current;
-    if (!map || !sites.length) return;
-    const longitudes = sites.map((site) => site.longitude);
-    const latitudes = sites.map((site) => site.latitude);
-    map.fitBounds([[Math.min(...longitudes), Math.min(...latitudes)], [Math.max(...longitudes), Math.max(...latitudes)]], {
-      padding: expanded ? 70 : 45, maxZoom: 11, duration: 700,
+    const L = leafletRef.current;
+    if (!map || !L || !sites.length) return;
+    map.flyToBounds(L.latLngBounds(sites.map((site) => [site.latitude, site.longitude])), {
+      padding: [expanded ? 70 : 45, expanded ? 70 : 45], maxZoom: 11, duration: 0.7,
     });
   }, [expanded, sites]);
 
@@ -273,14 +226,14 @@ export default function LaunchSiteAtlas({
               <Radio aria-hidden="true" size={13} /> Pad visibility
             </div>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              {dataState === 'loading' ? 'Loading nearby facilities…' : dataState === 'error' ? 'Facility feed unavailable' : dataState === 'empty' ? 'No nearby pads reported' : zoom < 7 ? `${sites.length} pads clustered · zoom in` : zoom < 10 ? `${sites.length} pads · names appear at zoom 10` : `${sites.length} pads · facility names visible`}
+              {dataState === 'loading' ? 'Loading nearby facilities…' : dataState === 'error' ? 'Facility feed unavailable' : dataState === 'empty' ? 'No nearby pads reported' : zoom < 10 ? `${sites.length} pads · zoom closer to reveal names` : `${sites.length} pads · facility names visible`}
             </p>
           </div>
           <div className="pointer-events-auto flex gap-1 rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] p-1 shadow-lg backdrop-blur" role="group" aria-label="Atlas controls">
-            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomOut({ duration: 250 })} aria-label="Zoom atlas out"><Minus aria-hidden="true" size={16} /></button>
-            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomIn({ duration: 250 })} aria-label="Zoom atlas in"><Plus aria-hidden="true" size={16} /></button>
+            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomOut()} aria-label="Zoom atlas out"><Minus aria-hidden="true" size={16} /></button>
+            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomIn()} aria-label="Zoom atlas in"><Plus aria-hidden="true" size={16} /></button>
             <button type="button" className="icon-button h-11 w-11" onClick={fitRegion} disabled={!sites.length} aria-label="Fit nearby launch pads"><Layers3 aria-hidden="true" size={16} /></button>
-            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.flyTo({ center: [location.lng, location.lat], zoom: 8, duration: 600 })} aria-label="Reset atlas to launch region"><RotateCcw aria-hidden="true" size={16} /></button>
+            <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.flyTo([location.lat, location.lng], 8, { duration: 0.6 })} aria-label="Reset atlas to launch region"><RotateCcw aria-hidden="true" size={16} /></button>
           </div>
         </div>
         {mapState === 'loading' ? <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[var(--surface-sunken)]"><div className="text-center"><LoaderCircle aria-hidden="true" className="mx-auto animate-spin text-[var(--console-cyan)]" /><p className="mt-2 text-sm text-[var(--text-muted)]">Loading open map…</p></div></div> : null}

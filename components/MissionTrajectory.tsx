@@ -5,8 +5,8 @@ import { createPortal } from 'react-dom';
 import { ExternalLink, Info, Maximize2, X } from 'lucide-react';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import LaunchSiteAtlas from '@/components/mission-map/LaunchSiteAtlas';
-import MissionMapCanvas from '@/components/mission-map/MissionMapCanvas';
-import { formatLaunchCoordinates } from '@/components/mission-map/MissionPhaseRail';
+import MissionMapCanvas, { type MissionMapSelection } from '@/components/mission-map/MissionMapCanvas';
+import MissionPhaseRail, { formatLaunchCoordinates } from '@/components/mission-map/MissionPhaseRail';
 import { isCriticalLaunchStatusName, isMeaningfulLaunchValue } from '@/lib/format';
 import { MAP_HEIGHT, MAP_WIDTH, type MapViewport } from '@/lib/map-geometry';
 import { buildReportedSiteMapUrl } from '@/lib/site-map';
@@ -22,7 +22,7 @@ interface MissionTrajectoryProps {
   variant?: 'compact' | 'detail';
 }
 
-const ATLAS_DISCLOSURE = 'Pad locations, descriptions, imagery, and launch counts are supplied by Launch Library 2. The open base map is supplied by OpenFreeMap and OpenStreetMap contributors.';
+const ATLAS_DISCLOSURE = 'Pad locations, descriptions, imagery, and launch counts are supplied by Launch Library 2. The open base map is rendered with Leaflet and OpenStreetMap contributor data.';
 
 function statusTone(launch: Launch): string {
   if (launch.status === 'live') return 'text-[var(--console-magenta)]';
@@ -82,6 +82,7 @@ export default function MissionTrajectory({
   const dialogTitleId = `${rawId}-atlas-dialog-title`;
   const dialogDescriptionId = `${rawId}-atlas-dialog-description`;
   const [expanded, setExpanded] = useState(false);
+  const [activeSelection, setActiveSelection] = useState<MissionMapSelection>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -148,20 +149,43 @@ export default function MissionTrajectory({
 
   return (
     <>
-      <Root id={embedded ? undefined : sectionId} tabIndex={!embedded && sectionId ? -1 : undefined} aria-labelledby={embedded ? undefined : sectionTitleId} className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${variant === 'detail' ? 'min-h-[36rem]' : 'lg:h-full lg:min-h-[27.5rem]'} ${className}`} data-mission-map-variant={variant}>
+      <Root id={embedded ? undefined : sectionId} tabIndex={!embedded && sectionId ? -1 : undefined} aria-labelledby={embedded ? undefined : sectionTitleId} className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${variant === 'detail' ? 'min-h-[48rem]' : 'lg:h-full lg:min-h-[27.5rem]'} ${className}`} data-mission-map-variant={variant}>
         <header className="flex items-center justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><h2 id={sectionTitleId} className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]">{variant === 'detail' ? 'Launch site atlas' : 'Mission trajectory'}</h2><span className="rounded border border-[rgba(88,200,232,0.3)] bg-[rgba(88,200,232,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-cyan)]">{variant === 'detail' ? 'Open map' : 'Illustrative model'}</span></div>
+            <div className="flex flex-wrap items-center gap-2"><h2 id={sectionTitleId} className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]">Mission trajectory</h2><span className="rounded border border-[rgba(88,200,232,0.3)] bg-[rgba(88,200,232,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-cyan)]">Illustrative model</span>{variant === 'detail' ? <span className="rounded border border-[rgba(94,230,168,0.3)] bg-[rgba(94,230,168,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-green)]">Open pad atlas</span> : null}</div>
             <p className="mt-1 truncate text-xs text-[var(--text-muted)]">{launch?.name || 'No mission selected'}</p>
           </div>
           <button ref={expandButtonRef} type="button" className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs" onClick={openExpanded} disabled={!launch} aria-label="Enlarge launch site atlas"><span className="hidden sm:inline">Explore full screen</span><Maximize2 aria-hidden="true" className="h-4 w-4" /></button>
         </header>
 
-        {variant === 'detail' && launch ? <LaunchSiteAtlas launch={launch} /> : (
-          <MissionMapCanvas activeSelection={null} launch={launch} trajectory={trajectory} variant="compact" viewMode="focus" viewport={viewport} />
+        {variant === 'detail' && launch && trajectory ? (
+          <div className="grid min-h-0">
+            <section aria-labelledby={`${sectionTitleId}-flight-path`} className="border-b border-[var(--border-strong)] bg-[var(--surface-sunken)]">
+              <div className="border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
+                <p className="console-label">Animated flight path</p>
+                <h3 id={`${sectionTitleId}-flight-path`} className="mt-1 text-base font-bold text-[var(--text-primary)]">Stage-by-stage mission model</h3>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Choose a stage to inspect its animated path, timing, altitude, and downrange context.</p>
+              </div>
+              <MissionMapCanvas activeSelection={activeSelection} launch={launch} trajectory={trajectory} variant="detail" viewMode="focus" viewport={viewport} />
+              <MissionPhaseRail activeSelection={activeSelection} launch={launch} onSelect={setActiveSelection} trajectory={trajectory} />
+              <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{TRAJECTORY_DISCLOSURE}</p>
+            </section>
+            <section aria-labelledby={`${sectionTitleId}-atlas`}>
+              <div className="border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
+                <p className="console-label text-[var(--console-green)]">Launch complex field guide</p>
+                <h3 id={`${sectionTitleId}-atlas`} className="mt-1 text-base font-bold text-[var(--text-primary)]">Launch site atlas</h3>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Zoom closer to reveal every neighboring pad, then explore its photo, history, operators, and launch facts.</p>
+              </div>
+              <LaunchSiteAtlas launch={launch} />
+              <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{ATLAS_DISCLOSURE}</p>
+            </section>
+          </div>
+        ) : (
+          <>
+            <MissionMapCanvas activeSelection={null} launch={launch} trajectory={trajectory} variant="compact" viewMode="focus" viewport={viewport} />
+            <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{TRAJECTORY_DISCLOSURE}</p>
+          </>
         )}
-
-        <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{variant === 'detail' ? ATLAS_DISCLOSURE : TRAJECTORY_DISCLOSURE}</p>
         {variant === 'compact' ? <CompactFacts launch={launch} /> : null}
       </Root>
       {dialog}

@@ -5581,21 +5581,25 @@ test('trajectory and signal motion settles for reduced-motion users', async ({
       ?.click();
   });
   await expect(atlas).toBeVisible();
-  await expect(atlas.locator('canvas')).toHaveCount(1);
+  await expect(atlas.locator('.leaflet-container')).toHaveCount(1);
 
   const motion = await page.evaluate(() => {
     const atlas = document.querySelector('[data-launch-site-atlas]');
     const heading = atlas?.closest('[data-mission-map-variant]')?.querySelector('h2');
-    const canvas = atlas?.querySelector('canvas');
+    const trajectory = atlas
+      ?.closest('[data-mission-map-variant]')
+      ?.querySelector('[data-trajectory-map]');
     return {
       heading: heading ? getComputedStyle(heading).animationName : null,
-      canvas: canvas ? getComputedStyle(canvas).animationName : null,
+      trajectory: trajectory
+        ? getComputedStyle(trajectory).animationName
+        : null,
     };
   });
 
   expect(motion).toEqual({
     heading: 'none',
-    canvas: 'none',
+    trajectory: 'none',
   });
 });
 

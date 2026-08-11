@@ -6,32 +6,43 @@ import { TRAJECTORY_DISCLOSURE } from '@/lib/trajectory';
 import type { Launch, LaunchSiteAtlasResponse } from '@/lib/types';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
-const source = { setData: vi.fn(), getClusterExpansionZoom: vi.fn(async () => 12) };
 const mapInstances: Array<Record<string, ReturnType<typeof vi.fn>>> = [];
 
-vi.mock('maplibre-gl', () => {
+vi.mock('leaflet', () => {
   class MockMap {
-    addControl = vi.fn();
-    addLayer = vi.fn();
-    addSource = vi.fn();
-    easeTo = vi.fn();
-    fitBounds = vi.fn();
+    flyToBounds = vi.fn();
     flyTo = vi.fn();
-    getCanvas = vi.fn(() => document.createElement('canvas'));
-    getSource = vi.fn(() => source);
+    getContainer = vi.fn(() => document.createElement('div'));
     getZoom = vi.fn(() => 8);
-    queryRenderedFeatures = vi.fn(() => []);
     remove = vi.fn();
     zoomIn = vi.fn();
     zoomOut = vi.fn();
-    on = vi.fn((event: string, layerOrCallback: string | (() => void), callback?: () => void) => {
-      if (event === 'load') queueMicrotask(() => (typeof layerOrCallback === 'function' ? layerOrCallback() : callback?.()));
-    });
+    on = vi.fn();
     constructor() {
       mapInstances.push(this as unknown as Record<string, ReturnType<typeof vi.fn>>);
     }
   }
-  return { Map: MockMap, AttributionControl: class {} };
+  const layer = { addTo: vi.fn(), clearLayers: vi.fn() };
+  layer.addTo.mockImplementation(() => layer);
+  const marker = { addTo: vi.fn(), bindTooltip: vi.fn(), on: vi.fn() };
+  marker.addTo.mockImplementation(() => marker);
+  marker.bindTooltip.mockImplementation(() => marker);
+  marker.on.mockImplementation(() => marker);
+  const tiles = {
+    addTo: vi.fn(),
+    on: vi.fn(),
+    once: vi.fn((event: string, callback: () => void) => { if (event === 'load') queueMicrotask(callback); return tiles; }),
+  };
+  tiles.addTo.mockImplementation(() => tiles);
+  tiles.on.mockImplementation(() => tiles);
+  const leaflet = {
+    circleMarker: vi.fn(() => marker),
+    latLngBounds: vi.fn((points) => points),
+    layerGroup: vi.fn(() => layer),
+    map: vi.fn(() => new MockMap()),
+    tileLayer: vi.fn(() => tiles),
+  };
+  return { default: leaflet, ...leaflet };
 });
 
 function makeLaunch(overrides: Partial<Launch> = {}): Launch {
@@ -72,7 +83,6 @@ const atlas: LaunchSiteAtlasResponse = {
 describe('MissionTrajectory', () => {
   beforeEach(() => {
     mapInstances.length = 0;
-    source.setData.mockClear();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(atlas), { status: 200 })));
   });
 
@@ -89,7 +99,9 @@ describe('MissionTrajectory', () => {
     const user = userEvent.setup();
     const { container } = render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
     expect(screen.getByRole('heading', { name: 'Launch site atlas' })).toBeVisible();
-    expect(screen.getByText('Open map')).toBeVisible();
+    expect(screen.getByText('Open pad atlas')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Stage-by-stage mission model' })).toBeVisible();
+    expect(container.querySelectorAll('[data-trajectory-map]')).toHaveLength(1);
     expect(screen.getByRole('group', { name: 'Atlas controls' })).toBeVisible();
     expect(container.querySelector('[data-launch-site-atlas]')).toBeInTheDocument();
 
@@ -116,7 +128,7 @@ describe('MissionTrajectory', () => {
     await user.click(screen.getByRole('button', { name: 'Reset atlas to launch region' }));
     expect(mapInstances[0].zoomIn).toHaveBeenCalled();
     expect(mapInstances[0].zoomOut).toHaveBeenCalled();
-    expect(mapInstances[0].fitBounds).toHaveBeenCalled();
+    expect(mapInstances[0].flyToBounds).toHaveBeenCalled();
     expect(mapInstances[0].flyTo).toHaveBeenCalled();
   });
 

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import "maplibre-gl/dist/maplibre-gl.css";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import RegisterServiceWorker from "./register-sw";
 import AppShell from "@/components/layout/AppShell";

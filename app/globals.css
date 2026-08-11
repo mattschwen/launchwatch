@@ -1,4 +1,33 @@
 @import "tailwindcss";
+
+.leaflet-container {
+  background: #080b0e;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+.leaflet-control-attribution {
+  background: rgba(5, 6, 10, 0.82) !important;
+  color: var(--text-muted);
+}
+
+.leaflet-control-attribution a {
+  color: var(--console-cyan);
+}
+
+.leaflet-tooltip.launch-site-label {
+  border: 1px solid rgba(88, 200, 232, 0.35);
+  background: rgba(5, 6, 10, 0.94);
+  color: #f4f7f8;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.leaflet-tooltip-top.launch-site-label::before {
+  border-top-color: rgba(5, 6, 10, 0.94);
+}
 @source "../components/launch/MissionVisual.tsx";
 
 /* ═══════════════════════════════════════════════════
