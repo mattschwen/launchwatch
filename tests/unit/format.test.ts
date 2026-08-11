@@ -11,6 +11,7 @@ import {
   formatLaunchTime,
   formatLaunchWindow,
   formatLaunchWindowTimes,
+  formatLocalLaunchWindow,
   formatTimelineOffset,
   formatTimelineEventUtcTime,
   getTimelineEventDate,
@@ -167,6 +168,28 @@ describe('launch formatting', () => {
         windowEnd: '2035-07-29T00:30:00.000Z',
       })
     ).toBe('Jul 28, 2035, 23:30 UTC – Jul 29, 2035, 00:30 UTC');
+  });
+
+  it('translates validated provider windows without repeating UTC', () => {
+    expect(
+      formatLocalLaunchWindow(UPCOMING_LAUNCHES[0], 'America/Denver')
+    ).toBe('8:30 AM–10:30 AM MDT');
+    expect(
+      formatLocalLaunchWindow(UPCOMING_LAUNCHES[0], 'UTC')
+    ).toBeNull();
+    expect(
+      formatLocalLaunchWindow(
+        {
+          date: '2035-07-28T01:30:00.000Z',
+          windowStart: '2035-07-28T01:30:00.000Z',
+          windowEnd: '2035-07-28T07:30:00.000Z',
+        },
+        'America/Denver'
+      )
+    ).toBe('Jul 27, 7:30 PM–Jul 28, 1:30 AM MDT');
+    expect(
+      formatLocalLaunchWindow(UPCOMING_LAUNCHES[0], 'Not/A_Timezone')
+    ).toBeNull();
   });
 
   it('formats provider timeline durations as scannable mission offsets', () => {

@@ -40,6 +40,16 @@ test.describe('confirmed launch local time', () => {
       }).format(new Date((element as HTMLTimeElement).dateTime))
     );
     await expect(featuredLocalTime).toHaveText(expectedLocalTime);
+    const featuredWindow = featured.locator('[data-launch-window]');
+    await expect(featuredWindow.getByText('Your window')).toBeVisible();
+    await expect(
+      featuredWindow.locator('[data-local-launch-window]')
+    ).toContainText('6:00 AM–8:00 AM MDT');
+    await expect(
+      featuredWindow.getByRole('note', {
+        name: 'Your local launch window 6:00 AM–8:00 AM MDT',
+      })
+    ).toBeVisible();
 
     const schedule = page.locator('#upcoming-launch-results');
     const firstMissionRow = schedule.locator('article').first();
@@ -67,6 +77,9 @@ test.describe('confirmed launch local time', () => {
     await expect(
       selectedMission.getByText('Your time', { exact: true })
     ).toBeVisible();
+    await expect(
+      selectedMission.locator('[data-local-launch-window]')
+    ).toContainText('6:00 AM–8:00 AM MDT');
     await expectContainedPage(page);
 
     await page.goto('/launch/ll2-demo-orbital-dawn');
@@ -77,6 +90,9 @@ test.describe('confirmed launch local time', () => {
     await expect(
       missionPanel.getByText(expectedLocalTime, { exact: true })
     ).toBeVisible();
+    await expect(
+      missionPanel.locator('[data-local-launch-window]')
+    ).toContainText('6:00 AM–8:00 AM MDT');
     const timeline = page.getByRole('region', { name: 'Launch timeline' });
     const timelineClocks = timeline.locator('[data-timeline-clock]');
     await expect(
@@ -123,6 +139,9 @@ test.describe('UTC launch time', () => {
     await expect(featured.getByText('12:00 UTC', { exact: true })).toBeVisible();
     await expect(
       featured.getByText('Your time', { exact: true })
+    ).toHaveCount(0);
+    await expect(
+      featured.locator('[data-local-launch-window]')
     ).toHaveCount(0);
     await expect(
       page

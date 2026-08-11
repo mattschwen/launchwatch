@@ -84,6 +84,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   visibly pending until the provider confirms a minute-level target. The
   pending control remains keyboard-focusable and exposes its precision-aware
   explanation on focus or hover without opening calendar actions.
+- Validated provider launch windows keep the UTC range authoritative and add a
+  hydration-safe local start/end range inside the same telemetry badge. UTC
+  viewers do not receive a duplicate range, and local midnight crossings name
+  both dates instead of implying one calendar day.
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping the full

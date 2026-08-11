@@ -491,6 +491,91 @@ export function formatLaunchWindowTimes(
     : formatLaunchWindow(launch);
 }
 
+export function formatLocalLaunchWindow(
+  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>,
+  timeZone: string,
+  locale = 'en-US'
+): string | null {
+  const bounds = getLaunchWindowBounds(launch);
+  if (!bounds) return null;
+
+  try {
+    const offsetName = (date: Date): string | undefined =>
+      new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        timeZoneName: 'longOffset',
+      })
+        .formatToParts(date)
+        .find((part) => part.type === 'timeZoneName')?.value;
+    const startOffset = offsetName(bounds.start);
+    const endOffset = offsetName(bounds.end);
+
+    if (
+      !startOffset ||
+      !endOffset ||
+      [startOffset, endOffset].every(
+        (offset) => offset === 'GMT' || offset === 'GMT+00:00'
+      )
+    ) {
+      return null;
+    }
+
+    const calendarParts = (date: Date): Record<string, string> =>
+      Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone,
+        })
+          .formatToParts(date)
+          .filter((part) => part.type !== 'literal')
+          .map((part) => [part.type, part.value])
+      );
+    const startDate = calendarParts(bounds.start);
+    const endDate = calendarParts(bounds.end);
+    const sameDay = ['year', 'month', 'day'].every(
+      (part) => startDate[part] === endDate[part]
+    );
+    const sameYear = startDate.year === endDate.year;
+    const clockFormatter = new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone,
+    });
+    const zoneName = (date: Date): string | undefined =>
+      new Intl.DateTimeFormat(locale, {
+        timeZone,
+        timeZoneName: 'short',
+      })
+        .formatToParts(date)
+        .find((part) => part.type === 'timeZoneName')?.value;
+    const startZone = zoneName(bounds.start);
+    const endZone = zoneName(bounds.end);
+    if (!startZone || !endZone) return null;
+
+    const startClock = clockFormatter.format(bounds.start);
+    const endClock = clockFormatter.format(bounds.end);
+    const zonesMatch = startZone === endZone;
+    const startTime = `${startClock}${zonesMatch ? '' : ` ${startZone}`}`;
+    const endTime = `${endClock} ${endZone}`;
+
+    if (sameDay) return `${startTime}–${endTime}`;
+
+    const dateFormatter = new Intl.DateTimeFormat(locale, {
+      month: 'short',
+      day: 'numeric',
+      ...(sameYear ? {} : { year: 'numeric' as const }),
+      timeZone,
+    });
+    return `${dateFormatter.format(bounds.start)}, ${startTime}–${dateFormatter.format(
+      bounds.end
+    )}, ${endTime}`;
+  } catch {
+    return null;
+  }
+}
+
 export function formatRelativeDate(date: string): string {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
