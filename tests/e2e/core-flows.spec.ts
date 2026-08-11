@@ -2073,6 +2073,72 @@ test('timed estimates retain a live approximate countdown', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('open launch windows retain a live time-to-close signal across mission surfaces', async ({
+  page,
+}) => {
+  const now = Date.now();
+  const target = new Date(now - 60_000).toISOString();
+  const windowLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: target,
+    dateUnix: Math.floor(Date.parse(target) / 1000),
+    windowStart: new Date(now - 30 * 60_000).toISOString(),
+    windowEnd: new Date(now + 90 * 60_000).toISOString(),
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [windowLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: windowLaunch,
+        canonicalId: windowLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+
+  const heroWindow = page
+    .locator('section[aria-labelledby="featured-launch-title"]')
+    .getByRole('status', {
+      name: /Launch window open · closes in 1h (28|29|30)m/,
+    });
+  await expect(heroWindow).toBeVisible();
+  await expect(heroWindow).toHaveAttribute(
+    'data-countdown-state',
+    'window-open'
+  );
+
+  if (!test.info().project.name.startsWith('mobile')) {
+    await expect(
+      page
+        .getByRole('complementary', { name: 'Mission status' })
+        .getByRole('status', {
+          name: /Launch window open · closes in 1h (28|29|30)m/,
+        })
+    ).toBeVisible();
+  }
+
+  await page.goto(`/watch?id=${windowLaunch.id}`);
+  await expect(
+    page
+      .locator('section.stream-surface')
+      .getByRole('status', {
+        name: /Launch window open · closes in 1h (28|29|30)m/,
+      })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('post-target countdowns wait for provider confirmation without inventing a window', async ({
   page,
 }) => {

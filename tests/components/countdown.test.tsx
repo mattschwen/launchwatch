@@ -172,55 +172,85 @@ describe('Countdown', () => {
   });
 
   it('identifies a confirmed provider window that remains open', () => {
+    const now = Date.parse('2035-07-28T14:30:30.000Z');
     mockedUseCountdown.mockReturnValue({
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0,
       total: 0,
-      now: Date.now(),
+      now,
     });
-    const target = new Date(Date.now() - 60_000);
 
     render(
       <Countdown
-        targetDate={target.toISOString()}
-        windowStart={new Date(target.getTime() - 30 * 60_000).toISOString()}
-        windowEnd={new Date(Date.now() + 30 * 60_000).toISOString()}
+        targetDate="2035-07-28T14:30:00.000Z"
+        windowStart="2035-07-28T14:00:00.000Z"
+        windowEnd="2035-07-28T16:00:00.000Z"
       />
     );
 
     expect(
-      screen.getByRole('status', { name: 'Launch window open' })
+      screen.getByRole('status', {
+        name: 'Launch window open · closes in 1h 29m',
+      })
     ).toHaveClass('text-[var(--console-green)]');
   });
 
   it('does not present an active provider target window as nominal during an alert', () => {
+    const now = Date.parse('2035-07-28T14:30:30.000Z');
     mockedUseCountdown.mockReturnValue({
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0,
       total: 0,
-      now: Date.now(),
+      now,
     });
-    const target = new Date(Date.now() - 60_000);
 
     render(
       <Countdown
         alert
-        targetDate={target.toISOString()}
-        windowStart={new Date(target.getTime() - 30 * 60_000).toISOString()}
-        windowEnd={new Date(Date.now() + 30 * 60_000).toISOString()}
+        targetDate="2035-07-28T14:30:00.000Z"
+        windowStart="2035-07-28T14:00:00.000Z"
+        windowEnd="2035-07-28T16:00:00.000Z"
       />
     );
 
     expect(
-      screen.getByRole('status', { name: 'Provider target window active' })
+      screen.getByRole('status', {
+        name: 'Provider target window active · closes in 1h 29m',
+      })
     ).toHaveClass('text-[var(--console-red)]');
     expect(
-      screen.queryByRole('status', { name: 'Launch window open' })
+      screen.queryByRole('status', { name: /Launch window open/ })
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps the final launch-window minute honest', () => {
+    mockedUseCountdown.mockReturnValue({
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      total: 0,
+      now: Date.parse('2035-07-28T15:59:30.000Z'),
+    });
+
+    render(
+      <Countdown
+        targetDate="2035-07-28T14:30:00.000Z"
+        windowStart="2035-07-28T14:00:00.000Z"
+        windowEnd="2035-07-28T16:00:00.000Z"
+        compact
+      />
+    );
+
+    expect(
+      screen.getByRole('status', {
+        name: 'Launch window open · closes in <1m',
+      })
+    ).toHaveAttribute('data-countdown-state', 'window-open');
   });
 
   it('stops calling a validated provider window open after its end', () => {

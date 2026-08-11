@@ -50,6 +50,9 @@ short, dismissible status toast; it never blocks the application.
 - Mission briefings, coverage, community links, and replay surfaces
 - Provider-derived mission clocks translate precise timeline offsets into UTC
   and local milestone times; coarse targets keep those clocks visibly pending.
+- Once a validated launch window opens, shared mission countdowns retain urgency
+  with a minute-level time-to-close readout instead of collapsing to a static
+  open-window label; confirmed in-flight state and provider alerts keep priority.
 - External coverage handoffs name the destination before leaving LaunchWatch,
   fill the non-embeddable player with an eligible licensed vehicle or mission
   visual when available, and retain consistent screen-reader cues when

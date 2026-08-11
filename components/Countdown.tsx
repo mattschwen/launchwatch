@@ -57,6 +57,23 @@ function formatSpokenCountdown({
     : `${duration} until launch`;
 }
 
+function formatWindowRemaining(milliseconds: number): string {
+  const totalMinutes = Math.floor(milliseconds / 60_000);
+  if (totalMinutes < 1) return '<1m';
+
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d${hours > 0 ? ` ${hours}h` : ''}`;
+  }
+  if (hours > 0) {
+    return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+  }
+  return `${minutes}m`;
+}
+
 export default function Countdown({
   alert = false,
   targetDate,
@@ -131,12 +148,17 @@ export default function Countdown({
     const providerWindowOpen = Boolean(
       launchWindow && launchWindow.end.getTime() >= now
     );
+    const windowCloseLabel = providerWindowOpen && launchWindow
+      ? ` · closes in ${formatWindowRemaining(
+          launchWindow.end.getTime() - now
+        )}`
+      : '';
     const statusLabel = completedLabel
       ? completedLabel
       : providerWindowOpen
         ? alert
-          ? 'Provider target window active'
-          : 'Launch window open'
+          ? `Provider target window active${windowCloseLabel}`
+          : `Launch window open${windowCloseLabel}`
         : 'Awaiting provider update';
     const statusTone = completedLabel
       ? 'text-[var(--text-secondary)]'
