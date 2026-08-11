@@ -3156,6 +3156,106 @@ test('mission program context follows the mission across primary surfaces', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('provider readiness follows the mission across primary surfaces', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const weatherConcerns =
+    'Cumulus Cloud Rule and attached anvil cloud clearance';
+  const readinessLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    launchProbability: 85,
+    weatherConcerns,
+    holdReason: 'Range clearance pending final confirmation',
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [readinessLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    }),
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: readinessLaunch,
+        canonicalId: readinessLaunch.id,
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  const assertReadiness = async (
+    signal: Locator,
+    detailed = true,
+  ): Promise<void> => {
+    await expect(signal).toBeVisible();
+    await expect(signal).toContainText('85% provider probability');
+    if (detailed) {
+      await expect(signal).toContainText(weatherConcerns);
+      await expect(signal).toContainText('Range clearance pending');
+    }
+    expect(
+      await signal.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+  };
+
+  await page.goto('/');
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  const heroReadiness = hero.locator('[data-launch-readiness-signal]');
+  await assertReadiness(heroReadiness, false);
+  await expect(heroReadiness).toHaveAccessibleName(
+    /Launch readiness: 85% provider probability.*Range clearance pending.*Cumulus Cloud Rule/,
+  );
+  const openBriefing = hero.getByRole('button', { name: 'Open briefing' });
+  await openBriefing.focus();
+  await openBriefing.press('Enter');
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await assertReadiness(briefing.locator('[data-launch-readiness-signal]'));
+  await briefing
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+
+  await page.goto('/watch');
+  await assertReadiness(
+    page.locator('main [data-launch-readiness-signal]').first(),
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await assertReadiness(
+    page
+      .getByRole('region', { name: 'Mission telemetry' })
+      .locator('[data-launch-readiness-signal]'),
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(
+    await page.locator('img').evaluateAll((images) =>
+      images.every(
+        (image) =>
+          image instanceof HTMLImageElement &&
+          image.complete &&
+          image.naturalWidth > 0,
+      ),
+    ),
+  ).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('primary mission summaries keep the provider launch window visible', async ({
   page,
 }) => {

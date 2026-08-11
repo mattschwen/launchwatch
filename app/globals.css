@@ -246,6 +246,10 @@ body::before {
 }
 
 @media (max-height: 430px) {
+  .launch-readiness-hero {
+    display: none;
+  }
+
   .compact-hero-telemetry .local-launch-time {
     display: none;
   }

@@ -322,6 +322,10 @@ const ll2Upcoming = ll2Launch({
     'A communications payload mission opening a new low-Earth-orbit relay corridor.\n\nMission objectives:\n\n* Deploy the relay payload\n* Validate the communications link',
 });
 
+ll2Upcoming.probability = 85;
+ll2Upcoming.weather_concerns = 'Cumulus Cloud Rule';
+ll2Upcoming.holdreason = null;
+
 ll2Upcoming.rocket.configuration.image = {
   id: 9001,
   name: 'Astra Nova launch vehicle',

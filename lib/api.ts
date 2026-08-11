@@ -1065,6 +1065,15 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
       : null,
     windowStart: launch.window_start || null,
     windowEnd: launch.window_end || null,
+    launchProbability:
+      typeof launch.probability === 'number' &&
+      Number.isInteger(launch.probability) &&
+      launch.probability >= 0 &&
+      launch.probability <= 100
+        ? launch.probability
+        : null,
+    weatherConcerns: optionalText(launch.weather_concerns) ?? null,
+    holdReason: optionalText(launch.holdreason) ?? null,
     livestream: livestreams?.[0]?.url || null,
     livestreams: livestreams.length > 0 ? livestreams : null,
     description: normalizeLaunchDescription(launch.mission?.description),

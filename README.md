@@ -70,6 +70,10 @@ short, dismissible status toast; it never blocks the application.
   featured mission while Watch, briefing, and detail telemetry retain the
   complete type, program, and target-orbit profile; absent or duplicate
   provider values collapse without invented labels
+- Provider launch-readiness reports retain bounded probability, weather
+  constraints, and hold reasons across Home, Watch, briefing, and canonical
+  detail surfaces; missing or malformed values remain absent rather than being
+  inferred from mission status
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
   re-arm the alert thresholds for the new confirmed time, and exported or

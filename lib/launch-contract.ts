@@ -9,6 +9,21 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
+function isOptionalNullableString(value: unknown): boolean {
+  return value === undefined || isNullableString(value);
+}
+
+function isLaunchProbability(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'number' &&
+      Number.isInteger(value) &&
+      value >= 0 &&
+      value <= 100)
+  );
+}
+
 function isSafeHttpsUrl(value: unknown): value is string {
   if (typeof value !== 'string' || value !== value.trim()) return false;
 
@@ -93,6 +108,9 @@ export function isLaunch(value: unknown): value is Launch {
     isNullableString(value.description) &&
     typeof value.isLive === 'boolean' &&
     sources.includes(String(value.source)) &&
+    isLaunchProbability(value.launchProbability) &&
+    isOptionalNullableString(value.weatherConcerns) &&
+    isOptionalNullableString(value.holdReason) &&
     isLaunchFirstStage(value.firstStage) &&
     (timeline === undefined ||
       timeline === null ||

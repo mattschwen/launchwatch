@@ -61,6 +61,33 @@ describe('client launch contract', () => {
     ).toBe(false);
   });
 
+  it.each([-1, 20.5, 101, Number.NaN])(
+    'rejects malformed launch probability %s',
+    (launchProbability) => {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          launchProbability,
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it('rejects non-text readiness constraints', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        weatherConcerns: ['Cumulus Cloud Rule'],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        holdReason: { reason: 'Range clearance pending' },
+      }),
+    ).toBe(false);
+  });
+
   it.each([
     {
       label: 'unqualified ID',

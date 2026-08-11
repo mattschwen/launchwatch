@@ -34,6 +34,9 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     missionType: 'Communications',
     windowStart: '2035-07-28T14:30:00.000Z',
     windowEnd: '2035-07-28T16:30:00.000Z',
+    launchProbability: 85,
+    weatherConcerns: 'Cumulus Cloud Rule',
+    holdReason: null,
     livestream: null,
     livestreams: null,
     description:

@@ -35,6 +35,7 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
+import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
@@ -531,6 +532,7 @@ export default function LaunchDetailClient({
             {presentedLaunch.rocket}
           </dd>
         </div>
+        <LaunchReadinessSignal launch={presentedLaunch} variant="compact" />
         <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
         <MissionProfileSignal launch={presentedLaunch} variant="compact" />
       </dl>

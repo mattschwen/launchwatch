@@ -27,6 +27,7 @@ import MissionDescription from './MissionDescription';
 import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
+import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 
 interface LaunchBriefingDrawerProps {
@@ -223,6 +224,7 @@ export default function LaunchBriefingDrawer({
                 </dd>
               </div>
             ) : null}
+            <LaunchReadinessSignal launch={launch} />
             <div className="py-4">
               <dt className="flex items-center gap-3">
                 <Rocket

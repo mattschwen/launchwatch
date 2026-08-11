@@ -69,6 +69,9 @@ const NORMAL_LIST_LAUNCH = {
     map_image: 'https://example.test/pad-map.jpg',
   },
   webcast_live: false,
+  probability: 85,
+  weather_concerns: 'Cumulus Cloud Rule',
+  holdreason: null,
   vid_urls: null,
   timeline: null,
   image: {
@@ -193,6 +196,19 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves provider launch probability and readiness constraints', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      holdreason: 'Range clearance pending',
+    });
+
+    expect(normalized).toMatchObject({
+      launchProbability: 85,
+      weatherConcerns: 'Cumulus Cloud Rule',
+      holdReason: 'Range clearance pending',
+    });
+  });
+
   it('preserves provider-confirmed first-stage reuse and recovery details', () => {
     const normalized = normalizeLL2Launch({
       ...DETAILED_LAUNCH,

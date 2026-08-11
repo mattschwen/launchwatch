@@ -16,6 +16,7 @@ import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LocalLaunchTime from '@/components/LocalLaunchTime';
 import LaunchActions from './LaunchActions';
+import LaunchReadinessSignal from './LaunchReadinessSignal';
 import LaunchWindow from './LaunchWindow';
 import MissionProfileSignal from './MissionProfileSignal';
 
@@ -247,13 +248,16 @@ export default function HeroSection({
                     : 'Coverage live'
                   : critical
                     ? 'Launch status alert'
-                  : 'Next launch'}
+                : 'Next launch'}
             </p>
-            {feedNotice ? (
-              <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--console-amber)]">
-                {feedNotice}
-              </span>
-            ) : null}
+            <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
+              <LaunchReadinessSignal launch={activeLaunch} variant="hero" />
+              {feedNotice ? (
+                <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--console-amber)]">
+                  {feedNotice}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <Link

@@ -117,6 +117,9 @@ export interface LL2Launch {
   net_precision?: LaunchDatePrecision | null;
   window_start?: string | null;
   window_end?: string | null;
+  probability?: number | null;
+  weather_concerns?: string | null;
+  holdreason?: string | null;
   status: {
     id: number;
     name: string;
@@ -333,6 +336,9 @@ export interface Launch {
   missionType?: string | null;
   windowStart?: string | null;
   windowEnd?: string | null;
+  launchProbability?: number | null;
+  weatherConcerns?: string | null;
+  holdReason?: string | null;
   livestream: string | null;
   livestreams?: LaunchStream[] | null;
   description: string | null;

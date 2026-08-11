@@ -94,6 +94,11 @@ its nominal target instant passes.
 
 CDN policy: 5 minutes fresh, 10 minutes stale-while-revalidate.
 
+Launch Library 2 records may include `launchProbability` (an integer from 0 to
+100), `weatherConcerns`, and `holdReason`. These are provider-reported
+readiness facts, not LaunchWatch predictions. Missing, placeholder, or malformed
+values normalize to `null`; clients must not infer them from launch status.
+
 ### `GET /api/launches?type=live`
 
 Returns upcoming-feed launches marked live by provider state or the supported webcast/window heuristic.

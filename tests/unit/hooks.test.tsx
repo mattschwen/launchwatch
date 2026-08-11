@@ -27,6 +27,9 @@ describe('reconcileCurrentLaunch', () => {
       datePrecision: { name: 'Minute', abbrev: 'MIN' },
       windowStart: '2035-07-28T15:30:00.000Z',
       windowEnd: '2035-07-28T17:30:00.000Z',
+      launchProbability: 70,
+      weatherConcerns: 'Anvil Cloud Rule',
+      holdReason: 'Range clearance pending',
       statusName: 'Target updated',
     };
     const detailLaunch = {
@@ -41,6 +44,9 @@ describe('reconcileCurrentLaunch', () => {
       datePrecision: feedLaunch.datePrecision,
       windowStart: feedLaunch.windowStart,
       windowEnd: feedLaunch.windowEnd,
+      launchProbability: feedLaunch.launchProbability,
+      weatherConcerns: feedLaunch.weatherConcerns,
+      holdReason: feedLaunch.holdReason,
       statusName: feedLaunch.statusName,
       description: detailLaunch.description,
       livestream: detailLaunch.livestream,
