@@ -118,6 +118,17 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     orbit: 'Low Earth Orbit',
     rocketFamily: 'Astra',
     rocketVariant: 'Nova',
+    firstStage: {
+      serialNumber: 'B2042',
+      flightNumber: 7,
+      reused: true,
+      landingAttempt: true,
+      landingSuccess: null,
+      landingLocation: 'Autonomous Recovery Platform',
+      landingLocationAbbrev: 'ARP',
+      landingType: 'Autonomous Spaceport Drone Ship',
+      landingTypeAbbrev: 'ASDS',
+    },
   },
   {
     id: 'spacex-demo-polaris',

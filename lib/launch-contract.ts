@@ -39,6 +39,28 @@ function isSafeLaunchStreams(value: unknown): boolean {
   );
 }
 
+function isLaunchFirstStage(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!isRecord(value)) return false;
+
+  return (
+    isNullableString(value.serialNumber) &&
+    (value.flightNumber === null ||
+      (typeof value.flightNumber === 'number' &&
+        Number.isInteger(value.flightNumber) &&
+        value.flightNumber > 0)) &&
+    (value.reused === null || typeof value.reused === 'boolean') &&
+    (value.landingAttempt === null ||
+      typeof value.landingAttempt === 'boolean') &&
+    (value.landingSuccess === null ||
+      typeof value.landingSuccess === 'boolean') &&
+    isNullableString(value.landingLocation) &&
+    isNullableString(value.landingLocationAbbrev) &&
+    isNullableString(value.landingType) &&
+    isNullableString(value.landingTypeAbbrev)
+  );
+}
+
 export function isLaunch(value: unknown): value is Launch {
   if (!isRecord(value)) return false;
 
@@ -71,6 +93,7 @@ export function isLaunch(value: unknown): value is Launch {
     isNullableString(value.description) &&
     typeof value.isLive === 'boolean' &&
     sources.includes(String(value.source)) &&
+    isLaunchFirstStage(value.firstStage) &&
     (timeline === undefined ||
       timeline === null ||
       (Array.isArray(timeline) &&

@@ -369,6 +369,41 @@ test('mission briefing keeps controls clear of simulated PWA safe areas', async 
   );
 });
 
+test('provider first-stage telemetry follows the canonical mission across surfaces', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto(`/launch/${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`);
+
+  const detailSignal = page.locator(
+    '#mission-summary [data-first-stage-signal]',
+  ).first();
+  await expect(detailSignal).toContainText('B2042 · Flight 7');
+  await expect(detailSignal).toContainText('Flight-proven booster');
+  await expect(detailSignal).toContainText(
+    'Recovery planned · Autonomous Recovery Platform (ARP)',
+  );
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await expect(
+    briefing.locator('[data-first-stage-signal]'),
+  ).toContainText('B2042 · Flight 7');
+  await briefing.getByRole('button', { name: 'Close mission briefing' }).click();
+
+  await page.goto(`/watch?id=${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`);
+  const watchSignal = page.locator(
+    '[data-watch-mission-details] [data-first-stage-signal]',
+  );
+  await expect(watchSignal).toContainText('B2042 · Flight 7');
+  await expect(watchSignal).toContainText(
+    'Recovery planned · Autonomous Recovery Platform (ARP)',
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('shared routes publish the branded LaunchWatch social preview', async ({
   page,
 }) => {

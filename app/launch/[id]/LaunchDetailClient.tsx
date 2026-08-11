@@ -35,6 +35,7 @@ import LaunchActions from '@/components/launch/LaunchActions';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
+import FirstStageSignal from '@/components/launch/FirstStageSignal';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
@@ -531,6 +532,7 @@ export default function LaunchDetailClient({
             {presentedLaunch.rocket}
           </dd>
         </div>
+        <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
         <div className="mission-telemetry-item relative pl-8">
           <Orbit
             aria-hidden="true"

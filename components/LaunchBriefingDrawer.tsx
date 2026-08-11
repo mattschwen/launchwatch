@@ -28,6 +28,7 @@ import LocalLaunchTime from './LocalLaunchTime';
 import MissionDescription from './MissionDescription';
 import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
+import FirstStageSignal from './launch/FirstStageSignal';
 
 interface LaunchBriefingDrawerProps {
   launch: Launch | null;
@@ -236,6 +237,7 @@ export default function LaunchBriefingDrawer({
                 {launch.rocket}
               </dd>
             </div>
+            <FirstStageSignal firstStage={launch.firstStage} />
             <div className="py-4">
               <dt className="flex items-center gap-3">
                 <MapPin

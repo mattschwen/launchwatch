@@ -135,6 +135,26 @@ export interface LL2Launch {
       image?: LL2Media | string | null;
       image_url?: string | null;
     };
+    launcher_stage?: Array<{
+      type?: string | null;
+      reused?: boolean | null;
+      launcher_flight_number?: number | null;
+      launcher?: {
+        serial_number?: string | null;
+      } | null;
+      landing?: {
+        attempt?: boolean | null;
+        success?: boolean | null;
+        landing_location?: {
+          name?: string | null;
+          abbrev?: string | null;
+        } | null;
+        type?: {
+          name?: string | null;
+          abbrev?: string | null;
+        } | null;
+      } | null;
+    }> | null;
   };
   pad: {
     id: number;
@@ -258,6 +278,18 @@ export interface LaunchTimelineEvent {
   description: string;
 }
 
+export interface LaunchFirstStage {
+  serialNumber: string | null;
+  flightNumber: number | null;
+  reused: boolean | null;
+  landingAttempt: boolean | null;
+  landingSuccess: boolean | null;
+  landingLocation: string | null;
+  landingLocationAbbrev: string | null;
+  landingType: string | null;
+  landingTypeAbbrev: string | null;
+}
+
 export interface LaunchDatePrecision {
   name: string;
   abbrev: string;
@@ -324,6 +356,7 @@ export interface Launch {
   orbit?: string | null;
   rocketFamily?: string | null;
   rocketVariant?: string | null;
+  firstStage?: LaunchFirstStage | null;
 }
 
 export type LaunchProviderName = LaunchSource;

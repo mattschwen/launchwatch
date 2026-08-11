@@ -193,6 +193,68 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves provider-confirmed first-stage reuse and recovery details', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      rocket: {
+        ...DETAILED_LAUNCH.rocket,
+        launcher_stage: [
+          {
+            type: 'Core',
+            reused: true,
+            launcher_flight_number: 18,
+            launcher: {
+              serial_number: 'B1085',
+            },
+            landing: {
+              attempt: true,
+              success: null,
+              landing_location: {
+                name: 'A Shortfall of Gravitas',
+                abbrev: 'ASOG',
+              },
+              type: {
+                name: 'Autonomous Spaceport Drone Ship',
+                abbrev: 'ASDS',
+              },
+            },
+          },
+        ],
+      },
+    } as LL2Launch);
+
+    expect((normalized as unknown as { firstStage?: unknown }).firstStage).toEqual({
+      serialNumber: 'B1085',
+      flightNumber: 18,
+      reused: true,
+      landingAttempt: true,
+      landingSuccess: null,
+      landingLocation: 'A Shortfall of Gravitas',
+      landingLocationAbbrev: 'ASOG',
+      landingType: 'Autonomous Spaceport Drone Ship',
+      landingTypeAbbrev: 'ASDS',
+    });
+  });
+
+  it('does not invent first-stage telemetry from an empty provider stage', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      rocket: {
+        ...DETAILED_LAUNCH.rocket,
+        launcher_stage: [
+          {
+            type: 'Core',
+            launcher_flight_number: 0,
+            launcher: { serial_number: '   ' },
+            landing: {},
+          },
+        ],
+      },
+    });
+
+    expect(normalized.firstStage).toBeNull();
+  });
+
   it('normalizes confirmed payload deployment as a successful outcome', () => {
     const normalized = normalizeLL2Launch({
       ...NORMAL_LIST_LAUNCH,

@@ -24,6 +24,41 @@ describe('client launch contract', () => {
         ],
       }),
     ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        firstStage: {
+          serialNumber: 'B1085',
+          flightNumber: 18,
+          reused: true,
+          landingAttempt: true,
+          landingSuccess: null,
+          landingLocation: 'A Shortfall of Gravitas',
+          landingLocationAbbrev: 'ASOG',
+          landingType: 'Autonomous Spaceport Drone Ship',
+          landingTypeAbbrev: 'ASDS',
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects malformed first-stage provider facts', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        firstStage: {
+          serialNumber: 'B1085',
+          flightNumber: -1,
+          reused: 'yes',
+          landingAttempt: true,
+          landingSuccess: null,
+          landingLocation: 'A Shortfall of Gravitas',
+          landingLocationAbbrev: 'ASOG',
+          landingType: 'Autonomous Spaceport Drone Ship',
+          landingTypeAbbrev: 'ASDS',
+        },
+      }),
+    ).toBe(false);
   });
 
   it.each([

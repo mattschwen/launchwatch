@@ -162,6 +162,26 @@ function ll2Launch({
         variant: rocket.split(' ').slice(1).join(' ') || null,
         image: null,
       },
+      launcher_stage: [
+        {
+          type: 'Core',
+          reused: true,
+          launcher_flight_number: 7,
+          launcher: { serial_number: 'B2042' },
+          landing: {
+            attempt: true,
+            success: null,
+            landing_location: {
+              name: 'Autonomous Recovery Platform',
+              abbrev: 'ARP',
+            },
+            type: {
+              name: 'Autonomous Spaceport Drone Ship',
+              abbrev: 'ASDS',
+            },
+          },
+        },
+      ],
     },
     pad: {
       id: 1,

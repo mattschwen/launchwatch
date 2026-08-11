@@ -114,4 +114,23 @@ describe('LaunchBriefingDrawer', () => {
       })
     ).toBeVisible();
   });
+
+  it('surfaces provider-confirmed first-stage history and recovery plans', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    const dialog = screen.getByRole('dialog', { name: launch.name });
+    const firstStage = within(dialog)
+      .getByText('First stage')
+      .closest('[data-first-stage-signal]');
+
+    expect(firstStage).toHaveTextContent('B2042 · Flight 7');
+    expect(firstStage).toHaveTextContent('Flight-proven booster');
+    expect(firstStage).toHaveTextContent(
+      'Recovery planned · Autonomous Recovery Platform (ARP)',
+    );
+  });
 });

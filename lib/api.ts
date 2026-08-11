@@ -984,6 +984,67 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     launch.pad.country?.alpha_2_code ||
     launch.pad.location?.country?.alpha_2_code ||
     undefined;
+  const launcherStages = Array.isArray(launch.rocket.launcher_stage)
+    ? launch.rocket.launcher_stage
+    : [];
+  const providerFirstStage =
+    launcherStages.find((stage) => stage?.type?.trim().toLowerCase() === 'core') ??
+    launcherStages[0] ??
+    null;
+  const serialNumber = optionalText(
+    providerFirstStage?.launcher?.serial_number,
+  ) ?? null;
+  const flightNumber =
+    typeof providerFirstStage?.launcher_flight_number === 'number' &&
+    Number.isInteger(providerFirstStage.launcher_flight_number) &&
+    providerFirstStage.launcher_flight_number > 0
+      ? providerFirstStage.launcher_flight_number
+      : null;
+  const reused =
+    typeof providerFirstStage?.reused === 'boolean'
+      ? providerFirstStage.reused
+      : null;
+  const landingAttempt =
+    typeof providerFirstStage?.landing?.attempt === 'boolean'
+      ? providerFirstStage.landing.attempt
+      : null;
+  const landingSuccess =
+    typeof providerFirstStage?.landing?.success === 'boolean'
+      ? providerFirstStage.landing.success
+      : null;
+  const landingLocation = optionalText(
+    providerFirstStage?.landing?.landing_location?.name,
+  ) ?? null;
+  const landingLocationAbbrev = optionalText(
+    providerFirstStage?.landing?.landing_location?.abbrev,
+  ) ?? null;
+  const landingType = optionalText(providerFirstStage?.landing?.type?.name) ?? null;
+  const landingTypeAbbrev = optionalText(
+    providerFirstStage?.landing?.type?.abbrev,
+  ) ?? null;
+  const firstStage =
+    providerFirstStage &&
+    (serialNumber ||
+      flightNumber !== null ||
+      reused !== null ||
+      landingAttempt !== null ||
+      landingSuccess !== null ||
+      landingLocation ||
+      landingLocationAbbrev ||
+      landingType ||
+      landingTypeAbbrev)
+      ? {
+          serialNumber,
+          flightNumber,
+          reused,
+          landingAttempt,
+          landingSuccess,
+          landingLocation,
+          landingLocationAbbrev,
+          landingType,
+          landingTypeAbbrev,
+        }
+      : null;
 
   return {
     id: toCanonicalLaunchId('ll2', launch.id),
@@ -1050,6 +1111,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
       : null,
     rocketFamily: family,
     rocketVariant: configuration.variant || null,
+    firstStage,
   };
 }
 
