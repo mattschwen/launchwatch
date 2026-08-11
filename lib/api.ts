@@ -42,6 +42,7 @@ const NASA_API_KEY = process.env.NASA_API_KEY || 'DEMO_KEY';
 const PROVIDER_TIMEOUT_MS = 12_000;
 const PROVIDER_FAILURE_COOLDOWN_MS = 30_000;
 export const MAX_HISTORY_LIMIT = 100;
+const MAX_PROVIDER_UPDATES = 5;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -597,6 +598,46 @@ function safeProviderCoverageUrl(
   }
 }
 
+function normalizeProviderUpdates(
+  updates: LL2Launch['updates'],
+): NonNullable<Launch['providerUpdates']> {
+  if (!Array.isArray(updates)) return [];
+
+  const seen = new Set<string>();
+  return updates
+    .flatMap((update) => {
+      const comment = optionalText(update?.comment);
+      const createdAt = optionalText(update?.created_on);
+      if (
+        !comment ||
+        comment.length > 500 ||
+        !createdAt ||
+        Number.isNaN(Date.parse(createdAt))
+      ) {
+        return [];
+      }
+
+      const normalizedCreatedAt = new Date(createdAt).toISOString();
+      const key = `${normalizedCreatedAt}\u0000${comment.toLocaleLowerCase()}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+
+      return [{
+        id:
+          typeof update.id === 'number' &&
+          Number.isInteger(update.id) &&
+          update.id > 0
+            ? String(update.id)
+            : key,
+        comment,
+        createdAt: normalizedCreatedAt,
+        sourceUrl: safeProviderCoverageUrl(update.info_url),
+      }];
+    })
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .slice(0, MAX_PROVIDER_UPDATES);
+}
+
 function normalizeDatePrecision(value: unknown): LaunchDatePrecision | null {
   if (typeof value === 'string') {
     const normalized = value.trim();
@@ -1083,6 +1124,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     agencies.push({ name, abbrev, type });
     return agencies;
   }, []);
+  const providerUpdates = normalizeProviderUpdates(launch.updates);
 
   return {
     id: toCanonicalLaunchId('ll2', launch.id),
@@ -1152,6 +1194,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
         }];
       })
       : null,
+    providerUpdates: providerUpdates.length > 0 ? providerUpdates : null,
     videoThumbnail: livestreams?.[0]?.thumbnail || null,
     source: 'll2',
     ll2Id: launch.id,

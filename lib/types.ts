@@ -222,6 +222,12 @@ export interface LL2Launch {
     image_url?: string | null;
     priority?: number;
   }> | null;
+  updates?: Array<{
+    id?: number;
+    comment?: string | null;
+    info_url?: string | null;
+    created_on?: string | null;
+  }> | null;
 }
 
 // NASA APOD Type
@@ -307,6 +313,13 @@ export interface LaunchMissionAgency {
   type: string | null;
 }
 
+export interface LaunchProviderUpdate {
+  id: string;
+  comment: string;
+  createdAt: string;
+  sourceUrl: string | null;
+}
+
 export interface LaunchDatePrecision {
   name: string;
   abbrev: string;
@@ -372,6 +385,7 @@ export interface Launch {
   providerLogo?: string | null;
   program?: string | null;
   timeline?: LaunchTimelineEvent[] | null;
+  providerUpdates?: LaunchProviderUpdate[] | null;
   videoThumbnail?: string | null;
   source: LaunchSource;
   ll2Id?: string | null;

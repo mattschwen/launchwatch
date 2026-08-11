@@ -3247,6 +3247,87 @@ test('provider mission operators stay legible across deeper mission surfaces', a
   expect(pageErrors).toEqual([]);
 });
 
+test('canonical mission detail exposes a responsive cited provider update log', async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const updateLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    providerUpdates: [
+      {
+        id: '4103',
+        comment:
+          'Now targeting the refined launch window after range coordination.',
+        createdAt: '2035-07-28T09:15:00.000Z',
+        sourceUrl: 'https://example.test/mission-update',
+      },
+      {
+        id: '4102',
+        comment:
+          'Launch weather improved to 85% GO with the Cumulus Cloud Rule monitored.',
+        createdAt: '2035-07-27T18:42:00.000Z',
+        sourceUrl: null,
+      },
+    ],
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: UPCOMING_LAUNCHES, meta: FEED_META }),
+    }),
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: updateLaunch,
+        canonicalId: updateLaunch.id,
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const updates = page.getByRole('region', { name: 'Latest mission updates' });
+  await expect(updates).toBeVisible();
+  await expect(updates.getByRole('listitem')).toHaveCount(2);
+  await expect(updates).toContainText('range coordination');
+  await expect(updates).toContainText('Cited source unavailable');
+  const citedSource = updates.getByRole('link', {
+    name: /Open cited source.*opens in a new tab/i,
+  });
+  await expect(citedSource).toHaveAttribute(
+    'href',
+    'https://example.test/mission-update',
+  );
+  expect((await citedSource.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  const updateIndex = page.getByRole('link', { name: 'Updates', exact: true });
+  await updateIndex.focus();
+  await updateIndex.press('Enter');
+  await expect(updates).toBeFocused();
+
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  const compactUpdate = briefing.locator('[data-mission-update-log]');
+  await expect(compactUpdate).toContainText('Latest provider update');
+  await expect(compactUpdate).toContainText('range coordination');
+  await expect(compactUpdate).not.toContainText('Cumulus Cloud Rule');
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 test('provider readiness follows the mission across primary surfaces', async ({
   page,
 }) => {
@@ -9659,9 +9740,9 @@ test('mission detail index moves focus among available sections', async ({
   const sectionIndex = page.getByRole('navigation', {
     name: 'Mission sections',
   }).last();
-  await expect(sectionIndex).toContainText('5 sections');
+  await expect(sectionIndex).toContainText('6 sections');
   const sectionLinks = sectionIndex.getByRole('link');
-  await expect(sectionLinks).toHaveCount(5);
+  await expect(sectionLinks).toHaveCount(6);
 
   const sectionTrack = sectionIndex.locator('[data-mission-section-track]');
   const previousSections = sectionIndex.getByRole('button', {
@@ -9685,25 +9766,35 @@ test('mission detail index moves focus among available sections', async ({
     }),
   ).toBe(false);
 
+  const coverageSectionIsVisible = () =>
+    sectionTrack.evaluate((track) => {
+      const link = [...track.querySelectorAll('a')].find(
+        (candidate) => candidate.textContent?.includes('Coverage'),
+      );
+      if (!link) return false;
+      const linkBounds = link.getBoundingClientRect();
+      const trackBounds = track.getBoundingClientRect();
+      return linkBounds.left >= trackBounds.left - 1 &&
+        linkBounds.right <= trackBounds.right + 1;
+    });
+
   await nextSections.click();
-  await expect
-    .poll(() =>
-      sectionTrack.evaluate((track) => {
-        const link = [...track.querySelectorAll('a')].find(
-          (candidate) => candidate.textContent?.includes('Coverage'),
-        );
-        if (!link) return false;
-        const linkBounds = link.getBoundingClientRect();
-        const trackBounds = track.getBoundingClientRect();
-        return linkBounds.left >= trackBounds.left - 1 &&
-          linkBounds.right <= trackBounds.right + 1;
-      }),
-    )
-    .toBe(true);
   await expect(previousSections).toHaveAttribute('aria-disabled', 'false');
+  if (!(await coverageSectionIsVisible())) {
+    await nextSections.click();
+  }
+  await expect
+    .poll(coverageSectionIsVisible)
+    .toBe(true);
 
   await sectionTrack.focus();
-  await page.keyboard.press('ArrowLeft');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if ((await previousSections.getAttribute('aria-disabled')) === 'true') {
+      break;
+    }
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForTimeout(350);
+  }
   await expect.poll(() => sectionTrack.evaluate((track) => track.scrollLeft))
     .toBeLessThanOrEqual(1);
   await expect(previousSections).toHaveAttribute('aria-disabled', 'true');
@@ -9711,6 +9802,7 @@ test('mission detail index moves focus among available sections', async ({
   const destinations = [
     ['Summary', 'mission-summary'],
     ['Trajectory', 'mission-trajectory'],
+    ['Updates', 'mission-updates'],
     ['Timeline', 'mission-timeline'],
     ['Intelligence', 'mission-intelligence'],
     ['Coverage', 'mission-coverage'],

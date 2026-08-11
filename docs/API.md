@@ -107,6 +107,14 @@ provider-supplied `name`, optional `abbrev`, and optional agency `type`.
 Placeholder or duplicate agency names are omitted, and clients must not infer
 an operator from the launch service provider when the mission record is silent.
 
+Normal-mode schedule records do not include provider update notes. Canonical
+LL2 detail responses may add `providerUpdates`, containing at most the latest
+five valid notes in newest-first order. Each note has a stable string `id`, a
+trimmed `comment`, a normalized ISO `createdAt` timestamp, and a nullable
+credential-free HTTPS `sourceUrl`. Invalid timestamps and empty or oversized
+comments are rejected; an unsafe source URL is removed without discarding an
+otherwise valid provider note.
+
 ### `GET /api/launches?type=live`
 
 Returns upcoming-feed launches marked live by provider state or the supported webcast/window heuristic.
@@ -309,6 +317,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `rocketImageUrl`, `launchImageUrl`, `padMapImage`, `providerLogo` | Backward-compatible optional media URLs |
 | `vehicleVisual`, `missionVisual` | Optional structured visuals with provider provenance |
 | `timeline` | Optional provider timeline events |
+| `providerUpdates` | Up to five newest LL2 detail notes with timestamp and optional safe cited source |
 
 Fields absent from an upstream provider are represented as `null`, omitted optional fields, or a documented fallback string.
 

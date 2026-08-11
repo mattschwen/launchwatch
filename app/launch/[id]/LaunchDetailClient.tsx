@@ -39,6 +39,7 @@ import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
+import MissionUpdateLog from '@/components/launch/MissionUpdateLog';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
@@ -216,11 +217,42 @@ function DeferredDetailTrajectory({
 }
 
 const DETAIL_SECTION_LINKS = [
-  { id: 'mission-summary', label: 'Summary', timelineOnly: false },
-  { id: 'mission-trajectory', label: 'Trajectory', timelineOnly: false },
-  { id: 'mission-timeline', label: 'Timeline', timelineOnly: true },
-  { id: 'mission-intelligence', label: 'Intelligence', timelineOnly: false },
-  { id: 'mission-coverage', label: 'Coverage', timelineOnly: false },
+  {
+    id: 'mission-summary',
+    label: 'Summary',
+    updatesOnly: false,
+    timelineOnly: false,
+  },
+  {
+    id: 'mission-trajectory',
+    label: 'Trajectory',
+    updatesOnly: false,
+    timelineOnly: false,
+  },
+  {
+    id: 'mission-updates',
+    label: 'Updates',
+    updatesOnly: true,
+    timelineOnly: false,
+  },
+  {
+    id: 'mission-timeline',
+    label: 'Timeline',
+    updatesOnly: false,
+    timelineOnly: true,
+  },
+  {
+    id: 'mission-intelligence',
+    label: 'Intelligence',
+    updatesOnly: false,
+    timelineOnly: false,
+  },
+  {
+    id: 'mission-coverage',
+    label: 'Coverage',
+    updatesOnly: false,
+    timelineOnly: false,
+  },
 ] as const;
 type DetailSectionId = (typeof DETAIL_SECTION_LINKS)[number]['id'];
 
@@ -333,9 +365,11 @@ export default function LaunchDetailClient({
   const detailSectionLinks = useMemo(
     () =>
       DETAIL_SECTION_LINKS.filter(
-        (section) => !section.timelineOnly || Boolean(launch.timeline?.length),
+        (section) =>
+          (!section.timelineOnly || Boolean(launch.timeline?.length)) &&
+          (!section.updatesOnly || Boolean(launch.providerUpdates?.length)),
       ),
-    [launch.timeline?.length],
+    [launch.providerUpdates?.length, launch.timeline?.length],
   );
   const { setSource: setDetailNavigationSource } =
     useDetailNavigationContext();
@@ -1107,6 +1141,8 @@ export default function LaunchDetailClient({
         </nav>
 
         <DeferredDetailTrajectory launch={presentedLaunch} />
+
+        <MissionUpdateLog providerUpdates={launch.providerUpdates} />
 
         {launch.timeline?.length ? (
           <section

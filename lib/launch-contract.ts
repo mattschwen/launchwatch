@@ -111,6 +111,34 @@ function isLaunchMissionAgencies(value: unknown): boolean {
   return true;
 }
 
+function isLaunchProviderUpdates(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!Array.isArray(value) || value.length > 5) return false;
+
+  const ids = new Set<string>();
+  for (const update of value) {
+    if (
+      !isRecord(update) ||
+      typeof update.id !== 'string' ||
+      update.id.length === 0 ||
+      ids.has(update.id) ||
+      typeof update.comment !== 'string' ||
+      update.comment !== update.comment.trim() ||
+      update.comment.length === 0 ||
+      update.comment.length > 500 ||
+      typeof update.createdAt !== 'string' ||
+      Number.isNaN(Date.parse(update.createdAt)) ||
+      new Date(update.createdAt).toISOString() !== update.createdAt ||
+      !isSafeOptionalUrl(update.sourceUrl)
+    ) {
+      return false;
+    }
+    ids.add(update.id);
+  }
+
+  return true;
+}
+
 export function isLaunch(value: unknown): value is Launch {
   if (!isRecord(value)) return false;
 
@@ -148,6 +176,7 @@ export function isLaunch(value: unknown): value is Launch {
     isOptionalNullableString(value.weatherConcerns) &&
     isOptionalNullableString(value.holdReason) &&
     isLaunchMissionAgencies(value.missionAgencies) &&
+    isLaunchProviderUpdates(value.providerUpdates) &&
     isLaunchFirstStage(value.firstStage) &&
     (timeline === undefined ||
       timeline === null ||

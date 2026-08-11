@@ -171,6 +171,14 @@ const DETAILED_LAUNCH = {
       image_url: 'https://example.test/mission-patch.png',
     },
   ],
+  updates: [
+    {
+      id: 4102,
+      comment: 'Now targeting Jul 29 at 02:00 UTC.',
+      info_url: 'https://example.test/mission-update',
+      created_on: '2035-07-27T18:42:00Z',
+    },
+  ],
 } satisfies LL2Launch;
 
 function jsonResponse(payload: unknown): Response {
@@ -204,6 +212,82 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('normalizes a bounded newest-first provider update log and rejects unsafe entries', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      updates: [
+        ...DETAILED_LAUNCH.updates,
+        {
+          id: 4103,
+          comment: 'GO for launch.',
+          info_url: 'https://example.test/go-status',
+          created_on: '2035-07-28T09:15:00Z',
+        },
+        {
+          id: 4104,
+          comment: '  ',
+          info_url: 'https://example.test/blank',
+          created_on: '2035-07-28T10:00:00Z',
+        },
+        {
+          id: 4105,
+          comment: 'Source URL is unsafe but the provider note remains useful.',
+          info_url: 'javascript:alert(document.domain)',
+          created_on: '2035-07-28T08:00:00Z',
+        },
+        {
+          id: 4106,
+          comment: 'Malformed timestamps cannot be represented honestly.',
+          info_url: 'https://example.test/malformed-time',
+          created_on: 'not-a-date',
+        },
+      ],
+    });
+
+    expect(normalized.providerUpdates).toEqual([
+      {
+        id: '4103',
+        comment: 'GO for launch.',
+        sourceUrl: 'https://example.test/go-status',
+        createdAt: '2035-07-28T09:15:00.000Z',
+      },
+      {
+        id: '4105',
+        comment: 'Source URL is unsafe but the provider note remains useful.',
+        sourceUrl: null,
+        createdAt: '2035-07-28T08:00:00.000Z',
+      },
+      {
+        id: '4102',
+        comment: 'Now targeting Jul 29 at 02:00 UTC.',
+        sourceUrl: 'https://example.test/mission-update',
+        createdAt: '2035-07-27T18:42:00.000Z',
+      },
+    ]);
+  });
+
+  it('limits provider updates to the latest five notes', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      updates: Array.from({ length: 8 }, (_, index) => ({
+        id: index + 1,
+        comment: `Provider note ${index + 1}`,
+        created_on: new Date(
+          Date.UTC(2035, 6, 20 + index),
+        ).toISOString(),
+      })),
+    });
+
+    expect(normalized.providerUpdates).toHaveLength(5);
+    expect(normalized.providerUpdates?.map((update) => update.id)).toEqual([
+      '8',
+      '7',
+      '6',
+      '5',
+      '4',
+    ]);
+  });
+
   it('preserves distinct provider mission operators and rejects placeholders', () => {
     const normalized = normalizeLL2Launch({
       ...NORMAL_LIST_LAUNCH,

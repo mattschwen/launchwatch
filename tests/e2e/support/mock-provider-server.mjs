@@ -340,6 +340,22 @@ const ll2Upcoming = ll2Launch({
 ll2Upcoming.probability = 85;
 ll2Upcoming.weather_concerns = 'Cumulus Cloud Rule';
 ll2Upcoming.holdreason = null;
+ll2Upcoming.updates = [
+  {
+    id: 4103,
+    comment:
+      'Now targeting the refined launch window after range coordination.',
+    info_url: 'https://example.test/mission-update',
+    created_on: '2035-07-28T09:15:00Z',
+  },
+  {
+    id: 4102,
+    comment:
+      'Launch weather improved to 85% GO with the Cumulus Cloud Rule monitored.',
+    info_url: null,
+    created_on: '2035-07-27T18:42:00Z',
+  },
+];
 
 ll2Upcoming.rocket.configuration.image = {
   id: 9001,
@@ -579,7 +595,9 @@ const server = createServer(async (request, response) => {
     request.method === 'GET' &&
     url.pathname === '/ll2/2.3.0/launches/upcoming/'
   ) {
-    sendJson(response, 200, { count: 1, results: [ll2Upcoming] });
+    const normalLaunch = { ...ll2Upcoming };
+    delete normalLaunch.updates;
+    sendJson(response, 200, { count: 1, results: [normalLaunch] });
     return;
   }
 

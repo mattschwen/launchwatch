@@ -31,6 +31,7 @@ import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 import MissionOperatorSignal from './launch/MissionOperatorSignal';
 import ProviderRevisionSignal from './launch/ProviderRevisionSignal';
+import MissionUpdateLog from './launch/MissionUpdateLog';
 
 interface LaunchBriefingDrawerProps {
   launch: Launch | null;
@@ -257,6 +258,7 @@ export default function LaunchBriefingDrawer({
             </div>
             <MissionProfileSignal launch={launch} />
             <MissionOperatorSignal missionAgencies={launch.missionAgencies} />
+            <MissionUpdateLog providerUpdates={launch.providerUpdates} compact />
           </dl>
 
           {launch.timeline?.length ? (

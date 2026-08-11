@@ -48,6 +48,48 @@ describe('client launch contract', () => {
         ],
       }),
     ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        providerUpdates: [
+          {
+            id: '4103',
+            comment: 'GO for launch.',
+            createdAt: '2035-07-28T09:15:00.000Z',
+            sourceUrl: 'https://example.test/go-status',
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects malformed or unsafe provider updates', () => {
+    const providerUpdate = {
+      id: '4103',
+      comment: 'GO for launch.',
+      createdAt: '2035-07-28T09:15:00.000Z',
+      sourceUrl: 'https://example.test/go-status',
+    };
+
+    for (const invalidUpdate of [
+      { ...providerUpdate, comment: ' GO for launch. ' },
+      { ...providerUpdate, createdAt: 'not-a-date' },
+      { ...providerUpdate, sourceUrl: 'javascript:alert(document.domain)' },
+    ]) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          providerUpdates: [invalidUpdate],
+        }),
+      ).toBe(false);
+    }
+
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        providerUpdates: [providerUpdate, providerUpdate],
+      }),
+    ).toBe(false);
   });
 
   it('rejects malformed or duplicate mission operators', () => {
