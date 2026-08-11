@@ -77,6 +77,9 @@ short, dismissible status toast; it never blocks the application.
   constraints, and hold reasons across Home, Watch, briefing, and canonical
   detail surfaces; missing or malformed values remain absent rather than being
   inferred from mission status
+- Per-mission provider revision times remain distinct from LaunchWatch's feed
+  refresh time across Home, Watch, briefing, and canonical detail surfaces, so
+  users can see when the underlying record—not only the browser feed—changed
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
   re-arm the alert thresholds for the new confirmed time, and exported or

@@ -30,6 +30,7 @@ import FirstStageSignal from './launch/FirstStageSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 import MissionOperatorSignal from './launch/MissionOperatorSignal';
+import ProviderRevisionSignal from './launch/ProviderRevisionSignal';
 
 interface LaunchBriefingDrawerProps {
   launch: Launch | null;
@@ -225,6 +226,7 @@ export default function LaunchBriefingDrawer({
                 </dd>
               </div>
             ) : null}
+            <ProviderRevisionSignal updatedAt={launch.providerUpdatedAt} />
             <LaunchReadinessSignal launch={launch} />
             <div className="py-4">
               <dt className="flex items-center gap-3">

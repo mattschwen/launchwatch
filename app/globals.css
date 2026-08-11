@@ -250,6 +250,10 @@ body::before {
     display: none;
   }
 
+  .provider-revision-hero {
+    display: none;
+  }
+
   .compact-hero-telemetry .local-launch-time {
     display: none;
   }

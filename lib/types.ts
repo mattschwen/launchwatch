@@ -113,6 +113,7 @@ export interface LL2Video {
 export interface LL2Launch {
   id: string;
   name: string;
+  last_updated?: string | null;
   net: string; // Network Estimated Time
   net_precision?: LaunchDatePrecision | null;
   window_start?: string | null;
@@ -345,6 +346,7 @@ export interface Launch {
   launchSite: string;
   status: 'upcoming' | 'live' | 'success' | 'failure' | 'tbd';
   statusName?: string | null;
+  providerUpdatedAt?: string | null;
   missionName?: string | null;
   missionType?: string | null;
   missionAgencies?: LaunchMissionAgency[] | null;

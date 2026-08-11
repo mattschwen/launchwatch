@@ -11,6 +11,7 @@ import type { LL2Launch } from '@/lib/types';
 const NORMAL_LIST_LAUNCH = {
   id: '8b8a30c5-12b5-4a37-bbea-160d90ec65e5',
   name: 'Falcon 9 Block 5 | Fixture Mission',
+  last_updated: '2035-07-29T01:13:00Z',
   net: '2035-07-29T02:00:00Z',
   net_precision: {
     name: 'Hour',
@@ -233,6 +234,26 @@ describe('Launch Library 2.3 adapter', () => {
         type: null,
       },
     ]);
+  });
+
+  it('preserves the provider record revision time', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      last_updated: '2035-07-29T01:13:00Z',
+    } as LL2Launch & { last_updated: string });
+
+    expect(normalized).toMatchObject({
+      providerUpdatedAt: '2035-07-29T01:13:00.000Z',
+    });
+  });
+
+  it('drops malformed provider revision times', () => {
+    const normalized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      last_updated: 'not-a-timestamp',
+    });
+
+    expect(normalized.providerUpdatedAt).toBeNull();
   });
 
   it('preserves provider launch probability and readiness constraints', () => {

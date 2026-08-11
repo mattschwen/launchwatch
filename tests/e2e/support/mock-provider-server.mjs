@@ -145,6 +145,7 @@ function ll2Launch({
   return {
     id,
     name,
+    last_updated: new Date(Date.now() - 47 * 60 * 1000).toISOString(),
     net: launchDate.toISOString(),
     window_start: launchDate.toISOString(),
     window_end: new Date(launchDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),

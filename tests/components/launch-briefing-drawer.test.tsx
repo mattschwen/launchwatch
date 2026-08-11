@@ -150,4 +150,17 @@ describe('LaunchBriefingDrawer', () => {
     expect(profile).toHaveTextContent('Program · LaunchWatch Test Program');
     expect(profile).toHaveTextContent('Orbit · Low Earth Orbit');
   });
+
+  it('identifies when the provider last revised the mission record', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    const revision = screen
+      .getByText('Provider revision')
+      .closest('[data-provider-revision-signal]');
+    expect(revision).toHaveTextContent('Jul 26, 2035 · 11:42 UTC');
+  });
 });

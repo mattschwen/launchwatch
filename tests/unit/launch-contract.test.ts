@@ -87,6 +87,21 @@ describe('client launch contract', () => {
     ).toBe(false);
   });
 
+  it('rejects malformed provider revision timestamps', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        providerUpdatedAt: 'yesterday afternoon',
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        providerUpdatedAt: '2035-07-29T01:13:00Z',
+      }),
+    ).toBe(false);
+  });
+
   it.each([-1, 20.5, 101, Number.NaN])(
     'rejects malformed launch probability %s',
     (launchProbability) => {

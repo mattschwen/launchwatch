@@ -30,6 +30,7 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     launchSite: 'Space Launch Complex 40, Cape Canaveral Space Force Station',
     status: 'upcoming',
     statusName: 'Go',
+    providerUpdatedAt: '2035-07-26T11:42:00.000Z',
     missionName: 'Orbital Dawn',
     missionType: 'Communications',
     missionAgencies: [
@@ -150,6 +151,7 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     launchSite: 'Launch Complex 39A, Kennedy Space Center',
     status: 'upcoming',
     statusName: 'Scheduled',
+    providerUpdatedAt: null,
     missionName: 'Polaris Relay',
     missionType: 'Technology',
     livestream: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
@@ -192,6 +194,7 @@ export const HISTORICAL_LAUNCHES: Launch[] = [
     launchSite: 'Launch Complex 39A, Kennedy Space Center',
     status: 'success',
     statusName: 'Success',
+    providerUpdatedAt: null,
     missionName: 'Demo Return Flight',
     missionType: 'Crewed',
     missionAgencies: [
@@ -244,6 +247,7 @@ export const HISTORICAL_LAUNCHES: Launch[] = [
     launchSite: 'Vandenberg Space Force Base, USA',
     status: 'failure',
     statusName: 'Failure',
+    providerUpdatedAt: '2024-11-05T08:02:00.000Z',
     missionName: 'Pathfinder Qualification',
     missionType: 'Test flight',
     livestream: null,

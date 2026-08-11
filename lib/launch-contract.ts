@@ -13,6 +13,16 @@ function isOptionalNullableString(value: unknown): boolean {
   return value === undefined || isNullableString(value);
 }
 
+function isOptionalProviderTimestamp(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== 'string' || value !== value.trim()) return false;
+
+  const timestamp = Date.parse(value);
+  return (
+    Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value
+  );
+}
+
 function isLaunchProbability(value: unknown): boolean {
   return (
     value === undefined ||
@@ -128,6 +138,7 @@ export function isLaunch(value: unknown): value is Launch {
     typeof value.rocket === 'string' &&
     typeof value.launchSite === 'string' &&
     statuses.includes(String(value.status)) &&
+    isOptionalProviderTimestamp(value.providerUpdatedAt) &&
     isSafeNullableUrl(value.livestream) &&
     isSafeLaunchStreams(value.livestreams) &&
     isNullableString(value.description) &&

@@ -195,6 +195,7 @@ export function reconcileCurrentLaunch(
     launchProbability: feedLaunch.launchProbability,
     weatherConcerns: feedLaunch.weatherConcerns,
     holdReason: feedLaunch.holdReason,
+    providerUpdatedAt: feedLaunch.providerUpdatedAt,
     status: feedLaunch.status,
     statusName: feedLaunch.statusName,
     isLive: feedLaunch.isLive,

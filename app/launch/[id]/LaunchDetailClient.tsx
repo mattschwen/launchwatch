@@ -38,6 +38,7 @@ import FirstStageSignal from '@/components/launch/FirstStageSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
+import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
@@ -533,6 +534,10 @@ export default function LaunchDetailClient({
             {presentedLaunch.rocket}
           </dd>
         </div>
+        <ProviderRevisionSignal
+          updatedAt={presentedLaunch.providerUpdatedAt}
+          variant="compact"
+        />
         <LaunchReadinessSignal launch={presentedLaunch} variant="compact" />
         <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
         <MissionProfileSignal launch={presentedLaunch} variant="compact" />

@@ -19,6 +19,7 @@ import LaunchActions from './LaunchActions';
 import LaunchReadinessSignal from './LaunchReadinessSignal';
 import LaunchWindow from './LaunchWindow';
 import MissionProfileSignal from './MissionProfileSignal';
+import ProviderRevisionSignal from './ProviderRevisionSignal';
 
 interface HeroSectionProps {
   activeLaunch: Launch | null;
@@ -381,6 +382,10 @@ export default function HeroSection({
                 date={activeLaunch.date}
                 precision={activeLaunch.datePrecision}
                 className="mt-1 font-mono text-[0.7rem] leading-4 text-[var(--text-secondary)]"
+              />
+              <ProviderRevisionSignal
+                updatedAt={activeLaunch.providerUpdatedAt}
+                variant="hero"
               />
             </div>
             <div className="relative min-w-0 pl-6 min-[360px]:pl-10">

@@ -3347,6 +3347,89 @@ test('provider readiness follows the mission across primary surfaces', async ({
   expect(pageErrors).toEqual([]);
 });
 
+test('provider record revisions stay visible across primary mission surfaces', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  const revisionLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    providerUpdatedAt: new Date(Date.now() - 47 * 60 * 1000).toISOString(),
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [revisionLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    }),
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: revisionLaunch,
+        canonicalId: revisionLaunch.id,
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  const assertRevision = async (signal: Locator): Promise<void> => {
+    await expect(signal).toBeVisible();
+    await expect(signal).toContainText(/(?:4[7-9]|5\d)m(?: ago)?/);
+    expect(
+      await signal.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+  };
+
+  await page.goto('/');
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  const heroRevision = hero.locator('[data-provider-revision-signal]');
+  await assertRevision(heroRevision);
+  await expect(
+    heroRevision.getByText('Provider revision age:', { exact: true }),
+  ).toBeAttached();
+
+  await hero.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  const briefingRevision = briefing.locator(
+    '[data-provider-revision-signal]',
+  );
+  await assertRevision(briefingRevision);
+  await expect(briefingRevision).toContainText(/UTC/);
+  await briefing
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+
+  await page.goto('/watch');
+  await assertRevision(
+    page.locator('main [data-provider-revision-signal]').first(),
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await assertRevision(
+    page
+      .getByRole('region', { name: 'Mission telemetry' })
+      .locator('[data-provider-revision-signal]'),
+  );
+
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test('primary mission summaries keep the provider launch window visible', async ({
   page,
 }) => {
@@ -9783,21 +9866,24 @@ test('narrow mission telemetry keeps every countdown label readable', async ({
   });
   await expect(telemetry).toBeVisible();
 
-  const countdownLayout = await telemetry.locator('time').evaluate((element) => ({
-    display: (() => {
-      const display = element.querySelector<HTMLElement>('.countdown-display');
-      return {
-        clientWidth: display?.clientWidth ?? 0,
-        scrollWidth: display?.scrollWidth ?? 0,
-      };
-    })(),
-    units: [
-      ...element.querySelectorAll<HTMLElement>('.countdown-unit'),
-    ].map((unit) => ({
-      clientWidth: unit.clientWidth,
-      scrollWidth: unit.scrollWidth,
-    })),
-  }));
+  const countdownLayout = await telemetry
+    .locator('time:has(.countdown-display)')
+    .evaluate((element) => ({
+      display: (() => {
+        const display =
+          element.querySelector<HTMLElement>('.countdown-display');
+        return {
+          clientWidth: display?.clientWidth ?? 0,
+          scrollWidth: display?.scrollWidth ?? 0,
+        };
+      })(),
+      units: [
+        ...element.querySelectorAll<HTMLElement>('.countdown-unit'),
+      ].map((unit) => ({
+        clientWidth: unit.clientWidth,
+        scrollWidth: unit.scrollWidth,
+      })),
+    }));
 
   expect(countdownLayout.display.scrollWidth).toBeLessThanOrEqual(
     countdownLayout.display.clientWidth + 1
@@ -9936,7 +10022,7 @@ test('upcoming and historical details place one trajectory before mission suppor
       expect(unavailableLayout.cardHeight).toBeLessThan(390);
     }
     if (telemetryFirst) {
-      const countdown = telemetry.locator('time');
+      const countdown = telemetry.locator('time:has(.countdown-display)');
       await expect(countdown).toHaveCount(1);
       await expect(countdown.locator('.countdown-prefix')).toHaveText('≈T−');
       const countdownBounds = await countdown.boundingBox();

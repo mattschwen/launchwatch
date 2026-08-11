@@ -570,6 +570,14 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed || undefined;
 }
 
+function providerTimestamp(value: string | null | undefined): string | null {
+  const normalized = optionalText(value);
+  if (!normalized) return null;
+
+  const timestamp = Date.parse(normalized);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+}
+
 function safeProviderCoverageUrl(
   value: string | null | undefined,
 ): string | null {
@@ -904,6 +912,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     launchSite,
     status,
     statusName,
+    providerUpdatedAt: null,
     missionName: launch.name,
     missionAgencies: null,
     livestream: webcast,
@@ -1086,6 +1095,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     launchSite: launch.pad.name || 'Unknown Site',
     status: isLive ? 'live' : sourceStatus,
     statusName: launch.status.name || launch.status.abbrev || null,
+    providerUpdatedAt: providerTimestamp(launch.last_updated),
     missionName: isMeaningfulLaunchValue(launch.mission?.name)
       ? launch.mission.name.trim()
       : null,
