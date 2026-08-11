@@ -2,6 +2,7 @@
 
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
+import PwaInstallButton from '@/components/PwaInstallButton';
 import { useCurrentTime, useLaunches } from '@/lib/hooks';
 import { getFeedHealth } from '@/lib/feed-health';
 
@@ -272,16 +273,19 @@ export default function Footer(): React.ReactElement {
                 ? 'Refresh schedule'
                 : 'Refresh when online'}
           </button>
-          <a
-            href="https://github.com/mattschwen/launchwatch"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center gap-2 justify-self-end font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)] min-[384px]:justify-self-auto"
-          >
-            Source
-            <ExternalLink aria-hidden="true" size={13} />
-            <ExternalLinkHint />
-          </a>
+          <span className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
+            <PwaInstallButton />
+            <a
+              href="https://github.com/mattschwen/launchwatch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-2 font-medium text-[var(--text-secondary)] hover:text-[var(--console-cyan)]"
+            >
+              Source
+              <ExternalLink aria-hidden="true" size={13} />
+              <ExternalLinkHint />
+            </a>
+          </span>
         </div>
       </div>
     </footer>

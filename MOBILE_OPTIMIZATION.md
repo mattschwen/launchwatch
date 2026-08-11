@@ -468,6 +468,9 @@ The optional expanded map remains a modal dialog. It must:
   schedule and archive, and resumes eligible refresh work after reconnecting.
 - A newly available worker is applied explicitly before reloading into a new shell.
 - Bottom navigation and safe-area spacing remain correct in standalone mode.
+- Browsers that emit `beforeinstallprompt` expose a compact footer install
+  action. The action defers to the native installer, disappears after dismissal,
+  and stays hidden when LaunchWatch is already running in standalone mode.
 
 ## Manual QA Matrix
 
