@@ -69,6 +69,7 @@ const NORMAL_LIST_LAUNCH = {
     },
     location: {
       name: 'Vandenberg SFB, CA, USA',
+      timezone_name: 'America/Los_Angeles',
     },
     image: {
       image_url: 'https://example.test/pad.jpg',
@@ -212,6 +213,24 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves a valid launch-site time zone and rejects malformed zones', () => {
+    expect(normalizeLL2Launch(NORMAL_LIST_LAUNCH).location).toMatchObject({
+      timeZone: 'America/Los_Angeles',
+    });
+
+    const malformed = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      pad: {
+        ...NORMAL_LIST_LAUNCH.pad,
+        location: {
+          ...NORMAL_LIST_LAUNCH.pad.location,
+          timezone_name: 'Mars/Olympus_Mons',
+        },
+      },
+    });
+    expect(malformed.location).not.toHaveProperty('timeZone');
+  });
+
   it('normalizes a bounded newest-first provider update log and rejects unsafe entries', () => {
     const normalized = normalizeLL2Launch({
       ...DETAILED_LAUNCH,

@@ -62,7 +62,7 @@ describe('LaunchList', () => {
     }
   });
 
-  it('adds local-time context to exact upcoming mission rows', () => {
+  it('adds distinct site and viewer time context to exact upcoming rows', () => {
     vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
       locale: 'en-US',
       calendar: 'gregory',
@@ -87,9 +87,10 @@ describe('LaunchList', () => {
       const mission = screen.getByRole('link', {
         name: new RegExp(launch.name),
       });
+      expect(mission).toHaveTextContent('Site time');
       expect(mission).toHaveTextContent('Your time');
       const missionTimes = mission.querySelectorAll('time');
-      expect(missionTimes).toHaveLength(3);
+      expect(missionTimes).toHaveLength(4);
       expect(
         [...missionTimes].every(
           (time) => time.getAttribute('datetime') === launch.date,
@@ -98,8 +99,11 @@ describe('LaunchList', () => {
       expect(mission.querySelector('.launch-card-date')).toContainElement(
         missionTimes[0],
       );
-      expect(mission.querySelector('.local-launch-time')).toContainElement(
+      expect(mission.querySelector('.launch-site-time')).toContainElement(
         missionTimes[2],
+      );
+      expect(mission.querySelector('.local-launch-time')).toContainElement(
+        missionTimes[3],
       );
     }
   });

@@ -168,6 +168,7 @@ export interface LL2Launch {
     location?: {
       name: string;
       country_code?: string | null;
+      timezone_name?: string | null;
       country?: {
         alpha_2_code?: string | null;
       } | null;
@@ -246,6 +247,7 @@ export interface LaunchLocation {
   lng: number;
   name: string;
   countryCode?: string;
+  timeZone?: string;
 }
 
 export interface LaunchSite {

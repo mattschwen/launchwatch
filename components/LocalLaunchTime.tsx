@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import type { LaunchDatePrecision } from '@/lib/types';
-import { formatLocalLaunchTime } from '@/lib/format';
+import { formatLocalLaunchTime, normalizeTimeZone } from '@/lib/format';
 
 const subscribe = (): (() => void) => () => undefined;
 
@@ -11,11 +11,13 @@ export default function LocalLaunchTime({
   precision,
   className = '',
   as = 'span',
+  excludeTimeZone,
 }: {
   date: string;
   precision?: LaunchDatePrecision | null;
   className?: string;
   as?: 'dd' | 'span';
+  excludeTimeZone?: string | null;
 }): React.ReactElement | null {
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   if (!hydrated) return null;
@@ -29,6 +31,10 @@ export default function LocalLaunchTime({
 
   const localTime = formatLocalLaunchTime(date, precision, timeZone);
   if (!localTime) return null;
+  const excludedTime = normalizeTimeZone(excludeTimeZone)
+    ? formatLocalLaunchTime(date, precision, excludeTimeZone!, undefined)
+    : null;
+  if (excludedTime === localTime) return null;
   const Tag = as;
 
   return (

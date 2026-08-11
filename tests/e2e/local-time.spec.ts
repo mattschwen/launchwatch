@@ -39,6 +39,27 @@ test.describe('confirmed launch local time', () => {
         timeZoneName: 'short',
       }).format(new Date((element as HTMLTimeElement).dateTime))
     );
+    const featuredSiteTime = featured
+      .getByText('Site time', { exact: true })
+      .locator('..')
+      .locator('time');
+    const viewport = page.viewportSize();
+    const compactHero = Boolean(
+      viewport && viewport.width <= 430 && viewport.height <= 760,
+    );
+    if (compactHero) {
+      await expect(featuredSiteTime).toBeHidden();
+    } else {
+      const expectedSiteTime = await featuredSiteTime.evaluate((element) =>
+        new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: 'America/New_York',
+          timeZoneName: 'short',
+        }).format(new Date((element as HTMLTimeElement).dateTime))
+      );
+      await expect(featuredSiteTime).toHaveText(expectedSiteTime);
+    }
     await expect(featuredLocalTime).toHaveText(expectedLocalTime);
     const featuredWindow = featured.locator('[data-launch-window]');
     await expect(featuredWindow.getByText('Your window')).toBeVisible();
@@ -57,6 +78,9 @@ test.describe('confirmed launch local time', () => {
       firstMissionRow.getByText('Your time', { exact: true })
     ).toBeVisible();
     await expect(
+      firstMissionRow.getByText('Site time', { exact: true })
+    ).toBeVisible();
+    await expect(
       firstMissionRow.locator('.local-launch-time time')
     ).toHaveText(expectedLocalTime);
     await expectContainedPage(page);
@@ -66,6 +90,9 @@ test.describe('confirmed launch local time', () => {
     const briefingLocalTime = briefing.locator('.local-launch-time');
     await expect(
       briefingLocalTime.getByText('Your time', { exact: true })
+    ).toBeVisible();
+    await expect(
+      briefing.getByText('Site time', { exact: true })
     ).toBeVisible();
     await expect(
       briefingLocalTime.getByText(expectedLocalTime, { exact: true })
@@ -78,6 +105,9 @@ test.describe('confirmed launch local time', () => {
       selectedMission.getByText('Your time', { exact: true })
     ).toBeVisible();
     await expect(
+      selectedMission.getByText('Site time', { exact: true })
+    ).toBeVisible();
+    await expect(
       selectedMission.locator('[data-local-launch-window]')
     ).toContainText('6:00 AM–8:00 AM MDT');
     await expectContainedPage(page);
@@ -86,6 +116,9 @@ test.describe('confirmed launch local time', () => {
     const missionPanel = page.locator('main section').first();
     await expect(
       missionPanel.getByText('Your time', { exact: true })
+    ).toBeVisible();
+    await expect(
+      missionPanel.getByText('Site time', { exact: true })
     ).toBeVisible();
     await expect(
       missionPanel.getByText(expectedLocalTime, { exact: true })
@@ -140,6 +173,13 @@ test.describe('UTC launch time', () => {
     await expect(
       featured.getByText('Your time', { exact: true })
     ).toHaveCount(0);
+    const viewport = page.viewportSize();
+    const featuredSiteTime = featured.getByText('Site time', { exact: true });
+    if (viewport && viewport.width <= 430 && viewport.height <= 760) {
+      await expect(featuredSiteTime).toBeHidden();
+    } else {
+      await expect(featuredSiteTime).toBeVisible();
+    }
     await expect(
       featured.locator('[data-local-launch-window]')
     ).toHaveCount(0);

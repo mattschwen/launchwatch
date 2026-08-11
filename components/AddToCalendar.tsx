@@ -105,7 +105,9 @@ function resolveMenuViewport(
     bottom: Math.max(0, bottomEdge - trigger.bottom - gutter),
   };
   const alternate: MenuPlacement = preferred === 'top' ? 'bottom' : 'top';
-  const minimumUsefulHeight = 160;
+  // The menu is scrollable, so preserve the requested side whenever it can
+  // retain the same 96px interaction floor used by the rendered max height.
+  const minimumUsefulHeight = 96;
   const placement =
     available[preferred] < minimumUsefulHeight &&
     available[alternate] > available[preferred]

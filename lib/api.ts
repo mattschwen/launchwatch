@@ -17,6 +17,7 @@ import {
   firstLaunchValue,
   isMeaningfulLaunchValue,
   normalizeLaunchDescription,
+  normalizeTimeZone,
 } from './format';
 import { isEligibleLaunchVisual } from './launch-visual';
 import { extractYouTubeId } from './youtube';
@@ -1035,6 +1036,9 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     launch.pad.country?.alpha_2_code ||
     launch.pad.location?.country?.alpha_2_code ||
     undefined;
+  const timeZone = normalizeTimeZone(
+    optionalText(launch.pad.location?.timezone_name),
+  );
   const launcherStages = Array.isArray(launch.rocket.launcher_stage)
     ? launch.rocket.launcher_stage
     : [];
@@ -1173,6 +1177,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
       lng: longitude,
       name: launch.pad.location?.name || launch.pad.name || 'Unknown Site',
       countryCode,
+      ...(timeZone ? { timeZone } : {}),
     } : null,
     provider: provider.name,
     providerLogo: provider.logo,

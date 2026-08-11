@@ -14,7 +14,7 @@ import {
 } from '@/lib/format';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
-import LocalLaunchTime from '@/components/LocalLaunchTime';
+import LaunchTimeContext from '@/components/LaunchTimeContext';
 import LaunchActions from './LaunchActions';
 import LaunchReadinessSignal from './LaunchReadinessSignal';
 import LaunchWindow from './LaunchWindow';
@@ -377,10 +377,9 @@ export default function HeroSection({
                   activeLaunch.datePrecision
                 )}
               </dd>
-              <LocalLaunchTime
+              <LaunchTimeContext
                 as="dd"
-                date={activeLaunch.date}
-                precision={activeLaunch.datePrecision}
+                launch={activeLaunch}
                 className="mt-1 font-mono text-[0.7rem] leading-4 text-[var(--text-secondary)]"
               />
               <ProviderRevisionSignal

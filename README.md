@@ -93,6 +93,9 @@ short, dismissible status toast; it never blocks the application.
   schedule rows, plus the complete local start and end of validated launch
   windows, while UTC remains authoritative; UTC users and coarse provider
   estimates keep the existing single-time presentation
+- Provider-confirmed launch-site clocks accompany precise targets across the
+  schedule, featured mission, Watch, briefing, and detail surfaces; the
+  viewer clock is omitted when it would duplicate the pad's local time
 - Responsive selected-mission trajectory map on Watch and every detail route,
   with a collapsed Home mobile presentation and a coordinate-validated
   OpenStreetMap handoff for provider-reported launch sites. Optional trajectory

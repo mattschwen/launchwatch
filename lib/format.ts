@@ -273,6 +273,24 @@ export function formatLocalLaunchTime(
   }
 }
 
+export function normalizeTimeZone(value: unknown): string | null {
+  if (
+    typeof value !== 'string' ||
+    value !== value.trim() ||
+    value.length === 0 ||
+    value.length > 100
+  ) {
+    return null;
+  }
+
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(0);
+    return value;
+  } catch {
+    return null;
+  }
+}
+
 function precisionCode(
   precision: LaunchDatePrecision | null | undefined
 ): string | null {

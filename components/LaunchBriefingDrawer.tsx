@@ -22,7 +22,7 @@ import {
   hasExactLaunchTime,
 } from '@/lib/format';
 import AddToCalendar from './AddToCalendar';
-import LocalLaunchTime from './LocalLaunchTime';
+import LaunchTimeContext from './LaunchTimeContext';
 import MissionDescription from './MissionDescription';
 import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
@@ -205,9 +205,8 @@ export default function LaunchBriefingDrawer({
                 <span className="block">
                   {formatLaunchDate(launch.date, launch.datePrecision)}
                 </span>
-                <LocalLaunchTime
-                  date={launch.date}
-                  precision={launch.datePrecision}
+                <LaunchTimeContext
+                  launch={launch}
                   className="mt-1 font-mono text-xs text-[var(--text-secondary)]"
                 />
               </dd>

@@ -101,6 +101,9 @@ values normalize to `null`; clients must not infer them from launch status.
 The optional `providerUpdatedAt` field is the normalized provider record's
 canonical ISO revision timestamp. It is distinct from response `meta.generatedAt`
 and provider cache metadata, which describe LaunchWatch's own fetch lifecycle.
+When LL2 supplies a valid IANA launch-site time zone, `location.timeZone`
+preserves it for precise pad-local clock context. Empty or invalid zones are
+omitted, and clients must continue treating UTC as the authoritative target.
 
 Launch Library 2 mission agencies normalize to `missionAgencies` entries with
 provider-supplied `name`, optional `abbrev`, and optional agency `type`.

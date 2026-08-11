@@ -1645,7 +1645,9 @@ test('narrow schedule rows keep timing and mission identity in a stable scan pat
 
   const row = page.locator('.launch-card-grid').first();
   await expect(row).toBeVisible();
-  await expect(row.locator('time[datetime]')).toHaveCount(3);
+  await expect(row.locator('time[datetime]')).toHaveCount(4);
+  await expect(row.getByText('Site time', { exact: true })).toBeVisible();
+  await expect(row.getByText('Your time', { exact: true })).toBeVisible();
   await expect
     .poll(() =>
       row.evaluate((element) => {

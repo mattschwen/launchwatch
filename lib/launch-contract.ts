@@ -1,4 +1,5 @@
 import type { Launch, LaunchIntel } from './types';
+import { normalizeTimeZone } from './format';
 import { parseLaunchId } from './launch-id';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -139,6 +140,32 @@ function isLaunchProviderUpdates(value: unknown): boolean {
   return true;
 }
 
+function isLaunchLocation(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.lat === 'number' &&
+    Number.isFinite(value.lat) &&
+    value.lat >= -90 &&
+    value.lat <= 90 &&
+    typeof value.lng === 'number' &&
+    Number.isFinite(value.lng) &&
+    value.lng >= -180 &&
+    value.lng <= 180 &&
+    typeof value.name === 'string' &&
+    value.name === value.name.trim() &&
+    value.name.length > 0 &&
+    (value.countryCode === undefined ||
+      (typeof value.countryCode === 'string' &&
+        value.countryCode === value.countryCode.trim() &&
+        value.countryCode.length > 0)) &&
+    (value.timeZone === undefined ||
+      (typeof value.timeZone === 'string' &&
+        normalizeTimeZone(value.timeZone) === value.timeZone))
+  );
+}
+
 export function isLaunch(value: unknown): value is Launch {
   if (!isRecord(value)) return false;
 
@@ -178,6 +205,7 @@ export function isLaunch(value: unknown): value is Launch {
     isLaunchMissionAgencies(value.missionAgencies) &&
     isLaunchProviderUpdates(value.providerUpdates) &&
     isLaunchFirstStage(value.firstStage) &&
+    isLaunchLocation(value.location) &&
     (timeline === undefined ||
       timeline === null ||
       (Array.isArray(timeline) &&

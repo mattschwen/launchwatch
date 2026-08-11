@@ -144,6 +144,24 @@ describe('client launch contract', () => {
     ).toBe(false);
   });
 
+  it('rejects malformed launch coordinates and time zones', () => {
+    for (const location of [
+      { ...UPCOMING_LAUNCHES[0].location, lat: 91 },
+      { ...UPCOMING_LAUNCHES[0].location, lng: Number.NaN },
+      {
+        ...UPCOMING_LAUNCHES[0].location,
+        timeZone: 'Mars/Olympus_Mons',
+      },
+    ]) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          location,
+        }),
+      ).toBe(false);
+    }
+  });
+
   it.each([-1, 20.5, 101, Number.NaN])(
     'rejects malformed launch probability %s',
     (launchProbability) => {

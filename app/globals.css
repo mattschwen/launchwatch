@@ -280,6 +280,10 @@ body::before {
     order: 2;
     margin-top: 1.5rem;
   }
+
+  .compact-hero-telemetry .launch-site-time {
+    display: none;
+  }
 }
 
 @media (max-height: 430px) {
@@ -291,6 +295,7 @@ body::before {
     display: none;
   }
 
+  .compact-hero-telemetry .launch-site-time,
   .compact-hero-telemetry .local-launch-time {
     display: none;
   }

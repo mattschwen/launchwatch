@@ -162,6 +162,58 @@ describe('AddToCalendar', () => {
     ).toHaveClass('bottom-full', 'overflow-y-auto', 'overscroll-contain');
   });
 
+  it('keeps a scrollable top menu when compact telemetry leaves its interaction floor', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(568);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        if (this.tagName === 'HEADER') {
+          return {
+            bottom: 70,
+            height: 70,
+            left: 0,
+            right: 320,
+            top: 0,
+            width: 320,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          };
+        }
+        return {
+          bottom: 244,
+          height: 44,
+          left: 16,
+          right: 152,
+          top: 200,
+          width: 136,
+          x: 16,
+          y: 200,
+          toJSON: () => ({}),
+        };
+      },
+    );
+
+    render(
+      <div className="app-shell">
+        <header />
+        <AddToCalendar
+          launch={UPCOMING_LAUNCHES[0]}
+          menuPlacement="top"
+        />
+      </div>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
+
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' }),
+    ).toHaveStyle({ maxHeight: '122px' });
+    expect(
+      screen.getByRole('group', { name: 'Calendar options' }),
+    ).toHaveClass('bottom-full');
+  });
+
   it('identifies the Google Calendar handoff as a new-tab action', async () => {
     const user = userEvent.setup();
 

@@ -54,4 +54,24 @@ describe('LocalLaunchTime', () => {
     );
     expect(screen.queryByText('Your time')).not.toBeInTheDocument();
   });
+
+  it('does not repeat the launch-site time zone', () => {
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      locale: 'en-US',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+      timeZone: 'America/New_York',
+      hourCycle: 'h12',
+      hour12: true,
+    });
+
+    render(
+      <LocalLaunchTime
+        date="2035-07-28T14:30:00.000Z"
+        excludeTimeZone="America/New_York"
+      />
+    );
+
+    expect(screen.queryByText('Your time')).not.toBeInTheDocument();
+  });
 });

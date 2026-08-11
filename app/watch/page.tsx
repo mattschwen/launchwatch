@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
-import LocalLaunchTime from '@/components/LocalLaunchTime';
+import LaunchTimeContext from '@/components/LaunchTimeContext';
 import MissionDescription from '@/components/MissionDescription';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
@@ -1356,9 +1356,8 @@ function WatchContent(): React.ReactElement {
                       selectedLaunch.datePrecision
                     )}
                   </p>
-                  <LocalLaunchTime
-                    date={selectedLaunch.date}
-                    precision={selectedLaunch.datePrecision}
+                  <LaunchTimeContext
+                    launch={selectedLaunch}
                     className="mt-1 font-mono text-[0.7rem] leading-4 text-[var(--text-secondary)]"
                   />
                   <LaunchWindow

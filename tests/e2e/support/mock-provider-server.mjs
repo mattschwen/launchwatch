@@ -192,6 +192,7 @@ function ll2Launch({
       longitude,
       location: {
         name: pad,
+        timezone_name: 'America/New_York',
         country: { alpha_2_code: 'US' },
       },
     },
