@@ -9,6 +9,7 @@ interface StatusBadgeProps {
   status: Launch['status'];
   statusName?: string | null;
   className?: string;
+  compactLabel?: string;
   unconfirmed?: boolean;
   variant?: 'badge' | 'inline';
 }
@@ -60,6 +61,7 @@ export default function StatusBadge({
   status,
   statusName,
   className = '',
+  compactLabel,
   unconfirmed = false,
   variant = 'badge',
 }: StatusBadgeProps): React.ReactElement {
@@ -84,10 +86,22 @@ export default function StatusBadge({
 
   return (
     <span
+      aria-label={compactLabel ? displayLabel : undefined}
       className={`inline-flex items-center gap-1.5 ${presentationClass} ${className}`}
     >
       <WarningLight color={config.lightColor} size="sm" spinning={config.spinning} />
-      {displayLabel}
+      {compactLabel ? (
+        <>
+          <span aria-hidden="true" className="sm:hidden">
+            {compactLabel}
+          </span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            {displayLabel}
+          </span>
+        </>
+      ) : (
+        displayLabel
+      )}
     </span>
   );
 }

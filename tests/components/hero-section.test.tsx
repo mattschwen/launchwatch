@@ -178,6 +178,38 @@ describe('HeroSection', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('keeps the provider mission state visible in the primary hero', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={{
+          ...UPCOMING_LAUNCHES[0],
+          statusName: 'Go for Launch',
+        }}
+      />
+    );
+
+    expect(screen.getByText('GO FOR LAUNCH')).toBeVisible();
+    expect(screen.getByText('GO')).toBeVisible();
+    expect(screen.getByLabelText('GO FOR LAUNCH')).toBeVisible();
+  });
+
+  it('does not present a retained provider state as current', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={{
+          ...UPCOMING_LAUNCHES[0],
+          statusName: 'Go for Launch',
+        }}
+        stale
+      />
+    );
+
+    expect(screen.getByText('STATUS UNCONFIRMED')).toBeVisible();
+    expect(screen.queryByText('GO FOR LAUNCH')).not.toBeInTheDocument();
+  });
+
   it('keeps the provider launch window visible beside the target time', () => {
     const { rerender } = render(
       <HeroSection

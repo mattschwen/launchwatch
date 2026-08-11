@@ -841,6 +841,7 @@ test('detail enrichment cannot regress the current schedule or live state', asyn
     'section[aria-labelledby="featured-launch-title"]'
   );
   await expect(hero.getByText('Next launch', { exact: true })).toBeVisible();
+  await expect(hero.getByText('GO', { exact: true })).toBeVisible();
   await expect(hero.getByText('Coverage live', { exact: true })).toHaveCount(0);
   await expect(hero.getByText('In flight', { exact: true })).toHaveCount(0);
   await expect(
@@ -2536,15 +2537,20 @@ test('home identifies and recovers retained missions after refresh failure', asy
       name: UPCOMING_LAUNCHES[0].name,
     })
   ).toBeVisible();
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero.getByText('GO', { exact: true })).toBeVisible();
   await expect(page.getByText('Last-known mission · refresh failed')).toHaveCount(0);
 
   failureEnabled = true;
   await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
-  const hero = page.locator(
-    'section[aria-labelledby="featured-launch-title"]'
-  );
   await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(
+    hero.getByText('STATUS UNCONFIRMED', { exact: true })
+  ).toBeVisible();
+  await expect(hero.getByText('GO', { exact: true })).toHaveCount(0);
   await expect(hero).toHaveClass(/signal-warm/);
 
   const schedule = page.locator(

@@ -15,6 +15,7 @@ import {
 import Countdown from '@/components/Countdown';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LaunchTimeContext from '@/components/LaunchTimeContext';
+import StatusBadge from '@/components/ui/StatusBadge';
 import LaunchActions from './LaunchActions';
 import LaunchReadinessSignal from './LaunchReadinessSignal';
 import LaunchWindow from './LaunchWindow';
@@ -231,7 +232,7 @@ export default function HeroSection({
         />
 
         <div className="relative flex min-w-0 flex-1 flex-col">
-          <div className="mb-4 flex min-h-5 flex-wrap items-center justify-between gap-3">
+          <div className="featured-launch-header mb-4 flex min-h-5 flex-wrap items-center justify-between gap-3">
             <p
               className={`data-label ${
                 live
@@ -252,6 +253,20 @@ export default function HeroSection({
                 : 'Next launch'}
             </p>
             <div className="flex max-w-full flex-wrap items-center justify-end gap-2">
+              {!activeLaunch.isLive && !critical ? (
+                <StatusBadge
+                  status={activeLaunch.status}
+                  statusName={activeLaunch.statusName}
+                  compactLabel={
+                    activeLaunch.statusName?.trim().toLowerCase() ===
+                      'go for launch' && !retained && !stale
+                      ? 'GO'
+                      : undefined
+                  }
+                  unconfirmed={retained || stale}
+                  className="provider-status-hero max-w-full"
+                />
+              ) : null}
               <LaunchReadinessSignal launch={activeLaunch} variant="hero" />
               {feedNotice ? (
                 <span className="font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--console-amber)]">
