@@ -12,6 +12,18 @@ import {
 describe('client launch contract', () => {
   it('accepts a normalized launch with canonical provider identity', () => {
     expect(isLaunch(UPCOMING_LAUNCHES[0])).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+        livestreams: [
+          {
+            url: 'https://x.com/i/broadcasts/orbital-dawn',
+            title: 'Orbital Dawn official coverage',
+          },
+        ],
+      }),
+    ).toBe(true);
   });
 
   it.each([
@@ -30,6 +42,38 @@ describe('client launch contract', () => {
     {
       label: 'source-mismatched native ID',
       launch: { ...UPCOMING_LAUNCHES[0], sourceId: 'another-mission' },
+    },
+  ])('rejects a launch with $label', ({ launch }) => {
+    expect(isLaunch(launch)).toBe(false);
+  });
+
+  it.each([
+    {
+      label: 'executable primary coverage',
+      launch: {
+        ...UPCOMING_LAUNCHES[0],
+        livestream: 'javascript:alert(document.domain)',
+      },
+    },
+    {
+      label: 'credential-bearing primary coverage',
+      launch: {
+        ...UPCOMING_LAUNCHES[0],
+        livestream: 'https://viewer:secret@example.test/coverage',
+      },
+    },
+    {
+      label: 'insecure ranked coverage',
+      launch: {
+        ...UPCOMING_LAUNCHES[0],
+        livestream: null,
+        livestreams: [
+          {
+            url: 'http://example.test/coverage',
+            title: 'Unsafe provider coverage',
+          },
+        ],
+      },
     },
   ])('rejects a launch with $label', ({ launch }) => {
     expect(isLaunch(launch)).toBe(false);

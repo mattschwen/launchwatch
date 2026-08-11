@@ -1057,6 +1057,67 @@ test('watch degrades unsafe provider coverage to a safe stream search', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('browser launch feeds reject unsafe coverage actions and recover safely', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  let recoveryStarted = false;
+  const unsafeLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    livestream: 'javascript:document.body.dataset.compromised=true',
+    livestreams: [
+      {
+        url: 'https://viewer:secret@example.test/coverage',
+        title: 'Credential-bearing provider coverage',
+      },
+    ],
+  };
+
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: recoveryStarted ? UPCOMING_LAUNCHES : [unsafeLaunch],
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+
+  const unavailableHeading = page.getByRole('heading', {
+    level: 1,
+    name: 'We could not load the next mission.',
+  });
+  await expect(unavailableHeading).toBeVisible();
+  const unavailableHero = page.locator('section').filter({
+    has: unavailableHeading,
+  });
+  await expect(
+    unavailableHero.getByText('Launch feed response was incomplete'),
+  ).toBeVisible();
+  await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
+  await expect(page.locator('a[href*="viewer:secret"]')).toHaveCount(0);
+  expect(await page.locator('body').getAttribute('data-compromised')).toBeNull();
+
+  const retry = unavailableHero.getByRole('button', { name: 'Retry schedule' });
+  await retry.focus();
+  const initialFeedRequests = feedRequests;
+  recoveryStarted = true;
+  await retry.press('Enter');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Orbital Dawn', exact: true }).first(),
+  ).toBeFocused();
+  expect(feedRequests).toBe(initialFeedRequests + 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('keyboard skip link is visible, touch-safe, and clears the sticky header', async ({
   page,
 }) => {

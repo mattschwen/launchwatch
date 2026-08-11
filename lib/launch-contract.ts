@@ -24,6 +24,21 @@ function isSafeOptionalUrl(value: unknown): boolean {
   return value === undefined || value === null || isSafeHttpsUrl(value);
 }
 
+function isSafeNullableUrl(value: unknown): boolean {
+  return value === null || isSafeHttpsUrl(value);
+}
+
+function isSafeLaunchStreams(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (Array.isArray(value) &&
+      value.every(
+        (stream) => isRecord(stream) && isSafeHttpsUrl(stream.url),
+      ))
+  );
+}
+
 export function isLaunch(value: unknown): value is Launch {
   if (!isRecord(value)) return false;
 
@@ -51,7 +66,8 @@ export function isLaunch(value: unknown): value is Launch {
     typeof value.rocket === 'string' &&
     typeof value.launchSite === 'string' &&
     statuses.includes(String(value.status)) &&
-    isNullableString(value.livestream) &&
+    isSafeNullableUrl(value.livestream) &&
+    isSafeLaunchStreams(value.livestreams) &&
     isNullableString(value.description) &&
     typeof value.isLive === 'boolean' &&
     sources.includes(String(value.source)) &&
