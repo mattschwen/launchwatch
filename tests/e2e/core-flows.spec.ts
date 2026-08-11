@@ -3078,6 +3078,84 @@ test('featured mission telemetry stays legible in the split layout', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('mission program context follows the mission across primary surfaces', async ({
+  page,
+}) => {
+  const program =
+    'International Earth Observation and Climate Resilience Program';
+  const lineageLaunch = { ...UPCOMING_LAUNCHES[0], program };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [lineageLaunch, ...UPCOMING_LAUNCHES.slice(1)],
+        meta: FEED_META,
+      }),
+    }),
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: lineageLaunch,
+        canonicalId: lineageLaunch.id,
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  const assertProfile = async (
+    profile: Locator,
+    expectedProgram = program,
+    includeOrbit = true,
+  ): Promise<void> => {
+    await expect(profile).toBeVisible();
+    await expect(profile).toContainText('Communications');
+    await expect(profile).toContainText(expectedProgram);
+    if (includeOrbit) {
+      await expect(profile).toContainText('Orbit · Low Earth Orbit');
+    }
+    expect(
+      await profile.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+  };
+
+  await page.goto('/');
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  await assertProfile(
+    hero.locator('[data-mission-profile-signal]'),
+    program,
+    false,
+  );
+
+  await hero.getByRole('button', { name: 'Open briefing' }).click();
+  const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
+  await assertProfile(briefing.locator('[data-mission-profile-signal]'));
+  await briefing
+    .getByRole('button', { name: 'Close mission briefing' })
+    .click();
+
+  await page.goto('/watch');
+  await assertProfile(
+    page.locator('main [data-mission-profile-signal]').first(),
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  await assertProfile(
+    page
+      .getByRole('region', { name: 'Mission telemetry' })
+      .locator('[data-mission-profile-signal]'),
+    'LaunchWatch Test Program',
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('primary mission summaries keep the provider launch window visible', async ({
   page,
 }) => {

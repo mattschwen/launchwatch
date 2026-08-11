@@ -21,7 +21,6 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
-  Orbit,
   Radio,
   RefreshCw,
   Rocket,
@@ -36,11 +35,11 @@ import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
+import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import StatusBadge from '@/components/ui/StatusBadge';
 import VideoPlayer from '@/components/video/VideoPlayer';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import {
-  firstLaunchValue,
   formatLaunchDate,
   formatPrimaryMissionName,
   formatTimelineOffset,
@@ -533,20 +532,7 @@ export default function LaunchDetailClient({
           </dd>
         </div>
         <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
-        <div className="mission-telemetry-item relative pl-8">
-          <Orbit
-            aria-hidden="true"
-            size={18}
-            className="absolute left-0 top-0.5 text-[var(--text-muted)]"
-          />
-          <dt className="data-label">Mission profile</dt>
-          <dd className="mt-1 text-sm text-[var(--text-primary)]">
-            {firstLaunchValue([
-              presentedLaunch.orbit,
-              presentedLaunch.missionType,
-            ])}
-          </dd>
-        </div>
+        <MissionProfileSignal launch={presentedLaunch} variant="compact" />
       </dl>
     </section>
   );

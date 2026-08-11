@@ -8,13 +8,11 @@ import {
   ChevronDown,
   ExternalLink,
   MapPin,
-  Orbit,
   Rocket,
   X,
 } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
-  firstLaunchValue,
   formatLaunchDate,
   formatPrimaryMissionName,
   formatLaunchWindow,
@@ -29,6 +27,7 @@ import MissionDescription from './MissionDescription';
 import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
+import MissionProfileSignal from './launch/MissionProfileSignal';
 
 interface LaunchBriefingDrawerProps {
   launch: Launch | null;
@@ -251,19 +250,7 @@ export default function LaunchBriefingDrawer({
                 {getLaunchSiteDisplay(launch).label}
               </dd>
             </div>
-            <div className="py-4">
-              <dt className="flex items-center gap-3">
-                <Orbit
-                  aria-hidden="true"
-                  size={18}
-                  className="shrink-0 text-[var(--text-muted)]"
-                />
-                <span className="data-label">Mission profile</span>
-              </dt>
-              <dd className="mt-1 pl-[1.875rem] text-sm text-[var(--text-primary)]">
-                {firstLaunchValue([launch.orbit, launch.missionType])}
-              </dd>
-            </div>
+            <MissionProfileSignal launch={launch} />
           </dl>
 
           {launch.timeline?.length ? (

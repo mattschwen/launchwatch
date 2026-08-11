@@ -34,6 +34,7 @@ import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
+import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
@@ -1361,14 +1362,18 @@ function WatchContent(): React.ReactElement {
                     launch={selectedLaunch}
                     className="mt-2"
                   />
-                  {selectedLaunch.firstStage ? (
-                    <dl className="mt-4 border-t border-[var(--border-subtle)] pt-4">
+                  <dl className="mt-4 space-y-4 border-t border-[var(--border-subtle)] pt-4">
+                    {selectedLaunch.firstStage ? (
                       <FirstStageSignal
                         firstStage={selectedLaunch.firstStage}
                         compact
                       />
-                    </dl>
-                  ) : null}
+                    ) : null}
+                    <MissionProfileSignal
+                      launch={selectedLaunch}
+                      variant="compact"
+                    />
+                  </dl>
                 </div>
                 <LaunchActions
                   launch={selectedLaunch}

@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, MapPin, Rocket, Target } from 'lucide-react';
+import { CalendarDays, MapPin, Rocket } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
-  firstLaunchValue,
   formatLaunchDay,
   formatPrimaryMissionName,
   formatLaunchTime,
@@ -18,6 +17,7 @@ import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
 import LocalLaunchTime from '@/components/LocalLaunchTime';
 import LaunchActions from './LaunchActions';
 import LaunchWindow from './LaunchWindow';
+import MissionProfileSignal from './MissionProfileSignal';
 
 interface HeroSectionProps {
   activeLaunch: Launch | null;
@@ -203,14 +203,6 @@ export default function HeroSection({
   const vehicleDetail = [activeLaunch.rocketFamily, activeLaunch.rocketVariant]
     .filter(Boolean)
     .join(' ');
-  const missionType = firstLaunchValue(
-    [activeLaunch.missionType, activeLaunch.orbit],
-    'Profile pending'
-  );
-  const missionDetail = firstLaunchValue(
-    [activeLaunch.orbit, activeLaunch.program],
-    'Target pending'
-  );
   const primaryMissionName = formatPrimaryMissionName(activeLaunch);
 
   return (
@@ -417,20 +409,7 @@ export default function HeroSection({
                 {vehicleDetail || activeLaunch.provider || 'Vehicle profile'}
               </dd>
             </div>
-            <div className="relative min-w-0 pl-6 min-[360px]:pl-10">
-              <Target
-                aria-hidden="true"
-                className="absolute left-0 top-0.5 text-[var(--text-muted)] min-[360px]:left-3"
-                size={18}
-              />
-              <dt className="data-label">Mission</dt>
-              <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
-                {missionType}
-              </dd>
-              <dd className="mt-0.5 break-words text-xs leading-4 text-[var(--console-cyan)]">
-                {missionDetail}
-              </dd>
-            </div>
+            <MissionProfileSignal launch={activeLaunch} variant="hero" />
           </dl>
 
           <LaunchActions

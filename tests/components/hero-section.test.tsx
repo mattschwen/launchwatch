@@ -198,6 +198,26 @@ describe('HeroSection', () => {
     expect(screen.queryByRole('note', { name: /Launch window/ })).toBeNull();
   });
 
+  it('keeps provider mission program visible without pushing down the schedule', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[0]}
+      />
+    );
+
+    const profile = screen
+      .getByText('Communications')
+      .closest('[data-mission-profile-signal]');
+
+    expect(profile).toHaveTextContent('Communications');
+    expect(profile).toHaveTextContent('LaunchWatch Test Program');
+    expect(
+      profile?.querySelector('[aria-label="Program: LaunchWatch Test Program"]'),
+    ).toBeVisible();
+    expect(profile).not.toHaveTextContent('Low Earth Orbit');
+  });
+
   it('pairs a provider pad identifier with its launch facility', () => {
     render(
       <HeroSection

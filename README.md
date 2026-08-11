@@ -66,6 +66,10 @@ short, dismissible status toast; it never blocks the application.
 - Canonical LL2 mission details retain provider-confirmed first-stage identity,
   flight history, reuse, and recovery plans across Watch, briefing, and detail
   telemetry instead of reducing the vehicle to its configuration name
+- Provider mission context keeps type and program lineage visible in the
+  featured mission while Watch, briefing, and detail telemetry retain the
+  complete type, program, and target-orbit profile; absent or duplicate
+  provider values collapse without invented labels
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
   re-arm the alert thresholds for the new confirmed time, and exported or

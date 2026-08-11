@@ -133,4 +133,21 @@ describe('LaunchBriefingDrawer', () => {
       'Recovery planned · Autonomous Recovery Platform (ARP)',
     );
   });
+
+  it('preserves provider mission type, program, and orbit context', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    const dialog = screen.getByRole('dialog', { name: launch.name });
+    const profile = within(dialog)
+      .getByText('Mission profile')
+      .closest('[data-mission-profile-signal]');
+
+    expect(profile).toHaveTextContent('Communications');
+    expect(profile).toHaveTextContent('Program · LaunchWatch Test Program');
+    expect(profile).toHaveTextContent('Orbit · Low Earth Orbit');
+  });
 });
