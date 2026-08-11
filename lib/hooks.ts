@@ -178,7 +178,7 @@ export function useNextLaunch() {
   };
 }
 
-function enrichCurrentLaunch(
+export function reconcileCurrentLaunch(
   feedLaunch: Launch | null,
   detailLaunch: Launch | null,
 ): Launch | null {
@@ -216,7 +216,7 @@ export function useLaunchById(id: string | null | undefined) {
   } | null>(null);
   const currentRemote = remote?.id === id ? remote : null;
   const launch = useMemo(
-    () => enrichCurrentLaunch(feedLaunch, currentRemote?.launch ?? null),
+    () => reconcileCurrentLaunch(feedLaunch, currentRemote?.launch ?? null),
     [currentRemote?.launch, feedLaunch]
   );
 

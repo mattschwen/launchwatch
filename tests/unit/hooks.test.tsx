@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useLaunchIntel } from '@/lib/hooks';
+import { reconcileCurrentLaunch, useLaunchIntel } from '@/lib/hooks';
 import {
   LAUNCH_INTEL,
   UPCOMING_LAUNCHES,
@@ -16,6 +16,36 @@ function intelResponse(intel: LaunchIntel): Response {
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+describe('reconcileCurrentLaunch', () => {
+  it('keeps current schedule fields authoritative while retaining detail enrichment', () => {
+    const feedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2035-07-28T15:30:00.000Z',
+      dateUnix: 2069259000,
+      datePrecision: { name: 'Minute', abbrev: 'MIN' },
+      windowStart: '2035-07-28T15:30:00.000Z',
+      windowEnd: '2035-07-28T17:30:00.000Z',
+      statusName: 'Target updated',
+    };
+    const detailLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      description: 'Canonical mission detail.',
+      livestream: 'https://example.test/official-coverage',
+    };
+
+    expect(reconcileCurrentLaunch(feedLaunch, detailLaunch)).toMatchObject({
+      date: feedLaunch.date,
+      dateUnix: feedLaunch.dateUnix,
+      datePrecision: feedLaunch.datePrecision,
+      windowStart: feedLaunch.windowStart,
+      windowEnd: feedLaunch.windowEnd,
+      statusName: feedLaunch.statusName,
+      description: detailLaunch.description,
+      livestream: detailLaunch.livestream,
+    });
+  });
 });
 
 describe('useLaunchIntel', () => {

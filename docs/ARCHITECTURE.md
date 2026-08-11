@@ -181,8 +181,11 @@ visible batch of mission links from speculatively resolving canonical detail
 routes before the user chooses one.
 
 Canonical detail pages retain the richer server detail payload, but reconcile
-its volatile live status with the shared browser feed after that feed settles.
-A server-rendered live snapshot is not allowed to keep magenta
+its volatile target, precision, launch window, provider status, and live flags
+with the shared browser feed after that feed settles. Provider retargets then
+update the detail countdown, local time, calendar/share payload, trajectory,
+and timeline clocks without discarding richer description, visual, timeline,
+or stream data. A server-rendered live snapshot is not allowed to keep magenta
 live treatment or autoplay when the current feed is unavailable, stale, or no
 longer confirms the mission. The detail route instead exposes an amber retry
 state while preserving official coverage and the canonical mission identity.

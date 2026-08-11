@@ -49,7 +49,7 @@ import {
   isCriticalLaunchStatusName,
   isCompletedLaunch,
 } from '@/lib/format';
-import { useLaunchIntel } from '@/lib/hooks';
+import { reconcileCurrentLaunch, useLaunchIntel } from '@/lib/hooks';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
 import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
@@ -314,13 +314,7 @@ export default function LaunchDetailClient({
   );
   const currentFeedLaunch = feedCanConfirmCurrentState ? feedLaunch : null;
   const presentedLaunch: Launch = currentFeedLaunch
-    ? {
-        ...launch,
-        status: currentFeedLaunch.status,
-        statusName: currentFeedLaunch.statusName,
-        isLive: currentFeedLaunch.isLive,
-        webcastLive: currentFeedLaunch.webcastLive,
-      }
+    ? (reconcileCurrentLaunch(currentFeedLaunch, launch) ?? launch)
     : liveStatusUnconfirmed
       ? { ...launch, isLive: false, webcastLive: false }
       : launch;

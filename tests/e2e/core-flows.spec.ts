@@ -824,6 +824,44 @@ test('detail suppresses a live server snapshot the current feed cannot confirm',
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('canonical detail adopts the current feed target after a provider retarget', async ({
+  page,
+}) => {
+  const currentFeedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: '2035-07-28T15:30:00.000Z',
+    dateUnix: 2069259000,
+    datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    windowStart: '2035-07-28T15:30:00.000Z',
+    windowEnd: '2035-07-28T17:30:00.000Z',
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [currentFeedLaunch], meta: FEED_META }),
+    })
+  );
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const summary = page.locator('#mission-summary');
+  await expect(
+    summary.locator('time[datetime="2035-07-28T15:30:00.000Z"]').first()
+  ).toBeVisible();
+  const launchWindow = summary
+    .locator('[data-launch-window="true"]')
+    .filter({ visible: true })
+    .first();
+  await expect(launchWindow).toContainText('15:30–17:30 UTC');
+  await expect(launchWindow).not.toContainText('14:30–16:30 UTC');
+  await expect(
+    summary.locator('time[datetime="2035-07-28T14:30:00.000Z"]')
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('detail keeps one direct provider alternative for embedded video', async ({
   page,
 }) => {

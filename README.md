@@ -77,9 +77,11 @@ short, dismissible status toast; it never blocks the application.
 - Provider alert states such as holds, scrubs, and cancellations remain named
   in the featured mission and compact schedule instead of collapsing to a
   generic TBD label; their target timing stays visible with the critical signal
-- Canonical mission details reconcile server-rendered live state with the
-  shared browser feed; an unconfirmed snapshot becomes an amber, retryable
-  state and keeps official coverage available without autoplay
+- Canonical mission details reconcile server-rendered timing and live state
+  with the shared browser feed, so provider retargets update the countdown,
+  launch window, calendar/share payload, trajectory, and timeline clocks. An
+  unconfirmed live snapshot becomes an amber, retryable state and keeps
+  official coverage available without autoplay
 - Reduced-motion-safe trajectory drawing, hardware LEDs, holographic surfaces,
   grid texture, and scanlines
 - Windows high-contrast affordances that preserve the current route and
