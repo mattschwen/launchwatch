@@ -33,6 +33,10 @@ const launches = {
       id: 'ksc-39a',
       name: 'LC-39A',
       full_name: 'Kennedy Space Center Launch Complex 39A',
+      latitude: 28.6084,
+      longitude: -80.6043,
+      locality: 'Kennedy Space Center',
+      region: 'Florida',
     },
     upcoming: true,
   },
@@ -61,6 +65,62 @@ const launches = {
     upcoming: false,
   },
 };
+
+const launchPads = [
+  {
+    id: 80,
+    active: true,
+    name: 'Space Launch Complex 40',
+    latitude: 28.5619,
+    longitude: -80.5774,
+    description:
+      'A workhorse orbital launch pad supporting commercial and government missions from Florida.',
+    info_url: 'https://www.spacex.com/launches/',
+    wiki_url:
+      'https://en.wikipedia.org/wiki/Cape_Canaveral_Space_Launch_Complex_40',
+    total_launch_count: 230,
+    orbital_launch_attempt_count: 230,
+    location: {
+      name: 'Cape Canaveral Space Force Station',
+      description:
+        'A major United States launch range on Florida’s Atlantic coast.',
+      country: { alpha_2_code: 'US' },
+    },
+    agencies: [{ name: 'SpaceX' }, { name: 'United States Space Force' }],
+    image: {
+      id: 8001,
+      name: 'Space Launch Complex 40',
+      image_url: '/icon-512.png',
+      thumbnail_url: '/icon-192.png',
+      credit: 'LaunchWatch fixture',
+      license: {
+        id: 1,
+        name: 'CC BY 4.0',
+        link: 'https://creativecommons.org/licenses/by/4.0/',
+      },
+      single_use: false,
+    },
+  },
+  {
+    id: 81,
+    active: true,
+    name: 'Launch Complex 39A',
+    latitude: 28.6084,
+    longitude: -80.6043,
+    description:
+      'Historic Apollo and Shuttle infrastructure adapted for modern commercial launch operations.',
+    info_url: 'https://www.nasa.gov/kennedy/',
+    wiki_url: 'https://en.wikipedia.org/wiki/Kennedy_Space_Center_Launch_Complex_39A',
+    total_launch_count: 180,
+    orbital_launch_attempt_count: 178,
+    location: {
+      name: 'Kennedy Space Center',
+      country: { alpha_2_code: 'US' },
+    },
+    agencies: [{ name: 'NASA' }, { name: 'SpaceX' }],
+    image: null,
+  },
+];
 
 function ll2Launch({
   id,
@@ -464,6 +524,14 @@ const server = createServer(async (request, response) => {
     url.pathname === '/ll2/2.3.0/launches/upcoming/'
   ) {
     sendJson(response, 200, { count: 1, results: [ll2Upcoming] });
+    return;
+  }
+
+  if (
+    request.method === 'GET' &&
+    url.pathname === '/ll2/2.3.0/pads/'
+  ) {
+    sendJson(response, 200, { count: launchPads.length, results: launchPads });
     return;
   }
 

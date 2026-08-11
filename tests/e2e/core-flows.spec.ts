@@ -491,8 +491,7 @@ test('external actions identify when they open a new tab', async ({ page }) => {
     '/history',
     '/launch/ll2-demo-orbital-dawn',
   ]) {
-    await page.goto(route);
-    await page.waitForLoadState('networkidle');
+    await page.goto(route, { waitUntil: 'domcontentloaded' });
 
     const externalLinks = page.locator('a[target="_blank"]');
     await expect(externalLinks.first()).toBeVisible();
@@ -1723,7 +1722,9 @@ test('narrow mission consoles contain 200% text and internal rails', async ({
     .last();
   await expect(loadedTrajectory).toBeVisible();
   await expect(
-    loadedTrajectory.getByRole('list', { name: 'Mission model phases' }),
+    loadedTrajectory.getByRole('complementary', {
+      name: 'Launch site learning panel',
+    }),
   ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
@@ -2282,6 +2283,12 @@ test('home identifies and recovers retained missions after refresh failure', asy
   });
 
   await page.goto('/');
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: UPCOMING_LAUNCHES[0].name,
+    })
+  ).toBeVisible();
   await expect(page.getByText('Last-known mission · refresh failed')).toHaveCount(0);
 
   failureEnabled = true;
@@ -4466,7 +4473,7 @@ test('home distinguishes an empty provider schedule and offers recovery', async 
     );
     await expect(
       page.getByRole('button', {
-        name: 'Enlarge illustrative trajectory map',
+        name: 'Enlarge launch site atlas',
       })
     ).toHaveCount(0);
     await expect(page.locator('[data-trajectory-map]')).toHaveCount(0);
@@ -4673,9 +4680,9 @@ test('watch enriches the selected mission and switches the mission queue', async
     page.getByRole('heading', { level: 2, name: 'Orbital Dawn' })
   ).toBeVisible();
   await expect(page).toHaveTitle('Orbital Dawn | Watch | LaunchWatch');
-  const watchTrajectory = page.getByRole('region', {
-    name: 'Mission trajectory',
-  });
+  const watchTrajectory = page.locator(
+    '[data-trajectory-pending="true"], [data-mission-map-variant="detail"]'
+  );
   await expect(watchTrajectory).toHaveCount(1);
   await expect(watchTrajectory).toContainText('Orbital Dawn');
   await expect(
@@ -5358,7 +5365,7 @@ test('watch prioritizes coverage intelligence before trajectory telemetry', asyn
   });
   const trajectory = page.getByRole('heading', {
     level: 2,
-    name: 'Mission trajectory',
+    name: /^(?:Mission trajectory|Launch site atlas)$/,
   });
   await expect(intelligence).toBeVisible();
   await expect(trajectory).toBeVisible();
@@ -5467,9 +5474,9 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
   await page.goto('/watch');
 
   const pendingTrajectory = page.locator('[data-trajectory-pending="true"]');
-  const trajectoryMap = page.locator('[data-trajectory-map]');
+  const trajectoryMap = page.locator('[data-launch-site-atlas]');
   const trajectoryState = page.locator(
-    '[data-trajectory-pending="true"], [data-trajectory-map]'
+    '[data-trajectory-pending="true"], [data-launch-site-atlas]'
   );
   const mobile = test.info().project.name.startsWith('mobile');
   await expect(trajectoryState).toHaveCount(1);
@@ -5547,10 +5554,10 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
   await loadButton.press('Enter');
   await expect(trajectoryMap).toHaveCount(1);
   await expect(
-    page.getByRole('region', { name: 'Mission trajectory' })
+    page.locator('[data-launch-site-atlas]')
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: /^(Mission focus|Focus)$/ })
+    page.getByRole('button', { name: 'Enlarge launch site atlas' })
   ).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
@@ -5560,39 +5567,35 @@ test('trajectory and signal motion settles for reduced-motion users', async ({
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/watch');
-  const trajectoryPath = page.locator('.trajectory-path-ascent');
-  await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const heading = [...document.querySelectorAll('h2')].find(
-          (element) => element.textContent?.trim() === 'Mission trajectory'
-        );
-        if (!heading) return false;
-
-        heading.scrollIntoView({ block: 'center' });
-        return true;
-      })
-    )
-    .toBe(true);
-  await expect(trajectoryPath).toHaveCount(1);
+  const atlas = page.locator('[data-launch-site-atlas]');
+  const trajectoryState = page.locator(
+    '[data-trajectory-pending="true"], [data-launch-site-atlas]'
+  );
+  await expect(trajectoryState).toHaveCount(1);
+  await page.evaluate(() => {
+    document
+      .querySelector('[data-trajectory-pending="true"], [data-launch-site-atlas]')
+      ?.scrollIntoView({ block: 'center' });
+    document
+      .querySelector<HTMLButtonElement>('[data-trajectory-pending="true"] button')
+      ?.click();
+  });
+  await expect(atlas).toBeVisible();
+  await expect(atlas.locator('canvas')).toHaveCount(1);
 
   const motion = await page.evaluate(() => {
-    const animationName = (selector: string): string | null => {
-      const element = document.querySelector(selector);
-      return element ? getComputedStyle(element).animationName : null;
-    };
-
+    const atlas = document.querySelector('[data-launch-site-atlas]');
+    const heading = atlas?.closest('[data-mission-map-variant]')?.querySelector('h2');
+    const canvas = atlas?.querySelector('canvas');
     return {
-      ascent: animationName('.trajectory-path-ascent'),
-      orbit: animationName('.trajectory-path-orbit'),
-      beacon: animationName('.trajectory-site-beacon'),
+      heading: heading ? getComputedStyle(heading).animationName : null,
+      canvas: canvas ? getComputedStyle(canvas).animationName : null,
     };
   });
 
   expect(motion).toEqual({
-    ascent: 'none',
-    orbit: 'none',
-    beacon: 'none',
+    heading: 'none',
+    canvas: 'none',
   });
 });
 
@@ -9557,7 +9560,7 @@ test('upcoming and historical details place one trajectory before mission suppor
       ).toBe(true);
     }
     await expect(
-      trajectory.locator('[data-trajectory-map]')
+      trajectory.locator('[data-launch-site-atlas]')
     ).toHaveCount(1);
     await expect(
       page.getByRole('region', { name: 'Mission intelligence' })
@@ -9842,7 +9845,7 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
     'button[aria-controls="mobile-mission-map"]:visible'
   );
   const expandButton = page.getByRole('button', {
-    name: /illustrative trajectory map/i,
+    name: /launch site atlas/i,
   });
 
   if ((page.viewportSize()?.width ?? 0) < 1024) {
@@ -9952,32 +9955,28 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await expandButton.click();
   const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
   const closeButton = dialog.getByRole('button', {
-    name: 'Close full trajectory map',
+    name: 'Close launch site atlas',
   });
 
   await expect(dialog).toBeVisible();
   await expect(closeButton).toBeFocused();
   await expect(closeButton).toHaveCSS('width', '44px');
 
-  const zoomIn = dialog.getByRole('button', { name: 'Zoom map in' });
+  const zoomIn = dialog.getByRole('button', { name: 'Zoom atlas in' });
   await zoomIn.focus();
-  for (let step = 0; step < 6; step += 1) {
-    await zoomIn.press('Enter');
-  }
-  await expect(zoomIn).toBeFocused();
-  await expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
-  await expect(zoomIn).not.toHaveAttribute('disabled', '');
-  await expect(dialog.getByRole('status')).toHaveText(
-    /Map zoom level 7 of 7\. Map scale \d+\.\d times\./
-  );
   await zoomIn.press('Enter');
   await expect(zoomIn).toBeFocused();
+  await expect(
+    dialog.getByRole('complementary', {
+      name: 'Launch site learning panel',
+    })
+  ).toBeVisible();
 
   await closeButton.click();
   await expect(expandButton).toBeFocused();
 });
 
-test('expanded trajectory map reframes the globe and discloses close site detail', async ({
+test('expanded atlas reveals nearby pads and supports a learning sequence', async ({
   page,
 }) => {
   await page.goto('/');
@@ -9988,57 +9987,30 @@ test('expanded trajectory map reframes the globe and discloses close site detail
   }
 
   const expandButton = page.getByRole('button', {
-    name: 'Enlarge illustrative trajectory map',
+    name: 'Enlarge launch site atlas',
   });
   await expandButton.click();
   const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
-  const mapSurface = dialog.getByRole('region', {
-    name: 'Interactive flight map',
+  await expect(dialog.locator('[data-atlas-map]')).toBeVisible();
+  const fieldGuide = dialog.getByRole('complementary', {
+    name: 'Launch site learning panel',
   });
-  const map = dialog.locator('[data-trajectory-map]');
-
-  await dialog.getByRole('button', { name: 'Global' }).click();
-  await expect(mapSurface).toHaveAttribute('data-map-mode', 'world');
-  await expect(map).toHaveAttribute(
-    'data-map-view',
-    /^-?\d+\.\d:0\.0:1000\.0:500\.0$/
-  );
-
-  await dialog
-    .getByRole('button', {
-      name: (page.viewportSize()?.width ?? 0) < 768 ? 'Site' : 'Site detail',
-      exact: true,
-    })
+  await expect(fieldGuide).toBeVisible();
+  await expect(
+    fieldGuide.getByRole('heading', { name: 'Space Launch Complex 40' })
+  ).toBeVisible();
+  await expect(fieldGuide.getByText('230').first()).toBeVisible();
+  await expect(
+    fieldGuide.getByText(/workhorse orbital launch pad/i)
+  ).toBeVisible();
+  await fieldGuide
+    .getByRole('button', { name: 'Explore next nearby launch pad' })
     .click();
-  await expect(mapSurface).toHaveAttribute('data-map-mode', 'site');
-  const siteDetail = dialog.getByRole('complementary', {
-    name: 'Reported launch site detail',
-  });
-  await expect(siteDetail).toBeVisible();
-  await expect(siteDetail.getByText('28.5619°N')).toBeVisible();
-  await expect(siteDetail.getByText('80.5774°W')).toBeVisible();
-  expect(
-    await siteDetail.evaluate((element) => {
-      const map = element.closest('[data-map-interactive="true"]');
-      if (!map) return false;
-      const cardBounds = element.getBoundingClientRect();
-      const mapBounds = map.getBoundingClientRect();
-      return (
-        cardBounds.left >= mapBounds.left &&
-        cardBounds.right <= mapBounds.right &&
-        cardBounds.top >= mapBounds.top &&
-        cardBounds.bottom <= mapBounds.bottom
-      );
-    })
-  ).toBe(true);
-
-  const closeView = await map.getAttribute('data-map-view');
-  await mapSurface.focus();
-  await mapSurface.press('ArrowRight');
-  await expect(map).not.toHaveAttribute('data-map-view', closeView || '');
-  await mapSurface.press('Home');
-  await expect(mapSurface).toHaveAttribute('data-map-mode', 'focus');
-  await expect(siteDetail).toHaveCount(0);
+  await expect(
+    fieldGuide.getByRole('heading', { name: 'Launch Complex 39A' })
+  ).toBeVisible();
+  await expect(fieldGuide.getByText(/Apollo and Shuttle/i)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Fit nearby launch pads' }).click();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -10075,9 +10047,14 @@ test('reported launch coordinates hand off to an exact external site map', async
     .last()
     .getByRole('link', { name: 'Trajectory', exact: true })
     .click();
-  const detailSiteMap = page.locator(siteMapSelector).last();
+  const detailSiteMap = page
+    .getByRole('complementary', { name: 'Launch site learning panel' })
+    .getByRole('link', { name: /OpenStreetMap/i });
   await expect(detailSiteMap).toBeVisible();
-  await expect(detailSiteMap).toHaveAttribute('href', siteMapUrl);
+  await expect(detailSiteMap).toHaveAttribute(
+    'href',
+    'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=15/28.5619/-80.5774'
+  );
   await detailSiteMap.focus();
   await expect(detailSiteMap).toBeFocused();
   const detailBounds = await detailSiteMap.boundingBox();
@@ -10127,12 +10104,12 @@ test('expanded trajectory keeps long mission context readable', async ({
   }
 
   await page
-    .getByRole('button', { name: 'Enlarge illustrative trajectory map' })
+    .getByRole('button', { name: 'Enlarge launch site atlas' })
     .click();
   const dialog = page.getByRole('dialog', { name: missionName });
   const title = dialog.getByRole('heading', { name: missionName });
   const closeButton = dialog.getByRole('button', {
-    name: 'Close full trajectory map',
+    name: 'Close launch site atlas',
   });
 
   await expect(dialog).toBeVisible();

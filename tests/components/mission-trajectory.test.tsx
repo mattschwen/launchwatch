@@ -1,533 +1,158 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MissionTrajectory from '@/components/MissionTrajectory';
 import { TRAJECTORY_DISCLOSURE } from '@/lib/trajectory';
-import type { Launch } from '@/lib/types';
+import type { Launch, LaunchSiteAtlasResponse } from '@/lib/types';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
+const source = { setData: vi.fn(), getClusterExpansionZoom: vi.fn(async () => 12) };
+const mapInstances: Array<Record<string, ReturnType<typeof vi.fn>>> = [];
+
+vi.mock('maplibre-gl', () => {
+  class MockMap {
+    addControl = vi.fn();
+    addLayer = vi.fn();
+    addSource = vi.fn();
+    easeTo = vi.fn();
+    fitBounds = vi.fn();
+    flyTo = vi.fn();
+    getCanvas = vi.fn(() => document.createElement('canvas'));
+    getSource = vi.fn(() => source);
+    getZoom = vi.fn(() => 8);
+    queryRenderedFeatures = vi.fn(() => []);
+    remove = vi.fn();
+    zoomIn = vi.fn();
+    zoomOut = vi.fn();
+    on = vi.fn((event: string, layerOrCallback: string | (() => void), callback?: () => void) => {
+      if (event === 'load') queueMicrotask(() => (typeof layerOrCallback === 'function' ? layerOrCallback() : callback?.()));
+    });
+    constructor() {
+      mapInstances.push(this as unknown as Record<string, ReturnType<typeof vi.fn>>);
+    }
+  }
+  return { Map: MockMap, AttributionControl: class {} };
+});
+
 function makeLaunch(overrides: Partial<Launch> = {}): Launch {
-  return {
-    ...UPCOMING_LAUNCHES[0],
-    ...overrides,
-  };
+  return { ...UPCOMING_LAUNCHES[0], ...overrides };
 }
 
-describe('MissionTrajectory', () => {
-  it('renders a ready compact map with both modeled phases and disclosure', () => {
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} />
-    );
+const atlas: LaunchSiteAtlasResponse = {
+  sites: [
+    {
+      id: '80', name: 'Space Launch Complex 40', active: true,
+      latitude: 28.5619, longitude: -80.5774,
+      locationName: 'Cape Canaveral SFS', countryCode: 'US',
+      description: 'A workhorse orbital launch pad with a long history.',
+      locationDescription: null, infoUrl: 'https://www.spacex.com/launches/',
+      wikiUrl: 'https://en.wikipedia.org/wiki/Cape_Canaveral_Space_Launch_Complex_40',
+      totalLaunchCount: 230, orbitalLaunchAttemptCount: 230,
+      agencies: ['SpaceX', 'United States Space Force'],
+      image: {
+        kind: 'mission', url: 'https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/slc-40.jpg',
+        name: 'SLC-40', credit: 'SpaceX', licenseName: 'CC BY 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', singleUse: false,
+        sourceLabel: 'Launch Library 2', sourceUrl: 'https://thespacedevs.com/llapi',
+      },
+    },
+    {
+      id: '81', name: 'Launch Complex 39A', active: true,
+      latitude: 28.6084, longitude: -80.6043,
+      locationName: 'Kennedy Space Center', countryCode: 'US',
+      description: 'Apollo, Shuttle, and commercial missions have flown here.',
+      locationDescription: null, infoUrl: null, wikiUrl: null,
+      totalLaunchCount: 180, orbitalLaunchAttemptCount: 178,
+      agencies: ['NASA', 'SpaceX'], image: null,
+    },
+  ],
+  meta: { generatedAt: '2026-08-11T00:00:00.000Z', cached: false, stale: false, source: 'launch-library-2', sourceUrl: 'https://thespacedevs.com/llapi' },
+};
 
-    expect(
-      screen.getByRole('heading', { name: 'Mission trajectory' })
-    ).toBeVisible();
+describe('MissionTrajectory', () => {
+  beforeEach(() => {
+    mapInstances.length = 0;
+    source.setData.mockClear();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(atlas), { status: 200 })));
+  });
+
+  it('keeps the lightweight illustrative model in compact placements', () => {
+    const { container } = render(<MissionTrajectory launch={makeLaunch()} />);
+    expect(screen.getByRole('heading', { name: 'Mission trajectory' })).toBeVisible();
     expect(screen.getByText('Illustrative model')).toBeVisible();
     expect(screen.getAllByText(TRAJECTORY_DISCLOSURE)).toHaveLength(2);
-    expect(screen.getByText('Ascent model')).toBeVisible();
-    expect(screen.getByText('Target-orbit model')).toBeVisible();
-    expect(
-      container.querySelector('[data-map-availability="ready"]')
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-trajectory-phase="ascent-model"]')
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector(
-        '[data-trajectory-phase="target-orbit-model"]'
-      )
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector(
-        '[data-trajectory-marker="reported-launch-site"]'
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', {
-        name: /28\.5619°N.*80\.5774°W.*opens in a new tab/i,
-      })
-    ).toHaveAttribute(
-      'href',
-      'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774'
-    );
+    expect(container.querySelector('[data-trajectory-map]')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /28\.5619°N.*80\.5774°W.*opens in a new tab/i })).toHaveAttribute('href', 'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774');
   });
 
-  it('opens a focus-managed full-map dialog and closes with Escape', async () => {
+  it('loads a continuous open map and a progressively explorable field guide', async () => {
     const user = userEvent.setup();
-    const missionName =
-      'Falcon 9 Block 5 | BlueBird 11-13 (Block 2 #6-8)';
-    render(
-      <MissionTrajectory launch={makeLaunch({ name: missionName })} />
-    );
+    const { container } = render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    expect(screen.getByRole('heading', { name: 'Launch site atlas' })).toBeVisible();
+    expect(screen.getByText('Open map')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Atlas controls' })).toBeVisible();
+    expect(container.querySelector('[data-launch-site-atlas]')).toBeInTheDocument();
 
-    const expandButton = screen.getByRole('button', {
-      name: 'Enlarge illustrative trajectory map',
-    });
-    await user.click(expandButton);
+    const panel = screen.getByRole('complementary', { name: 'Launch site learning panel' });
+    expect(await within(panel).findByRole('heading', { name: 'Space Launch Complex 40' })).toBeVisible();
+    expect(within(panel).getAllByText('230', { selector: 'dd' })).toHaveLength(2);
+    expect(within(panel).getByText(/workhorse orbital launch pad/i)).toBeVisible();
+    expect(within(panel).getByText(/SpaceX · United States Space Force/)).toBeVisible();
+    expect(within(panel).getByRole('img', { name: /Space Launch Complex 40 launch facility/i })).toBeVisible();
+    expect(within(panel).getByRole('link', { name: /OpenStreetMap/i })).toHaveAttribute('rel', 'noopener noreferrer');
 
-    const dialog = await screen.findByRole('dialog', {
-      name: missionName,
-    });
-    expect(dialog).toBeVisible();
-    const dialogTitle = within(dialog).getByRole('heading', {
-      name: missionName,
-    });
-    expect(dialogTitle).toHaveClass('break-words');
-    expect(dialogTitle).not.toHaveClass('truncate');
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: 'Close full trajectory map' })
-      ).toHaveFocus();
-    });
-    expect(screen.getAllByText(TRAJECTORY_DISCLOSURE)).toHaveLength(4);
-    expect(
-      dialog.querySelector('[data-enlarged-map-region]')
-    ).toHaveClass('min-h-0');
-    expect(
-      dialog.querySelector('[data-enlarged-map-support]')
-    ).toHaveClass('overflow-y-auto');
+    await user.click(within(panel).getByRole('button', { name: 'Explore next nearby launch pad' }));
+    expect(within(panel).getByRole('heading', { name: 'Launch Complex 39A' })).toBeVisible();
+    expect(mapInstances[0].flyTo).toHaveBeenCalled();
+  });
 
+  it('connects the visible controls to continuous map operations', async () => {
+    const user = userEvent.setup();
+    render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    await screen.findByRole('heading', { name: 'Space Launch Complex 40' });
+    await user.click(screen.getByRole('button', { name: 'Zoom atlas in' }));
+    await user.click(screen.getByRole('button', { name: 'Zoom atlas out' }));
+    await user.click(screen.getByRole('button', { name: 'Fit nearby launch pads' }));
+    await user.click(screen.getByRole('button', { name: 'Reset atlas to launch region' }));
+    expect(mapInstances[0].zoomIn).toHaveBeenCalled();
+    expect(mapInstances[0].zoomOut).toHaveBeenCalled();
+    expect(mapInstances[0].fitBounds).toHaveBeenCalled();
+    expect(mapInstances[0].flyTo).toHaveBeenCalled();
+  });
+
+  it('reports a provider failure without hiding the open map', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 502 })));
+    render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    expect(await screen.findByText('Nearby pad data is unavailable')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Atlas controls' })).toBeVisible();
+    expect(screen.getByText(/still explore the open map/i)).toBeVisible();
+  });
+
+  it('renders an honest coordinate-missing state without requesting pad data', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<MissionTrajectory launch={makeLaunch({ location: undefined })} variant="detail" />);
+    expect(screen.getByText('Launch-site atlas unavailable')).toBeVisible();
+    expect(screen.getByText(/did not report coordinates/i)).toBeVisible();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('opens the atlas dialog with managed focus and restores focus on Escape', async () => {
+    const user = userEvent.setup();
+    render(<MissionTrajectory launch={makeLaunch()} />);
+    const open = screen.getByRole('button', { name: 'Enlarge launch site atlas' });
+    await user.click(open);
+    const dialog = screen.getByRole('dialog', { name: makeLaunch().name });
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Close launch site atlas' })).toHaveFocus());
     await user.keyboard('{Escape}');
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(expandButton).toHaveFocus();
-    });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(open).toHaveFocus());
   });
 
-  it('lets detail users select and clear modeled phases', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-    const rail = screen.getByRole('list', {
-      name: 'Mission model phases',
-    });
-    const site = within(rail).getByRole('button', {
-      name: /Reported launch site/i,
-    });
-    const ascent = within(rail).getByRole('button', {
-      name: /Illustrative ascent/i,
-    });
-    const orbit = within(rail).getByRole('button', {
-      name: /Reported target orbit/i,
-    });
-    const ascentGroup = container.querySelector(
-      '[data-map-phase-group="ascent-model"]'
-    );
-    const orbitGroup = container.querySelector(
-      '[data-map-phase-group="target-orbit-model"]'
-    );
-
-    expect(site).toHaveAttribute('aria-pressed', 'false');
-    expect(ascent).toHaveAttribute('aria-pressed', 'false');
-    expect(orbit).toHaveAttribute('aria-pressed', 'false');
-
-    await user.click(ascent);
-
-    expect(ascent).toHaveAttribute('aria-pressed', 'true');
-    expect(ascentGroup).toHaveAttribute('opacity', '1');
-    expect(orbitGroup).toHaveAttribute('opacity', '0.25');
-
-    await user.click(ascent);
-
-    expect(ascent).toHaveAttribute('aria-pressed', 'false');
-    expect(orbitGroup).toHaveAttribute('opacity', '1');
-  });
-
-  it('switches between trajectory-aware focus and global framing', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-    const focus = screen.getByRole('button', {
-      name: /Mission focus/i,
-    });
-    const global = screen.getByRole('button', { name: 'Global' });
-    const map = container.querySelector('[data-trajectory-map]');
-    const focusView = map?.getAttribute('data-map-view');
-
-    expect(focus).toHaveAttribute('aria-pressed', 'true');
-    expect(global).toHaveAttribute('aria-pressed', 'false');
-    expect(focusView).not.toBe('0.0:0.0:1000.0:500.0');
-
-    await user.click(global);
-
-    expect(global).toHaveAttribute('aria-pressed', 'true');
-    expect(focus).toHaveAttribute('aria-pressed', 'false');
-    const globalView = map?.getAttribute('data-map-view');
-    expect(globalView).toMatch(/^-?\d+\.\d:0\.0:1000\.0:500\.0$/);
-    expect(globalView).not.toBe('0.0:0.0:1000.0:500.0');
-    expect(map?.parentElement).toHaveAttribute('data-map-mode', 'world');
-
-    await user.click(focus);
-
-    expect(focus).toHaveAttribute('aria-pressed', 'true');
-    expect(map).toHaveAttribute('data-map-view', focusView);
-  });
-
-  it('offers seven useful zoom steps while retaining control focus', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-    const zoomOut = screen.getByRole('button', { name: 'Zoom map out' });
-    const zoomIn = screen.getByRole('button', { name: 'Zoom map in' });
-    const map = container.querySelector('[data-trajectory-map]');
-
-    expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
-    expect(zoomOut).toHaveAttribute('tabindex', '-1');
-    expect(zoomOut).not.toBeDisabled();
-    expect(zoomIn).toHaveAttribute('aria-disabled', 'false');
-    expect(zoomIn).not.toHaveAttribute('tabindex');
-
-    zoomIn.focus();
-    for (let step = 0; step < 6; step += 1) {
-      await user.keyboard('{Enter}');
-    }
-
-    expect(zoomIn).toHaveFocus();
-    expect(zoomIn).toHaveAttribute('aria-disabled', 'true');
-    expect(zoomIn).toHaveAttribute('tabindex', '-1');
-    expect(zoomIn).not.toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /Map zoom level 7 of 7\. Map scale \d+\.\d times\./
-    );
-    const maximumZoomView = map?.getAttribute('data-map-view');
-
-    await user.keyboard('{Enter}');
-    expect(map).toHaveAttribute('data-map-view', maximumZoomView);
-    expect(zoomIn).toHaveFocus();
-
-    zoomOut.focus();
-    for (let step = 0; step < 6; step += 1) {
-      await user.keyboard('{Enter}');
-    }
-
-    expect(zoomOut).toHaveFocus();
-    expect(zoomOut).toHaveAttribute('aria-disabled', 'true');
-    expect(zoomOut).toHaveAttribute('tabindex', '-1');
-    expect(zoomOut).not.toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /Map zoom level 1 of 7\. Map scale \d+\.\d times\./
-    );
-  });
-
-  it('opens a close site view with progressively disclosed reported facts', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-
-    expect(
-      container.querySelector('[data-trajectory-site-detail]')
-    ).not.toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole('button', { name: /Site detail/i })
-    );
-
-    expect(
-      container.querySelector('[data-map-mode="site"]')
-    ).toBeInTheDocument();
-    const details = screen.getByRole('complementary', {
-      name: 'Reported launch site detail',
-    });
-    expect(details).toBeVisible();
-    expect(within(details).getByText('SLC-40 · Cape Canaveral')).toBeVisible();
-    expect(within(details).getByText('28.5619°N')).toBeVisible();
-    expect(within(details).getByText('80.5774°W')).toBeVisible();
-    expect(
-      within(details).getByRole('link', {
-        name: /Inspect reported coordinates.*opens in a new tab/i,
-      })
-    ).toHaveAttribute(
-      'href',
-      'https://www.openstreetmap.org/?mlat=28.5619&mlon=-80.5774#map=12/28.5619/-80.5774'
-    );
-  });
-
-  it('refits the map when a modeled phase is selected', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-    const map = container.querySelector('[data-trajectory-map]');
-    const fullMissionView = map?.getAttribute('data-map-view');
-    const rail = screen.getByRole('list', { name: 'Mission model phases' });
-
-    await user.click(
-      within(rail).getByRole('button', { name: /Illustrative ascent/i })
-    );
-
-    expect(map?.getAttribute('data-map-view')).not.toBe(fullMissionView);
-    expect(container.querySelector('[data-map-mode="focus"]')).toBeInTheDocument();
-  });
-
-  it('supports keyboard panning and reset on the interactive map', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-    const interactiveMap = screen.getByRole('region', {
-      name: 'Interactive flight map',
-    });
-    const map = container.querySelector('[data-trajectory-map]');
-    const initialView = map?.getAttribute('data-map-view');
-
-    interactiveMap.focus();
-    await user.keyboard('{ArrowRight}');
-    expect(map?.getAttribute('data-map-view')).not.toBe(initialView);
-
-    await user.keyboard('{Home}');
-    expect(map).toHaveAttribute('data-map-view', initialView || '');
-  });
-
-  it('keeps a reported site visible at the antimeridian in global view', async () => {
-    const user = userEvent.setup();
-    const { container } = render(
-      <MissionTrajectory
-        launch={makeLaunch({
-          location: {
-            lat: 0,
-            lng: -179.9,
-            name: 'Dateline Test Site',
-          },
-        })}
-        variant="detail"
-      />
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Global' }));
-
-    expect(
-      container.querySelector(
-        '[data-trajectory-marker="reported-launch-site"]'
-      )
-    ).toBeInTheDocument();
-  });
-
-  it('resets map controls when the selected mission changes', async () => {
-    const user = userEvent.setup();
-    const { rerender } = render(
-      <MissionTrajectory launch={makeLaunch()} variant="detail" />
-    );
-
-    await user.click(screen.getByRole('button', { name: 'Global' }));
-    expect(
-      screen.getByRole('button', { name: 'Global' })
-    ).toHaveAttribute('aria-pressed', 'true');
-
-    rerender(
-      <MissionTrajectory
-        launch={makeLaunch({
-          id: 'replacement-launch',
-          name: 'Replacement Launch',
-        })}
-        variant="detail"
-      />
-    );
-
-    expect(
-      screen.getByRole('button', { name: /Mission focus/i })
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('button', { name: 'Global' })
-    ).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('shows an honest orbit-only state when coordinates are missing', () => {
-    const { container } = render(
-      <MissionTrajectory
-        launch={makeLaunch({
-          location: null,
-          launchSite: 'Reported pad without coordinates',
-        })}
-        variant="detail"
-      />
-    );
-
-    expect(
-      container.querySelector('[data-map-availability="orbit-only"]')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Launch coordinates not supplied')).toBeVisible();
-    expect(
-      screen.getByText(/reports Low Earth Orbit, but no geographic origin/i)
-    ).toBeVisible();
-    expect(screen.getByText('Geographic model unavailable')).toBeVisible();
-    expect(
-      screen.getByText(
-        /Reported pad without coordinates is reported, but geographic coordinates were not supplied/i
-      )
-    ).toBeVisible();
-    expect(
-      container.querySelector('[data-trajectory-phase]')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('list', { name: 'Mission model phases' })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTitle('Open reported launch site in OpenStreetMap')
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows only an accurate site locator when the orbit is missing', () => {
-    const { container } = render(
-      <MissionTrajectory
-        launch={makeLaunch({ orbit: 'Unknown' })}
-        variant="detail"
-      />
-    );
-
-    expect(
-      container.querySelector('[data-map-availability="site-only"]')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Site locator only')).toBeVisible();
-    expect(
-      screen.getByText(/no directional path is inferred/i)
-    ).toBeVisible();
-    expect(
-      container.querySelector(
-        '[data-trajectory-marker="reported-launch-site"]'
-      )
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-trajectory-phase]')
-    ).not.toBeInTheDocument();
-    const rail = screen.getByRole('list', {
-      name: 'Mission model phases',
-    });
-    expect(
-      within(rail).getByRole('button', {
-        name: /Reported launch site/i,
-      })
-    ).toBeVisible();
-    expect(
-      within(rail).queryByRole('button', {
-        name: /Illustrative ascent/i,
-      })
-    ).not.toBeInTheDocument();
-    expect(screen.getByText('Not supplied')).toBeVisible();
-  });
-
-  it('shows unavailable when neither coordinates nor orbit data exists', () => {
-    const { container } = render(
-      <MissionTrajectory
-        launch={makeLaunch({
-          location: null,
-          orbit: null,
-        })}
-      />
-    );
-
-    expect(
-      container.querySelector('[data-map-availability="unavailable"]')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Launch coordinates not supplied')).toBeVisible();
-    expect(
-      screen.getByText(/reported site remains listed below/i)
-    ).toBeVisible();
-    expect(
-      container.querySelector('[data-trajectory-phase]')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('list', { name: 'Trajectory model legend' })
-    ).not.toBeInTheDocument();
-  });
-
-  it('uses unique IDs for multiple responsive and dialog instances', async () => {
-    const user = userEvent.setup();
-    render(
-      <>
-        <MissionTrajectory launch={makeLaunch()} />
-        <MissionTrajectory launch={makeLaunch({ id: 'second-launch' })} />
-      </>
-    );
-    const enlargeButtons = screen.getAllByRole('button', {
-      name: 'Enlarge illustrative trajectory map',
-    });
-    await user.click(enlargeButtons[0]);
-    await user.click(enlargeButtons[1]);
-
-    expect(screen.getAllByRole('dialog')).toHaveLength(2);
-    const ids = [...document.querySelectorAll<HTMLElement>('[id]')].map(
-      (element) => element.id
-    );
-
-    expect(ids.length).toBeGreaterThan(0);
-    expect(new Set(ids).size).toBe(ids.length);
-    expect(
-      screen.getAllByRole('region', {
-        name: 'Mission trajectory',
-        hidden: true,
-      })
-    ).toHaveLength(2);
-
-    const closeButtons = screen.getAllByRole('button', {
-      name: 'Close full trajectory map',
-    });
-    await user.click(closeButtons[1]);
-    await user.click(
-      screen.getByRole('button', { name: 'Close full trajectory map' })
-    );
-  });
-
-  it('does not surface placeholder location copy over the reported site', () => {
-    render(
-      <MissionTrajectory
-        launch={makeLaunch({
-          launchSite: 'Space Launch Complex 40',
-          location: {
-            lat: 28.5619,
-            lng: -80.5774,
-            name: 'Unknown Site',
-            countryCode: 'US',
-          },
-        })}
-        variant="detail"
-      />
-    );
-
-    expect(screen.getAllByText('SLC-40').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Unknown Site')).not.toBeInTheDocument();
-  });
-
-  it('keeps the reported pad and facility readable in detail facts', () => {
-    const reportedSite =
-      'Space Launch Complex 40, Cape Canaveral Space Force Station';
-    render(
-      <MissionTrajectory
-        launch={makeLaunch({
-          launchSite: reportedSite,
-          location: {
-            lat: 28.5619,
-            lng: -80.5774,
-            name: 'Cape Canaveral',
-          },
-        })}
-        variant="detail"
-      />
-    );
-
-    expect(
-      screen.getAllByText('SLC-40 · Cape Canaveral').length
-    ).toBeGreaterThan(0);
-  });
-
-  it('renders an honest waiting state before a mission is available', () => {
-    const { container } = render(<MissionTrajectory launch={null} />);
-
-    expect(screen.getByText('Awaiting mission selection')).toBeVisible();
-    expect(
-      container.querySelector('[data-map-availability="none"]')
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('list', { name: 'Trajectory model legend' })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {
-        name: 'Enlarge illustrative trajectory map',
-      })
-    ).toBeDisabled();
+  it('keeps expansion disabled before a mission is selected', () => {
+    render(<MissionTrajectory launch={null} />);
+    expect(screen.getByText('No mission selected')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Enlarge launch site atlas' })).toBeDisabled();
+    expect(screen.getByText('Mission trajectory model unavailable')).toBeInTheDocument();
   });
 });

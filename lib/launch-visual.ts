@@ -213,6 +213,12 @@ export function isEligibleLaunchVisual(
   return eligibleVisual(asset, asset.kind) !== null;
 }
 
+export function selectLaunchVisualAsset(
+  asset: LaunchVisualAssetLike
+): EligibleLaunchVisual | null {
+  return eligibleVisual(asset, asset.kind);
+}
+
 export function selectLaunchVisual(
   launch: Launch | null | undefined
 ): LaunchVisualSelection {

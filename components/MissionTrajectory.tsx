@@ -1,54 +1,16 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  ExternalLink,
-  Focus,
-  Globe2,
-  Info,
-  MapPin,
-  Maximize2,
-  Minus,
-  Plus,
-  RotateCcw,
-  X,
-} from 'lucide-react';
+import { ExternalLink, Info, Maximize2, X } from 'lucide-react';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
-import MissionMapCanvas, {
-  type MissionMapSelection,
-} from '@/components/mission-map/MissionMapCanvas';
-import MissionPhaseRail, {
-  formatLaunchCoordinates,
-} from '@/components/mission-map/MissionPhaseRail';
-import {
-  isCriticalLaunchStatusName,
-  isMeaningfulLaunchValue,
-} from '@/lib/format';
-import {
-  fitMapPoints,
-  getMapViewport,
-  MAP_HEIGHT,
-  MAP_WIDTH,
-  MAX_MAP_ZOOM,
-  panMapViewport,
-  zoomMapViewport,
-  type MapPoint,
-  type MapViewport,
-} from '@/lib/map-geometry';
-import {
-  buildIllustrativeTrajectory,
-  TRAJECTORY_DISCLOSURE,
-  type IllustrativeTrajectory,
-} from '@/lib/trajectory';
+import LaunchSiteAtlas from '@/components/mission-map/LaunchSiteAtlas';
+import MissionMapCanvas from '@/components/mission-map/MissionMapCanvas';
+import { formatLaunchCoordinates } from '@/components/mission-map/MissionPhaseRail';
+import { isCriticalLaunchStatusName, isMeaningfulLaunchValue } from '@/lib/format';
+import { MAP_HEIGHT, MAP_WIDTH, type MapViewport } from '@/lib/map-geometry';
 import { buildReportedSiteMapUrl } from '@/lib/site-map';
+import { buildIllustrativeTrajectory, TRAJECTORY_DISCLOSURE } from '@/lib/trajectory';
 import type { Launch } from '@/lib/types';
 
 interface MissionTrajectoryProps {
@@ -60,167 +22,45 @@ interface MissionTrajectoryProps {
   variant?: 'compact' | 'detail';
 }
 
-export type MapViewMode = 'focus' | 'world' | 'site';
-
-const ZOOM_FACTORS = [1, 1.35, 1.8, 2.5, 3.5, 5, 7] as const;
-
-const WORLD_VIEWPORT: MapViewport = {
-  x: 0,
-  y: 0,
-  width: MAP_WIDTH,
-  height: MAP_HEIGHT,
-  zoom: 1,
-};
-
-function trajectoryPoints(
-  trajectory: IllustrativeTrajectory | null
-): MapPoint[] {
-  if (!trajectory) return [];
-
-  return [
-    trajectory.launchPoint,
-    trajectory.transitionPoint,
-    trajectory.targetPoint,
-  ].filter((point): point is MapPoint => Boolean(point));
-}
-
-function getTrajectoryWorldViewport(
-  trajectory: IllustrativeTrajectory | null
-): MapViewport {
-  const points = trajectoryPoints(trajectory);
-  if (!points.length) return WORLD_VIEWPORT;
-
-  const minX = Math.min(...points.map((point) => point.x));
-  const maxX = Math.max(...points.map((point) => point.x));
-
-  return {
-    ...WORLD_VIEWPORT,
-    x: (minX + maxX) / 2 - MAP_WIDTH / 2,
-  };
-}
-
-function getSelectionViewport(
-  trajectory: IllustrativeTrajectory,
-  selection: MissionMapSelection
-): MapViewport {
-  if (selection === 'reported-site' && trajectory.launchPoint) {
-    const longitude = (trajectory.launchPoint.x / MAP_WIDTH) * 360 - 180;
-    const latitude = 90 - (trajectory.launchPoint.y / MAP_HEIGHT) * 180;
-    return getMapViewport([longitude, latitude], 8);
-  }
-
-  const phase = trajectory.phases.find(({ id }) => id === selection);
-  if (!phase) return trajectory.focusViewport;
-
-  return fitMapPoints(
-    [phase.start, phase.end, phase.labelPoint],
-    {
-      minHeight: 170,
-      minWidth: 340,
-      padding: 54,
-    }
-  );
-}
+const ATLAS_DISCLOSURE = 'Pad locations, descriptions, imagery, and launch counts are supplied by Launch Library 2. The open base map is supplied by OpenFreeMap and OpenStreetMap contributors.';
 
 function statusTone(launch: Launch): string {
   if (launch.status === 'live') return 'text-[var(--console-magenta)]';
-  if (
-    launch.status === 'failure' ||
-    isCriticalLaunchStatusName(launch.statusName)
-  ) {
-    return 'text-[var(--console-red)]';
-  }
+  if (launch.status === 'failure' || isCriticalLaunchStatusName(launch.statusName)) return 'text-[var(--console-red)]';
   if (launch.status === 'tbd') return 'text-[var(--console-amber)]';
   return 'text-[var(--console-green)]';
 }
 
-function CompactFacts({
-  launch,
-  trajectory,
-}: {
-  launch: Launch | null;
-  trajectory: IllustrativeTrajectory | null;
-}): React.ReactElement {
+function CompactFacts({ launch }: { launch: Launch | null }): React.ReactElement {
+  const trajectory = launch ? buildIllustrativeTrajectory(launch) : null;
   const reportedSiteMapUrl = buildReportedSiteMapUrl(launch?.location);
-  const facts = launch && trajectory
-    ? [
-        {
-          label: 'Status',
-          value: isMeaningfulLaunchValue(launch.statusName)
-            ? launch.statusName.trim()
-            : launch.status === 'success'
-              ? 'Successful'
-              : launch.status === 'failure'
-                ? 'Unsuccessful'
-                : launch.status === 'live'
-                  ? 'Live'
-                  : launch.status === 'tbd'
-                    ? 'To be determined'
-                    : 'Upcoming',
-          className: statusTone(launch),
-        },
-        {
-          label: 'Target orbit',
-          value: trajectory.orbitAvailable
-            ? trajectory.orbitLabel
-            : 'Not supplied',
-          className: trajectory.orbitAvailable
-            ? 'text-[var(--text-primary)]'
-            : 'text-[var(--console-amber)]',
-        },
-        {
-          label: 'Reported site',
-          value: trajectory.siteLabel,
-          className: 'text-[var(--text-primary)]',
-        },
-        {
-          label: 'Coordinates',
-          value: formatLaunchCoordinates(launch),
-          className: launch.location
-            ? 'text-[var(--text-primary)]'
-            : 'text-[var(--console-amber)]',
-          href: reportedSiteMapUrl,
-        },
-      ]
-    : [
-        { label: 'Status', value: 'No mission', className: '' },
-        { label: 'Target orbit', value: '—', className: '' },
-        { label: 'Reported site', value: '—', className: '' },
-        { label: 'Coordinates', value: '—', className: '' },
-      ];
+  const facts = launch && trajectory ? [
+    {
+      label: 'Status',
+      value: isMeaningfulLaunchValue(launch.statusName) ? launch.statusName.trim() : launch.status === 'success' ? 'Successful' : launch.status === 'failure' ? 'Unsuccessful' : launch.status === 'live' ? 'Live' : launch.status === 'tbd' ? 'To be determined' : 'Upcoming',
+      className: statusTone(launch),
+    },
+    { label: 'Target orbit', value: trajectory.orbitAvailable ? trajectory.orbitLabel : 'Not supplied', className: trajectory.orbitAvailable ? 'text-[var(--text-primary)]' : 'text-[var(--console-amber)]' },
+    { label: 'Reported site', value: trajectory.siteLabel, className: 'text-[var(--text-primary)]' },
+    { label: 'Coordinates', value: formatLaunchCoordinates(launch), className: launch.location ? 'text-[var(--text-primary)]' : 'text-[var(--console-amber)]', href: reportedSiteMapUrl },
+  ] : [
+    { label: 'Status', value: 'No mission', className: '' },
+    { label: 'Target orbit', value: '—', className: '' },
+    { label: 'Reported site', value: '—', className: '' },
+    { label: 'Coordinates', value: '—', className: '' },
+  ];
 
   return (
     <dl className="grid grid-cols-2 border-t border-[var(--border-subtle)] sm:grid-cols-4">
-      {facts.map((fact, index) => (
-        <div
-          key={fact.label}
-          className={`min-w-0 px-3 py-2.5 ${
-            index % 2 ? 'border-l border-[var(--border-subtle)]' : ''
-          } ${index >= 2 ? 'border-t border-[var(--border-subtle)] sm:border-t-0' : ''} ${
-            index > 0 ? 'sm:border-l sm:border-[var(--border-subtle)]' : ''
-          }`}
-        >
-          <dt className="font-mono text-[9px] font-semibold uppercase tracking-[0.11em] text-[var(--text-muted)]">
-            {fact.label}
-          </dt>
-          <dd
-            className={`mt-1 break-words text-[11px] font-semibold leading-4 ${fact.className}`}
-          >
-            {'href' in fact && fact.href ? (
-              <a
-                href={fact.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Open reported launch site in OpenStreetMap"
-                className="-my-2 inline-flex min-h-11 max-w-full items-center gap-1.5 text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)]"
-              >
-                <span>{fact.value}</span>
-                <ExternalLink aria-hidden="true" className="shrink-0" size={12} />
-                <ExternalLinkHint />
+      {facts.map((item, index) => (
+        <div key={item.label} className={`min-w-0 px-3 py-2.5 ${index % 2 ? 'border-l border-[var(--border-subtle)]' : ''} ${index >= 2 ? 'border-t border-[var(--border-subtle)] sm:border-t-0' : ''} ${index > 0 ? 'sm:border-l sm:border-[var(--border-subtle)]' : ''}`}>
+          <dt className="font-mono text-[9px] font-semibold uppercase tracking-[0.11em] text-[var(--text-muted)]">{item.label}</dt>
+          <dd className={`mt-1 break-words text-[11px] font-semibold leading-4 ${item.className}`}>
+            {'href' in item && item.href ? (
+              <a href={item.href} target="_blank" rel="noopener noreferrer" title="Open reported launch site in OpenStreetMap" className="-my-2 inline-flex min-h-11 max-w-full items-center gap-1.5 text-[var(--console-cyan)] transition-colors hover:text-[var(--text-primary)]">
+                <span>{item.value}</span><ExternalLink aria-hidden="true" className="shrink-0" size={12} /><ExternalLinkHint />
               </a>
-            ) : (
-              fact.value
-            )}
+            ) : item.value}
           </dd>
         </div>
       ))}
@@ -228,618 +68,103 @@ function CompactFacts({
   );
 }
 
-interface MapToolbarProps {
-  canFocus: boolean;
-  canInspectSite: boolean;
-  disabled: boolean;
-  expandButtonRef?: React.RefObject<HTMLButtonElement | null>;
-  onEnlarge: () => void;
-  onReset: () => void;
-  onViewMode: (mode: MapViewMode) => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  viewMode: MapViewMode;
-  maxZoomLevel: number;
-  zoomScale: number;
-  zoomLevel: number;
-  showEnlarge?: boolean;
-}
-
-function MapToolbar({
-  canFocus,
-  canInspectSite,
-  disabled,
-  expandButtonRef,
-  onEnlarge,
-  onReset,
-  onViewMode,
-  onZoomIn,
-  onZoomOut,
-  viewMode,
-  maxZoomLevel,
-  zoomScale,
-  zoomLevel,
-  showEnlarge = true,
-}: MapToolbarProps): React.ReactElement {
-  const zoomOutUnavailable = disabled || zoomLevel === 0;
-  const zoomInUnavailable = disabled || zoomLevel === maxZoomLevel;
-
-  return (
-    <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
-      <div
-        role="group"
-        aria-label="Map view"
-        className="flex w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface-base)] p-0.5 sm:w-auto"
-      >
-        <button
-          type="button"
-          aria-pressed={viewMode === 'focus'}
-          disabled={!canFocus}
-          onClick={() => onViewMode('focus')}
-          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
-            viewMode === 'focus'
-              ? 'bg-[rgba(94,230,168,0.1)] text-[var(--console-green)]'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Focus aria-hidden="true" size={14} />
-          <span className="hidden sm:inline">Mission focus</span>
-          <span className="sm:hidden">Focus</span>
-        </button>
-        <button
-          type="button"
-          aria-pressed={viewMode === 'world'}
-          onClick={() => onViewMode('world')}
-          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
-            viewMode === 'world'
-              ? 'bg-[rgba(88,200,232,0.1)] text-[var(--console-cyan)]'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <Globe2 aria-hidden="true" size={14} />
-          Global
-        </button>
-        <button
-          type="button"
-          aria-pressed={viewMode === 'site'}
-          disabled={!canInspectSite}
-          onClick={() => onViewMode('site')}
-          className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors sm:flex-none ${
-            viewMode === 'site'
-              ? 'bg-[rgba(244,185,95,0.1)] text-[var(--console-amber)]'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-          }`}
-        >
-          <MapPin aria-hidden="true" size={14} />
-          <span className="hidden md:inline">Site detail</span>
-          <span className="md:hidden">Site</span>
-        </button>
-      </div>
-
-      <button
-        type="button"
-        className="icon-button h-11 w-11"
-        onClick={() => {
-          if (!zoomOutUnavailable) onZoomOut();
-        }}
-        disabled={disabled}
-        aria-disabled={zoomOutUnavailable}
-        aria-label="Zoom map out"
-        tabIndex={zoomOutUnavailable ? -1 : undefined}
-      >
-        <Minus aria-hidden="true" size={16} />
-      </button>
-      <button
-        type="button"
-        className="icon-button h-11 w-11"
-        onClick={() => {
-          if (!zoomInUnavailable) onZoomIn();
-        }}
-        disabled={disabled}
-        aria-disabled={zoomInUnavailable}
-        aria-label="Zoom map in"
-        tabIndex={zoomInUnavailable ? -1 : undefined}
-      >
-        <Plus aria-hidden="true" size={16} />
-      </button>
-      <span
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        Map zoom level {zoomLevel + 1} of {maxZoomLevel + 1}. Map scale{' '}
-        {zoomScale.toFixed(1)} times.
-      </span>
-      <button
-        type="button"
-        className="icon-button h-11 w-11"
-        onClick={onReset}
-        disabled={disabled}
-        aria-label="Reset map view"
-      >
-        <RotateCcw aria-hidden="true" size={16} />
-      </button>
-      {showEnlarge ? (
-        <button
-          ref={expandButtonRef}
-          type="button"
-          className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs"
-          onClick={onEnlarge}
-          disabled={disabled}
-          aria-label="Enlarge illustrative trajectory map"
-        >
-          <span className="hidden sm:inline">Enlarge map</span>
-          <Maximize2 aria-hidden="true" className="h-4 w-4" />
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function MissionTrajectoryController({
-  launch,
+export default function MissionTrajectory({
   className = '',
   embedded = false,
+  launch,
   onReady,
   sectionId,
   variant = 'compact',
 }: MissionTrajectoryProps): React.ReactElement {
   const Root = embedded ? 'div' : 'section';
-  const rawInstanceId = useId();
-  const instanceId = rawInstanceId.replaceAll(':', '');
-  const sectionTitleId = `${instanceId}-mission-trajectory-title`;
-  const dialogTitleId = `${instanceId}-enlarged-trajectory-title`;
-  const dialogDescriptionId = `${instanceId}-enlarged-trajectory-description`;
+  const rawId = useId().replaceAll(':', '');
+  const sectionTitleId = `${rawId}-mission-map-title`;
+  const dialogTitleId = `${rawId}-atlas-dialog-title`;
+  const dialogDescriptionId = `${rawId}-atlas-dialog-description`;
   const [expanded, setExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<MapViewMode>('focus');
-  const [zoomLevel, setZoomLevel] = useState(0);
-  const [panOffset, setPanOffset] = useState<MapPoint>({ x: 0, y: 0 });
-  const [activeSelection, setActiveSelection] =
-    useState<MissionMapSelection>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const trajectory = useMemo(
-    () => (launch ? buildIllustrativeTrajectory(launch) : null),
-    [launch]
-  );
-  const canFocus = Boolean(
-    trajectory?.launchPoint || trajectory?.phases.length
-  );
-  const canInspectSite = Boolean(trajectory?.launchPoint);
-  const effectiveViewMode =
-    (viewMode === 'focus' && !canFocus) ||
-    (viewMode === 'site' && !canInspectSite)
-      ? 'world'
-      : viewMode;
-  const activeSelectionAvailable =
-    activeSelection === 'reported-site'
-      ? Boolean(trajectory?.launchPoint)
-      : activeSelection
-        ? Boolean(
-            trajectory?.phases.some((phase) => phase.id === activeSelection)
-          )
-        : true;
-  const effectiveSelection = activeSelectionAvailable
-    ? activeSelection
-    : null;
-  const baseViewport = useMemo(() => {
-    if (!trajectory) return WORLD_VIEWPORT;
-    if (effectiveViewMode === 'world') {
-      return getTrajectoryWorldViewport(trajectory);
-    }
-    if (effectiveViewMode === 'site') {
-      return getSelectionViewport(trajectory, 'reported-site');
-    }
-    return getSelectionViewport(trajectory, effectiveSelection);
-  }, [effectiveSelection, effectiveViewMode, trajectory]);
-  const maxZoomLevel = useMemo(() => {
-    const lastDistinctZoom = ZOOM_FACTORS.findLastIndex(
-      (factor) => baseViewport.zoom * factor < MAX_MAP_ZOOM
-    );
-    return Math.min(
-      ZOOM_FACTORS.length - 1,
-      Math.max(0, lastDistinctZoom + 1)
-    );
-  }, [baseViewport.zoom]);
-  const boundedZoomLevel = Math.min(zoomLevel, maxZoomLevel);
-  const zoomScale = Math.min(
-    MAX_MAP_ZOOM,
-    baseViewport.zoom * ZOOM_FACTORS[boundedZoomLevel]
-  );
-  const zoomFocalPoint = useMemo<MapPoint>(() => {
-    if (effectiveSelection === 'reported-site' && trajectory?.launchPoint) {
-      return trajectory.launchPoint;
-    }
-    const phase = trajectory?.phases.find(
-      ({ id }) => id === effectiveSelection
-    );
-    if (phase) {
-      return {
-        x: (phase.start.x + phase.end.x) / 2,
-        y: (phase.start.y + phase.end.y) / 2,
-      };
-    }
-    return {
-      x: baseViewport.x + baseViewport.width / 2,
-      y: baseViewport.y + baseViewport.height / 2,
-    };
-  }, [baseViewport, effectiveSelection, trajectory]);
-  const viewport = useMemo(
-    () =>
-      panMapViewport(
-        zoomMapViewport(baseViewport, zoomScale, zoomFocalPoint),
-        panOffset.x,
-        panOffset.y
-      ),
-    [baseViewport, panOffset, zoomFocalPoint, zoomScale]
-  );
+  const trajectory = useMemo(() => launch ? buildIllustrativeTrajectory(launch) : null, [launch]);
+  const viewport: MapViewport = trajectory?.focusViewport || {
+    x: 0,
+    y: 0,
+    width: MAP_WIDTH,
+    height: MAP_HEIGHT,
+    zoom: 1,
+  };
 
-  useEffect(() => {
-    onReady?.();
-  }, [onReady]);
+  useEffect(() => onReady?.(), [onReady]);
 
-  const resetMap = useCallback((): void => {
-    setViewMode(canFocus ? 'focus' : 'world');
-    setZoomLevel(0);
-    setPanOffset({ x: 0, y: 0 });
-    setActiveSelection(null);
-  }, [canFocus]);
-
-  const changeViewMode = useCallback((mode: MapViewMode): void => {
-    setViewMode(mode);
-    setZoomLevel(0);
-    setPanOffset({ x: 0, y: 0 });
-    setActiveSelection(mode === 'site' ? 'reported-site' : null);
-  }, []);
-
-  const changeSelection = useCallback(
-    (selection: MissionMapSelection): void => {
-      setActiveSelection(selection);
-      setViewMode(
-        selection === 'reported-site'
-          ? 'site'
-          : canFocus
-            ? 'focus'
-            : 'world'
-      );
-      setZoomLevel(0);
-      setPanOffset({ x: 0, y: 0 });
-    },
-    [canFocus]
-  );
-
-  const panMap = useCallback((deltaX: number, deltaY: number): void => {
-    setPanOffset((offset) => ({
-      x: offset.x + deltaX,
-      y: offset.y + deltaY,
-    }));
-  }, []);
-
-  const zoomIn = useCallback((): void => {
-    setZoomLevel((level) => Math.min(maxZoomLevel, level + 1));
-  }, [maxZoomLevel]);
-
-  const zoomOut = useCallback((): void => {
-    setZoomLevel((level) => Math.max(0, level - 1));
-  }, []);
-
-  const closeExpanded = useCallback((): void => {
-    setExpanded(false);
-  }, []);
-
-  const openExpanded = useCallback((): void => {
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+  const openExpanded = useCallback(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setExpanded(true);
   }, []);
+  const closeExpanded = useCallback(() => setExpanded(false), []);
 
   useEffect(() => {
     if (!expanded) return;
-
     const previousOverflow = document.body.style.overflow;
-    const expandButton = expandButtonRef.current;
     const previousFocus = previousFocusRef.current;
-    const backgroundElements = [
-      ...document.body.querySelectorAll<HTMLElement>(
-        ':scope > :not([data-mission-map-dialog])'
-      ),
-    ].filter(
-      (element) =>
-        !['LINK', 'SCRIPT', 'STYLE'].includes(element.tagName)
-    );
-    const backgroundState = backgroundElements.map((element) => ({
-      element,
-      ariaHidden: element.getAttribute('aria-hidden'),
-      inert: element.inert,
-    }));
-
-    backgroundElements.forEach((element) => {
-      element.inert = true;
-      element.setAttribute('aria-hidden', 'true');
-    });
+    const expandButton = expandButtonRef.current;
+    const backgroundElements = [...document.body.querySelectorAll<HTMLElement>(':scope > :not([data-mission-map-dialog])')].filter((element) => !['LINK', 'SCRIPT', 'STYLE'].includes(element.tagName));
+    const backgroundState = backgroundElements.map((element) => ({ element, ariaHidden: element.getAttribute('aria-hidden'), inert: element.inert }));
+    backgroundElements.forEach((element) => { element.inert = true; element.setAttribute('aria-hidden', 'true'); });
     document.body.style.overflow = 'hidden';
-    const frame = window.requestAnimationFrame(() => {
-      closeButtonRef.current?.focus();
-    });
-
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeExpanded();
-        return;
-      }
-
+    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); closeExpanded(); return; }
       if (event.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = [
-        ...dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-        ),
-      ];
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')];
       if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      if (event.shiftKey && document.activeElement === focusable[0]) { event.preventDefault(); focusable.at(-1)?.focus(); }
+      else if (!event.shiftKey && document.activeElement === focusable.at(-1)) { event.preventDefault(); focusable[0].focus(); }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', keydown);
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', keydown);
       document.body.style.overflow = previousOverflow;
-      backgroundState.forEach(({ element, ariaHidden, inert }) => {
-        element.inert = inert;
-        if (ariaHidden === null) {
-          element.removeAttribute('aria-hidden');
-        } else {
-          element.setAttribute('aria-hidden', ariaHidden);
-        }
-      });
-      window.requestAnimationFrame(() => {
-        (expandButton ?? previousFocus)?.focus();
-        previousFocusRef.current = null;
-      });
+      backgroundState.forEach(({ element, ariaHidden, inert }) => { element.inert = inert; if (ariaHidden === null) element.removeAttribute('aria-hidden'); else element.setAttribute('aria-hidden', ariaHidden); });
+      (expandButton || previousFocus)?.focus();
+      previousFocusRef.current = null;
     };
   }, [closeExpanded, expanded]);
 
-  const toolbar = (
-    <MapToolbar
-      canFocus={canFocus}
-      canInspectSite={canInspectSite}
-      disabled={!launch}
-      expandButtonRef={expandButtonRef}
-      onEnlarge={openExpanded}
-      onReset={resetMap}
-      onViewMode={changeViewMode}
-      onZoomIn={zoomIn}
-      onZoomOut={zoomOut}
-      viewMode={effectiveViewMode}
-      maxZoomLevel={maxZoomLevel}
-      zoomLevel={boundedZoomLevel}
-      zoomScale={zoomScale}
-    />
-  );
-
-  const dialog =
-    expanded && typeof document !== 'undefined'
-      ? createPortal(
-          <div
-            data-mission-map-dialog
-            className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:p-5"
-            onMouseDown={(event) => {
-              if (event.currentTarget === event.target) closeExpanded();
-            }}
-          >
-            <div
-              ref={dialogRef}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={dialogTitleId}
-              aria-describedby={dialogDescriptionId}
-              className="surface-card holo-card signal-cold flex h-[min(92svh,58rem)] min-h-[20rem] w-full max-w-[90rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]"
-            >
-              <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
-                <div className="min-w-0">
-                  <p className="console-label">Enlarged mission map</p>
-                  <h2
-                    id={dialogTitleId}
-                    className="mt-1 break-words text-lg font-bold leading-snug text-[var(--text-primary)] sm:text-xl"
-                  >
-                    {launch?.name || 'Mission trajectory'}
-                  </h2>
-                  <p
-                    id={dialogDescriptionId}
-                    className="mt-1 text-xs text-[var(--text-muted)]"
-                  >
-                    Geographic context and provider-reported mission profile.
-                  </p>
-                </div>
-                <button
-                  ref={closeButtonRef}
-                  type="button"
-                  className="icon-button shrink-0"
-                  aria-label="Close full trajectory map"
-                  onClick={closeExpanded}
-                >
-                  <X aria-hidden="true" className="h-5 w-5" />
-                </button>
-              </header>
-
-              <div className="shrink-0 border-b border-[var(--border-subtle)] px-3 py-2 sm:px-5">
-                <MapToolbar
-                  canFocus={canFocus}
-                  canInspectSite={canInspectSite}
-                  disabled={!launch}
-                  onEnlarge={openExpanded}
-                  onReset={resetMap}
-                  onViewMode={changeViewMode}
-                  onZoomIn={zoomIn}
-                  onZoomOut={zoomOut}
-                  showEnlarge={false}
-                  viewMode={effectiveViewMode}
-                  maxZoomLevel={maxZoomLevel}
-                  zoomLevel={boundedZoomLevel}
-                  zoomScale={zoomScale}
-                />
-              </div>
-              <div
-                className={`min-h-0 shrink-0 p-3 sm:aspect-auto sm:h-auto sm:flex-1 sm:shrink sm:p-4 ${
-                  effectiveViewMode === 'site'
-                    ? 'h-[25rem]'
-                    : 'aspect-[2/1]'
-                }`}
-                data-enlarged-map-region
-              >
-                <MissionMapCanvas
-                  activeSelection={effectiveSelection}
-                  expanded
-                  launch={launch}
-                  onPan={panMap}
-                  onReset={resetMap}
-                  onZoomIn={zoomIn}
-                  onZoomOut={zoomOut}
-                  trajectory={trajectory}
-                  variant="detail"
-                  viewMode={effectiveViewMode}
-                  viewport={viewport}
-                />
-              </div>
-              {launch && trajectory ? (
-                <div
-                  className="min-h-0 flex-1 overflow-y-auto border-t border-[var(--border-subtle)] sm:max-h-[min(30svh,14rem)] sm:flex-none"
-                  data-enlarged-map-support
-                >
-                  <MissionPhaseRail
-                    activeSelection={effectiveSelection}
-                    launch={launch}
-                    onSelect={changeSelection}
-                    trajectory={trajectory}
-                  />
-                  <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-3 text-xs leading-relaxed text-[var(--text-muted)] sm:px-5">
-                    <Info
-                      aria-hidden="true"
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
-                    />
-                    {TRAJECTORY_DISCLOSURE}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          </div>,
-          document.body
-        )
-      : null;
+  const dialog = expanded && launch && typeof document !== 'undefined' ? createPortal(
+    <div data-mission-map-dialog className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:p-5" onMouseDown={(event) => { if (event.currentTarget === event.target) closeExpanded(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} aria-describedby={dialogDescriptionId} className="surface-card holo-card signal-cold flex h-[min(94svh,64rem)] min-h-[24rem] w-full max-w-[96rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
+          <div className="min-w-0"><p className="console-label">Launch complex field guide</p><h2 id={dialogTitleId} className="mt-1 break-words text-lg font-bold leading-snug text-[var(--text-primary)] sm:text-xl">{launch.name}</h2><p id={dialogDescriptionId} className="mt-1 text-xs text-[var(--text-muted)]">Zoom from regional clusters to individual pads, then follow the facility guide.</p></div>
+          <button ref={closeButtonRef} type="button" className="icon-button shrink-0" aria-label="Close launch site atlas" onClick={closeExpanded}><X aria-hidden="true" className="h-5 w-5" /></button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden"><LaunchSiteAtlas launch={launch} expanded /></div>
+        <p className="flex shrink-0 items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{ATLAS_DISCLOSURE}</p>
+      </div>
+    </div>,
+    document.body
+  ) : null;
 
   return (
     <>
-      <Root
-        id={embedded ? undefined : sectionId}
-        tabIndex={!embedded && sectionId ? -1 : undefined}
-        aria-labelledby={embedded ? undefined : sectionTitleId}
-        className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${
-          variant === 'detail'
-            ? 'min-h-[32rem]'
-            : 'lg:h-full lg:min-h-[27.5rem]'
-        } ${className}`}
-        data-mission-map-variant={variant}
-      >
-        <header
-          className={`flex gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5 ${
-            variant === 'detail'
-              ? 'flex-col sm:flex-row sm:items-center sm:justify-between'
-              : 'items-center justify-between'
-          }`}
-        >
+      <Root id={embedded ? undefined : sectionId} tabIndex={!embedded && sectionId ? -1 : undefined} aria-labelledby={embedded ? undefined : sectionTitleId} className={`surface-card holo-card signal-cold flex min-h-0 flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] ${variant === 'detail' ? 'min-h-[36rem]' : 'lg:h-full lg:min-h-[27.5rem]'} ${className}`} data-mission-map-variant={variant}>
+        <header className="flex items-center justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2
-                id={sectionTitleId}
-                className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]"
-              >
-                Mission trajectory
-              </h2>
-              <span className="rounded border border-[rgba(88,200,232,0.3)] bg-[rgba(88,200,232,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-cyan)]">
-                Illustrative model
-              </span>
-            </div>
-            <p className="mt-1 truncate text-xs text-[var(--text-muted)]">
-              {launch?.name || 'No mission selected'}
-            </p>
+            <div className="flex flex-wrap items-center gap-2"><h2 id={sectionTitleId} className="font-mono text-xs font-bold uppercase tracking-[0.13em] text-[var(--text-secondary)]">{variant === 'detail' ? 'Launch site atlas' : 'Mission trajectory'}</h2><span className="rounded border border-[rgba(88,200,232,0.3)] bg-[rgba(88,200,232,0.08)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.09em] text-[var(--console-cyan)]">{variant === 'detail' ? 'Open map' : 'Illustrative model'}</span></div>
+            <p className="mt-1 truncate text-xs text-[var(--text-muted)]">{launch?.name || 'No mission selected'}</p>
           </div>
-
-          {variant === 'detail' ? (
-            toolbar
-          ) : (
-            <button
-              ref={expandButtonRef}
-              type="button"
-              className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs"
-              onClick={openExpanded}
-              disabled={!launch}
-              aria-label="Enlarge illustrative trajectory map"
-            >
-              <span className="hidden sm:inline">Enlarge map</span>
-              <Maximize2 aria-hidden="true" className="h-4 w-4" />
-            </button>
-          )}
+          <button ref={expandButtonRef} type="button" className="action-button action-button-quiet min-h-11 min-w-11 shrink-0 px-2.5 text-xs" onClick={openExpanded} disabled={!launch} aria-label="Enlarge launch site atlas"><span className="hidden sm:inline">Explore full screen</span><Maximize2 aria-hidden="true" className="h-4 w-4" /></button>
         </header>
 
-        <MissionMapCanvas
-          activeSelection={effectiveSelection}
-          launch={launch}
-          onPan={variant === 'detail' ? panMap : undefined}
-          onReset={variant === 'detail' ? resetMap : undefined}
-          onZoomIn={variant === 'detail' ? zoomIn : undefined}
-          onZoomOut={variant === 'detail' ? zoomOut : undefined}
-          trajectory={trajectory}
-          variant={variant}
-          viewMode={effectiveViewMode}
-          viewport={viewport}
-        />
+        {variant === 'detail' && launch ? <LaunchSiteAtlas launch={launch} /> : (
+          <MissionMapCanvas activeSelection={null} launch={launch} trajectory={trajectory} variant="compact" viewMode="focus" viewport={viewport} />
+        )}
 
-        {variant === 'detail' && launch && trajectory ? (
-          <MissionPhaseRail
-            activeSelection={effectiveSelection}
-            launch={launch}
-            onSelect={changeSelection}
-            trajectory={trajectory}
-          />
-        ) : null}
-
-        <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]">
-          <Info
-            aria-hidden="true"
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]"
-          />
-          {TRAJECTORY_DISCLOSURE}
-        </p>
-        {variant === 'compact' ? (
-          <CompactFacts launch={launch} trajectory={trajectory} />
-        ) : null}
+        <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{variant === 'detail' ? ATLAS_DISCLOSURE : TRAJECTORY_DISCLOSURE}</p>
+        {variant === 'compact' ? <CompactFacts launch={launch} /> : null}
       </Root>
       {dialog}
     </>
-  );
-}
-
-export default function MissionTrajectory(
-  props: MissionTrajectoryProps
-): React.ReactElement {
-  return (
-    <MissionTrajectoryController
-      key={props.launch?.id || 'no-mission'}
-      {...props}
-    />
   );
 }

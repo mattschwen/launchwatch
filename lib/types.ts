@@ -211,6 +211,35 @@ export interface LaunchLocation {
   countryCode?: string;
 }
 
+export interface LaunchSite {
+  id: string;
+  name: string;
+  active: boolean;
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  countryCode: string | null;
+  description: string | null;
+  locationDescription: string | null;
+  infoUrl: string | null;
+  wikiUrl: string | null;
+  totalLaunchCount: number;
+  orbitalLaunchAttemptCount: number;
+  agencies: string[];
+  image: LaunchVisual | null;
+}
+
+export interface LaunchSiteAtlasResponse {
+  sites: LaunchSite[];
+  meta: {
+    generatedAt: string;
+    cached: boolean;
+    stale: boolean;
+    source: 'launch-library-2';
+    sourceUrl: string;
+  };
+}
+
 export interface LaunchStream {
   url: string;
   title: string;
