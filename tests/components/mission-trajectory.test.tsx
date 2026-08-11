@@ -7,6 +7,7 @@ import type { Launch, LaunchSiteAtlasResponse } from '@/lib/types';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 const mapInstances: Array<Record<string, ReturnType<typeof vi.fn>>> = [];
+const polylineMock = vi.hoisted(() => vi.fn());
 
 vi.mock('leaflet', () => {
   class MockMap {
@@ -40,6 +41,7 @@ vi.mock('leaflet', () => {
     latLngBounds: vi.fn((points) => points),
     layerGroup: vi.fn(() => layer),
     map: vi.fn(() => new MockMap()),
+    polyline: polylineMock.mockImplementation(() => marker),
     tileLayer: vi.fn(() => tiles),
   };
   return { default: leaflet, ...leaflet };
@@ -83,6 +85,7 @@ const atlas: LaunchSiteAtlasResponse = {
 describe('MissionTrajectory', () => {
   beforeEach(() => {
     mapInstances.length = 0;
+    polylineMock.mockClear();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(atlas), { status: 200 })));
   });
 
@@ -112,6 +115,12 @@ describe('MissionTrajectory', () => {
     expect(within(panel).getByText(/SpaceX · United States Space Force/)).toBeVisible();
     expect(within(panel).getByRole('img', { name: /Space Launch Complex 40 launch facility/i })).toBeVisible();
     expect(within(panel).getByRole('link', { name: /OpenStreetMap/i })).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.getAllByText('Illustrative ascent corridor')).not.toHaveLength(0);
+    expect(polylineMock).toHaveBeenCalledTimes(2);
+    expect(polylineMock.mock.calls[1]?.[1]).toEqual(expect.objectContaining({
+      className: 'mission-corridor-line',
+      color: '#5ee6a8',
+    }));
 
     await user.click(within(panel).getByRole('button', { name: 'Explore next nearby launch pad' }));
     expect(within(panel).getByRole('heading', { name: 'Launch Complex 39A' })).toBeVisible();
@@ -126,10 +135,27 @@ describe('MissionTrajectory', () => {
     await user.click(screen.getByRole('button', { name: 'Zoom atlas out' }));
     await user.click(screen.getByRole('button', { name: 'Fit nearby launch pads' }));
     await user.click(screen.getByRole('button', { name: 'Reset atlas to launch region' }));
+    await user.click(screen.getAllByRole('button', { name: 'Center current launch' })[0]);
     expect(mapInstances[0].zoomIn).toHaveBeenCalled();
     expect(mapInstances[0].zoomOut).toHaveBeenCalled();
     expect(mapInstances[0].flyToBounds).toHaveBeenCalled();
     expect(mapInstances[0].flyTo).toHaveBeenCalled();
+  });
+
+  it('finds pads by operator and reports an honest empty search state', async () => {
+    const user = userEvent.setup();
+    render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    const panel = screen.getByRole('complementary', { name: 'Launch site learning panel' });
+    await within(panel).findByRole('heading', { name: 'Space Launch Complex 40' });
+    const search = within(panel).getByRole('searchbox', { name: 'Find a launch pad' });
+
+    await user.type(search, 'NASA');
+    expect(within(panel).getByRole('button', { name: /Launch Complex 39A/ })).toBeVisible();
+    expect(within(panel).queryByRole('button', { name: /Space Launch Complex 40/ })).not.toBeInTheDocument();
+
+    await user.clear(search);
+    await user.type(search, 'No such facility');
+    expect(within(panel).getByRole('status')).toHaveTextContent(/No pads match/);
   });
 
   it('reports a provider failure without hiding the open map', async () => {

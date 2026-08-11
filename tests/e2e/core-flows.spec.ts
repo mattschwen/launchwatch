@@ -10556,6 +10556,9 @@ test('mission trajectory keeps modeled phases in frame and restores focus', asyn
   await zoomIn.focus();
   await zoomIn.press('Enter');
   await expect(zoomIn).toBeFocused();
+  await expect(dialog.locator('.mission-corridor-line')).toBeVisible();
+  await expect(dialog.locator('.current-launch-beacon')).toBeVisible();
+  await expect(dialog.getByText('Illustrative ascent corridor')).toBeVisible();
   await expect(
     dialog.getByRole('complementary', {
       name: 'Launch site learning panel',
@@ -10591,6 +10594,9 @@ test('expanded atlas reveals nearby pads and supports a learning sequence', asyn
   ).toBeVisible();
   await expect(fieldGuide.getByText('230').first()).toBeVisible();
   await expect(
+    fieldGuide.getByText('Current mission launch point')
+  ).toBeVisible();
+  await expect(
     fieldGuide.getByText(/workhorse orbital launch pad/i)
   ).toBeVisible();
   await fieldGuide
@@ -10600,6 +10606,15 @@ test('expanded atlas reveals nearby pads and supports a learning sequence', asyn
     fieldGuide.getByRole('heading', { name: 'Launch Complex 39A' })
   ).toBeVisible();
   await expect(fieldGuide.getByText(/Apollo and Shuttle/i)).toBeVisible();
+  const padSearch = fieldGuide.getByRole('searchbox', {
+    name: 'Find a launch pad',
+  });
+  await padSearch.fill('SpaceX');
+  await expect(
+    fieldGuide.getByRole('button', { name: /Space Launch Complex 40/ })
+  ).toBeVisible();
+  await padSearch.fill('No such facility');
+  await expect(fieldGuide.getByRole('status')).toContainText('No pads match');
   await dialog.getByRole('button', { name: 'Fit nearby launch pads' }).click();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

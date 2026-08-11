@@ -7,6 +7,7 @@ import {
   type MapViewport,
 } from '@/lib/map-geometry';
 import {
+  buildIllustrativeLaunchCorridor,
   buildIllustrativeTrajectory,
   classifyTargetOrbit,
   TRAJECTORY_DISCLOSURE,
@@ -77,6 +78,29 @@ describe('illustrative trajectory model', () => {
       projectMapPoint(location.lng, location.lat)
     );
     expect(model.phases[0].start).toEqual(model.launchPoint);
+  });
+
+  it('anchors its local zoom corridor at the reported coordinates', () => {
+    const launch = makeLaunch();
+    const corridor = buildIllustrativeLaunchCorridor(launch);
+
+    expect(corridor).toHaveLength(4);
+    expect(corridor[0]).toEqual({
+      lat: launch.location!.lat,
+      lng: launch.location!.lng,
+    });
+    expect(corridor.at(-1)).not.toEqual(corridor[0]);
+    corridor.forEach(({ lat, lng }) => {
+      expect(lat).toBeGreaterThanOrEqual(-90);
+      expect(lat).toBeLessThanOrEqual(90);
+      expect(lng).toBeGreaterThanOrEqual(-180);
+      expect(lng).toBeLessThanOrEqual(180);
+    });
+  });
+
+  it('does not invent a local corridor without a reported model', () => {
+    expect(buildIllustrativeLaunchCorridor(makeLaunch({ orbit: null }))).toEqual([]);
+    expect(buildIllustrativeLaunchCorridor(makeLaunch({ location: null }))).toEqual([]);
   });
 
   it('makes a northern inclined ascent rise before a separate orbit continuation', () => {

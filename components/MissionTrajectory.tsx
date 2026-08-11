@@ -137,10 +137,10 @@ export default function MissionTrajectory({
     <div data-mission-map-dialog className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:p-5" onMouseDown={(event) => { if (event.currentTarget === event.target) closeExpanded(); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} aria-describedby={dialogDescriptionId} className="surface-card holo-card signal-cold flex h-[min(94svh,64rem)] min-h-[24rem] w-full max-w-[96rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-strong)] bg-[var(--surface-base)] shadow-[var(--shadow-elevated)]">
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
-          <div className="min-w-0"><p className="console-label">Launch complex field guide</p><h2 id={dialogTitleId} className="mt-1 break-words text-lg font-bold leading-snug text-[var(--text-primary)] sm:text-xl">{launch.name}</h2><p id={dialogDescriptionId} className="mt-1 text-xs text-[var(--text-muted)]">Zoom from regional clusters to individual pads, then follow the facility guide.</p></div>
+          <div className="min-w-0"><p className="console-label">Full mission map</p><h2 id={dialogTitleId} className="mt-1 break-words text-lg font-bold leading-snug text-[var(--text-primary)] sm:text-xl">{launch.name}</h2><p id={dialogDescriptionId} className="mt-1 text-xs text-[var(--text-muted)]">Keep the modeled ascent in view while you zoom from the launch region to individual pads.</p></div>
           <button ref={closeButtonRef} type="button" className="icon-button shrink-0" aria-label="Close launch site atlas" onClick={closeExpanded}><X aria-hidden="true" className="h-5 w-5" /></button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden"><LaunchSiteAtlas launch={launch} expanded /></div>
+        <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden"><LaunchSiteAtlas launch={launch} trajectory={trajectory!} expanded /></div>
         <p className="flex shrink-0 items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{ATLAS_DISCLOSURE}</p>
       </div>
     </div>,
@@ -176,7 +176,7 @@ export default function MissionTrajectory({
                 <h3 id={`${sectionTitleId}-atlas`} className="mt-1 text-base font-bold text-[var(--text-primary)]">Launch site atlas</h3>
                 <p className="mt-1 text-xs text-[var(--text-muted)]">Zoom closer to reveal every neighboring pad, then explore its photo, history, operators, and launch facts.</p>
               </div>
-              <LaunchSiteAtlas launch={launch} />
+              <LaunchSiteAtlas launch={launch} trajectory={trajectory} />
               <p className="flex items-start gap-2 border-t border-[var(--border-subtle)] px-4 py-2.5 text-[10px] leading-relaxed text-[var(--text-muted)] sm:px-5 sm:text-[11px]"><Info aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--console-cyan)]" />{ATLAS_DISCLOSURE}</p>
             </section>
           </div>

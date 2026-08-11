@@ -58,6 +58,11 @@ export interface IllustrativeTrajectory {
   focusViewport: MapViewport;
 }
 
+export interface TrajectoryCoordinate {
+  lat: number;
+  lng: number;
+}
+
 export const TRAJECTORY_DISCLOSURE =
   'Illustrative trajectory model — geometry is derived from the reported launch site and target orbit, not vehicle telemetry or a planned flight path.';
 
@@ -161,6 +166,62 @@ function hasValidLocation(
       location.lng >= -180 &&
       location.lng <= 180
   );
+}
+
+function destinationCoordinate(
+  origin: TrajectoryCoordinate,
+  bearing: number,
+  distanceKm: number
+): TrajectoryCoordinate {
+  const earthRadiusKm = 6_371;
+  const angularDistance = distanceKm / earthRadiusKm;
+  const bearingRadians = bearing * Math.PI / 180;
+  const latitude = origin.lat * Math.PI / 180;
+  const longitude = origin.lng * Math.PI / 180;
+  const nextLatitude = Math.asin(
+    Math.sin(latitude) * Math.cos(angularDistance) +
+      Math.cos(latitude) * Math.sin(angularDistance) * Math.cos(bearingRadians)
+  );
+  const nextLongitude = longitude + Math.atan2(
+    Math.sin(bearingRadians) * Math.sin(angularDistance) * Math.cos(latitude),
+    Math.cos(angularDistance) - Math.sin(latitude) * Math.sin(nextLatitude)
+  );
+
+  return {
+    lat: nextLatitude * 180 / Math.PI,
+    lng: ((nextLongitude * 180 / Math.PI + 540) % 360) - 180,
+  };
+}
+
+/**
+ * Builds a short, local-scale rendering of the same illustrative model used by
+ * the world map. Keeping it anchored at the reported coordinates means the
+ * model remains legible as the launch-site atlas is zoomed toward pad level.
+ */
+export function buildIllustrativeLaunchCorridor(
+  launch: Launch,
+  modelKind = classifyTargetOrbit(launch.orbit)
+): TrajectoryCoordinate[] {
+  if (!hasValidLocation(launch.location) || modelKind === 'unknown') return [];
+
+  const origin = { lat: launch.location.lat, lng: launch.location.lng };
+  const northern = origin.lat >= 0;
+  const initialBearing =
+    modelKind === 'polar'
+      ? northern ? 350 : 170
+      : modelKind === 'equatorial'
+        ? northern ? 112 : 68
+        : modelKind === 'departure'
+          ? northern ? 74 : 106
+          : northern ? 66 : 114;
+  const bearingDrift = modelKind === 'polar' ? 4 : northern ? 10 : -10;
+
+  return [
+    origin,
+    destinationCoordinate(origin, initialBearing, 24),
+    destinationCoordinate(origin, initialBearing + bearingDrift * 0.45, 72),
+    destinationCoordinate(origin, initialBearing + bearingDrift, 160),
+  ];
 }
 
 function compactSiteLabel(launch: Launch): string {

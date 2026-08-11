@@ -6,6 +6,20 @@
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+.launch-site-atlas-map img.leaflet-tile {
+  filter: grayscale(1) sepia(0.32) hue-rotate(88deg) saturate(0.68) brightness(0.52) contrast(1.3) !important;
+  opacity: 0.84;
+}
+
+.launch-site-atlas-brand-overlay {
+  background:
+    linear-gradient(rgba(4, 13, 12, 0.22), rgba(4, 13, 12, 0.22)),
+    linear-gradient(rgba(94, 230, 168, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88, 200, 232, 0.025) 1px, transparent 1px),
+    radial-gradient(circle at center, transparent 44%, rgba(5, 6, 10, 0.46) 100%);
+  background-size: 100% 100%, 32px 32px, 32px 32px, 100% 100%;
+}
+
 .leaflet-control-attribution {
   background: rgba(5, 6, 10, 0.82) !important;
   color: var(--text-muted);
@@ -27,6 +41,29 @@
 
 .leaflet-tooltip-top.launch-site-label::before {
   border-top-color: rgba(5, 6, 10, 0.94);
+}
+
+.leaflet-tooltip.current-launch-label {
+  border: 1px solid rgba(94, 230, 168, 0.55);
+  background: rgba(5, 6, 10, 0.96);
+  color: #63f6b2;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0 0 1px rgba(5, 6, 10, 0.85), 0 0 24px rgba(94, 230, 168, 0.2);
+}
+
+.leaflet-tooltip-top.current-launch-label::before {
+  border-top-color: rgba(5, 6, 10, 0.96);
+}
+
+.current-launch-beacon {
+  filter: drop-shadow(0 0 5px rgba(94, 230, 168, 0.95));
+}
+
+.mission-corridor-line {
+  filter: drop-shadow(0 0 4px rgba(94, 230, 168, 0.72));
 }
 @source "../components/launch/MissionVisual.tsx";
 
