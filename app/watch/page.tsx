@@ -40,6 +40,7 @@ import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
+import WatchSectionIndex from '@/components/watch/WatchSectionIndex';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -195,7 +196,12 @@ function DeferredWatchTrajectory({
   };
 
   return (
-    <div ref={hostRef} className="mt-5 min-w-0 max-w-full">
+    <div
+      ref={hostRef}
+      id="watch-trajectory"
+      tabIndex={-1}
+      className="watch-section-anchor mt-5 min-w-0 max-w-full rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+    >
       {enabled ? (
         <TrajectoryErrorBoundary
           resetKey={launch.id}
@@ -410,10 +416,11 @@ function WatchStage({
     return (
       <div
         ref={coverageRegionRef}
+        id="watch-coverage"
         role="region"
         aria-label={coverageLabel}
         tabIndex={-1}
-        className={`rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] ${
+        className={`watch-section-anchor rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] ${
           liveCoverage
             ? 'signal-live'
             : coverageUnconfirmed && launch.isLive
@@ -445,10 +452,11 @@ function WatchStage({
   return (
     <section
       ref={coverageRegionRef}
+      id="watch-coverage"
       role="region"
       aria-label={coverageLabel}
       tabIndex={-1}
-      className="stream-surface holo-card signal-warm relative flex min-h-0 w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-4 py-3 text-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] min-[360px]:min-h-[22rem] min-[360px]:px-5 min-[360px]:py-0 sm:aspect-video"
+      className="watch-section-anchor stream-surface holo-card signal-warm relative flex min-h-0 w-full min-w-0 flex-col items-center justify-center rounded-[var(--radius-md)] border px-4 py-3 text-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--surface-canvas)] min-[360px]:min-h-[22rem] min-[360px]:px-5 min-[360px]:py-0 sm:aspect-video"
     >
       <div
         aria-hidden="true"
@@ -750,8 +758,10 @@ function MissionQueue({
 
   return (
     <aside
+      id="watch-queue"
+      tabIndex={-1}
       aria-labelledby="mission-queue-title"
-      className="watch-mission-queue surface-card holo-card signal-cold min-w-0 max-w-full overflow-hidden"
+      className="watch-section-anchor watch-mission-queue surface-card holo-card signal-cold min-w-0 max-w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
     >
       <div className="watch-mission-queue-header flex min-h-14 items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
         <h2 id="mission-queue-title" className="section-title text-[1.2rem]">
@@ -1304,6 +1314,8 @@ function WatchContent(): React.ReactElement {
           </div>
         ) : null}
 
+        <WatchSectionIndex />
+
         <div className="watch-primary-grid grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div
             data-watch-selected-mission
@@ -1327,8 +1339,10 @@ function WatchContent(): React.ReactElement {
             </div>
 
             <section
+              id="watch-mission"
+              tabIndex={-1}
               data-watch-mission-details
-              className={`watch-mission-details surface-card holo-card order-3 min-w-0 max-w-full overflow-hidden p-5 sm:p-6 lg:mt-4 ${
+              className={`watch-section-anchor watch-mission-details surface-card holo-card order-3 min-w-0 max-w-full overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-6 lg:mt-4 ${
                 selectedLiveCoverage
                   ? 'signal-live'
                   : selectedLaunch.isLive && coverageUnconfirmed
@@ -1437,15 +1451,21 @@ function WatchContent(): React.ReactElement {
         </div>
 
         <div className="watch-support-grid mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <LaunchIntelDeck
-            launch={selectedLaunch}
-            intel={intel}
-            loading={intelLoading}
-            offline={intelOffline}
-            error={intelError}
-            retryAt={intelRetryAt}
-            onRetry={retryIntel}
-          />
+          <div
+            id="watch-intelligence"
+            tabIndex={-1}
+            className="watch-section-anchor min-w-0 rounded-[var(--radius-md)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
+          >
+            <LaunchIntelDeck
+              launch={selectedLaunch}
+              intel={intel}
+              loading={intelLoading}
+              offline={intelOffline}
+              error={intelError}
+              retryAt={intelRetryAt}
+              onRetry={retryIntel}
+            />
+          </div>
           <aside className="surface-card holo-card signal-warm p-5">
             <h2 className="section-title text-[1.15rem]">Source & status</h2>
             <div

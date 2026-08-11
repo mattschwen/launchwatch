@@ -5651,6 +5651,64 @@ test('watch keeps keyboard-focused queue missions below sticky navigation', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch console index preserves mission context and reveals every region', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+
+  const index = page.getByRole('navigation', {
+    name: 'Watch console sections',
+  });
+  await expect(index).toBeVisible();
+  const links = index.getByRole('link');
+  await expect(links).toHaveCount(5);
+  for (const label of ['Coverage', 'Queue', 'Mission', 'Intel', 'Path']) {
+    const link = index.getByRole('link', { name: label });
+    expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  for (const [label, id] of [
+    ['Coverage', 'watch-coverage'],
+    ['Queue', 'watch-queue'],
+    ['Mission', 'watch-mission'],
+    ['Intel', 'watch-intelligence'],
+    ['Path', 'watch-trajectory'],
+  ] as const) {
+    const link = index.getByRole('link', { name: label });
+    await link.click();
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/watch\\?id=ll2-demo-orbital-dawn#${id}$`,
+      ),
+    );
+    const target = page.locator(`#${id}`);
+    await expect(target).toBeFocused();
+    await expect(link).toHaveAttribute('aria-current', 'location');
+    await expect(target).toBeInViewport();
+    await expect
+      .poll(async () => {
+        const [indexBounds, targetBounds] = await Promise.all([
+          index.boundingBox(),
+          target.boundingBox(),
+        ]);
+        return (targetBounds?.y ?? 0) -
+          ((indexBounds?.y ?? 0) + (indexBounds?.height ?? 0));
+      })
+      .toBeGreaterThanOrEqual(-1);
+  }
+
+  const intelLink = index.getByRole('link', { name: 'Intel' });
+  await intelLink.focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(index.getByRole('link', { name: 'Mission' })).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps long standby missions readable at the 320px boundary', async ({
   page,
 }) => {
