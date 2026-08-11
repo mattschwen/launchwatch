@@ -10018,6 +10018,104 @@ test('expanded atlas reveals nearby pads and supports a learning sequence', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('launch-site atlas retries a transient facility-feed failure in place', async ({
+  page,
+}) => {
+  let padRequests = 0;
+  let facilityFeedAvailable = false;
+  await page.route('**/api/launch-sites?*', (route) => {
+    padRequests += 1;
+    if (!facilityFeedAvailable) {
+      return route.fulfill({
+        status: 502,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Nearby launch sites are unavailable' }),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        sites: [
+          {
+            id: '80',
+            name: 'Space Launch Complex 40',
+            active: true,
+            latitude: 28.5619,
+            longitude: -80.5774,
+            locationName: 'Cape Canaveral Space Force Station',
+            countryCode: 'US',
+            description: 'A workhorse orbital launch pad.',
+            locationDescription: null,
+            infoUrl: 'https://www.spacex.com/launches/',
+            wikiUrl: null,
+            totalLaunchCount: 230,
+            orbitalLaunchAttemptCount: 230,
+            agencies: ['SpaceX'],
+            image: null,
+          },
+        ],
+        meta: {
+          generatedAt: '2026-08-11T00:00:00.000Z',
+          cached: false,
+          stale: false,
+          source: 'launch-library-2',
+          sourceUrl: 'https://thespacedevs.com/llapi',
+        },
+      }),
+    });
+  });
+
+  await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page
+      .locator('button[aria-controls="mobile-mission-map"]:visible')
+      .click();
+  }
+  await page
+    .getByRole('button', { name: 'Enlarge launch site atlas' })
+    .click();
+
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const fieldGuide = dialog.getByRole('complementary', {
+    name: 'Launch site learning panel',
+  });
+  const retry = fieldGuide.getByRole('button', {
+    name: 'Retry nearby pad data',
+  });
+  await expect(retry).toBeVisible();
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(dialog.locator('[data-atlas-map]')).toBeVisible();
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    const atlasBounds = await dialog
+      .locator('[data-launch-site-atlas]')
+      .boundingBox();
+    expect(atlasBounds).not.toBeNull();
+    expect(atlasBounds!.height).toBeGreaterThanOrEqual(500);
+  } else {
+    const retryBounds = await retry.boundingBox();
+    const dialogBounds = await dialog.boundingBox();
+    expect(retryBounds).not.toBeNull();
+    expect(dialogBounds).not.toBeNull();
+    expect(retryBounds!.y + retryBounds!.height).toBeLessThanOrEqual(
+      dialogBounds!.y + dialogBounds!.height
+    );
+  }
+  const requestsBeforeRetry = padRequests;
+
+  facilityFeedAvailable = true;
+  await retry.focus();
+  await retry.press('Enter');
+  const recoveredHeading = fieldGuide.getByRole('heading', {
+    name: 'Space Launch Complex 40',
+  });
+  await expect(recoveredHeading).toBeVisible();
+  await expect(recoveredHeading).toBeFocused();
+  expect(padRequests).toBe(requestsBeforeRetry + 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('reported launch coordinates hand off to an exact external site map', async ({
   page,
 }) => {

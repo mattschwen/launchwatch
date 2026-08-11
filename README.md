@@ -70,6 +70,9 @@ short, dismissible status toast; it never blocks the application.
   OpenStreetMap handoff for provider-reported launch sites. Optional trajectory
   chunk failures stay contained to a retryable telemetry panel so schedule,
   coverage, and briefing controls remain usable
+- The launch-site field guide keeps its open map available when nearby pad data
+  fails, offers an in-place retry with offline and busy states, and returns
+  keyboard focus to the recovered facility instead of requiring a page reload
 - Discrete stream, news, and community coverage signals based on available
   records rather than synthetic strength percentages; external news actions
   are limited to credential-free HTTPS destinations

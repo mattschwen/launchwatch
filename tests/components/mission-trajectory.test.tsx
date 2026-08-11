@@ -140,6 +140,56 @@ describe('MissionTrajectory', () => {
     expect(screen.getByText(/still explore the open map/i)).toBeVisible();
   });
 
+  it('recovers a transient pad failure without reloading the mission', async () => {
+    const user = userEvent.setup();
+    let resolveRetry!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{}', { status: 502 }))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveRetry = resolve;
+          }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    const retry = await screen.findByRole('button', {
+      name: 'Retry nearby pad data',
+    });
+    await user.click(retry);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(retry).toHaveAttribute('aria-disabled', 'true');
+    expect(retry).toHaveAttribute('aria-busy', 'true');
+    expect(retry).toHaveFocus();
+
+    resolveRetry(new Response(JSON.stringify(atlas), { status: 200 }));
+
+    const recoveredHeading = await screen.findByRole('heading', {
+      name: 'Space Launch Complex 40',
+    });
+    await waitFor(() => expect(recoveredHeading).toHaveFocus());
+    expect(screen.queryByText('Nearby pad data is unavailable')).not.toBeInTheDocument();
+  });
+
+  it('keeps facility retry unavailable while the device is offline', async () => {
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 502 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<MissionTrajectory launch={makeLaunch()} variant="detail" />);
+    const retry = await screen.findByRole('button', {
+      name: 'Retry nearby pad data',
+    });
+    await waitFor(() => expect(retry).toHaveAttribute('aria-disabled', 'true'));
+    expect(screen.getByText('Retry when online')).toBeVisible();
+
+    retry.click();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('renders an honest coordinate-missing state without requesting pad data', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

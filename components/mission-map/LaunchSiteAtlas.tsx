@@ -13,6 +13,7 @@ import {
   Minus,
   Plus,
   Radio,
+  RefreshCw,
   RotateCcw,
   Satellite,
 } from 'lucide-react';
@@ -55,9 +56,15 @@ export default function LaunchSiteAtlas({
   const markerLayerRef = useRef<LayerGroup | null>(null);
   const tileLayerRef = useRef<TileLayer | null>(null);
   const leafletRef = useRef<typeof import('leaflet') | null>(null);
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
+  const recoveredHeadingRef = useRef<HTMLHeadingElement>(null);
+  const emptyStateRef = useRef<HTMLDivElement>(null);
+  const retryRequestedRef = useRef(false);
   const [sites, setSites] = useState<LaunchSite[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dataState, setDataState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [retrying, setRetrying] = useState(false);
   const [mapState, setMapState] = useState<'loading' | 'ready' | 'degraded'>('loading');
   const [zoom, setZoom] = useState(8);
   const [isOffline, setIsOffline] = useState(false);
@@ -77,7 +84,7 @@ export default function LaunchSiteAtlas({
       return;
     }
     const controller = new AbortController();
-    setDataState('loading');
+    if (!retryRequestedRef.current) setDataState('loading');
     fetch(`/api/launch-sites?id=${encodeURIComponent(launch.id)}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`Launch sites returned ${response.status}`);
@@ -87,6 +94,7 @@ export default function LaunchSiteAtlas({
         const nextSites = Array.isArray(payload.sites) ? payload.sites : [];
         setSites(nextSites);
         setDataState(nextSites.length ? 'ready' : 'empty');
+        setRetrying(false);
         if (nextSites.length) {
           const nearest = [...nextSites].sort((a, b) => distanceKm(location, a) - distanceKm(location, b))[0];
           setSelectedId(nearest.id);
@@ -95,9 +103,22 @@ export default function LaunchSiteAtlas({
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setDataState('error');
+        setRetrying(false);
       });
     return () => controller.abort();
-  }, [launch.id, location]);
+  }, [launch.id, location, requestVersion]);
+
+  useEffect(() => {
+    if (!retryRequestedRef.current || retrying || dataState === 'loading') return;
+
+    const frame = window.requestAnimationFrame(() => {
+      if (dataState === 'ready') recoveredHeadingRef.current?.focus();
+      else if (dataState === 'empty') emptyStateRef.current?.focus();
+      else retryButtonRef.current?.focus();
+      retryRequestedRef.current = false;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [dataState, retrying]);
 
   useEffect(() => {
     const updateNetwork = () => setIsOffline(!navigator.onLine);
@@ -208,6 +229,13 @@ export default function LaunchSiteAtlas({
     focusSite(next);
   };
 
+  const retryPadData = () => {
+    if (retrying || isOffline) return;
+    retryRequestedRef.current = true;
+    setRetrying(true);
+    setRequestVersion((version) => version + 1);
+  };
+
   if (!location) {
     return (
       <div className="grid min-h-80 place-items-center bg-[var(--surface-sunken)] px-6 text-center" data-launch-site-atlas>
@@ -217,8 +245,8 @@ export default function LaunchSiteAtlas({
   }
 
   return (
-    <div className={`grid min-h-0 bg-[var(--surface-sunken)] ${expanded ? 'lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
-      <div className={`relative min-h-[28rem] overflow-hidden border-[var(--border-subtle)] ${expanded ? 'lg:min-h-0 lg:border-r' : 'xl:border-r'}`}>
+    <div className={`grid min-h-0 bg-[var(--surface-sunken)] ${expanded ? 'h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
+      <div className={`relative overflow-hidden border-[var(--border-subtle)] ${expanded ? 'min-h-[18rem] sm:min-h-[24rem] lg:min-h-0 lg:border-r' : 'min-h-[28rem] xl:border-r'}`}>
         <div ref={containerRef} className="absolute inset-0" data-atlas-map />
         <div className="absolute left-3 right-3 top-3 flex flex-wrap items-start justify-between gap-2 pointer-events-none">
           <div className="pointer-events-auto rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] px-3 py-2 shadow-lg backdrop-blur">
@@ -226,7 +254,7 @@ export default function LaunchSiteAtlas({
               <Radio aria-hidden="true" size={13} /> Pad visibility
             </div>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              {dataState === 'loading' ? 'Loading nearby facilities…' : dataState === 'error' ? 'Facility feed unavailable' : dataState === 'empty' ? 'No nearby pads reported' : zoom < 10 ? `${sites.length} pads · zoom closer to reveal names` : `${sites.length} pads · facility names visible`}
+              {dataState === 'loading' || retrying ? 'Loading nearby facilities…' : dataState === 'error' ? 'Facility feed unavailable' : dataState === 'empty' ? 'No nearby pads reported' : zoom < 10 ? `${sites.length} pads · zoom closer to reveal names` : `${sites.length} pads · facility names visible`}
             </p>
           </div>
           <div className="pointer-events-auto flex gap-1 rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] p-1 shadow-lg backdrop-blur" role="group" aria-label="Atlas controls">
@@ -245,9 +273,34 @@ export default function LaunchSiteAtlas({
         {dataState === 'loading' ? (
           <div className="grid min-h-72 place-items-center p-6 text-center"><div><LoaderCircle aria-hidden="true" className="mx-auto animate-spin text-[var(--console-green)]" /><p className="mt-3 text-sm font-semibold">Building the local pad atlas</p><p className="mt-1 text-xs text-[var(--text-muted)]">Finding launch facilities within 250 km.</p></div></div>
         ) : dataState === 'error' ? (
-          <div className="p-6"><p className="font-semibold text-[var(--console-amber)]">Nearby pad data is unavailable</p><p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">You can still explore the open map and this mission’s reported coordinates.</p></div>
+          <div className="grid min-h-72 place-items-center p-6 text-center">
+            <div className="max-w-sm">
+              <Radio aria-hidden="true" className="mx-auto text-[var(--console-amber)]" />
+              <p className="mt-3 font-semibold text-[var(--console-amber)]">Nearby pad data is unavailable</p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">You can still explore the open map and this mission’s reported coordinates.</p>
+              <p role="status" aria-live="polite" className="mt-2 text-xs text-[var(--text-secondary)]">
+                {retrying
+                  ? 'Reconnecting to the facility feed…'
+                  : isOffline
+                    ? 'Reconnect to request nearby facility data.'
+                    : 'The failure may be temporary.'}
+              </p>
+              <button
+                ref={retryButtonRef}
+                type="button"
+                aria-label={retrying ? 'Retrying nearby pad data' : 'Retry nearby pad data'}
+                aria-disabled={retrying || isOffline}
+                aria-busy={retrying}
+                onClick={retryPadData}
+                className="action-button action-button-quiet mx-auto mt-5 min-h-11 aria-disabled:cursor-wait aria-disabled:opacity-60"
+              >
+                <RefreshCw aria-hidden="true" size={16} className={retrying ? 'animate-spin' : ''} />
+                {retrying ? 'Retrying pad data' : isOffline ? 'Retry when online' : 'Retry pad data'}
+              </button>
+            </div>
+          </div>
         ) : dataState === 'empty' || !selectedSite ? (
-          <div className="p-6"><p className="font-semibold">No neighboring facilities reported</p><p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">Launch Library 2 has no pads with coordinates in this 250 km region.</p></div>
+          <div ref={emptyStateRef} tabIndex={-1} className="p-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"><p className="font-semibold">No neighboring facilities reported</p><p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">Launch Library 2 has no pads with coordinates in this 250 km region.</p></div>
         ) : (
           <div>
             {visual ? (
@@ -262,7 +315,7 @@ export default function LaunchSiteAtlas({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="console-label flex items-center gap-1.5"><BookOpen aria-hidden="true" size={13} /> Field guide · {selectedIndex + 1} of {sortedSites.length}</p>
-                  <h3 className="mt-2 break-words text-lg font-bold leading-tight text-[var(--text-primary)]">{selectedSite.name}</h3>
+                  <h3 ref={recoveredHeadingRef} tabIndex={-1} className="mt-2 scroll-mt-4 break-words text-lg font-bold leading-tight text-[var(--text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--console-cyan)]">{selectedSite.name}</h3>
                   <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">{selectedSite.locationName}{selectedSite.countryCode ? ` · ${selectedSite.countryCode}` : ''}</p>
                 </div>
                 <span className={`shrink-0 rounded border px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wider ${selectedSite.active ? 'border-[rgba(94,230,168,0.35)] text-[var(--console-green)]' : 'border-[rgba(244,185,95,0.35)] text-[var(--console-amber)]'}`}>{selectedSite.active ? 'Active' : 'Retired'}</span>
