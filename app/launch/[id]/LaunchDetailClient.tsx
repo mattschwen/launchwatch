@@ -1250,6 +1250,7 @@ export default function LaunchDetailClient({
                 title={presentedLaunch.name}
                 autoplay={presentedLaunch.isLive}
                 live={presentedLaunch.isLive}
+                launch={presentedLaunch}
                 className="rounded-none"
               />
             </div>

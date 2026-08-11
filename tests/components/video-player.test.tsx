@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import VideoPlayer from '@/components/video/VideoPlayer';
+import { UPCOMING_LAUNCHES } from '@/tests/fixtures/launches';
 
 describe('VideoPlayer coverage state', () => {
   it('moves keyboard focus into a video after deferred loading', async () => {
@@ -115,6 +116,67 @@ describe('VideoPlayer coverage state', () => {
     });
     expect(live.closest('.stream-surface')).toHaveClass('signal-live');
     expect(live).toHaveClass('action-button-stream');
+  });
+
+  it('fills external coverage with an eligible vehicle reference instead of a blank stage', () => {
+    const { container } = render(
+      <VideoPlayer
+        url="https://x.com/i/broadcasts/scheduled-mission"
+        title="Orbital Dawn"
+        launch={UPCOMING_LAUNCHES[0]}
+        visualPriority
+      />
+    );
+
+    const visual = container.querySelector('[data-coverage-visual="true"]');
+    expect(visual).not.toBeNull();
+    expect(visual).toHaveAttribute('data-visual-kind', 'vehicle');
+    expect(
+      screen.getByRole('img', {
+        name: 'Vehicle reference image of Astra Nova launch vehicle',
+      })
+    ).toHaveAttribute('fetchpriority', 'high');
+    expect(screen.getByText('Vehicle reference')).toBeVisible();
+    expect(
+      screen.getByText('Credit: LaunchWatch fixture', { exact: true })
+    ).toBeVisible();
+    expect(
+      screen.getByRole('link', {
+        name: 'Open CC BY 4.0 visual license in a new tab',
+      })
+    ).toHaveAttribute(
+      'href',
+      'https://creativecommons.org/licenses/by/4.0/'
+    );
+    expect(
+      screen.getByRole('link', { name: /Open X stream.*new tab/i })
+    ).toBeVisible();
+  });
+
+  it('falls back to the external handoff when the eligible visual cannot load', () => {
+    const { container } = render(
+      <VideoPlayer
+        url="https://x.com/i/broadcasts/scheduled-mission"
+        title="Orbital Dawn"
+        launch={UPCOMING_LAUNCHES[0]}
+      />
+    );
+
+    fireEvent.error(
+      screen.getByRole('img', {
+        name: 'Vehicle reference image of Astra Nova launch vehicle',
+      })
+    );
+
+    expect(
+      container.querySelector('[data-coverage-visual="true"]')
+    ).toBeNull();
+    expect(
+      screen.getByText('This provider stream opens in a separate window.')
+    ).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: /Open X stream.*new tab/i })
+    ).toBeVisible();
   });
 
   it('names an unfamiliar external coverage host without exposing its www prefix', () => {

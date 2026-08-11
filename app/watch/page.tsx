@@ -427,6 +427,8 @@ function WatchStage({
             title={launch.name}
             autoplay={liveCoverage}
             live={liveCoverage}
+            launch={launch}
+            visualPriority
             className="rounded-none"
           />
         </div>
@@ -817,7 +819,7 @@ function MissionQueue({
                   onSelect(launch.id, event.detail > 0, 'push')
                 }
                 onKeyDown={(event) => handleQueueKeyDown(event, index)}
-                className={`flex min-h-[5.2rem] w-full scroll-mt-[calc(4.5rem+var(--safe-area-top))] items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 sm:scroll-mt-[calc(5.375rem+var(--safe-area-top))] ${
+                className={`flex min-h-[5.2rem] w-full scroll-mt-[calc(4.5rem+var(--safe-area-top)+2px)] items-center gap-3 border-b border-[var(--border-subtle)] px-4 py-3 text-left transition-colors last:border-0 sm:scroll-mt-[calc(5.375rem+var(--safe-area-top)+2px)] ${
                   selected
                     ? launch.isLive && !coverageUnconfirmed
                       ? 'bg-[var(--surface-live)] shadow-[inset_3px_0_0_var(--console-magenta)]'

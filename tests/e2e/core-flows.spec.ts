@@ -4828,6 +4828,9 @@ test('watch keeps mission selection ahead of secondary details on narrow layouts
     name: /Open X stream/,
   });
   await expect(externalCoverage).toBeVisible();
+  await expect(
+    page.locator('[data-coverage-visual="true"] img')
+  ).toBeVisible();
 
   const coverage = page.getByRole('region', {
     name: 'Mission coverage scheduled',
@@ -5146,7 +5149,7 @@ test('watch keeps long mission queues compact and keyboard-reachable', async ({
   expect(targetBounds!.y).toBeLessThanOrEqual(headerBounds!.height + 32);
 });
 
-test('watch keeps verified streams primary and offers a rocket visual on demand', async ({
+test('watch fills external coverage with a rocket visual and keeps the full archive on demand', async ({
   page,
 }) => {
   await page.goto('/watch?id=ll2-demo-orbital-dawn');
@@ -5154,6 +5157,24 @@ test('watch keeps verified streams primary and offers a rocket visual on demand'
   await expect(
     page.getByRole('link', { name: /Open X stream.*new tab/i })
   ).toBeVisible();
+  const coverageVisual = page.locator('[data-coverage-visual="true"]');
+  await expect(coverageVisual).toHaveAttribute('data-visual-kind', 'vehicle');
+  await expect(
+    coverageVisual.getByRole('img', {
+      name: 'Vehicle reference image of Astra Nova launch vehicle',
+    })
+  ).toHaveAttribute('fetchpriority', 'high');
+  await expect(
+    coverageVisual.getByText('Credit: LaunchWatch fixture', { exact: true })
+  ).toBeVisible();
+  await expect(
+    coverageVisual.getByRole('link', {
+      name: 'Open CC BY 4.0 visual license in a new tab',
+    })
+  ).toHaveAttribute(
+    'href',
+    'https://creativecommons.org/licenses/by/4.0/'
+  );
   await expect(page.locator('figure[data-visual-kind]')).toHaveCount(0);
   const showVisual = page.getByRole('button', {
     name: 'Show rocket reference for Orbital Dawn',
