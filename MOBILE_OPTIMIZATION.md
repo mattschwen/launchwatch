@@ -165,6 +165,11 @@ The optional expanded map remains a modal dialog. It must:
 
 ## Watch
 
+- The sticky five-destination console index stays a single, compact row at
+  normal phone sizes. When enlarged text makes that internal rail scrollable,
+  it reports the fully visible range and exposes contained 44-pixel previous
+  and next controls while retaining swipe and arrow-key navigation. The extra
+  chrome remains absent when every destination already fits.
 - Video preserves its aspect ratio without forcing horizontal overflow.
 - If a refresh fails after Watch has loaded missions, the room keeps the
   last-known queue and coverage link available but replaces every live claim,

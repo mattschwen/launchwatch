@@ -3,10 +3,12 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type KeyboardEvent,
 } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const WATCH_SECTIONS = [
   { id: 'watch-coverage', label: 'Coverage' },
@@ -18,6 +20,14 @@ const WATCH_SECTIONS = [
 
 type WatchSectionId = (typeof WATCH_SECTIONS)[number]['id'];
 
+interface SectionTrackState {
+  overflowing: boolean;
+  canMoveBackward: boolean;
+  canMoveForward: boolean;
+  firstVisible: number;
+  lastVisible: number;
+}
+
 function isWatchSectionId(value: string): value is WatchSectionId {
   return WATCH_SECTIONS.some((section) => section.id === value);
 }
@@ -28,6 +38,77 @@ export default function WatchSectionIndex(): React.ReactElement {
   const navRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
+  const trackId = useId();
+  const trackInstructionsId = useId();
+  const [trackState, setTrackState] = useState<SectionTrackState>({
+    overflowing: false,
+    canMoveBackward: false,
+    canMoveForward: false,
+    firstVisible: 1,
+    lastVisible: WATCH_SECTIONS.length,
+  });
+
+  const updateTrackState = useCallback((): void => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
+    const trackBounds = track.getBoundingClientRect();
+    const visibleIndexes = [...track.children].flatMap((child, index) => {
+      const bounds = child.getBoundingClientRect();
+      const visibleWidth = Math.max(
+        0,
+        Math.min(bounds.right, trackBounds.right) -
+          Math.max(bounds.left, trackBounds.left),
+      );
+      return visibleWidth >= bounds.width - 1 ? [index] : [];
+    });
+    const fallbackIndex = Math.min(
+      WATCH_SECTIONS.length - 1,
+      Math.max(
+        0,
+        Math.round(
+          (track.scrollLeft / Math.max(1, maxScrollLeft)) *
+            (WATCH_SECTIONS.length - 1),
+        ),
+      ),
+    );
+    const nextState = {
+      overflowing: maxScrollLeft > 1,
+      canMoveBackward: track.scrollLeft > 1,
+      canMoveForward: track.scrollLeft < maxScrollLeft - 1,
+      firstVisible: (visibleIndexes[0] ?? fallbackIndex) + 1,
+      lastVisible:
+        (visibleIndexes[visibleIndexes.length - 1] ?? fallbackIndex) + 1,
+    };
+
+    setTrackState((current) =>
+      current.overflowing === nextState.overflowing &&
+      current.canMoveBackward === nextState.canMoveBackward &&
+      current.canMoveForward === nextState.canMoveForward &&
+      current.firstVisible === nextState.firstVisible &&
+      current.lastVisible === nextState.lastVisible
+        ? current
+        : nextState,
+    );
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const frame = window.requestAnimationFrame(updateTrackState);
+    const observer = new ResizeObserver(updateTrackState);
+    observer.observe(track);
+    for (const child of track.children) observer.observe(child);
+    window.addEventListener('resize', updateTrackState);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', updateTrackState);
+    };
+  }, [updateTrackState]);
 
   const revealSection = useCallback(
     (
@@ -145,6 +226,18 @@ export default function WatchSectionIndex(): React.ReactElement {
     });
   }, [activeSectionId]);
 
+  const moveTrack = (direction: -1 | 1): void => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    track.scrollBy({
+      left: direction * Math.max(112, Math.floor(track.clientWidth * 0.72)),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  };
+
   const handleTrackKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (
       event.key !== 'ArrowLeft' &&
@@ -161,7 +254,20 @@ export default function WatchSectionIndex(): React.ReactElement {
     const currentIndex = links.indexOf(
       document.activeElement as HTMLAnchorElement,
     );
-    if (currentIndex < 0) return;
+    if (currentIndex < 0) {
+      const track = trackRef.current;
+      if (!track) return;
+
+      event.preventDefault();
+      if (event.key === 'Home') {
+        track.scrollTo({ left: 0, behavior: 'auto' });
+      } else if (event.key === 'End') {
+        track.scrollTo({ left: track.scrollWidth, behavior: 'auto' });
+      } else {
+        moveTrack(event.key === 'ArrowLeft' ? -1 : 1);
+      }
+      return;
+    }
 
     event.preventDefault();
     const nextIndex =
@@ -181,11 +287,80 @@ export default function WatchSectionIndex(): React.ReactElement {
       aria-label="Watch console sections"
       className="watch-section-index surface-card holo-card signal-cold !sticky top-[calc(3.5rem+var(--safe-area-top))] z-40 mb-4 min-w-0 max-w-full overflow-hidden bg-[color:var(--surface-header)] shadow-[0_10px_24px_rgba(0,0,0,0.34)] sm:top-[calc(4.375rem+var(--safe-area-top))]"
     >
+      {trackState.overflowing ? (
+        <div className="flex items-center justify-between gap-1.5 px-1.5 py-1.5">
+          <p
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="whitespace-nowrap font-mono text-[0.5rem] uppercase tracking-[0.04em] text-[var(--text-muted)]"
+          >
+            <span className="sr-only">
+              Watch index. {WATCH_SECTIONS.length} sections. Showing{' '}
+              {trackState.firstVisible === trackState.lastVisible
+                ? trackState.firstVisible
+                : `${trackState.firstVisible} through ${trackState.lastVisible}`}{' '}
+              of {WATCH_SECTIONS.length}.
+            </span>
+            <span aria-hidden="true">
+              <span className="text-[var(--console-cyan)]">Index</span>{' '}
+              {trackState.firstVisible === trackState.lastVisible
+                ? trackState.firstVisible
+                : `${trackState.firstVisible}–${trackState.lastVisible}`}{' '}
+              / {WATCH_SECTIONS.length}
+            </span>
+          </p>
+          <div
+            role="group"
+            aria-label="Watch index navigation"
+            className="flex shrink-0 items-center gap-1.5"
+          >
+            <button
+              type="button"
+              aria-label="Previous watch sections"
+              aria-controls={trackId}
+              aria-disabled={!trackState.canMoveBackward}
+              tabIndex={trackState.canMoveBackward ? undefined : -1}
+              onClick={() => {
+                if (trackState.canMoveBackward) moveTrack(-1);
+              }}
+              className="icon-button !h-[44px] !w-[44px] aria-disabled:cursor-default aria-disabled:opacity-35"
+            >
+              <ChevronLeft aria-hidden="true" size={17} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next watch sections"
+              aria-controls={trackId}
+              aria-disabled={!trackState.canMoveForward}
+              tabIndex={trackState.canMoveForward ? undefined : -1}
+              onClick={() => {
+                if (trackState.canMoveForward) moveTrack(1);
+              }}
+              className="icon-button !h-[44px] !w-[44px] aria-disabled:cursor-default aria-disabled:opacity-35"
+            >
+              <ChevronRight aria-hidden="true" size={17} />
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {trackState.overflowing ? (
+        <p id={trackInstructionsId} className="sr-only">
+          Use the previous and next buttons, horizontal scrolling, or the left
+          and right arrow keys to reveal every watch section.
+        </p>
+      ) : null}
       <div
+        id={trackId}
         ref={trackRef}
         data-watch-section-track
+        tabIndex={trackState.overflowing ? 0 : undefined}
+        aria-describedby={
+          trackState.overflowing ? trackInstructionsId : undefined
+        }
         onKeyDown={handleTrackKeyDown}
-        className="flex min-w-0 max-w-full overflow-x-auto overscroll-x-contain"
+        onScroll={updateTrackState}
+        className="flex min-w-0 max-w-full overflow-x-auto overscroll-x-contain outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)]"
       >
         {WATCH_SECTIONS.map((section, index) => {
           const active = section.id === activeSectionId;

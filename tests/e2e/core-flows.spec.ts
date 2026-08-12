@@ -5932,6 +5932,94 @@ test('watch console index keeps every label inside its control on narrow phones'
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch console index exposes overflow navigation at 200 percent text scaling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/watch');
+  await page.locator('html').evaluate((root) => {
+    root.style.fontSize = '32px';
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  const index = page.getByRole('navigation', {
+    name: 'Watch console sections',
+  });
+  const track = index.locator('[data-watch-section-track]');
+  const previous = index.getByRole('button', {
+    name: 'Previous watch sections',
+  });
+  const next = index.getByRole('button', {
+    name: 'Next watch sections',
+  });
+  const path = index.getByRole('link', { name: 'Path', exact: true });
+
+  await expect(index).toContainText('of 5');
+  await expect(previous).toHaveAttribute('aria-disabled', 'true');
+  await expect(next).toHaveAttribute('aria-disabled', 'false');
+  await expect(track).toHaveAttribute('tabindex', '0');
+  await expect
+    .poll(() =>
+      path.evaluate((link) => {
+        const linkBounds = link.getBoundingClientRect();
+        const trackBounds = link.parentElement?.getBoundingClientRect();
+        return Boolean(
+          trackBounds &&
+            linkBounds.left >= trackBounds.left - 1 &&
+            linkBounds.right <= trackBounds.right + 1,
+        );
+      }),
+    )
+    .toBe(false);
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await next.click();
+    if (
+      await path.evaluate((link) => {
+        const linkBounds = link.getBoundingClientRect();
+        const trackBounds = link.parentElement?.getBoundingClientRect();
+        return Boolean(
+          trackBounds &&
+            linkBounds.left >= trackBounds.left - 1 &&
+            linkBounds.right <= trackBounds.right + 1,
+        );
+      })
+    ) {
+      break;
+    }
+  }
+  await expect
+    .poll(() =>
+      path.evaluate((link) => {
+        const linkBounds = link.getBoundingClientRect();
+        const trackBounds = link.parentElement?.getBoundingClientRect();
+        return Boolean(
+          trackBounds &&
+            linkBounds.left >= trackBounds.left - 1 &&
+            linkBounds.right <= trackBounds.right + 1,
+        );
+      }),
+    )
+    .toBe(true);
+  await expect(previous).toHaveAttribute('aria-disabled', 'false');
+  for (const control of [previous, next]) {
+    const bounds = await control.boundingBox();
+    const indexBounds = await index.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(indexBounds).not.toBeNull();
+    expect(bounds!.width).toBeGreaterThanOrEqual(44);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    expect(bounds!.x).toBeGreaterThanOrEqual(indexBounds!.x);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(
+      indexBounds!.x + indexBounds!.width,
+    );
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps long standby missions readable at the 320px boundary', async ({
   page,
 }) => {
