@@ -97,7 +97,9 @@ its nominal target instant passes.
 }
 ```
 
-CDN policy: 5 minutes fresh, 10 minutes stale-while-revalidate.
+CDN policy: fresh complete responses remain fresh for 5 minutes with 10 minutes
+stale-while-revalidate. Successful responses marked `partial` or `stale` use
+`private, no-store` so recovery is not delayed by a shared cache.
 
 Launch Library 2 records may include `launchProbability` (an integer from 0 to
 100), `weatherConcerns`, and `holdReason`. These are provider-reported
@@ -147,7 +149,9 @@ Returns upcoming-feed launches marked live by provider state or the supported we
 }
 ```
 
-CDN policy: 1 minute fresh, 2 minutes stale-while-revalidate.
+CDN policy: fresh complete responses remain fresh for 1 minute with 2 minutes
+stale-while-revalidate. Successful responses marked `partial` or `stale` use
+`private, no-store`.
 
 ### `GET /api/launches?type=next`
 
@@ -162,7 +166,9 @@ Returns the first live or upcoming launch, or `null` when the usable provider re
 }
 ```
 
-CDN policy: 2 minutes fresh, 4 minutes stale-while-revalidate.
+CDN policy: fresh complete responses remain fresh for 2 minutes with 4 minutes
+stale-while-revalidate. Successful responses marked `partial` or `stale` use
+`private, no-store`.
 
 ### `GET /api/launches?type=history&limit=50`
 
@@ -187,7 +193,9 @@ to `success` because the provider defines it as confirmed payload deployment.
 }
 ```
 
-CDN policy: 60 minutes fresh, 120 minutes stale-while-revalidate.
+CDN policy: fresh complete responses remain fresh for 60 minutes with 120
+minutes stale-while-revalidate. Successful responses marked `partial` or
+`stale` use `private, no-store`.
 
 ### Feed errors
 

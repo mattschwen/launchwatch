@@ -31,7 +31,14 @@ function legacySource(meta: LaunchFeedMeta): 'api' | 'server-cache' | 'stale-cac
   return 'api';
 }
 
-function responseHeaders(type: LaunchFeedRequestType): HeadersInit {
+function responseHeaders(
+  type: LaunchFeedRequestType,
+  meta: LaunchFeedMeta,
+): HeadersInit {
+  if (meta.partial || meta.stale) {
+    return { 'Cache-Control': 'private, no-store' };
+  }
+
   return {
     'Cache-Control': `public, s-maxage=${CACHE_SECONDS[type]}, stale-while-revalidate=${CACHE_SECONDS[type] * 2}`,
   };
@@ -72,7 +79,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           source: legacySource(result.meta),
           meta: result.meta,
         },
-        { headers: responseHeaders(typeValue) },
+        { headers: responseHeaders(typeValue, result.meta) },
       );
     }
 
@@ -98,7 +105,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           source: legacySource(result.meta),
           meta: result.meta,
         },
-        { headers: responseHeaders(typeValue) },
+        { headers: responseHeaders(typeValue, result.meta) },
       );
     }
 
@@ -125,7 +132,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         source: legacySource(result.meta),
         meta: result.meta,
       },
-      { headers: responseHeaders(typeValue) },
+      { headers: responseHeaders(typeValue, result.meta) },
     );
   } catch (error) {
     console.error('Launch API route error:', error);
