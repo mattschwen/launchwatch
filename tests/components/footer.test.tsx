@@ -201,6 +201,47 @@ describe('Footer', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('keeps the global refresh action busy during initial synchronization', async () => {
+    const user = userEvent.setup();
+    let resolveInitial: ((value: Response) => void) | undefined;
+    const initialResponse = new Promise<Response>((resolve) => {
+      resolveInitial = resolve;
+    });
+    const fetchMock = vi.fn().mockReturnValue(initialResponse);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <LaunchDataProvider>
+        <Footer />
+      </LaunchDataProvider>
+    );
+
+    const synchronizing = screen.getByRole('button', {
+      name: 'Synchronizing launch schedule',
+    });
+    expect(synchronizing).not.toBeDisabled();
+    expect(synchronizing).toHaveAttribute('aria-disabled', 'true');
+    expect(synchronizing).toHaveAttribute('aria-busy', 'true');
+    expect(synchronizing).toHaveTextContent('Synchronizing');
+
+    synchronizing.focus();
+    await user.keyboard('{Enter}');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(synchronizing).toHaveFocus();
+
+    resolveInitial?.(
+      response({ launches: UPCOMING_LAUNCHES, meta: FEED_META })
+    );
+
+    await waitFor(() => {
+      expect(synchronizing).toHaveAccessibleName('Refresh launch schedule');
+      expect(synchronizing).toHaveAttribute('aria-disabled', 'false');
+      expect(synchronizing).toHaveAttribute('aria-busy', 'false');
+      expect(synchronizing).toHaveTextContent('Refresh schedule');
+    });
+    expect(synchronizing).toHaveFocus();
+  });
+
   it('keeps refresh focus and prevents duplicate requests while busy', async () => {
     const user = userEvent.setup();
     let resolveRefresh: ((value: Response) => void) | undefined;

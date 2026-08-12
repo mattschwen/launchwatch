@@ -139,6 +139,7 @@ export default function Footer(): React.ReactElement {
     online,
   );
   const age = refreshAge(meta?.generatedAt, now);
+  const feedRequestPending = loading || refreshing;
   const statusLabel =
     feedHealth === 'offline'
       ? launches.length > 0 && age !== 'pending'
@@ -249,12 +250,14 @@ export default function Footer(): React.ReactElement {
           <button
             type="button"
             onClick={() => {
-              if (online && !refreshing) void refresh();
+              if (online && !feedRequestPending) void refresh();
             }}
-            aria-disabled={refreshing || !online}
-            aria-busy={refreshing}
+            aria-disabled={feedRequestPending || !online}
+            aria-busy={feedRequestPending}
             aria-label={
-              refreshing
+              loading
+                ? 'Synchronizing launch schedule'
+                : refreshing
                 ? 'Refreshing launch schedule'
                 : online
                   ? 'Refresh launch schedule'
@@ -265,9 +268,11 @@ export default function Footer(): React.ReactElement {
             <RefreshCw
               aria-hidden="true"
               size={15}
-              className={refreshing ? 'animate-spin' : ''}
+              className={feedRequestPending ? 'animate-spin' : ''}
             />
-            {refreshing
+            {loading
+              ? 'Synchronizing'
+              : refreshing
               ? 'Refreshing'
               : online
                 ? 'Refresh schedule'

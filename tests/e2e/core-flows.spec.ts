@@ -2039,7 +2039,7 @@ test('home keeps meaningful hierarchy while the launch feed is synchronizing', a
 
   const busyRegions = page.locator('[aria-busy="true"]:visible');
   await expect(busyRegions).toHaveCount(
-    test.info().project.name.startsWith('mobile') ? 2 : 3
+    test.info().project.name.startsWith('mobile') ? 3 : 4
   );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
@@ -4329,6 +4329,51 @@ test('footer controls keep source provenance touch-safe and preserve refresh foc
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('footer blocks redundant refreshes while the initial feed is synchronizing', async ({
+  page,
+}) => {
+  let feedRequests = 0;
+  let releaseInitialFeed: (() => void) | undefined;
+  const initialFeedGate = new Promise<void>((resolve) => {
+    releaseInitialFeed = resolve;
+  });
+  await page.route('**/api/launches?type=all', async (route) => {
+    feedRequests += 1;
+    await initialFeedGate;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES,
+        meta: FEED_META,
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await expect.poll(() => feedRequests).toBe(1);
+
+  const synchronizing = page.locator('footer button').first();
+  await expect(synchronizing).toHaveAccessibleName(
+    'Synchronizing launch schedule'
+  );
+  await expect(synchronizing).toHaveText('Synchronizing');
+  await expect(synchronizing).toHaveAttribute('aria-disabled', 'true');
+  await expect(synchronizing).toHaveAttribute('aria-busy', 'true');
+  await synchronizing.focus();
+  await synchronizing.press('Enter');
+  expect(feedRequests).toBe(1);
+  await expect(synchronizing).toBeFocused();
+
+  releaseInitialFeed?.();
+  await expect(synchronizing).toHaveAccessibleName('Refresh launch schedule');
+  await expect(synchronizing).toHaveText('Refresh schedule');
+  await expect(synchronizing).toHaveAttribute('aria-disabled', 'false');
+  await expect(synchronizing).toHaveAttribute('aria-busy', 'false');
+  await expect(synchronizing).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('narrow footer keeps refresh and repository actions grouped beneath feed status', async ({
   page,
 }) => {
@@ -6268,7 +6313,7 @@ test('watch identifies provider synchronization before mission data arrives', as
     'aria-busy',
     'true',
   );
-  await expect(page.locator('[aria-busy="true"]:visible')).toHaveCount(3);
+  await expect(page.locator('[aria-busy="true"]:visible')).toHaveCount(4);
   expect(
     await page
       .locator('h1, h2, h3, h4, h5, h6')
@@ -6586,8 +6631,7 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
 
   const retainedNotice = page.getByRole('status').filter({
-    hasText:
-      'Refresh failed. Showing the last-known mission schedule. Live coverage is unconfirmed until the feed recovers.',
+    hasText: 'Showing the last-known mission schedule.',
   });
   await expect(retainedNotice).toBeVisible();
   const unconfirmedCoverage = page.getByRole('region', {
