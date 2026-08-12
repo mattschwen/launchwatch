@@ -1685,7 +1685,7 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
   await expectContentFits('.archive-row-grid');
 });
 
-test('featured countdown never strands the seconds cell', async ({ page }) => {
+test('featured countdown keeps every unit on one row', async ({ page }) => {
   const targetDate = new Date(
     Date.now() + 7 * 24 * 60 * 60 * 1_000
   ).toISOString();
@@ -1737,7 +1737,7 @@ test('featured countdown never strands the seconds cell', async ({ page }) => {
   await page.addStyleTag({
     content: ':root { font-size: 32px !important; }',
   });
-  await expect.poll(readGrid).toEqual({ columns: 2, rows: 2 });
+  await expect.poll(readGrid).toEqual({ columns: 4, rows: 1 });
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

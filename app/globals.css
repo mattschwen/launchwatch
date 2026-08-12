@@ -1362,17 +1362,12 @@ html[data-boot-status='visible'] .header-instruments {
 }
 
 .countdown-units {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  font-size: clamp(0.52em, 11cqi, 1em);
 }
 
-@container countdown-display (min-width: 7em) {
-  .countdown-units {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .countdown-units-wide {
-    grid-template-columns: minmax(4ch, 1.35fr) repeat(3, minmax(0, 1fr));
-  }
+.countdown-units-wide {
+  grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(0, 1fr));
 }
 
 .countdown-unit {
