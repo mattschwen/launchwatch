@@ -8787,6 +8787,37 @@ test('history and canonical detail preserve the provider failure diagnosis', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('deep mission surfaces explain the provider status definition', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open briefing' }).click();
+
+  const briefingStatus = page
+    .getByRole('dialog', { name: 'Orbital Dawn' })
+    .locator('[data-provider-status-signal]');
+  await expect(briefingStatus).toContainText('Go');
+  await expect(briefingStatus).toContainText(
+    'Current T-0 confirmed by official or reliable sources.',
+  );
+  await page.getByRole('button', { name: 'Close mission briefing' }).click();
+
+  await page.goto('/watch?id=ll2-demo-orbital-dawn');
+  const watchStatus = page.locator(
+    '[data-watch-mission-details] [data-provider-status-signal]',
+  );
+  await expect(watchStatus).toContainText('Go');
+  await expect(watchStatus).toContainText('Current T-0 confirmed');
+
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+  const detailStatus = page.locator(
+    '[aria-label="Mission telemetry"]:visible [data-provider-status-signal]',
+  );
+  await expect(detailStatus).toContainText('Go');
+  await expect(detailStatus).toContainText('Current T-0 confirmed');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('history identifies and isolates unconfirmed mission outcomes', async ({
   page,
 }) => {

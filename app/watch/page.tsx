@@ -39,6 +39,7 @@ import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
+import ProviderStatusSignal from '@/components/launch/ProviderStatusSignal';
 import TrajectoryErrorBoundary from '@/components/trajectory/TrajectoryErrorBoundary';
 import WatchSectionIndex from '@/components/watch/WatchSectionIndex';
 import { RESET_WATCH_SELECTION_EVENT } from '@/components/layout/navigation';
@@ -1382,6 +1383,10 @@ function WatchContent(): React.ReactElement {
                     className="mt-2"
                   />
                   <dl className="mt-4 space-y-4 border-t border-[var(--border-subtle)] pt-4">
+                    <ProviderStatusSignal
+                      launch={selectedLaunch}
+                      variant="compact"
+                    />
                     <ProviderRevisionSignal
                       updatedAt={selectedLaunch.providerUpdatedAt}
                       variant="compact"

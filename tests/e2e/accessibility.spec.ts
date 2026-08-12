@@ -812,6 +812,8 @@ test('@a11y coarse launch estimate has no serious WCAG A/AA violations', async (
     datePrecision: { name: 'Month', abbrev: 'M' },
     status: 'tbd' as const,
     statusName: 'To Be Determined',
+    statusDescription:
+      'Current date is a placeholder or rough estimation based on unreliable or interpreted sources.',
   };
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({

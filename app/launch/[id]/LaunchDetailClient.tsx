@@ -42,6 +42,7 @@ import LaunchFailureSignal from '@/components/launch/LaunchFailureSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
 import ProviderRevisionSignal from '@/components/launch/ProviderRevisionSignal';
+import ProviderStatusSignal from '@/components/launch/ProviderStatusSignal';
 import MissionUpdateLog from '@/components/launch/MissionUpdateLog';
 import StatusBadge from '@/components/ui/StatusBadge';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
@@ -552,6 +553,7 @@ export default function LaunchDetailClient({
       ) : null}
 
       <dl className={`${!completed || presentedLaunch.isLive ? 'mt-5' : ''} space-y-4`}>
+        <ProviderStatusSignal launch={presentedLaunch} variant="compact" />
         <div className="mission-telemetry-item relative pl-8">
           <MapPin
             aria-hidden="true"

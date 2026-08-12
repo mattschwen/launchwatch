@@ -105,6 +105,10 @@ Launch Library 2 records may include `launchProbability` (an integer from 0 to
 100), `weatherConcerns`, and `holdReason`. These are provider-reported
 readiness facts, not LaunchWatch predictions. Missing, placeholder, or malformed
 values normalize to `null`; clients must not infer them from launch status.
+The optional `statusDescription` retains LL2's trimmed, plain-language
+definition of the current provider state, capped at 300 characters. Empty or
+oversized descriptions normalize to `null`; the text explains provider meaning
+and does not replace the normalized `status` used for application behavior.
 Failed LL2 records may also include `failureReason`, a trimmed provider
 diagnosis capped at 500 characters. It is exposed only when the normalized
 mission status is `failure`; empty, placeholder, oversized, or stale reasons
@@ -369,6 +373,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `rocket`, `launchSite`, `location` | Vehicle and pad data |
 | `firstStage` | Optional LL2 detail telemetry for provider-confirmed booster identity, flight number, reuse, and landing attempt/outcome/location |
 | `status`, `statusName` | Normalized status plus the provider's human-readable mission state |
+| `statusDescription` | Optional bounded LL2 explanation of what the current provider state means |
 | `failureReason` | Optional bounded LL2 diagnosis exposed only for a failed mission |
 | `providerUpdatedAt` | Optional canonical ISO timestamp for the provider's last revision to this mission record; distinct from feed generation and cache timestamps |
 | `orbitalLaunchAttemptCountYear` | Optional positive ordinal for the worldwide orbital launch attempt sequence in the mission's UTC year |

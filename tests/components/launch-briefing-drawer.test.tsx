@@ -178,6 +178,22 @@ describe('LaunchBriefingDrawer', () => {
     expect(revision).toHaveTextContent('Jul 26, 2035 · 11:42 UTC');
   });
 
+  it('explains the provider mission state in the briefing', () => {
+    const launch = UPCOMING_LAUNCHES[0];
+
+    render(
+      <LaunchBriefingDrawer launch={launch} open onClose={vi.fn()} />
+    );
+
+    const status = screen
+      .getByText('Provider status')
+      .closest('[data-provider-status-signal]');
+    expect(status).toHaveTextContent('Go');
+    expect(status).toHaveTextContent(
+      'Current T-0 confirmed by official or reliable sources.',
+    );
+  });
+
   it('retains launch cadence in the mission briefing', () => {
     const launch = UPCOMING_LAUNCHES[0];
 

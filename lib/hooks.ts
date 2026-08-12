@@ -207,6 +207,7 @@ export function reconcileCurrentLaunch(
     padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
     status: feedLaunch.status,
     statusName: feedLaunch.statusName,
+    statusDescription: feedLaunch.statusDescription,
     isLive: feedLaunch.isLive,
     webcastLive: feedLaunch.webcastLive,
   };

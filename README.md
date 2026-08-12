@@ -90,6 +90,9 @@ short, dismissible status toast; it never blocks the application.
   constraints, and hold reasons across Home, Watch, briefing, and canonical
   detail surfaces; missing or malformed values remain absent rather than being
   inferred from mission status
+- Provider status definitions explain schedule confidence in Watch, briefing,
+  and canonical detail telemetry, so `Go`, `To Be Confirmed`, and placeholder
+  `To Be Determined` states remain understandable without crowding mission rows
 - Per-mission provider revision times remain distinct from LaunchWatch's feed
   refresh time across Home, Watch, briefing, and canonical detail surfaces, so
   users can see when the underlying record—not only the browser feed—changed

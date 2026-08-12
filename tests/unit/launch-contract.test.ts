@@ -30,6 +30,13 @@ describe('client launch contract', () => {
     expect(
       isLaunch({
         ...UPCOMING_LAUNCHES[0],
+        statusDescription:
+          'Current T-0 confirmed by official or reliable sources.',
+      }),
+    ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
         firstStage: {
           serialNumber: 'B1085',
           flightNumber: 18,
@@ -80,6 +87,22 @@ describe('client launch contract', () => {
           'https://flightclub.io/result?llId=demo-orbital-dawn',
       }),
     ).toBe(true);
+  });
+
+  it('rejects malformed provider status explanations', () => {
+    for (const statusDescription of [
+      ' Current T-0 is confirmed. ',
+      '',
+      'x'.repeat(301),
+      { text: 'Current T-0 is confirmed.' },
+    ]) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          statusDescription,
+        }),
+      ).toBe(false);
+    }
   });
 
   it('rejects unsafe provider mission resources', () => {

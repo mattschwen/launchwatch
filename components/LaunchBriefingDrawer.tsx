@@ -33,6 +33,7 @@ import LaunchFailureSignal from './launch/LaunchFailureSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 import MissionOperatorSignal from './launch/MissionOperatorSignal';
 import ProviderRevisionSignal from './launch/ProviderRevisionSignal';
+import ProviderStatusSignal from './launch/ProviderStatusSignal';
 import MissionUpdateLog from './launch/MissionUpdateLog';
 
 interface LaunchBriefingDrawerProps {
@@ -196,6 +197,7 @@ export default function LaunchBriefingDrawer({
           <LaunchFailureSignal launch={launch} className="mt-5" />
 
           <dl className="mt-6 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]">
+            <ProviderStatusSignal launch={launch} />
             <div className="py-4">
               <dt className="flex items-center gap-3">
                 <CalendarDays

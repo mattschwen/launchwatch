@@ -156,6 +156,10 @@ function ll2Launch({
       id: statusAbbrev === 'Success' ? 3 : statusAbbrev === 'Failure' ? 4 : 1,
       name: statusName,
       abbrev: statusAbbrev,
+      description:
+        statusAbbrev === 'Failure'
+          ? 'The launch vehicle failed to complete its mission.'
+          : 'Current T-0 confirmed by official or reliable sources.',
     },
     rocket: {
       id: 1,

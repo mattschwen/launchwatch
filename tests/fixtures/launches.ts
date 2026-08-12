@@ -30,6 +30,7 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     launchSite: 'Space Launch Complex 40, Cape Canaveral Space Force Station',
     status: 'upcoming',
     statusName: 'Go',
+    statusDescription: 'Current T-0 confirmed by official or reliable sources.',
     providerUpdatedAt: '2035-07-26T11:42:00.000Z',
     orbitalLaunchAttemptCountYear: 132,
     providerLaunchAttemptCountYear: 41,

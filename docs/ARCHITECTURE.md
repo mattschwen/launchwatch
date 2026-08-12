@@ -165,7 +165,7 @@ See [`API.md`](API.md) for request and response examples.
 shared state. `useLaunchById` preserves the shared feed record while it calls
 `/api/launches/[id]`, exposes the in-progress enrichment state, and then merges
 canonical detail into that record. While a mission remains in the current feed,
-its target, precision, launch window, provider status, and live flags stay
+its target, precision, launch window, provider status and explanation, and live flags stay
 authoritative; detail can add richer visuals, descriptions, and stream links but
 cannot regress current schedule state. This lets Watch resolve streams, Home
 acquire richer visual provenance only when the feed has no eligible image, and
@@ -183,7 +183,7 @@ visible batch of mission links from speculatively resolving canonical detail
 routes before the user chooses one.
 
 Canonical detail pages retain the richer server detail payload, but reconcile
-its volatile target, precision, launch window, provider status, and live flags
+its volatile target, precision, launch window, provider status and explanation, and live flags
 with the shared browser feed after that feed settles. Provider retargets then
 update the detail countdown, local time, calendar/share payload, trajectory,
 and timeline clocks without discarding richer description, visual, timeline,
@@ -203,6 +203,11 @@ flags are migrated in place so an app update does not replay an alert.
 ## UX Responsibilities
 
 - **Home** establishes one visual priority: active coverage first, otherwise the next launch. A live provider broadcast keeps the target countdown visible and is labeled `Coverage live`; only an explicit provider in-flight state becomes `In flight`. Its primary mission summary exposes a valid provider launch window beside the target time instead of reducing a range to one instant. When T-0 passes, shared countdowns use that validated window to distinguish a currently open window from an amber wait for provider confirmation; a target alone never invents an open window. When a provider supplies both a `Vehicle | Mission` designation and an identical structured mission name, the primary heading removes the redundant vehicle prefix while the telemetry retains the vehicle and compact rows retain the complete provider title. Upcoming missions use readable rows and progressive loading. Detail returns restore the batch containing the selected mission and return keyboard focus to its link. The map appears beside the hero on wide screens and behind an explicit disclosure on narrower screens.
+- **Provider status definitions** stay out of dense Home and archive rows, where
+  the named signal is sufficient, but appear in Watch mission telemetry,
+  briefings, and canonical detail. The bounded provider wording explains why a
+  state is confirmed or provisional without letting descriptive copy drive
+  normalized status behavior.
 - **Launch-site presentation** pairs a compact provider pad name with a distinct
   facility or locality when available. A numeric pad such as `201` therefore
   remains traceable to Wenchang across compact rows, mission summaries, map

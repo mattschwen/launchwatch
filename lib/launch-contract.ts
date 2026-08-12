@@ -117,6 +117,14 @@ function isOptionalTrimmedString(value: unknown): boolean {
   return value === undefined || isRequiredTrimmedString(value);
 }
 
+function isOptionalStatusDescription(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (isRequiredTrimmedString(value) && value.length <= 300)
+  );
+}
+
 function isOptionalFailureReason(value: unknown, status: unknown): boolean {
   if (value === undefined || value === null) return true;
 
@@ -285,6 +293,7 @@ export function isLaunch(value: unknown): value is Launch {
     typeof value.rocket === 'string' &&
     typeof value.launchSite === 'string' &&
     statuses.includes(String(value.status)) &&
+    isOptionalStatusDescription(value.statusDescription) &&
     isOptionalProviderTimestamp(value.providerUpdatedAt) &&
     isOptionalPositiveInteger(value.orbitalLaunchAttemptCountYear) &&
     isOptionalPositiveInteger(value.providerLaunchAttemptCountYear) &&

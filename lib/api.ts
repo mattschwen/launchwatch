@@ -45,6 +45,7 @@ const PROVIDER_FAILURE_COOLDOWN_MS = 30_000;
 export const MAX_HISTORY_LIMIT = 100;
 const MAX_PROVIDER_UPDATES = 5;
 const MAX_FAILURE_REASON_LENGTH = 500;
+const MAX_STATUS_DESCRIPTION_LENGTH = 300;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -582,6 +583,15 @@ function providerFailureReason(
   return normalized.length <= MAX_FAILURE_REASON_LENGTH ? normalized : null;
 }
 
+function providerStatusDescription(
+  value: string | null | undefined,
+): string | null {
+  const normalized = optionalText(value);
+  return normalized && normalized.length <= MAX_STATUS_DESCRIPTION_LENGTH
+    ? normalized
+    : null;
+}
+
 function providerTimestamp(value: string | null | undefined): string | null {
   const normalized = optionalText(value);
   if (!normalized) return null;
@@ -992,6 +1002,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     launchSite,
     status,
     statusName,
+    statusDescription: null,
     providerUpdatedAt: null,
     orbitalLaunchAttemptCountYear: null,
     providerLaunchAttemptCountYear: null,
@@ -1184,6 +1195,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     launchSite: launch.pad.name || 'Unknown Site',
     status: isLive ? 'live' : sourceStatus,
     statusName: launch.status.name || launch.status.abbrev || null,
+    statusDescription: providerStatusDescription(launch.status.description),
     providerUpdatedAt: providerTimestamp(launch.last_updated),
     orbitalLaunchAttemptCountYear: positiveProviderCount(
       launch.orbital_launch_attempt_count_year,

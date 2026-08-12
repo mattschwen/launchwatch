@@ -546,7 +546,23 @@ describe('Launch Library 2.3 adapter', () => {
     expect(normalized).toMatchObject({
       status: 'success',
       statusName: 'Payload Deployed',
+      statusDescription: 'Deployment of the payload(s) has been confirmed.',
     });
+  });
+
+  it('normalizes only a bounded provider status explanation', () => {
+    expect(normalizeLL2Launch(NORMAL_LIST_LAUNCH).statusDescription).toBe(
+      'Current T-0 confirmed by official sources.',
+    );
+    expect(
+      normalizeLL2Launch({
+        ...NORMAL_LIST_LAUNCH,
+        status: {
+          ...NORMAL_LIST_LAUNCH.status,
+          description: ` ${'x'.repeat(301)} `,
+        },
+      }).statusDescription,
+    ).toBeNull();
   });
 
   it('accepts a normal-mode list payload and requests the supported list mode', async () => {

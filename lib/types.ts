@@ -375,6 +375,7 @@ export interface Launch {
   launchSite: string;
   status: 'upcoming' | 'live' | 'success' | 'failure' | 'tbd';
   statusName?: string | null;
+  statusDescription?: string | null;
   providerUpdatedAt?: string | null;
   orbitalLaunchAttemptCountYear?: number | null;
   providerLaunchAttemptCountYear?: number | null;

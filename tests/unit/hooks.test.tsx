@@ -35,6 +35,7 @@ describe('reconcileCurrentLaunch', () => {
       providerLaunchAttemptCountYear: 42,
       padLaunchAttemptCountYear: 20,
       statusName: 'Target updated',
+      statusDescription: 'The provider revised the current launch target.',
     };
     const detailLaunch = {
       ...UPCOMING_LAUNCHES[0],
@@ -58,6 +59,7 @@ describe('reconcileCurrentLaunch', () => {
         feedLaunch.providerLaunchAttemptCountYear,
       padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
       statusName: feedLaunch.statusName,
+      statusDescription: feedLaunch.statusDescription,
       description: detailLaunch.description,
       livestream: detailLaunch.livestream,
     });
