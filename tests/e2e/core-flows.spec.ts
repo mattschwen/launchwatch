@@ -10073,6 +10073,60 @@ test('upcoming detail keeps mission commands in a touch-safe mobile console', as
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('detail overview balances mission context across desktop columns', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name.startsWith('mobile'),
+    'Desktop detail composition',
+  );
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const summary = page.locator('#mission-summary').last();
+  const visual = summary.locator('figure[data-visual-kind]');
+  const telemetry = summary.getByRole('region', {
+    name: 'Mission telemetry',
+  });
+  await expect(visual).toBeVisible();
+  await expect(telemetry).toBeVisible();
+  await expect(visual.getByRole('img')).toHaveAttribute(
+    'sizes',
+    '(max-width: 1023px) calc(100vw - 2rem), (max-width: 1471px) 52vw, 48rem',
+  );
+
+  const layout = await summary.evaluate((element) => {
+    const context = element.querySelector<HTMLElement>(
+      '[data-mission-summary-context]',
+    );
+    const visual = element.querySelector<HTMLElement>(
+      'figure[data-visual-kind]',
+    );
+    const telemetry = element.querySelector<HTMLElement>(
+      'section[aria-label="Mission telemetry"]',
+    );
+    const bounds = (target: HTMLElement | null): DOMRect | null =>
+      target?.getBoundingClientRect() ?? null;
+
+    return {
+      context: bounds(context),
+      visual: bounds(visual),
+      telemetry: bounds(telemetry),
+    };
+  });
+
+  expect(layout.context).not.toBeNull();
+  expect(layout.visual).not.toBeNull();
+  expect(layout.telemetry).not.toBeNull();
+  expect(layout.visual!.left).toBeLessThan(layout.telemetry!.left);
+  expect(layout.visual!.top).toBeGreaterThanOrEqual(
+    layout.context!.bottom + 16,
+  );
+  expect(layout.telemetry!.top).toBeLessThan(layout.visual!.top);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch exposes a labeled mobile mission command rail', async ({ page }) => {
   test.skip(
     !test.info().project.name.startsWith('mobile'),

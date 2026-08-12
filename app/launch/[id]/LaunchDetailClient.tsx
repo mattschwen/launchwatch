@@ -509,13 +509,15 @@ export default function LaunchDetailClient({
     <MissionVisual
       launch={presentedLaunch}
       priority
+      sizes="(max-width: 1023px) calc(100vw - 2rem), (max-width: 1471px) 52vw, 48rem"
+      className="mission-summary-visual lg:col-start-1 lg:row-start-2"
       showUnavailableState
     />
   );
   const missionTelemetry = (
     <section
       aria-label="Mission telemetry"
-      className="mission-telemetry-panel surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5"
+      className="mission-telemetry-panel surface-card holo-card signal-cold rounded-[var(--radius-md)] p-5 lg:col-start-2 lg:row-span-2 lg:row-start-1"
     >
       {!completed && liveSignal !== 'mission' ? (
         <div className="border-b border-[var(--border-subtle)] pb-5">
@@ -976,9 +978,12 @@ export default function LaunchDetailClient({
           id="mission-summary"
           ref={missionPanelRef}
           tabIndex={-1}
-          className={`mission-detail-section-anchor mission-summary-panel surface-card holo-card ${missionTone} grid min-w-0 gap-7 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-10`}
+          className={`mission-detail-section-anchor mission-summary-panel surface-card holo-card ${missionTone} grid min-w-0 items-start gap-7 overflow-hidden p-5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:p-7 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,.8fr)] lg:gap-x-10 lg:gap-y-6`}
         >
-          <div className="min-w-0">
+          <div
+            data-mission-summary-context
+            className="min-w-0 lg:col-start-1 lg:row-start-1"
+          >
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge
                 status={presentedLaunch.status}
@@ -1036,10 +1041,8 @@ export default function LaunchDetailClient({
             )}
           </div>
 
-          <div className="min-w-0 space-y-4">
-            {completed ? missionVisual : missionTelemetry}
-            {completed ? missionTelemetry : missionVisual}
-          </div>
+          {completed ? missionVisual : missionTelemetry}
+          {completed ? missionTelemetry : missionVisual}
         </section>
 
         <nav
