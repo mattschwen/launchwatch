@@ -322,7 +322,12 @@ instead of exposing a partial set of links.
 | Launch provider unavailable without cached data | `502` |
 | Aggregation failure | `500` |
 
-CDN policy: 2 minutes fresh, 10 minutes stale-while-revalidate. Individual intel sources have their own bounded fresh and stale windows.
+CDN policy: intelligence built from complete, non-stale launch data remains
+fresh for 2 minutes with 10 minutes stale-while-revalidate. A successful
+response built from launch metadata marked `partial` or `stale` uses
+`private, no-store`, so provider recovery can replace degraded mission facts
+and coverage on the next request. Individual intelligence sources retain their
+own bounded fresh and stale windows.
 
 ## Normalized Launch Shape
 

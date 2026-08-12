@@ -3,6 +3,13 @@ import { getLaunchIntel } from '@/lib/launch-intel';
 import { getLaunchIdFromIntelParams } from '@/lib/launch-intel-params';
 import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
 import { checkRequestRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import type { LaunchFeedMeta } from '@/lib/types';
+
+function responseCacheControl(meta: LaunchFeedMeta): string {
+  return meta.partial || meta.stale
+    ? 'private, no-store'
+    : 's-maxage=120, stale-while-revalidate=600';
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(intel, {
       headers: {
-        'Cache-Control': 's-maxage=120, stale-while-revalidate=600',
+        'Cache-Control': responseCacheControl(launchResult.meta),
         ...rateLimitHeaders(rateLimit),
         'X-LaunchWatch-Canonical-Id': parsedId.canonicalId,
         'X-LaunchWatch-Data-State': launchResult.meta.stale ? 'stale' : 'fresh',
