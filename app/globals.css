@@ -1022,6 +1022,19 @@ html[data-boot-status='visible'] .header-instruments {
   }
 }
 
+/* At the 320px / 200%-text boundary, the complete wordmark and feed shortcut
+   cannot coexist. Keep the recognizable emblem and the full accessible brand
+   name while preserving the actionable feed state without clipping. */
+.top-nav-shell[data-text-ultra-compact='true'] {
+  .brand-copy {
+    display: none;
+  }
+
+  .brand-emblem {
+    display: flex;
+  }
+}
+
 html[data-boot-status='visible']:has(
   .top-nav-shell[data-text-compact='true']
 ) {

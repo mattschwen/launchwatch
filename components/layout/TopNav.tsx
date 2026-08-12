@@ -108,7 +108,9 @@ function TopNavContents({
   detailSource: string | null;
 }): React.ReactElement {
   const headerRef = useRef<HTMLElement>(null);
-  const [textCompact, setTextCompact] = useState(false);
+  const [textMode, setTextMode] = useState<'default' | 'compact' | 'ultra'>(
+    'default',
+  );
   const pathname = usePathname();
   const { source: inferredDetailSource } = useDetailNavigationContext();
   const { hasLiveLaunches, liveCount } = useLiveContext();
@@ -141,10 +143,18 @@ function TopNavContents({
         window.getComputedStyle(document.documentElement).fontSize,
       );
       const width = header.clientWidth || window.innerWidth;
-      setTextCompact(
-        Number.isFinite(rootFontSize) && rootFontSize > 0
-          ? width / rootFontSize < 18
-          : false,
+      if (!Number.isFinite(rootFontSize) || rootFontSize <= 0) {
+        setTextMode('default');
+        return;
+      }
+
+      const widthInRootEm = width / rootFontSize;
+      setTextMode(
+        widthInRootEm < 11
+          ? 'ultra'
+          : widthInRootEm < 18
+            ? 'compact'
+            : 'default',
       );
     };
     const observer = new ResizeObserver(update);
@@ -161,7 +171,8 @@ function TopNavContents({
   return (
     <header
       ref={headerRef}
-      data-text-compact={textCompact ? 'true' : undefined}
+      data-text-compact={textMode !== 'default' ? 'true' : undefined}
+      data-text-ultra-compact={textMode === 'ultra' ? 'true' : undefined}
       className="top-nav-shell safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl"
     >
       <span

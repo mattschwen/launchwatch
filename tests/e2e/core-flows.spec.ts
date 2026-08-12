@@ -179,6 +179,44 @@ test('first visit keeps the brand and sync status distinct at 200% text size', a
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('settled header keeps feed health visible at 320px with 200% text', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/watch');
+  await page.addStyleTag({
+    content: ':root { font-size: 32px !important; }',
+  });
+
+  const header = page.locator('header.sticky:visible');
+  const brand = header.getByRole('link', { name: 'LaunchWatch home' });
+  const feedStatus = header.getByRole('button', {
+    name: /view provider status/,
+  });
+  await expect(brand).toBeVisible();
+  await expect(header.locator('.brand-copy:visible')).toHaveCount(0);
+  await expect(header.locator('.brand-emblem:visible')).toHaveCount(1);
+  await expect(feedStatus).toBeVisible();
+
+  const [brandBounds, feedBounds] = await Promise.all([
+    brand.boundingBox(),
+    feedStatus.boundingBox(),
+  ]);
+  expect(brandBounds).not.toBeNull();
+  expect(feedBounds).not.toBeNull();
+  expect(brandBounds!.x + brandBounds!.width).toBeLessThanOrEqual(
+    feedBounds!.x,
+  );
+  expect(feedBounds!.x + feedBounds!.width).toBeLessThanOrEqual(320);
+  expect(feedBounds!.height).toBeGreaterThanOrEqual(44);
+  await feedStatus.focus();
+  await expect(feedStatus).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('installed PWA chrome respects simulated device safe areas', async ({
   page,
 }) => {
