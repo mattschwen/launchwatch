@@ -88,14 +88,30 @@ export default function FilterBar({
             value={filters.search}
             onChange={(event) => update('search', event.target.value)}
             placeholder="Mission, operator, profile, orbit, vehicle, site, or provider"
-            className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] sm:pr-12"
+            className="controlled-search-input min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-12 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
           />
-          <kbd
-            aria-hidden="true"
-            className="pointer-events-none absolute right-3 top-1/2 hidden h-6 min-w-6 -translate-y-1/2 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-raised)] px-1.5 font-mono text-[0.65rem] text-[var(--text-muted)] sm:inline-flex"
-          >
-            /
-          </kbd>
+          {filters.search.length > 0 ? (
+            <button
+              type="button"
+              aria-label="Clear launch search"
+              onClick={() => {
+                update('search', '');
+                requestAnimationFrame(() =>
+                  resolvedSearchInputRef.current?.focus()
+                );
+              }}
+              className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-[var(--radius-sm)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--console-cyan)]"
+            >
+              <X aria-hidden="true" size={16} />
+            </button>
+          ) : (
+            <kbd
+              aria-hidden="true"
+              className="pointer-events-none absolute right-3 top-1/2 hidden h-6 min-w-6 -translate-y-1/2 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-raised)] px-1.5 font-mono text-[0.65rem] text-[var(--text-muted)] sm:inline-flex"
+            >
+              /
+            </kbd>
+          )}
         </div>
       </div>
 

@@ -114,6 +114,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - Schedule and archive search cover the complete provider-backed mission
   profile—including description, program, orbit, vehicle, site, provider, and
   status—and allow terms to match across those fields.
+- Entered schedule and archive queries replace the desktop shortcut badge with
+  a 44-pixel inline clear command at every width. Clearing restores search
+  focus and preserves provider, status, year, outcome, and sort selections.
 - When filters are active, the schedule disclosure keeps their total visibly
   counted while open or collapsed and includes that count in its accessible
   name, so hidden constraints never look like an unfiltered queue.

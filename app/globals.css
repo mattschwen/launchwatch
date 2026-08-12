@@ -2314,6 +2314,10 @@ select {
     background-color 160ms var(--ease-out-quick);
 }
 
+.controlled-search-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
 input[type='search']:hover,
 select:hover {
   border-color: color-mix(in srgb, var(--console-cyan) 32%, var(--border-strong));

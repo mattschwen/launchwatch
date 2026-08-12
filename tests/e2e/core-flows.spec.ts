@@ -4781,6 +4781,23 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     page.getByRole('heading', { name: 'Polaris Relay' })
   ).toHaveCount(0);
 
+  await search.fill('Polaris');
+  const clearSearch = page.getByRole('button', {
+    name: 'Clear launch search',
+  });
+  await expect(clearSearch).toBeVisible();
+  await expect(filterPanel.locator('kbd')).toHaveCount(0);
+  expect((await clearSearch.boundingBox())?.height).toBe(44);
+  clearSearch.focus();
+  await clearSearch.press('Enter');
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(provider).toHaveValue('Demo Launch Alliance');
+  await expect(page).toHaveURL(/\/?provider=Demo\+Launch\+Alliance$/);
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn' })
+  ).toHaveCount(2);
+
   await provider.selectOption('all');
   await search.fill('Polaris');
   await expect(page).toHaveURL(/\/?q=Polaris$/);
@@ -4828,7 +4845,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toBeVisible();
   const clearFilters = page.getByRole('button', { name: 'Clear all filters' });
   await search.focus();
-  for (let index = 0; index < 5; index += 1) {
+  for (let index = 0; index < 6; index += 1) {
     await page.keyboard.press('Tab');
   }
   await expect(clearFilters).toBeFocused();
@@ -8303,6 +8320,20 @@ test('history search reaches a completed mission detail', async ({ page }) => {
   await expect(page).toHaveURL(/\/history\?q=Return$/);
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
   await expect(archiveResults).toHaveText('1 result');
+  const clearSearch = page.getByRole('button', {
+    name: 'Clear archive search',
+  });
+  await expect(clearSearch).toBeVisible();
+  await expect(search.locator('xpath=..').locator('kbd')).toHaveCount(0);
+  expect((await clearSearch.boundingBox())?.height).toBe(44);
+  clearSearch.focus();
+  await clearSearch.press('Enter');
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(archiveResults).toHaveText('2 results');
+
+  await search.fill('Return');
   await page.reload();
   await expect(
     page.getByRole('searchbox', { name: 'Search missions' })

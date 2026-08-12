@@ -95,6 +95,44 @@ describe('FilterBar', () => {
     await waitFor(() => expect(search).toHaveFocus());
   });
 
+  it('clears only the search query and preserves the remaining filters', async () => {
+    const user = userEvent.setup();
+    const onFilterChange = vi.fn();
+    render(
+      <FilterBar
+        providerOptions={['SpaceX']}
+        onFilterChange={onFilterChange}
+      />
+    );
+
+    const search = screen.getByRole('searchbox', {
+      name: 'Search launches',
+    });
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Provider' }),
+      'SpaceX'
+    );
+    await user.type(search, 'Polaris');
+
+    const clearSearch = screen.getByRole('button', {
+      name: 'Clear launch search',
+    });
+    clearSearch.focus();
+    await user.keyboard('{Enter}');
+
+    expect(search).toHaveValue('');
+    await waitFor(() => expect(search).toHaveFocus());
+    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue(
+      'SpaceX'
+    );
+    expect(onFilterChange).toHaveBeenLastCalledWith({
+      search: '',
+      provider: 'SpaceX',
+      status: 'all',
+      sortBy: 'date-asc',
+    });
+  });
+
   it('treats whitespace-only search input as an inactive filter', async () => {
     const user = userEvent.setup();
     const onFilterChange = vi.fn();

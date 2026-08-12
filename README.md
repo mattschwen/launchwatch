@@ -46,7 +46,9 @@ short, dismissible status toast; it never blocks the application.
   accessible names on repeated archive actions
 - A route-aware `/` shortcut opens and focuses mission search on the schedule
   and archive without intercepting editable controls; shared search tolerates
-  provider punctuation, accents, and joined vehicle designations
+  provider punctuation, accents, and joined vehicle designations. Once a query
+  is entered, a touch-safe inline clear command removes only that query while
+  preserving the remaining filters and keyboard focus
 - Mission briefings, coverage, community links, and replay surfaces
 - Provider-derived mission clocks translate precise timeline offsets into UTC
   and local milestone times; coarse targets keep those clocks visibly pending.

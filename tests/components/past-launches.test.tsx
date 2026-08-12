@@ -522,13 +522,37 @@ describe('PastLaunches', () => {
     await user.keyboard('{Enter}');
 
     expect(search).toHaveValue('');
-    expect(search).toHaveFocus();
+    await waitFor(() => expect(search).toHaveFocus());
     expect(screen.getByRole('status')).toHaveTextContent('2 results');
     expect(screen.getByText('Demo Return Flight')).toBeVisible();
     expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
     expect(
       screen.queryByRole('button', { name: 'Clear archive filters' })
     ).not.toBeInTheDocument();
+  });
+
+  it('clears only the archive query and preserves secondary filters', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    const search = screen.getByRole('searchbox', { name: 'Search missions' });
+    const provider = screen.getByRole('combobox', { name: 'Provider' });
+    await user.selectOptions(provider, 'SpaceX');
+    await user.type(search, 'Return');
+
+    const clearSearch = screen.getByRole('button', {
+      name: 'Clear archive search',
+    });
+    clearSearch.focus();
+    await user.keyboard('{Enter}');
+
+    expect(search).toHaveValue('');
+    await waitFor(() => expect(search).toHaveFocus());
+    expect(provider).toHaveValue('SpaceX');
+    expect(window.location.search).toBe('?provider=SpaceX');
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(screen.queryByText('Pathfinder Qualification')).not.toBeInTheDocument();
   });
 
   it('treats whitespace-only search input as an inactive filter', async () => {
