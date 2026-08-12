@@ -23,9 +23,10 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayerGroup, Map as LeafletMap, TileLayer } from 'leaflet';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
+import { isLaunchSiteAtlasResponse } from '@/lib/launch-contract';
 import { selectLaunchVisualAsset } from '@/lib/launch-visual';
 import { buildIllustrativeLaunchCorridor, type IllustrativeTrajectory } from '@/lib/trajectory';
-import type { Launch, LaunchSite, LaunchSiteAtlasResponse } from '@/lib/types';
+import type { Launch, LaunchSite } from '@/lib/types';
 
 const OPEN_MAP_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
@@ -111,7 +112,11 @@ export default function LaunchSiteAtlas({
     fetch(`/api/launch-sites?id=${encodeURIComponent(launch.id)}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`Launch sites returned ${response.status}`);
-        return response.json() as Promise<LaunchSiteAtlasResponse>;
+        const payload: unknown = await response.json();
+        if (!isLaunchSiteAtlasResponse(payload)) {
+          throw new Error('Launch-site response was incomplete');
+        }
+        return payload;
       })
       .then((payload) => {
         const nextSites = Array.isArray(payload.sites) ? payload.sites : [];

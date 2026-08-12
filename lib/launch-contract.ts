@@ -3,7 +3,9 @@ import type {
   LaunchFeedMeta,
   LaunchIntel,
   LaunchProviderMeta,
+  LaunchSiteAtlasResponse,
 } from './types';
+import { isSupportedLaunchVisualUrl } from './launch-visual';
 import { normalizeTimeZone } from './format';
 import { parseLaunchId } from './launch-id';
 
@@ -101,6 +103,39 @@ function isSafeOptionalUrl(value: unknown): boolean {
 
 function isSafeNullableUrl(value: unknown): boolean {
   return value === null || isSafeHttpsUrl(value);
+}
+
+function isRequiredTrimmedString(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value === value.trim() &&
+    value.length > 0
+  );
+}
+
+function isOptionalTrimmedString(value: unknown): boolean {
+  return value === undefined || isRequiredTrimmedString(value);
+}
+
+function isSafeLaunchSiteVisual(value: unknown): boolean {
+  if (value === null) return true;
+  if (!isRecord(value)) return false;
+
+  return (
+    (value.kind === 'vehicle' || value.kind === 'mission') &&
+    typeof value.url === 'string' &&
+    isSupportedLaunchVisualUrl(value.url) &&
+    (value.thumbnailUrl === undefined ||
+      (typeof value.thumbnailUrl === 'string' &&
+        isSupportedLaunchVisualUrl(value.thumbnailUrl))) &&
+    isOptionalTrimmedString(value.name) &&
+    isOptionalTrimmedString(value.credit) &&
+    isOptionalTrimmedString(value.licenseName) &&
+    (value.licenseUrl === undefined || isSafeHttpsUrl(value.licenseUrl)) &&
+    (value.singleUse === undefined || typeof value.singleUse === 'boolean') &&
+    isRequiredTrimmedString(value.sourceLabel) &&
+    (value.sourceUrl === undefined || isSafeHttpsUrl(value.sourceUrl))
+  );
 }
 
 function isSafeLaunchStreams(value: unknown): boolean {
@@ -293,6 +328,60 @@ export function isLaunchFeedMeta(value: unknown): value is LaunchFeedMeta {
     typeof value.cached === 'boolean' &&
     isProviderMeta(value.providers.spacex) &&
     isProviderMeta(value.providers.ll2)
+  );
+}
+
+export function isLaunchSiteAtlasResponse(
+  value: unknown,
+): value is LaunchSiteAtlasResponse {
+  if (!isRecord(value) || !Array.isArray(value.sites)) return false;
+  if (value.sites.length > 100 || !isRecord(value.meta)) return false;
+
+  const ids = new Set<string>();
+  for (const site of value.sites) {
+    if (
+      !isRecord(site) ||
+      !isRequiredTrimmedString(site.id) ||
+      ids.has(site.id) ||
+      !isRequiredTrimmedString(site.name) ||
+      typeof site.active !== 'boolean' ||
+      typeof site.latitude !== 'number' ||
+      !Number.isFinite(site.latitude) ||
+      site.latitude < -90 ||
+      site.latitude > 90 ||
+      typeof site.longitude !== 'number' ||
+      !Number.isFinite(site.longitude) ||
+      site.longitude < -180 ||
+      site.longitude > 180 ||
+      !isRequiredTrimmedString(site.locationName) ||
+      !isNullableString(site.countryCode) ||
+      !isNullableString(site.description) ||
+      !isNullableString(site.locationDescription) ||
+      !isSafeNullableUrl(site.infoUrl) ||
+      !isSafeNullableUrl(site.wikiUrl) ||
+      typeof site.totalLaunchCount !== 'number' ||
+      !Number.isSafeInteger(site.totalLaunchCount) ||
+      site.totalLaunchCount < 0 ||
+      typeof site.orbitalLaunchAttemptCount !== 'number' ||
+      !Number.isSafeInteger(site.orbitalLaunchAttemptCount) ||
+      site.orbitalLaunchAttemptCount < 0 ||
+      !Array.isArray(site.agencies) ||
+      site.agencies.length > 8 ||
+      !site.agencies.every(isRequiredTrimmedString) ||
+      new Set(site.agencies).size !== site.agencies.length ||
+      !isSafeLaunchSiteVisual(site.image)
+    ) {
+      return false;
+    }
+    ids.add(site.id);
+  }
+
+  return (
+    isCanonicalTimestamp(value.meta.generatedAt) &&
+    typeof value.meta.cached === 'boolean' &&
+    typeof value.meta.stale === 'boolean' &&
+    value.meta.source === 'launch-library-2' &&
+    isSafeHttpsUrl(value.meta.sourceUrl)
   );
 }
 

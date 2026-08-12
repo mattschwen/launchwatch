@@ -113,7 +113,9 @@ short, dismissible status toast; it never blocks the application.
   coverage, and briefing controls remain usable
 - The launch-site field guide keeps its open map available when nearby pad data
   fails, offers an in-place retry with offline and busy states, and returns
-  keyboard focus to the recovered facility instead of requiring a page reload
+  keyboard focus to the recovered facility instead of requiring a page reload.
+  Malformed successful facility payloads fail closed into that same recovery
+  state instead of reaching map geometry or external-link rendering
 - Discrete stream, news, and community coverage signals based on available
   records rather than synthetic strength percentages; external news actions
   are limited to credential-free HTTPS destinations

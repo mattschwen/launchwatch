@@ -11585,6 +11585,60 @@ test('launch-site atlas retries a transient facility-feed failure in place', asy
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('launch-site atlas contains a malformed successful facility payload', async ({
+  page,
+}) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  await page.route('**/api/launch-sites?*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        sites: [
+          {
+            id: 'malformed-pad',
+            name: 'Malformed pad',
+            latitude: 'not-a-coordinate',
+          },
+        ],
+        meta: {
+          generatedAt: '2026-08-12T00:00:00.000Z',
+          cached: false,
+          stale: false,
+          source: 'launch-library-2',
+          sourceUrl: 'https://thespacedevs.com/llapi',
+        },
+      }),
+    }),
+  );
+
+  await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page
+      .locator('button[aria-controls="mobile-mission-map"]:visible')
+      .click();
+  }
+  await page
+    .getByRole('button', { name: 'Enlarge launch site atlas' })
+    .click();
+
+  const dialog = page.getByRole('dialog', { name: /Orbital Dawn/i });
+  const fieldGuide = dialog.getByRole('complementary', {
+    name: 'Launch site learning panel',
+  });
+  const retry = fieldGuide.getByRole('button', {
+    name: 'Retry nearby pad data',
+  });
+  await expect(retry).toBeVisible();
+  await expect(fieldGuide).toContainText(
+    'Nearby pad data is unavailable',
+  );
+  await expect(retry).toBeEnabled();
+  expect(pageErrors).toEqual([]);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('reported launch coordinates hand off to an exact external site map', async ({
   page,
 }) => {

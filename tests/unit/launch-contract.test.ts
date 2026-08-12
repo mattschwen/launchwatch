@@ -4,6 +4,7 @@ import {
   isLaunchCollection,
   isLaunchFeedMeta,
   isLaunchIntel,
+  isLaunchSiteAtlasResponse,
 } from '@/lib/launch-contract';
 import {
   FEED_META,
@@ -346,6 +347,68 @@ describe('client launch contract', () => {
     ]) {
       expect(isLaunchFeedMeta(invalidMeta)).toBe(false);
     }
+  });
+
+  it('accepts a complete launch-site atlas and rejects unsafe facility records', () => {
+    const atlas = {
+      sites: [
+        {
+          id: '80',
+          name: 'Space Launch Complex 40',
+          active: true,
+          latitude: 28.5619,
+          longitude: -80.5774,
+          locationName: 'Cape Canaveral Space Force Station',
+          countryCode: 'US',
+          description: 'A workhorse orbital launch pad.',
+          locationDescription: null,
+          infoUrl: 'https://www.spacex.com/launches/',
+          wikiUrl: null,
+          totalLaunchCount: 230,
+          orbitalLaunchAttemptCount: 229,
+          agencies: ['SpaceX'],
+          image: null,
+        },
+      ],
+      meta: {
+        generatedAt: '2035-07-28T12:00:00.000Z',
+        cached: false,
+        stale: false,
+        source: 'launch-library-2',
+        sourceUrl: 'https://thespacedevs.com/llapi',
+      },
+    };
+
+    expect(isLaunchSiteAtlasResponse(atlas)).toBe(true);
+    expect(
+      isLaunchSiteAtlasResponse({
+        ...atlas,
+        sites: [{ ...atlas.sites[0], agencies: undefined }],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunchSiteAtlasResponse({
+        ...atlas,
+        sites: [{ ...atlas.sites[0], latitude: 91 }],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunchSiteAtlasResponse({
+        ...atlas,
+        sites: [
+          {
+            ...atlas.sites[0],
+            infoUrl: 'javascript:alert(document.domain)',
+          },
+        ],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunchSiteAtlasResponse({
+        ...atlas,
+        sites: [atlas.sites[0], atlas.sites[0]],
+      }),
+    ).toBe(false);
   });
 
   it('accepts mission intelligence with credential-free HTTPS destinations', () => {
