@@ -924,6 +924,40 @@ describe('PastLaunches', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('retains settled records when a successful refresh has malformed provider metadata', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(successfulResponse)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          launches: [HISTORICAL_LAUNCHES[1]],
+          meta: {
+            ...FEED_META,
+            providers: {
+              ...FEED_META.providers,
+              ll2: { ...FEED_META.providers.ll2, state: 'recovering' },
+            },
+          },
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PastLaunches />);
+
+    expect(await screen.findByText('Demo Return Flight')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Refresh archive' }));
+
+    expect(
+      await screen.findByText('Archive refresh failed.', { exact: false })
+    ).toBeVisible();
+    expect(screen.getByText('Demo Return Flight')).toBeVisible();
+    expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps partial provider guidance on the single archive refresh command', async () => {
     vi.stubGlobal(
       'fetch',

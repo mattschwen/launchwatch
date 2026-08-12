@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   isLaunch,
   isLaunchCollection,
+  isLaunchFeedMeta,
   isLaunchIntel,
 } from '@/lib/launch-contract';
 import {
+  FEED_META,
   LAUNCH_INTEL,
   UPCOMING_LAUNCHES,
 } from '@/tests/fixtures/launches';
@@ -318,6 +320,32 @@ describe('client launch contract', () => {
         { ...UPCOMING_LAUNCHES[0], name: 'Conflicting duplicate mission' },
       ])
     ).toBe(false);
+  });
+
+  it('requires complete, canonical provider metadata', () => {
+    expect(isLaunchFeedMeta(FEED_META)).toBe(true);
+
+    for (const invalidMeta of [
+      { ...FEED_META, generatedAt: 'recently' },
+      { ...FEED_META, partial: 'false' },
+      { ...FEED_META, providers: { ll2: FEED_META.providers.ll2 } },
+      {
+        ...FEED_META,
+        providers: {
+          ...FEED_META.providers,
+          spacex: { ...FEED_META.providers.spacex, state: 'recovering' },
+        },
+      },
+      {
+        ...FEED_META,
+        providers: {
+          ...FEED_META.providers,
+          ll2: { ...FEED_META.providers.ll2, updatedAt: 'yesterday' },
+        },
+      },
+    ]) {
+      expect(isLaunchFeedMeta(invalidMeta)).toBe(false);
+    }
   });
 
   it('accepts mission intelligence with credential-free HTTPS destinations', () => {

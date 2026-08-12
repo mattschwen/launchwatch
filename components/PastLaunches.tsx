@@ -40,7 +40,11 @@ import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionDescription from '@/components/MissionDescription';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
-import { isLaunch, isLaunchCollection } from '@/lib/launch-contract';
+import {
+  isLaunch,
+  isLaunchCollection,
+  isLaunchFeedMeta,
+} from '@/lib/launch-contract';
 import { useOnlineStatus } from '@/lib/online-status';
 import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { generateYouTubeSearchUrl } from '@/lib/youtube';
@@ -68,15 +72,15 @@ function readHistoryPayload(payload: unknown): {
       : Array.isArray(nested?.launches)
         ? nested.launches
         : null;
-  const valid = collection !== null && isLaunchCollection(collection);
+  const validCollection = collection !== null && isLaunchCollection(collection);
+  const hasMeta = Object.prototype.hasOwnProperty.call(record, 'meta');
+  const meta = isLaunchFeedMeta(record.meta) ? record.meta : null;
+  const valid = validCollection && (!hasMeta || meta !== null);
 
   return {
     launches: valid ? collection : [],
     valid,
-    meta:
-      record.meta && typeof record.meta === 'object'
-        ? (record.meta as LaunchFeedMeta)
-        : null,
+    meta,
   };
 }
 

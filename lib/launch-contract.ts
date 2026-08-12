@@ -1,4 +1,9 @@
-import type { Launch, LaunchIntel } from './types';
+import type {
+  Launch,
+  LaunchFeedMeta,
+  LaunchIntel,
+  LaunchProviderMeta,
+} from './types';
 import { normalizeTimeZone } from './format';
 import { parseLaunchId } from './launch-id';
 
@@ -14,13 +19,31 @@ function isOptionalNullableString(value: unknown): boolean {
   return value === undefined || isNullableString(value);
 }
 
-function isOptionalProviderTimestamp(value: unknown): boolean {
-  if (value === undefined || value === null) return true;
+function isCanonicalTimestamp(value: unknown): value is string {
   if (typeof value !== 'string' || value !== value.trim()) return false;
 
   const timestamp = Date.parse(value);
   return (
     Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value
+  );
+}
+
+function isOptionalProviderTimestamp(value: unknown): boolean {
+  return value === undefined || value === null || isCanonicalTimestamp(value);
+}
+
+function isProviderMeta(value: unknown): value is LaunchProviderMeta {
+  if (!isRecord(value)) return false;
+
+  const states = ['ok', 'stale', 'error', 'not-requested'];
+  return (
+    states.includes(String(value.state)) &&
+    typeof value.cached === 'boolean' &&
+    (value.updatedAt === null || isCanonicalTimestamp(value.updatedAt)) &&
+    (value.error === undefined ||
+      (typeof value.error === 'string' &&
+        value.error === value.error.trim() &&
+        value.error.length > 0))
   );
 }
 
@@ -258,6 +281,19 @@ export function isLaunchCollection(value: unknown): value is Launch[] {
   }
 
   return true;
+}
+
+export function isLaunchFeedMeta(value: unknown): value is LaunchFeedMeta {
+  if (!isRecord(value) || !isRecord(value.providers)) return false;
+
+  return (
+    isCanonicalTimestamp(value.generatedAt) &&
+    typeof value.partial === 'boolean' &&
+    typeof value.stale === 'boolean' &&
+    typeof value.cached === 'boolean' &&
+    isProviderMeta(value.providers.spacex) &&
+    isProviderMeta(value.providers.ll2)
+  );
 }
 
 export function isLaunchIntel(value: unknown): value is LaunchIntel {

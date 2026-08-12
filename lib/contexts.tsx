@@ -10,17 +10,10 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { Launch } from './types';
+import type { Launch, LaunchFeedMeta } from './types';
 import { checkAndNotify, clearOldNotificationFlags } from './notifications';
-import { isLaunchCollection } from './launch-contract';
+import { isLaunchCollection, isLaunchFeedMeta } from './launch-contract';
 import { useOnlineStatus } from './online-status';
-
-export interface LaunchFeedMeta {
-  generatedAt?: string;
-  partial?: boolean;
-  stale?: boolean;
-  providers?: Record<string, unknown> | unknown[];
-}
 
 interface LaunchDataContextValue {
   launches: Launch[];
@@ -101,12 +94,15 @@ function readLaunches(payload: unknown): {
       Array.isArray(nestedData?.launches)) &&
     isLaunchCollection(launches);
 
-  const meta =
-    record.meta && typeof record.meta === 'object'
-      ? (record.meta as LaunchFeedMeta)
-      : null;
+  const hasMeta = Object.prototype.hasOwnProperty.call(record, 'meta');
+  const meta = isLaunchFeedMeta(record.meta) ? record.meta : null;
+  const validMeta = !hasMeta || meta !== null;
 
-  return { launches, meta, valid };
+  return {
+    launches: valid && validMeta ? launches : [],
+    meta,
+    valid: Boolean(valid && validMeta),
+  };
 }
 
 function messageFromPayload(payload: unknown, fallback: string): string {

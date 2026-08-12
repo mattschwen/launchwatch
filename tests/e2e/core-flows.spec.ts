@@ -2844,6 +2844,49 @@ test('home rejects incomplete successful refreshes without erasing retained miss
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home rejects malformed provider metadata without erasing retained missions', async ({
+  page,
+}) => {
+  let malformedMetaEnabled = false;
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: malformedMetaEnabled
+          ? [UPCOMING_LAUNCHES[1]]
+          : UPCOMING_LAUNCHES,
+        meta: malformedMetaEnabled
+          ? { ...FEED_META, generatedAt: 'recently' }
+          : FEED_META,
+      }),
+    })
+  );
+
+  await page.goto('/');
+  const retainedMission = page.getByRole('heading', {
+    level: 1,
+    name: UPCOMING_LAUNCHES[0].name,
+  });
+  await expect(retainedMission).toBeVisible();
+
+  malformedMetaEnabled = true;
+  await page.getByRole('button', { name: 'Refresh launch schedule' }).click();
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]'
+  );
+  await expect(hero).toContainText('Last-known mission · refresh failed');
+  await expect(retainedMission).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: UPCOMING_LAUNCHES[1].name })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('status', { name: 'Launch feed status: Partial feed' })
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home rejects invalid legacy array records without erasing retained missions', async ({
   page,
 }) => {

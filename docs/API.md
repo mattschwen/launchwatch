@@ -72,6 +72,11 @@ Provider `state` is one of:
 - `not-requested`: that provider is outside the endpoint’s scope.
 
 `partial` is true when any requested provider is stale or unavailable.
+Browser consumers validate the metadata timestamp, booleans, both provider
+records, provider-state enum, cache flags, and nullable provider timestamps
+before accepting a successful wrapped feed response. A malformed envelope is
+handled as a failed refresh so settled schedule or archive records remain
+available without presenting unverified provenance as current.
 
 ## Launch Feed
 
