@@ -305,6 +305,11 @@ or any successful response derived from launch metadata marked `partial` or
 the client's next request free to observe recovery instead of replaying a
 degraded shared-cache entry.
 
+Dense schedule and archive result lists disable automatic Next.js prefetching
+for provider-backed canonical detail routes. Detail acquisition begins after
+explicit mission activation, preventing speculative provider work for every
+visible row while preserving normal client-side navigation.
+
 ## PWA and Service Worker Policy
 
 The service worker is deliberately narrow:

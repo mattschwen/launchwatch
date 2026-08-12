@@ -375,6 +375,7 @@ function HistoryRow({
         <Link
           ref={detailLinkRef}
           href={detailHref}
+          prefetch={false}
           aria-label={`View mission ${launch.name}`}
           className="archive-row-action action-button action-button-quiet justify-self-start whitespace-nowrap min-[1120px]:justify-self-end"
         >

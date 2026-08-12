@@ -4,6 +4,34 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PastLaunches from '@/components/PastLaunches';
 import { FEED_META, HISTORICAL_LAUNCHES } from '../fixtures/launches';
 
+vi.mock('next/link', async () => {
+  const React = await import('react');
+
+  return {
+    default: React.forwardRef<
+      HTMLAnchorElement,
+      React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+        href: string;
+        prefetch?: boolean | null;
+      }
+    >(function MockLink(
+      { children, href, prefetch, ...props },
+      ref,
+    ) {
+      return (
+        <a
+          {...props}
+          ref={ref}
+          href={href}
+          data-prefetch={prefetch === null ? 'auto' : String(prefetch)}
+        >
+          {children}
+        </a>
+      );
+    }),
+  };
+});
+
 const successfulResponse = {
   ok: true,
   status: 200,
@@ -93,6 +121,18 @@ describe('PastLaunches', () => {
       'href',
       '/launch/spacex-demo-return?from=history&history=q%3DReturn',
     );
+  });
+
+  it('loads provider-backed mission details only after activation', async () => {
+    render(<PastLaunches />);
+
+    for (const launch of HISTORICAL_LAUNCHES) {
+      expect(
+        await screen.findByRole('link', {
+          name: `View mission ${launch.name}`,
+        }),
+      ).toHaveAttribute('data-prefetch', 'false');
+    }
   });
 
   it('surfaces a provider failure diagnosis in the expanded archive record', async () => {
