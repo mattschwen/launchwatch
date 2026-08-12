@@ -21,6 +21,7 @@ interface MissionVisualProps {
   launch: Launch | null;
   priority?: boolean;
   compact?: boolean;
+  sizes?: string;
   className?: string;
   loading?: boolean;
   error?: string | null;
@@ -32,6 +33,7 @@ interface AvailableMissionVisualProps {
   visual: EligibleLaunchVisual;
   priority: boolean;
   compact: boolean;
+  sizes?: string;
   className: string;
 }
 
@@ -156,6 +158,7 @@ function AvailableMissionVisual({
   visual,
   priority,
   compact,
+  sizes,
   className,
 }: AvailableMissionVisualProps): React.ReactElement {
   const [loaded, setLoaded] = useState(false);
@@ -252,11 +255,11 @@ function AvailableMissionVisual({
               fill
               loading={priority ? 'eager' : 'lazy'}
               fetchPriority={priority ? 'high' : undefined}
-              sizes={
+              sizes={sizes ?? (
                 compact
                   ? '(max-width: 639px) calc(100vw - 2.5rem), 36rem'
                   : '(max-width: 1023px) calc(100vw - 2rem), 32rem'
-              }
+              )}
               onLoad={imageLoaded}
               onError={imageFailed}
               className={`mission-visual-image mission-visual-image-${visual.kind} ${
@@ -337,6 +340,7 @@ export default function MissionVisual({
   launch,
   priority = false,
   compact = false,
+  sizes,
   className = '',
   loading = false,
   error = null,
@@ -373,6 +377,7 @@ export default function MissionVisual({
       visual={selection.visual}
       priority={priority}
       compact={compact}
+      sizes={sizes}
       className={className}
     />
   );

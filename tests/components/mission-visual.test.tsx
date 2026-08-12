@@ -267,6 +267,25 @@ describe('MissionVisual', () => {
     ).toHaveClass('mission-visual-image-mission');
   });
 
+  it('lets constrained layouts declare their actual responsive image width', () => {
+    const launch = launchWithVisuals({
+      vehicleVisual: licensedVisual('vehicle'),
+    });
+
+    render(
+      <MissionVisual
+        launch={launch}
+        compact
+        sizes="(max-width: 1023px) calc(100vw - 2rem), 21rem"
+      />
+    );
+
+    expect(screen.getByRole('img')).toHaveAttribute(
+      'sizes',
+      '(max-width: 1023px) calc(100vw - 2rem), 21rem'
+    );
+  });
+
   it('keeps a fixed loading shell until the image reports ready', () => {
     const { container } = render(
       <MissionVisual

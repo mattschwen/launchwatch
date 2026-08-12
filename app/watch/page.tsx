@@ -595,6 +595,7 @@ function WatchMissionVisual({
         launch={launch}
         priority
         compact
+        sizes="(max-width: 1023px) calc(100vw - 2rem), 21rem"
         loading={loading}
         error={error}
         showUnavailableState
@@ -641,6 +642,7 @@ function WatchMissionVisual({
           <MissionVisual
             launch={launch}
             compact
+            sizes="(max-width: 1023px) calc(100vw - 2rem), 21rem"
             loading={loading}
             error={error}
             showUnavailableState

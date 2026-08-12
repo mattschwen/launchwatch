@@ -415,7 +415,11 @@ function HistoryRow({
             </dl>
           </div>
           <div className="min-w-0 space-y-3">
-            <MissionVisual launch={launch} compact />
+            <MissionVisual
+              launch={launch}
+              compact
+              sizes="(max-width: 1023px) calc(100vw - 2.5rem), 18rem"
+            />
             <div className="flex flex-wrap content-start gap-2 lg:justify-end">
               {replayLaunch.livestream ? (
                 <Link

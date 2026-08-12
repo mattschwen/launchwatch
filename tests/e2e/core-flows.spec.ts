@@ -6345,6 +6345,10 @@ test('watch fills external coverage with a rocket visual and keeps the full arch
   await expect(visualImage).toBeVisible();
   await expect(visualImage).toHaveAttribute('loading', 'eager');
   await expect(visualImage).toHaveAttribute('fetchpriority', 'high');
+  await expect(visualImage).toHaveAttribute(
+    'sizes',
+    '(max-width: 1023px) calc(100vw - 2rem), 21rem'
+  );
   await expect(
     visual.getByText(
       'Credit: LaunchWatch fixture · via LaunchWatch fixture',
@@ -8877,11 +8881,14 @@ test('history loads licensed mission imagery only after archive expansion', asyn
     'figure[data-visual-kind="mission"]'
   );
   await expect(visual).toHaveCount(1);
-  await expect(
-    visual.getByRole('img', {
-      name: 'Mission image for Demo Return Flight mission',
-    })
-  ).toBeVisible();
+  const visualImage = visual.getByRole('img', {
+    name: 'Mission image for Demo Return Flight mission',
+  });
+  await expect(visualImage).toBeVisible();
+  await expect(visualImage).toHaveAttribute(
+    'sizes',
+    '(max-width: 1023px) calc(100vw - 2.5rem), 18rem'
+  );
   await expect(
     visual.getByText('Mission imagery', { exact: true })
   ).toBeVisible();
