@@ -5709,6 +5709,47 @@ test('watch console index preserves mission context and reveals every region', a
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch console index keeps every label inside its control on narrow phones', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 727 });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
+  });
+  await page.goto('/watch');
+
+  const index = page.getByRole('navigation', {
+    name: 'Watch console sections',
+  });
+  await expect(index).toBeVisible();
+  await expect(index.getByText('01', { exact: true })).toBeHidden();
+
+  const labelPlacement = await index.getByRole('link').evaluateAll((links) =>
+    links.map((link) => {
+      const controlBounds = link.getBoundingClientRect();
+      const labelRange = document.createRange();
+      labelRange.selectNodeContents(link);
+      const labelBounds = labelRange.getBoundingClientRect();
+
+      return {
+        label: link.textContent?.trim(),
+        contained:
+          labelBounds.left >= controlBounds.left - 0.5 &&
+          labelBounds.right <= controlBounds.right + 0.5,
+      };
+    }),
+  );
+
+  expect(labelPlacement).toEqual([
+    { label: '01Coverage', contained: true },
+    { label: '02Queue', contained: true },
+    { label: '03Mission', contained: true },
+    { label: '04Intel', contained: true },
+    { label: '05Path', contained: true },
+  ]);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps long standby missions readable at the 320px boundary', async ({
   page,
 }) => {

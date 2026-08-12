@@ -207,7 +207,7 @@ export default function WatchSectionIndex(): React.ReactElement {
             >
               <span
                 aria-hidden="true"
-                className={`hidden min-[360px]:inline ${
+                className={`hidden min-[440px]:inline ${
                   active
                     ? 'text-[var(--console-green)]'
                     : 'text-[var(--console-cyan)]'
