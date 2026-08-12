@@ -57,13 +57,18 @@ async function showViaServiceWorker(
     return false;
   }
 
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration) {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) {
+      return false;
+    }
+
+    await registration.showNotification(title, options);
+    return true;
+  } catch {
+    // A stale or stopping worker must not suppress the active-page fallback.
     return false;
   }
-
-  await registration.showNotification(title, options);
-  return true;
 }
 
 /**

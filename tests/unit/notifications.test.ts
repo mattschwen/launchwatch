@@ -46,6 +46,51 @@ function installGrantedNotifications(): ReturnType<typeof vi.fn> {
 }
 
 describe('launch notification precision', () => {
+  it('falls back to an in-page alert when service-worker delivery fails', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
+    const notification = vi.fn();
+    Object.defineProperty(notification, 'permission', {
+      configurable: true,
+      value: 'granted',
+    });
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: notification,
+    });
+
+    const showNotification = vi
+      .fn()
+      .mockRejectedValue(new Error('Service worker unavailable'));
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: vi.fn().mockResolvedValue({ showNotification }),
+      },
+    });
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      date: '2026-08-05T12:30:00.000Z',
+      dateUnix: 1_775_392_200,
+      datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    };
+
+    await checkAndNotify([launch]);
+
+    expect(showNotification).toHaveBeenCalledOnce();
+    expect(notification).toHaveBeenCalledOnce();
+    expect(notification).toHaveBeenCalledWith(
+      '🚀 Orbital Dawn',
+      expect.objectContaining({
+        body:
+          'Launching in 30 minutes\nAstra Nova from SLC-40 · Cape Canaveral',
+      }),
+    );
+    expect(localStorage.getItem('notified-1h-ll2-demo-orbital-dawn')).toBe(
+      String(Math.floor(new Date(launch.date).getTime() / 60_000)),
+    );
+  });
+
   it('does not alert on a coarse provider placeholder date', async () => {
     const notification = vi.fn();
     Object.defineProperty(notification, 'permission', {

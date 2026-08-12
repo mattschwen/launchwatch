@@ -95,9 +95,10 @@ short, dismissible status toast; it never blocks the application.
   never inferred outcomes
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
-  re-arm the alert thresholds for the new confirmed time, and exported or
-  copied mission details retain the canonical LaunchWatch route. Browsers that
-  block clipboard writes expose the same mission brief as selectable text
+  re-arm the alert thresholds for the new confirmed time, and a failed
+  service-worker delivery falls back to the active page. Exported or copied
+  mission details retain the canonical LaunchWatch route. Browsers that block
+  clipboard writes expose the same mission brief as selectable text
 - Compact local-time context beside exact primary mission targets and upcoming
   schedule rows, plus the complete local start and end of validated launch
   windows, while UTC remains authoritative; UTC users and coarse provider
