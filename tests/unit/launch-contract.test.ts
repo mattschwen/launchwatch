@@ -204,6 +204,32 @@ describe('client launch contract', () => {
     }
   });
 
+  it.each([
+    {
+      label: 'invalid target date',
+      date: 'not-a-date',
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix,
+    },
+    {
+      label: 'fractional Unix target',
+      date: UPCOMING_LAUNCHES[0].date,
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix + 0.5,
+    },
+    {
+      label: 'target date that disagrees with its Unix value',
+      date: UPCOMING_LAUNCHES[0].date,
+      dateUnix: UPCOMING_LAUNCHES[0].dateUnix + 60,
+    },
+  ])('rejects a launch with $label', ({ date, dateUnix }) => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        date,
+        dateUnix,
+      }),
+    ).toBe(false);
+  });
+
   it.each([-1, 20.5, 101, Number.NaN])(
     'rejects malformed launch probability %s',
     (launchProbability) => {

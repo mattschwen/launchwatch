@@ -894,7 +894,7 @@ test('detail enrichment cannot regress the current schedule or live state', asyn
   const currentFeedLaunch = {
     ...UPCOMING_LAUNCHES[0],
     date: '2035-07-28T15:30:00.000Z',
-    dateUnix: 2069259000,
+    dateUnix: 2069249400,
     windowStart: '2035-07-28T15:30:00.000Z',
     windowEnd: '2035-07-28T17:30:00.000Z',
   };
@@ -1014,7 +1014,7 @@ test('canonical detail adopts the current feed target after a provider retarget'
   const currentFeedLaunch = {
     ...UPCOMING_LAUNCHES[0],
     date: '2035-07-28T15:30:00.000Z',
-    dateUnix: 2069259000,
+    dateUnix: 2069249400,
     datePrecision: { name: 'Minute', abbrev: 'MIN' },
     windowStart: '2035-07-28T15:30:00.000Z',
     windowEnd: '2035-07-28T17:30:00.000Z',
@@ -1299,6 +1299,56 @@ test('browser launch feeds reject unsafe coverage actions and recover safely', a
     page.getByRole('link', { name: 'Orbital Dawn', exact: true }).first(),
   ).toBeFocused();
   expect(feedRequests).toBe(initialFeedRequests + 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('browser launch feeds reject inconsistent mission timing and recover safely', async ({
+  page,
+}) => {
+  let recoveryStarted = false;
+  const malformedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    date: 'not-a-date',
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: recoveryStarted ? UPCOMING_LAUNCHES : [malformedLaunch],
+        meta: FEED_META,
+      }),
+    }),
+  );
+
+  await page.goto('/');
+
+  const unavailableHeading = page.getByRole('heading', {
+    level: 1,
+    name: 'We could not load the next mission.',
+  });
+  await expect(unavailableHeading).toBeVisible();
+  const unavailableHero = page.locator('section').filter({
+    has: unavailableHeading,
+  });
+  await expect(
+    unavailableHero.getByText('Launch feed response was incomplete'),
+  ).toBeVisible();
+  await expect(page.getByText(/NaN/)).toHaveCount(0);
+
+  const retry = unavailableHero.getByRole('button', { name: 'Retry schedule' });
+  await retry.focus();
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  recoveryStarted = true;
+  await retry.press('Enter');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Orbital Dawn', exact: true }).first(),
+  ).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
@@ -1806,6 +1856,7 @@ test('featured countdown keeps every unit on one row', async ({ page }) => {
   const nearLaunch = {
     ...UPCOMING_LAUNCHES[0],
     date: targetDate,
+    dateUnix: Math.floor(Date.parse(targetDate) / 1_000),
     windowStart: targetDate,
     windowEnd: new Date(
       Date.parse(targetDate) + 2 * 60 * 60 * 1_000
@@ -4876,6 +4927,9 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
       id: 'll2-demo-scheduled-timing',
       sourceId: 'demo-scheduled-timing',
       name: 'Scheduled Timing Mission',
+      date: new Date(
+        (UPCOMING_LAUNCHES[0].dateUnix + 2) * 1_000,
+      ).toISOString(),
       dateUnix: UPCOMING_LAUNCHES[0].dateUnix + 2,
     },
   ];
@@ -4999,6 +5053,9 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
       id: `${template.source}-${sourceId}`,
       sourceId,
       name: `Schedule Mission ${index + 1}`,
+      date: new Date(
+        (UPCOMING_LAUNCHES[0].dateUnix + index) * 1_000,
+      ).toISOString(),
       dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
     };
   });
@@ -5081,6 +5138,9 @@ test('schedule detail return restores the revealed mission result', async ({
       source,
       sourceId,
       name: `Schedule Return Mission ${index + 1}`,
+      date: new Date(
+        (UPCOMING_LAUNCHES[0].dateUnix + index) * 1_000,
+      ).toISOString(),
       dateUnix: UPCOMING_LAUNCHES[0].dateUnix + index,
     };
   });

@@ -59,6 +59,7 @@ describe('LaunchTicker', () => {
     const estimatedLaunch = {
       ...UPCOMING_LAUNCHES[0],
       date: '2035-08-31T00:00:00.000Z',
+      dateUnix: 2072131200,
       datePrecision: { name: 'Month', abbrev: 'M' },
       status: 'tbd' as const,
       statusName: 'To Be Determined',

@@ -252,9 +252,11 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   independent, and degraded or stale metadata stays visible throughout.
 - Every browser-facing launch collection, including the independent History
   archive, must pass the shared launch contract and unique canonical-ID guard
-  before it can replace settled records or create mission links. Primary and
-  ranked coverage actions must also be credential-free HTTPS destinations;
-  malformed successful responses fail closed through the existing retry state.
+  before it can replace settled records or create mission links. Provider
+  target strings must parse and agree with their integer Unix timestamps;
+  primary and ranked coverage actions must be credential-free HTTPS
+  destinations. Malformed successful responses fail closed through the
+  existing retry state.
 - Provider date precision and valid launch windows are normalized with each
   mission. Primary mission summaries retain a supplied window instead of
   reducing it to one target instant. Coarse day, month, quarter, and year

@@ -23,7 +23,7 @@ describe('reconcileCurrentLaunch', () => {
     const feedLaunch = {
       ...UPCOMING_LAUNCHES[0],
       date: '2035-07-28T15:30:00.000Z',
-      dateUnix: 2069259000,
+      dateUnix: 2069249400,
       datePrecision: { name: 'Minute', abbrev: 'MIN' },
       windowStart: '2035-07-28T15:30:00.000Z',
       windowEnd: '2035-07-28T17:30:00.000Z',

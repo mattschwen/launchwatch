@@ -43,6 +43,24 @@ function isOptionalPositiveInteger(value: unknown): boolean {
   );
 }
 
+function isLaunchTarget(date: unknown, dateUnix: unknown): boolean {
+  if (
+    typeof date !== 'string' ||
+    date !== date.trim() ||
+    date.length === 0 ||
+    typeof dateUnix !== 'number' ||
+    !Number.isSafeInteger(dateUnix)
+  ) {
+    return false;
+  }
+
+  const parsedDate = Date.parse(date);
+  return (
+    Number.isFinite(parsedDate) &&
+    Math.floor(parsedDate / 1_000) === dateUnix
+  );
+}
+
 function isSafeHttpsUrl(value: unknown): value is string {
   if (typeof value !== 'string' || value !== value.trim()) return false;
 
@@ -195,9 +213,7 @@ export function isLaunch(value: unknown): value is Launch {
   return (
     canonicalIdentity &&
     typeof value.name === 'string' &&
-    typeof value.date === 'string' &&
-    typeof value.dateUnix === 'number' &&
-    Number.isFinite(value.dateUnix) &&
+    isLaunchTarget(value.date, value.dateUnix) &&
     typeof value.rocket === 'string' &&
     typeof value.launchSite === 'string' &&
     statuses.includes(String(value.status)) &&

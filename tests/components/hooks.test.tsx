@@ -221,7 +221,7 @@ describe('useLaunchById', () => {
     const feedLaunch = {
       ...UPCOMING_LAUNCHES[0],
       date: '2035-08-03T12:30:00.000Z',
-      dateUnix: 2069776200,
+      dateUnix: 2069757000,
       status: 'upcoming' as const,
       statusName: 'Go for Launch',
       isLive: false,
@@ -230,7 +230,7 @@ describe('useLaunchById', () => {
     const olderDetail = {
       ...UPCOMING_LAUNCHES[0],
       date: '2035-08-03T11:30:00.000Z',
-      dateUnix: 2069772600,
+      dateUnix: 2069753400,
       status: 'live' as const,
       statusName: 'In Flight',
       isLive: true,
