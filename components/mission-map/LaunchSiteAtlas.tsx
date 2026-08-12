@@ -323,13 +323,13 @@ export default function LaunchSiteAtlas({
   }
 
   return (
-    <div className={`grid min-h-0 bg-[var(--surface-sunken)] ${expanded ? 'h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
-      <div className={`relative overflow-hidden border-[var(--border-subtle)] ${expanded ? 'min-h-[18rem] sm:min-h-[24rem] lg:min-h-0 lg:border-r' : 'min-h-[28rem] xl:border-r'}`}>
+    <div className={`grid min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,1fr)] bg-[var(--surface-sunken)] ${expanded ? 'h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
+      <div className={`relative min-w-0 max-w-full overflow-hidden border-[var(--border-subtle)] ${expanded ? 'min-h-[18rem] sm:min-h-[24rem] lg:min-h-0 lg:border-r' : 'min-h-[28rem] xl:border-r'}`}>
         <div ref={containerRef} className="launch-site-atlas-map absolute inset-0" data-atlas-map />
         <div aria-hidden="true" className="launch-site-atlas-brand-overlay pointer-events-none absolute inset-0 z-[350]" />
-        <div className="pointer-events-none absolute left-3 right-3 top-3 z-[600] flex flex-wrap items-start justify-between gap-2">
-          <div className="pointer-events-auto rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] px-3 py-2 shadow-lg backdrop-blur">
-            <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--console-green)]">
+        <div className="pointer-events-none absolute left-3 right-3 top-3 z-[600] flex min-w-0 flex-wrap items-start justify-between gap-2">
+          <div className="pointer-events-auto min-w-0 max-w-full rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] px-3 py-2 shadow-lg backdrop-blur">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 break-words font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--console-green)]">
               <Route aria-hidden="true" size={13} /> Current launch + ascent
             </div>
             <p className="mt-1 max-w-[17rem] truncate text-xs font-semibold text-[var(--text-primary)]">{trajectory.siteLabel}</p>
@@ -337,7 +337,7 @@ export default function LaunchSiteAtlas({
               {dataState === 'loading' || retrying ? 'Loading nearby facilities…' : dataState === 'error' ? 'Facility feed unavailable' : dataState === 'empty' ? 'No nearby pads reported' : zoom < 10 ? `${sites.length} pads · zoom closer to reveal names` : `${sites.length} pads · facility names visible`}
             </p>
           </div>
-          <div className="pointer-events-auto flex gap-1 rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] p-1 shadow-lg backdrop-blur" role="group" aria-label="Atlas controls">
+          <div className="pointer-events-auto flex min-w-0 max-w-full flex-wrap justify-end gap-1 rounded-lg border border-white/10 bg-[rgba(5,6,10,0.9)] p-1 shadow-lg backdrop-blur" role="group" aria-label="Atlas controls">
             <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomOut()} aria-label="Zoom atlas out"><Minus aria-hidden="true" size={16} /></button>
             <button type="button" className="icon-button h-11 w-11" onClick={() => mapRef.current?.zoomIn()} aria-label="Zoom atlas in"><Plus aria-hidden="true" size={16} /></button>
             <button type="button" className="icon-button h-11 w-11" onClick={centerCurrentLaunch} aria-label="Center current launch"><LocateFixed aria-hidden="true" size={16} /></button>
@@ -351,7 +351,7 @@ export default function LaunchSiteAtlas({
         <p className="sr-only">Use arrow keys to pan, plus and minus to zoom, or choose a facility from the learning panel.</p>
       </div>
 
-      <aside className={`min-h-0 border-t border-[var(--border-subtle)] bg-[var(--surface-base)] ${expanded ? 'overflow-y-auto lg:border-t-0' : 'xl:border-t-0'}`} aria-label="Launch site learning panel">
+      <aside className={`min-h-0 min-w-0 max-w-full border-t border-[var(--border-subtle)] bg-[var(--surface-base)] ${expanded ? 'overflow-y-auto lg:border-t-0' : 'xl:border-t-0'}`} aria-label="Launch site learning panel">
         {dataState === 'loading' ? (
           <div className="grid min-h-72 place-items-center p-6 text-center"><div><LoaderCircle aria-hidden="true" className="mx-auto animate-spin text-[var(--console-green)]" /><p className="mt-3 text-sm font-semibold">Building the local pad atlas</p><p className="mt-1 text-xs text-[var(--text-muted)]">Finding launch facilities within 250 km.</p></div></div>
         ) : dataState === 'error' ? (
@@ -432,8 +432,8 @@ export default function LaunchSiteAtlas({
                   <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={15} />
                   <input id={`pad-search-${launch.id}`} type="search" value={padQuery} onChange={(event) => setPadQuery(event.target.value)} placeholder="Pad, location, or operator" className="min-h-11 w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface-sunken)] py-2 pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none transition-colors placeholder:text-[var(--text-muted)] focus:border-[var(--console-cyan)] focus:ring-2 focus:ring-[rgba(88,200,232,0.2)]" />
                 </div>
-                <div className="mt-2 grid gap-1">
-                  {matchingSites.map((site) => <button key={site.id} type="button" aria-pressed={site.id === selectedSite.id} onClick={() => focusSite(site)} className={`flex min-h-11 items-center justify-between gap-3 rounded px-2.5 text-left text-xs transition-colors ${site.id === selectedSite.id ? 'bg-[rgba(94,230,168,0.1)] text-[var(--console-green)]' : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'}`}><span className="min-w-0 truncate">{site.name}</span><span className="shrink-0 font-mono text-[10px] text-[var(--text-muted)]">{site.id === nearestSite?.id ? 'nearest · ' : ''}{distanceKm(location, site).toFixed(1)} km</span></button>)}
+                <div className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
+                  {matchingSites.map((site) => <button key={site.id} type="button" aria-pressed={site.id === selectedSite.id} onClick={() => focusSite(site)} className={`flex min-h-11 min-w-0 max-w-full items-center justify-between gap-3 rounded px-2.5 text-left text-xs transition-colors ${site.id === selectedSite.id ? 'bg-[rgba(94,230,168,0.1)] text-[var(--console-green)]' : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'}`}><span className="min-w-0 truncate">{site.name}</span><span className="shrink-0 font-mono text-[10px] text-[var(--text-muted)]">{site.id === nearestSite?.id ? 'nearest · ' : ''}{distanceKm(location, site).toFixed(1)} km</span></button>)}
                   {matchingSites.length === 0 ? <p role="status" className="rounded border border-dashed border-[var(--border-subtle)] px-3 py-4 text-xs text-[var(--text-muted)]">No pads match “{padQuery.trim()}”. Try a pad, location, or operator name.</p> : null}
                 </div>
               </div>

@@ -390,6 +390,10 @@ The optional expanded map remains a modal dialog. It must:
   timeline and intelligence support. Its map bundle loads only as the stable,
   named trajectory panel approaches the viewport; the pending panel preserves
   section-index focus, responsive height, and honest loading semantics.
+- The launch-site atlas uses zero-minimum grid tracks so provider facts cannot
+  widen a narrow detail panel. At the 320px / 200%-text boundary, its five map
+  controls wrap into complete touch targets and pad-search rows truncate only
+  their mission labels while preserving distance context and keyboard access.
 - Rate-limited mission intelligence remains in an honest standby state until
   its panel approaches the viewport, then begins acquisition early enough to
   resolve before the user reaches its coverage actions.

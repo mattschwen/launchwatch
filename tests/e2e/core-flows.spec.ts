@@ -10150,6 +10150,87 @@ test('mission trajectory loading frame stays contained at 200 percent text scali
   );
 });
 
+test('launch-site atlas controls reflow at 200 percent text scaling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto(
+    `/launch/${UPCOMING_LAUNCHES[0].id}#mission-trajectory`
+  );
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' })
+  ).toBeVisible();
+  const atlas = page.locator('[data-launch-site-atlas]').first();
+  await expect(atlas).toBeVisible({ timeout: 20_000 });
+  await page.locator('html').evaluate((root) => {
+    root.style.fontSize = '32px';
+  });
+  await page.locator('#mission-trajectory').scrollIntoViewIfNeeded();
+  const controls = atlas.getByRole('group', { name: 'Atlas controls' });
+  const reset = controls.getByRole('button', {
+    name: 'Reset atlas to launch region',
+  });
+
+  await expect(reset).toBeVisible();
+  const geometry = await atlas.evaluate((element) => {
+    const map = element.querySelector('[data-atlas-map]')?.parentElement;
+    const toolbar = element.querySelector<HTMLElement>(
+      '[role="group"][aria-label="Atlas controls"]'
+    );
+    const fieldGuide = element.querySelector<HTMLElement>(
+      'aside[aria-label="Launch site learning panel"]'
+    );
+    const buttons = toolbar ? [...toolbar.querySelectorAll('button')] : [];
+    const atlasBounds = element.getBoundingClientRect();
+    const mapBounds = map?.getBoundingClientRect();
+    const toolbarBounds = toolbar?.getBoundingClientRect();
+
+    return {
+      atlasWidth: atlasBounds.width,
+      atlasLeft: atlasBounds.left,
+      atlasRight: atlasBounds.right,
+      viewportWidth: window.innerWidth,
+      mapLeft: mapBounds?.left ?? 0,
+      mapRight: mapBounds?.right ?? 0,
+      mapWidth: mapBounds?.width ?? 0,
+      toolbarLeft: toolbarBounds?.left ?? 0,
+      toolbarRight: toolbarBounds?.right ?? 0,
+      fieldGuideClientWidth: fieldGuide?.clientWidth ?? 0,
+      fieldGuideScrollWidth: fieldGuide?.scrollWidth ?? 0,
+      buttons: buttons.map((button) => {
+        const bounds = button.getBoundingClientRect();
+        return {
+          left: bounds.left,
+          right: bounds.right,
+          width: bounds.width,
+          height: bounds.height,
+        };
+      }),
+    };
+  });
+
+  expect(geometry.mapWidth).toBeLessThanOrEqual(geometry.atlasWidth);
+  expect(geometry.atlasLeft).toBeGreaterThanOrEqual(0);
+  expect(geometry.atlasRight).toBeLessThanOrEqual(geometry.viewportWidth);
+  expect(geometry.toolbarLeft).toBeGreaterThanOrEqual(geometry.mapLeft);
+  expect(geometry.toolbarRight).toBeLessThanOrEqual(geometry.mapRight);
+  expect(geometry.fieldGuideScrollWidth).toBeLessThanOrEqual(
+    geometry.fieldGuideClientWidth
+  );
+  expect(
+    geometry.buttons.every(
+      (button) =>
+        button.left >= geometry.mapLeft &&
+        button.right <= geometry.mapRight &&
+        button.width >= 44 &&
+        button.height >= 44
+    )
+  ).toBe(true);
+  await reset.focus();
+  await expect(reset).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('mission detail index moves focus among available sections', async ({
   page,
 }) => {
