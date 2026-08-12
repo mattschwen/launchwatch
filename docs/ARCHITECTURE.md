@@ -288,10 +288,11 @@ metadata remains `error`, or `stale` when last-known data exists, until an
 upstream retry succeeds.
 
 The in-memory cache is per server instance and is an optimization, not durable storage.
-Shared CDN windows apply only to complete, non-stale launch-feed responses.
-Successful feeds marked `partial` or `stale` return `private, no-store`, leaving
-the bounded provider cooldown and the client's next refresh free to observe
-recovery instead of replaying a degraded shared-cache entry.
+Shared CDN windows apply only to complete, non-stale launch-feed and canonical
+detail responses. Successful responses marked `partial` or `stale` return
+`private, no-store`, leaving the bounded provider cooldown and the client's next
+refresh or detail request free to observe recovery instead of replaying a
+degraded shared-cache entry.
 
 ## PWA and Service Worker Policy
 

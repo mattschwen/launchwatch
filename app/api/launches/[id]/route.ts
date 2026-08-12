@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
 import { getLaunchDetailQueryError } from '@/lib/launch-detail-params';
 import { checkRequestRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import type { LaunchFeedMeta } from '@/lib/types';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
+}
+
+function responseCacheControl(meta: LaunchFeedMeta): string {
+  return meta.partial || meta.stale
+    ? 'private, no-store'
+    : 'public, s-maxage=300, stale-while-revalidate=900';
 }
 
 export async function GET(
@@ -82,7 +89,7 @@ export async function GET(
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+          'Cache-Control': responseCacheControl(result.meta),
           ...rateLimitHeaders(rateLimit),
           ...(parsed.legacy ? { 'Content-Location': `/api/launches/${parsed.canonicalId}` } : {}),
         },

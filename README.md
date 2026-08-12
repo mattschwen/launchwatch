@@ -250,9 +250,10 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
   enrichment cannot replace the current feed's target, launch window, status,
   or live flags.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
-- Fresh launch feeds retain their normal shared-cache windows, while partial or
-  stale successful responses bypass browser and CDN storage so a recovered
-  provider can replace degraded data on the next refresh.
+- Fresh launch feeds and canonical mission details retain their normal
+  shared-cache windows, while partial or stale successful responses bypass
+  browser and CDN storage so a recovered provider can replace degraded data on
+  the next refresh.
 - A failed provider resource enters a bounded 30-second recovery window before
   LaunchWatch attempts that same upstream request again. Other providers remain
   independent, and degraded or stale metadata stays visible throughout.

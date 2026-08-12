@@ -247,7 +247,10 @@ Responses to accepted legacy `past-*` IDs include `legacyId: true` and a `Conten
 | Provider unavailable without cached data | `502` |
 | Unexpected route failure | `500` |
 
-CDN policy: 5 minutes fresh, 15 minutes stale-while-revalidate.
+CDN policy: complete, non-stale details remain fresh for 5 minutes with 15
+minutes stale-while-revalidate. Successful responses marked `partial` or
+`stale` use `private, no-store` so provider recovery is visible on the next
+detail request.
 
 ## Launch Intelligence
 
