@@ -1007,6 +1007,39 @@ html[data-boot-status='visible'] .header-instruments {
   }
 }
 
+/* Enlarged text can consume the same physical header width as a much narrower
+   device. Preserve the brand and feed-health shortcut, while yielding the
+   emblem, redundant live shortcut, and UTC clock before they are clipped. */
+.top-nav-shell[data-text-compact='true'] {
+  .brand-emblem,
+  .mobile-header-live,
+  .mobile-header-clock {
+    display: none;
+  }
+
+  .brand-lockup {
+    gap: 0;
+  }
+}
+
+html[data-boot-status='visible']:has(
+  .top-nav-shell[data-text-compact='true']
+) {
+  .top-nav-shell .brand-copy,
+  .mission-boot-message-mobile,
+  .mission-boot-message-full {
+    display: none;
+  }
+
+  .top-nav-shell .brand-emblem {
+    display: flex;
+  }
+
+  .mission-boot-message-compact {
+    display: inline;
+  }
+}
+
 .mobile-primary-nav {
   overflow: clip;
   background:

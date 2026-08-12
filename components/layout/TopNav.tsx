@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -107,6 +107,8 @@ function TopNavContents({
 }: {
   detailSource: string | null;
 }): React.ReactElement {
+  const headerRef = useRef<HTMLElement>(null);
+  const [textCompact, setTextCompact] = useState(false);
   const pathname = usePathname();
   const { source: inferredDetailSource } = useDetailNavigationContext();
   const { hasLiveLaunches, liveCount } = useLiveContext();
@@ -130,8 +132,38 @@ function TopNavContents({
     ),
   );
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const update = (): void => {
+      const rootFontSize = Number.parseFloat(
+        window.getComputedStyle(document.documentElement).fontSize,
+      );
+      const width = header.clientWidth || window.innerWidth;
+      setTextCompact(
+        Number.isFinite(rootFontSize) && rootFontSize > 0
+          ? width / rootFontSize < 18
+          : false,
+      );
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    window.addEventListener('resize', update);
+    update();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   return (
-    <header className="top-nav-shell safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl">
+    <header
+      ref={headerRef}
+      data-text-compact={textCompact ? 'true' : undefined}
+      className="top-nav-shell safe-area-pt sticky top-0 z-50 w-full border-b border-[var(--border-subtle)] bg-[color:var(--surface-header)] backdrop-blur-xl"
+    >
       <span
         role="status"
         aria-live="polite"
@@ -260,7 +292,7 @@ function TopNavContents({
             <Link
               href="/watch"
               aria-label={`${liveCount} active live signal${liveCount === 1 ? '' : 's'}`}
-              className="mobile-header-signal flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-1 text-[10px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
+              className="mobile-header-live mobile-header-signal flex min-h-11 min-w-11 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-1 text-[10px] font-bold tracking-wider text-[var(--console-magenta)] font-[family-name:var(--font-geist-mono)]"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />

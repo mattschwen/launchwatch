@@ -118,6 +118,67 @@ test('first visit confirms synchronization without covering the active route', a
   ).toBeVisible();
 });
 
+test('first visit keeps the brand and sync status distinct at 200% text size', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 851 });
+  await page.addInitScript(() => {
+    window.localStorage.removeItem('launchwatch.boot-sequence.v3');
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.addStyleTag({
+    content: ':root { font-size: 32px !important; }',
+  });
+
+  const header = page.locator('header.sticky:visible');
+  const brand = header.getByRole('link', { name: 'LaunchWatch home' });
+  const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
+  await expect(toast).toBeVisible();
+  await expect(toast.getByRole('status')).toHaveAccessibleName(
+    'Launch schedule synchronized',
+  );
+  await expect(header.locator('.brand-copy:visible')).toHaveCount(0);
+  await expect(header.locator('.brand-emblem:visible')).toHaveCount(1);
+  await expect(
+    toast.locator('.mission-boot-message-compact'),
+  ).toHaveText('Synced');
+
+  const initialGeometry = await Promise.all([
+    brand.boundingBox(),
+    toast.boundingBox(),
+    header.boundingBox(),
+  ]);
+  const [brandBounds, toastBounds, headerBounds] = initialGeometry;
+  expect(brandBounds).not.toBeNull();
+  expect(toastBounds).not.toBeNull();
+  expect(headerBounds).not.toBeNull();
+  expect(brandBounds!.x + brandBounds!.width).toBeLessThanOrEqual(
+    toastBounds!.x,
+  );
+  expect(toastBounds!.x + toastBounds!.width).toBeLessThanOrEqual(393);
+  expect(toastBounds!.y).toBeGreaterThanOrEqual(headerBounds!.y);
+  expect(toastBounds!.y + toastBounds!.height).toBeLessThanOrEqual(
+    headerBounds!.y + headerBounds!.height + 1,
+  );
+
+  await toast
+    .getByRole('button', { name: 'Dismiss system status' })
+    .click();
+  await expect(toast).toHaveCount(0);
+  await expect(header.locator('.brand-wordmark')).toHaveText('LaunchWatch');
+  await expect(header.locator('.brand-wordmark')).toBeVisible();
+  await expect(header.locator('.brand-emblem:visible')).toHaveCount(0);
+  const feedStatus = header.getByRole('button', {
+    name: /view provider status/,
+  });
+  const feedBounds = await feedStatus.boundingBox();
+  expect(feedBounds).not.toBeNull();
+  expect(feedBounds!.x + feedBounds!.width).toBeLessThanOrEqual(393);
+  expect(feedBounds!.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('installed PWA chrome respects simulated device safe areas', async ({
   page,
 }) => {
@@ -1654,11 +1715,26 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
       )
     )
     .toBeGreaterThan(200);
-  await expect(
-    page
-      .locator('header time[aria-label^="Current UTC time"]')
-      .filter({ visible: true })
-  ).toHaveText(/\d{2}:\d{2}Z/);
+  const enlargedHeader = page.locator('header.sticky:visible');
+  const enlargedBrand = enlargedHeader.getByRole('link', {
+    name: 'LaunchWatch home',
+  });
+  const enlargedFeedStatus = enlargedHeader.getByRole('button', {
+    name: /view provider status/,
+  });
+  await expect(enlargedBrand).toBeVisible();
+  await expect(enlargedFeedStatus).toBeVisible();
+  await enlargedFeedStatus.focus();
+  await expect(enlargedFeedStatus).toBeFocused();
+  await expect(enlargedHeader.locator('.brand-emblem:visible')).toHaveCount(0);
+  await expect(enlargedHeader.locator('.hardware-clock:visible')).toHaveCount(0);
+  for (const control of [enlargedBrand, enlargedFeedStatus]) {
+    const bounds = await control.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(393);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+  }
 
   await page.goto('/watch');
   await applyTextResize();
@@ -2556,6 +2632,29 @@ test('narrow mobile chrome keeps concurrent live and degraded states readable', 
   await page.setViewportSize({ width: 393, height: 727 });
   await expect(header.locator('.brand-emblem')).toBeVisible();
   await expect(header.locator('.hardware-clock:visible')).toHaveCount(1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.addStyleTag({
+    content: ':root { font-size: 32px !important; }',
+  });
+  await expect(header.locator('.brand-emblem:visible')).toHaveCount(0);
+  await expect(header.locator('.mobile-header-live:visible')).toHaveCount(0);
+  await expect(header.locator('.hardware-clock:visible')).toHaveCount(0);
+  await expect(
+    page
+      .locator('nav[aria-label="Primary navigation"].fixed:visible')
+      .getByText('Live launch available'),
+  ).toBeAttached();
+  const enlargedFeedStatus = header.getByRole('button', {
+    name: 'Partial feed — view provider status',
+  });
+  const enlargedStatusBounds = await enlargedFeedStatus.boundingBox();
+  expect(enlargedStatusBounds).not.toBeNull();
+  expect(enlargedStatusBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(
+    enlargedStatusBounds!.x + enlargedStatusBounds!.width,
+  ).toBeLessThanOrEqual(393);
+  expect(enlargedStatusBounds!.height).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

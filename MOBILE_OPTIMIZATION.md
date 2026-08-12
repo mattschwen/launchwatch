@@ -58,6 +58,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - The visual feed-health readout is a 44-pixel shortcut to the footer's
   provider breakdown. It moves focus with the viewport without motion and
   keeps source provenance reachable from long routes.
+- At enlarged text sizes, the sticky header treats the brand and feed-health
+  shortcut as its essential controls. The decorative emblem, redundant live
+  shortcut, and UTC clock yield before either essential control can clip; live
+  state remains named in the fixed Watch destination.
 - The desktop mission ticker preserves provider date precision: minute- and
   hour-level targets keep quietly ticking at the available granularity without
   repeating the primary countdown animation, while day-and-coarser targets
@@ -456,7 +460,9 @@ The optional expanded map remains a modal dialog. It must:
 - The first-visit synchronization status is a compact dismissible header ribbon.
   It temporarily replaces redundant feed/clock instruments, never covers the
   page or changes header height, keeps its compact label readable at 320px,
-  and returns keyboard focus to the active route when dismissed.
+  and returns keyboard focus to the active route when dismissed. With enlarged
+  text, the ribbon shares the header with the compact brand emblem; dismissing
+  it restores the complete wordmark and feed-health shortcut.
 
 ## PWA and Offline Behavior
 

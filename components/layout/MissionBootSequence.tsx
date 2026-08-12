@@ -122,13 +122,22 @@ export default function MissionBootSequence(): React.ReactElement | null {
             aria-atomic="true"
             className="truncate text-xs font-medium text-[var(--text-primary)] sm:text-sm lg:mt-0.5"
           >
-            <span className="max-[359px]:hidden lg:hidden" aria-hidden="true">
+            <span
+              className="mission-boot-message-mobile max-[359px]:hidden lg:hidden"
+              aria-hidden="true"
+            >
               {mobileMessage}
             </span>
-            <span className="min-[360px]:hidden" aria-hidden="true">
+            <span
+              className="mission-boot-message-compact min-[360px]:hidden"
+              aria-hidden="true"
+            >
               {compactMessage}
             </span>
-            <span className="hidden lg:inline" aria-hidden="true">
+            <span
+              className="mission-boot-message-full hidden lg:inline"
+              aria-hidden="true"
+            >
               {message}
             </span>
           </p>
