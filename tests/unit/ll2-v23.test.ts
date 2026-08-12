@@ -437,6 +437,39 @@ describe('Launch Library 2.3 adapter', () => {
     });
   });
 
+  it('preserves a bounded provider diagnosis only for failed launches', () => {
+    const failed = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      status: {
+        id: 4,
+        name: 'Launch Failure',
+        abbrev: 'Failure',
+        description: 'The launch vehicle did not reach orbit.',
+      },
+      failreason: 'Launch vehicle disintegrated while passing Max-Q.',
+    } as LL2Launch & { failreason: string });
+    const successful = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      failreason: 'Stale provider diagnosis.',
+    } as LL2Launch & { failreason: string });
+    const oversized = normalizeLL2Launch({
+      ...NORMAL_LIST_LAUNCH,
+      status: {
+        id: 4,
+        name: 'Launch Failure',
+        abbrev: 'Failure',
+        description: 'The launch vehicle did not reach orbit.',
+      },
+      failreason: 'x'.repeat(501),
+    } as LL2Launch & { failreason: string });
+
+    expect(failed.failureReason).toBe(
+      'Launch vehicle disintegrated while passing Max-Q.',
+    );
+    expect(successful.failureReason).toBeNull();
+    expect(oversized.failureReason).toBeNull();
+  });
+
   it('preserves provider-confirmed first-stage reuse and recovery details', () => {
     const normalized = normalizeLL2Launch({
       ...DETAILED_LAUNCH,

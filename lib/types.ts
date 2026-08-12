@@ -132,6 +132,7 @@ export interface LL2Launch {
   probability?: number | null;
   weather_concerns?: string | null;
   holdreason?: string | null;
+  failreason?: string | null;
   flightclub_url?: string | null;
   info_urls?: LL2InfoUrl[] | null;
   status: {
@@ -386,6 +387,7 @@ export interface Launch {
   launchProbability?: number | null;
   weatherConcerns?: string | null;
   holdReason?: string | null;
+  failureReason?: string | null;
   livestream: string | null;
   livestreams?: LaunchStream[] | null;
   description: string | null;

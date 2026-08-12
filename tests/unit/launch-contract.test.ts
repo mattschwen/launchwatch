@@ -260,6 +260,32 @@ describe('client launch contract', () => {
     ).toBe(false);
   });
 
+  it('accepts a bounded failure diagnosis only for failed missions', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        status: 'failure',
+        failureReason: 'Vehicle lost during ascent.',
+      }),
+    ).toBe(true);
+
+    for (const launch of [
+      { ...UPCOMING_LAUNCHES[0], failureReason: 'Vehicle lost during ascent.' },
+      {
+        ...UPCOMING_LAUNCHES[0],
+        status: 'failure',
+        failureReason: ' Vehicle lost during ascent. ',
+      },
+      {
+        ...UPCOMING_LAUNCHES[0],
+        status: 'failure',
+        failureReason: 'x'.repeat(501),
+      },
+    ]) {
+      expect(isLaunch(launch)).toBe(false);
+    }
+  });
+
   it.each([
     {
       label: 'unqualified ID',

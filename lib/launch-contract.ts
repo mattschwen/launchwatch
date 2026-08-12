@@ -117,6 +117,16 @@ function isOptionalTrimmedString(value: unknown): boolean {
   return value === undefined || isRequiredTrimmedString(value);
 }
 
+function isOptionalFailureReason(value: unknown, status: unknown): boolean {
+  if (value === undefined || value === null) return true;
+
+  return (
+    status === 'failure' &&
+    isRequiredTrimmedString(value) &&
+    value.length <= 500
+  );
+}
+
 function isSafeLaunchSiteVisual(value: unknown): boolean {
   if (value === null) return true;
   if (!isRecord(value)) return false;
@@ -287,6 +297,7 @@ export function isLaunch(value: unknown): value is Launch {
     isLaunchProbability(value.launchProbability) &&
     isOptionalNullableString(value.weatherConcerns) &&
     isOptionalNullableString(value.holdReason) &&
+    isOptionalFailureReason(value.failureReason, value.status) &&
     isLaunchMissionAgencies(value.missionAgencies) &&
     isLaunchProviderUpdates(value.providerUpdates) &&
     isSafeOptionalUrl(value.officialMissionUrl) &&

@@ -29,6 +29,7 @@ import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
 import LaunchCadenceSignal from './launch/LaunchCadenceSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
+import LaunchFailureSignal from './launch/LaunchFailureSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
 import MissionOperatorSignal from './launch/MissionOperatorSignal';
 import ProviderRevisionSignal from './launch/ProviderRevisionSignal';
@@ -191,6 +192,8 @@ export default function LaunchBriefingDrawer({
               The provider has not supplied a full mission description.
             </p>
           )}
+
+          <LaunchFailureSignal launch={launch} className="mt-5" />
 
           <dl className="mt-6 divide-y divide-[var(--border-subtle)] border-y border-[var(--border-subtle)]">
             <div className="py-4">

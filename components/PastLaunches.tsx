@@ -38,6 +38,7 @@ import {
 } from '@/lib/history-return';
 import { RESET_HISTORY_FILTERS_EVENT } from '@/components/layout/navigation';
 import MissionVisual from '@/components/launch/MissionVisual';
+import LaunchFailureSignal from '@/components/launch/LaunchFailureSignal';
 import MissionDescription from '@/components/MissionDescription';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 import {
@@ -397,6 +398,10 @@ function HistoryRow({
                 No mission summary was supplied by the provider.
               </p>
             )}
+            <LaunchFailureSignal
+              launch={replayLaunch}
+              className="mt-4 max-w-3xl"
+            />
             <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
               <div>
                 <dt className="data-label">Mission type</dt>

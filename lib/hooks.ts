@@ -195,6 +195,10 @@ export function reconcileCurrentLaunch(
     launchProbability: feedLaunch.launchProbability,
     weatherConcerns: feedLaunch.weatherConcerns,
     holdReason: feedLaunch.holdReason,
+    failureReason:
+      feedLaunch.status === 'failure'
+        ? feedLaunch.failureReason ?? detailLaunch.failureReason ?? null
+        : null,
     providerUpdatedAt: feedLaunch.providerUpdatedAt,
     orbitalLaunchAttemptCountYear:
       feedLaunch.orbitalLaunchAttemptCountYear,

@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import LaunchBriefingDrawer from '@/components/LaunchBriefingDrawer';
-import { UPCOMING_LAUNCHES } from '../fixtures/launches';
+import { HISTORICAL_LAUNCHES, UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 describe('LaunchBriefingDrawer', () => {
   it('isolates the modal from background content and restores it on close', async () => {
@@ -191,5 +191,21 @@ describe('LaunchBriefingDrawer', () => {
     expect(cadence).toHaveTextContent('Provider attempt #41');
     expect(cadence).toHaveTextContent('Pad attempt #19');
     expect(cadence).toHaveTextContent('Worldwide orbital #132');
+  });
+
+  it('keeps a provider failure diagnosis visible in the briefing', () => {
+    render(
+      <LaunchBriefingDrawer
+        launch={HISTORICAL_LAUNCHES[1]}
+        open
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('note', {
+        name: /Provider failure report: Vehicle lost during the qualification ascent/,
+      }),
+    ).toBeVisible();
   });
 });

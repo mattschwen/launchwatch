@@ -969,7 +969,8 @@ test('watch retains settled coverage and focus while detail revalidates after re
   context,
   page,
 }) => {
-  let detailRequests = 0;
+  let revalidationRequests = 0;
+  let shouldGateRevalidation = false;
   let releaseRevalidation: (() => void) | undefined;
   const revalidationGate = new Promise<void>((resolve) => {
     releaseRevalidation = resolve;
@@ -982,8 +983,10 @@ test('watch retains settled coverage and focus while detail revalidates after re
   await page.route(
     '**/api/launches/ll2-demo-orbital-dawn',
     async (route) => {
-      detailRequests += 1;
-      if (detailRequests > 1) await revalidationGate;
+      if (shouldGateRevalidation) {
+        revalidationRequests += 1;
+        await revalidationGate;
+      }
 
       await route.fulfill({
         status: 200,
@@ -1008,13 +1011,14 @@ test('watch retains settled coverage and focus while detail revalidates after re
   await stream.focus();
   await expect(stream).toBeFocused();
 
+  shouldGateRevalidation = true;
   await context.setOffline(true);
   await expect(
     page.getByText('Device is offline.', { exact: true }),
   ).toBeVisible();
   await context.setOffline(false);
 
-  await expect.poll(() => detailRequests).toBe(2);
+  await expect.poll(() => revalidationRequests).toBe(1);
   await expect(stream).toBeVisible();
   await expect(stream).toBeFocused();
   await expect(
@@ -8746,6 +8750,40 @@ test('history chronology reverses the visible feed window and survives detail re
   await returnLink.click();
   await expect(chronology).toHaveValue('date-asc');
   await expect(rows.first()).toContainText('Pathfinder Qualification');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('history and canonical detail preserve the provider failure diagnosis', async ({
+  page,
+}) => {
+  await page.goto('/history?outcome=failure');
+
+  const failedMission = page.locator('article').filter({
+    hasText: 'Pathfinder Qualification',
+  });
+  await failedMission
+    .getByRole('button', {
+      name: 'Show mission details for Pathfinder Qualification',
+    })
+    .click();
+
+  const archiveSignal = failedMission.locator('[data-launch-failure-signal]');
+  await expect(archiveSignal).toContainText(
+    'Vehicle lost during the qualification ascent.',
+  );
+  await expect(archiveSignal).toHaveAttribute(
+    'aria-label',
+    'Provider failure report: Vehicle lost during the qualification ascent.',
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await failedMission.getByRole('link', { name: /^View mission / }).click();
+  const detailSignal = page.locator(
+    '[aria-label="Mission telemetry"] [data-launch-failure-signal]',
+  );
+  await expect(detailSignal).toContainText(
+    'Vehicle lost during the qualification ascent.',
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

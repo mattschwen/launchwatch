@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import { installApiFixtures } from './support/api-fixtures';
 import {
   FEED_META,
+  HISTORICAL_LAUNCHES,
   LAUNCH_INTEL,
   UPCOMING_LAUNCHES,
 } from '../fixtures/launches';
@@ -90,6 +91,54 @@ for (const route of routes) {
     ).toEqual([]);
   });
 }
+
+test('@a11y provider failure diagnosis stays semantic across archive and detail', async ({
+  page,
+}) => {
+  await page.goto('/history?outcome=failure');
+
+  const failedMission = page.locator('article').filter({
+    hasText: HISTORICAL_LAUNCHES[1].name,
+  });
+  await failedMission
+    .getByRole('button', {
+      name: `Show mission details for ${HISTORICAL_LAUNCHES[1].name}`,
+    })
+    .click();
+  await expect(
+    failedMission.getByRole('note', { name: /Provider failure report/ }),
+  ).toBeVisible();
+
+  const archiveResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+
+  await failedMission.getByRole('link', { name: /^View mission / }).click();
+  await expect(
+    page
+      .getByRole('region', { name: 'Mission telemetry' })
+      .locator('[data-launch-failure-signal]'),
+  ).toBeVisible();
+
+  const detailResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = [...archiveResults.violations, ...detailResults.violations]
+    .filter(
+      (violation) =>
+        violation.impact === 'serious' || violation.impact === 'critical',
+    );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`,
+      )
+      .join('\n'),
+  ).toEqual([]);
+});
 
 test('@a11y trajectory failure remains a usable mission panel', async ({
   page,

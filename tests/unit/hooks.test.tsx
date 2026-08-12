@@ -62,6 +62,21 @@ describe('reconcileCurrentLaunch', () => {
       livestream: detailLaunch.livestream,
     });
   });
+
+  it('does not retain a stale failure diagnosis after the feed changes outcome', () => {
+    const detailLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      status: 'failure' as const,
+      failureReason: 'Vehicle lost during ascent.',
+    };
+
+    expect(
+      reconcileCurrentLaunch(UPCOMING_LAUNCHES[0], detailLaunch),
+    ).toMatchObject({
+      status: 'upcoming',
+      failureReason: null,
+    });
+  });
 });
 
 describe('useLaunchIntel', () => {

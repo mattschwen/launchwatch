@@ -43,7 +43,8 @@ short, dismissible status toast; it never blocks the application.
 - Ranked official/provider stream discovery
 - Useful Watch fallback when no verified stream is live
 - Searchable and filterable launch schedule and archive with mission-specific
-  accessible names on repeated archive actions
+  accessible names on repeated archive actions; provider failure diagnoses
+  participate in archive search when available
 - A route-aware `/` shortcut opens and focuses mission search on the schedule
   and archive without intercepting editable controls; shared search tolerates
   provider punctuation, accents, and joined vehicle designations. Once a query
@@ -75,6 +76,9 @@ short, dismissible status toast; it never blocks the application.
 - Provider-reported mission operators remain distinct from the launch service
   provider across Watch, briefing, detail, and mission search; names,
   abbreviations, and agency types stay attributable without inferred ownership
+- Failed LL2 missions retain the provider's bounded failure diagnosis in the
+  archive, briefing, and canonical detail telemetry; absent or stale reasons
+  are never inferred from the generic mission status
 - Canonical LL2 detail records expose the latest five valid provider update
   notes in newest-first order with UTC timestamps and credential-free HTTPS
   source handoffs; the briefing retains only the newest note, and list-only

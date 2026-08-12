@@ -255,6 +255,7 @@ export const HISTORICAL_LAUNCHES: Launch[] = [
     launchSite: 'Vandenberg Space Force Base, USA',
     status: 'failure',
     statusName: 'Failure',
+    failureReason: 'Vehicle lost during the qualification ascent.',
     providerUpdatedAt: '2024-11-05T08:02:00.000Z',
     missionName: 'Pathfinder Qualification',
     missionType: 'Test flight',

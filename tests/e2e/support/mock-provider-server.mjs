@@ -537,6 +537,8 @@ const ll2Previous = ll2Launch({
     'A qualification flight retained for archive filtering and failure-state coverage.',
 });
 
+ll2Previous.failreason = 'Vehicle lost during the qualification ascent.';
+
 ll2Previous.image = {
   id: 9002,
   name: 'Pathfinder Qualification mission',

@@ -44,6 +44,7 @@ const PROVIDER_TIMEOUT_MS = 12_000;
 const PROVIDER_FAILURE_COOLDOWN_MS = 30_000;
 export const MAX_HISTORY_LIMIT = 100;
 const MAX_PROVIDER_UPDATES = 5;
+const MAX_FAILURE_REASON_LENGTH = 500;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -570,6 +571,15 @@ function optionalText(value: string | null | undefined): string | undefined {
 
   const trimmed = value.trim();
   return trimmed || undefined;
+}
+
+function providerFailureReason(
+  value: string | null | undefined,
+): string | null {
+  if (!isMeaningfulLaunchValue(value)) return null;
+
+  const normalized = value.trim();
+  return normalized.length <= MAX_FAILURE_REASON_LENGTH ? normalized : null;
 }
 
 function providerTimestamp(value: string | null | undefined): string | null {
@@ -1202,6 +1212,10 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
         : null,
     weatherConcerns: optionalText(launch.weather_concerns) ?? null,
     holdReason: optionalText(launch.holdreason) ?? null,
+    failureReason:
+      sourceStatus === 'failure'
+        ? providerFailureReason(launch.failreason)
+        : null,
     livestream: livestreams?.[0]?.url || null,
     livestreams: livestreams.length > 0 ? livestreams : null,
     description: normalizeLaunchDescription(launch.mission?.description),

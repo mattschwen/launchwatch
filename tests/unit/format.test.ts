@@ -409,6 +409,9 @@ describe('launch formatting', () => {
     expect(matchesLaunchSearch(launch, 'ora')).toBe(true);
     expect(matchesLaunchSearch(launch, '  ')).toBe(true);
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
+    expect(
+      matchesLaunchSearch(HISTORICAL_LAUNCHES[1], 'qualification ascent'),
+    ).toBe(true);
   });
 
   it('matches provider punctuation, accents, and letter-number joins forgivingly', () => {

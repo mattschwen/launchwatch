@@ -180,6 +180,7 @@ export function matchesLaunchSearch(launch: Launch, query: string): boolean {
       agency.type,
     ]),
     launch.description,
+    launch.failureReason,
     launch.program,
     launch.orbit,
     launch.rocket,

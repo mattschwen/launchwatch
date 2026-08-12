@@ -95,6 +95,23 @@ describe('PastLaunches', () => {
     );
   });
 
+  it('surfaces a provider failure diagnosis in the expanded archive record', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Show mission details for Pathfinder Qualification',
+      }),
+    );
+
+    expect(
+      screen.getByRole('note', {
+        name: /Provider failure report: Vehicle lost during the qualification ascent/,
+      }),
+    ).toBeVisible();
+  });
+
   it('marks and filters past missions whose outcomes remain unconfirmed', async () => {
     const user = userEvent.setup();
     const unconfirmedLaunch = {
