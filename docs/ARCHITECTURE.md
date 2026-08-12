@@ -287,6 +287,7 @@ attribution.
 | `type=next` CDN response | 2 minutes + 4 minutes stale-while-revalidate |
 | `type=history` CDN response | 60 minutes + 120 minutes stale-while-revalidate |
 | `/api/launches/[id]` CDN response | 5 minutes + 15 minutes stale-while-revalidate |
+| `/api/launch-sites` CDN response | 6 hours + 24 hours stale-while-revalidate |
 | Launch-intel aggregate | 2 minutes fresh + 10 minutes stale fallback |
 
 Provider transport failures also carry a bounded 30-second per-resource
@@ -296,11 +297,11 @@ upstream retry succeeds.
 
 The in-memory cache is per server instance and is an optimization, not durable storage.
 Shared CDN windows apply only to complete, non-stale launch-feed, canonical
-detail, and launch-intelligence responses. Successful responses marked
-`partial` or `stale` return
-`private, no-store`, leaving the bounded provider cooldown and the client's next
-request free to observe recovery instead of replaying a degraded shared-cache
-entry.
+detail, launch-site, and launch-intelligence responses. A stale facility atlas
+or any successful response derived from launch metadata marked `partial` or
+`stale` returns `private, no-store`, leaving the bounded provider cooldown and
+the client's next request free to observe recovery instead of replaying a
+degraded shared-cache entry.
 
 ## PWA and Service Worker Policy
 

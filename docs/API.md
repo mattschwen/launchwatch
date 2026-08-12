@@ -252,6 +252,28 @@ minutes stale-while-revalidate. Successful responses marked `partial` or
 `stale` use `private, no-store` so provider recovery is visible on the next
 detail request.
 
+## Launch Sites
+
+### `GET /api/launch-sites?id=[canonical-id]`
+
+Resolves the canonical mission server-side, then returns nearby Launch Library
+2 facilities for the provider-reported launch coordinates. The response
+includes bounded site facts and an atlas metadata envelope with its generation,
+cache, stale, and source state.
+
+| Condition | Status |
+| --- | --- |
+| Missing, repeated, or unsupported input | `400` |
+| Valid ID with no provider record | `404` |
+| Launch coordinates unavailable | `422` |
+| Launch or site provider unavailable without cached data | `502` |
+
+CDN policy: facilities resolved from a complete, current launch record and a
+fresh site atlas remain fresh for 6 hours with 24 hours
+stale-while-revalidate. A stale atlas, or one resolved from launch metadata
+marked `partial` or `stale`, uses `private, no-store` so the next request can
+observe provider recovery.
+
 ## Launch Intelligence
 
 ### `GET /api/launch-intel?id=[canonical-id]`

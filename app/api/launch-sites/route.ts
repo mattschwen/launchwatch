@@ -3,6 +3,15 @@ import { getLaunchByIdResult, parseLaunchId } from '@/lib/api';
 import { getNearbyLaunchSites } from '@/lib/launch-sites';
 import { checkRequestRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 
+function responseCacheControl(
+  launchMeta: { partial: boolean; stale: boolean },
+  atlasMeta: { stale: boolean },
+): string {
+  return launchMeta.partial || launchMeta.stale || atlasMeta.stale
+    ? 'private, no-store'
+    : 'public, s-maxage=21600, stale-while-revalidate=86400';
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   if ([...searchParams.keys()].some((key) => key !== 'id') || searchParams.getAll('id').length !== 1) {
@@ -36,7 +45,7 @@ export async function GET(request: NextRequest) {
     const atlas = await getNearbyLaunchSites(launchResult.data.location);
     return NextResponse.json(atlas, {
       headers: {
-        'Cache-Control': 'public, s-maxage=21600, stale-while-revalidate=86400',
+        'Cache-Control': responseCacheControl(launchResult.meta, atlas.meta),
         ...rateLimitHeaders(rateLimit),
         'X-LaunchWatch-Canonical-Id': parsed.canonicalId,
         'X-LaunchWatch-Data-State': atlas.meta.stale ? 'stale' : 'fresh',
