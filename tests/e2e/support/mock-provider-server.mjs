@@ -311,7 +311,10 @@ function ll2Launch({
         description: 'The payload deploys into its target orbit.',
       },
     ],
-    program: [{ name: 'LaunchWatch Test Program' }],
+    program: [
+      { name: 'LaunchWatch Test Program' },
+      { name: 'International Space Station' },
+    ],
     image: null,
     mission_patches: [],
   };

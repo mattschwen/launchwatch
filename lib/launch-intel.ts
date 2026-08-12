@@ -283,6 +283,7 @@ function buildMissionPhrases(launch: Launch): string[] {
     inferLaunchProvider(launch),
     `${inferLaunchProvider(launch)} ${launch.rocket}`,
     launch.missionType || '',
+    ...(launch.programs ?? []),
     launch.program || '',
   ]
     .map((phrase) => normalizeForMatch(phrase))

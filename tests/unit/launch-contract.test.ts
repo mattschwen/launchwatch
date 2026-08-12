@@ -64,6 +64,8 @@ describe('client launch contract', () => {
         missionAgencies: [
           { name: 'European Space Agency', abbrev: 'ESA', type: 'Multinational' },
         ],
+        program: 'Commercial Crew Program',
+        programs: ['Commercial Crew Program', 'International Space Station'],
       }),
     ).toBe(true);
     expect(
@@ -162,6 +164,37 @@ describe('client launch contract', () => {
           { name: 'European Space Agency', abbrev: 'ESA', type: 'Multinational' },
           { name: 'european space agency', abbrev: null, type: null },
         ],
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects malformed, duplicate, or oversized mission program lists', () => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        program: 'Commercial Crew Program',
+        programs: ['Commercial Crew Program', 'commercial crew program'],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        program: 'International Space Station',
+        programs: [' International Space Station '],
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        program: 'Program 0',
+        programs: Array.from({ length: 9 }, (_, index) => `Program ${index}`),
+      }),
+    ).toBe(false);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        program: 'Commercial Crew Program',
+        programs: ['International Space Station'],
       }),
     ).toBe(false);
   });

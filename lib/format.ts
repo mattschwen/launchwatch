@@ -181,6 +181,7 @@ export function matchesLaunchSearch(launch: Launch, query: string): boolean {
     ]),
     launch.description,
     launch.failureReason,
+    ...(launch.programs ?? []),
     launch.program,
     launch.orbit,
     launch.rocket,

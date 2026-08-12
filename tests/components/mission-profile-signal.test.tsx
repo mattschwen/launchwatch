@@ -25,6 +25,35 @@ describe('MissionProfileSignal', () => {
     expect(profile).toHaveTextContent('Orbit · Low Earth Orbit');
   });
 
+  it('shows complete multi-program lineage without repeating legacy data', () => {
+    render(
+      <dl>
+        <MissionProfileSignal
+          launch={{
+            missionType: 'Human Exploration',
+            program: 'Commercial Crew Program',
+            programs: [
+              'Commercial Crew Program',
+              'International Space Station',
+              'commercial crew program',
+            ],
+            orbit: 'Low Earth Orbit',
+          }}
+        />
+      </dl>
+    );
+
+    const profile = screen
+      .getByText('Mission profile')
+      .closest('[data-mission-profile-signal]');
+
+    expect(profile).toHaveTextContent(
+      'Programs · Commercial Crew Program · International Space Station',
+    );
+    expect(profile).toHaveTextContent('Orbit · Low Earth Orbit');
+    expect(screen.getAllByText(/Commercial Crew Program/i)).toHaveLength(1);
+  });
+
   it('does not repeat a provider value used as the primary profile', () => {
     render(
       <dl>

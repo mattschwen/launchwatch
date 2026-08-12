@@ -3537,12 +3537,17 @@ test('featured mission telemetry stays legible in the split layout', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('mission program context follows the mission across primary surfaces', async ({
+test('complete mission program lineage follows the mission across primary surfaces', async ({
   page,
 }) => {
   const program =
     'International Earth Observation and Climate Resilience Program';
-  const lineageLaunch = { ...UPCOMING_LAUNCHES[0], program };
+  const secondaryProgram = 'International Space Station Partnership';
+  const lineageLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    program,
+    programs: [program, secondaryProgram],
+  };
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({
       status: 200,
@@ -3567,12 +3572,14 @@ test('mission program context follows the mission across primary surfaces', asyn
 
   const assertProfile = async (
     profile: Locator,
-    expectedProgram = program,
+    expectedPrograms = [program, secondaryProgram],
     includeOrbit = true,
   ): Promise<void> => {
     await expect(profile).toBeVisible();
     await expect(profile).toContainText('Communications');
-    await expect(profile).toContainText(expectedProgram);
+    for (const expectedProgram of expectedPrograms) {
+      await expect(profile).toContainText(expectedProgram);
+    }
     if (includeOrbit) {
       await expect(profile).toContainText('Orbit · Low Earth Orbit');
     }
@@ -3589,7 +3596,7 @@ test('mission program context follows the mission across primary surfaces', asyn
   );
   await assertProfile(
     hero.locator('[data-mission-profile-signal]'),
-    program,
+    [program, secondaryProgram],
     false,
   );
 
@@ -3610,7 +3617,7 @@ test('mission program context follows the mission across primary surfaces', asyn
     page
       .getByRole('region', { name: 'Mission telemetry' })
       .locator('[data-mission-profile-signal]'),
-    'LaunchWatch Test Program',
+    ['LaunchWatch Test Program', 'International Space Station'],
   );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

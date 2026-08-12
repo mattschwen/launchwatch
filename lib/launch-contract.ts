@@ -214,6 +214,32 @@ function isLaunchMissionAgencies(value: unknown): boolean {
   return true;
 }
 
+function isLaunchPrograms(value: unknown, legacyProgram: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!Array.isArray(value) || value.length === 0 || value.length > 8) {
+    return false;
+  }
+  if (!isRequiredTrimmedString(legacyProgram) || legacyProgram !== value[0]) {
+    return false;
+  }
+
+  const names = new Set<string>();
+  for (const program of value) {
+    if (
+      !isRequiredTrimmedString(program) ||
+      program.length > 120
+    ) {
+      return false;
+    }
+
+    const normalizedName = program.toLocaleLowerCase();
+    if (names.has(normalizedName)) return false;
+    names.add(normalizedName);
+  }
+
+  return true;
+}
+
 function isLaunchProviderUpdates(value: unknown): boolean {
   if (value === undefined || value === null) return true;
   if (!Array.isArray(value) || value.length > 5) return false;
@@ -308,6 +334,7 @@ export function isLaunch(value: unknown): value is Launch {
     isOptionalNullableString(value.holdReason) &&
     isOptionalFailureReason(value.failureReason, value.status) &&
     isLaunchMissionAgencies(value.missionAgencies) &&
+    isLaunchPrograms(value.programs, value.program) &&
     isLaunchProviderUpdates(value.providerUpdates) &&
     isSafeOptionalUrl(value.officialMissionUrl) &&
     isSafeOptionalUrl(value.trajectorySimulationUrl) &&

@@ -405,6 +405,7 @@ export interface Launch {
   provider?: string | null;
   providerLogo?: string | null;
   program?: string | null;
+  programs?: string[] | null;
   timeline?: LaunchTimelineEvent[] | null;
   providerUpdates?: LaunchProviderUpdate[] | null;
   officialMissionUrl?: string | null;

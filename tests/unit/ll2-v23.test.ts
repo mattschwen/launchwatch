@@ -227,6 +227,24 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves every distinct provider program affiliation', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      program: [
+        { name: ' Commercial Crew Program ' },
+        { name: 'International Space Station' },
+        { name: 'commercial crew program' },
+        { name: 'N/A' },
+      ],
+    });
+
+    expect(normalized.program).toBe('Commercial Crew Program');
+    expect(normalized.programs).toEqual([
+      'Commercial Crew Program',
+      'International Space Station',
+    ]);
+  });
+
   it('preserves safe provider-curated mission resources', () => {
     const normalized = normalizeLL2Launch(DETAILED_LAUNCH);
 

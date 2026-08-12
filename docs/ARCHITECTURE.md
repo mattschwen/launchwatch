@@ -101,6 +101,8 @@ the same guard before its independent archive state can create mission links.
   successful terminal outcome instead of leaving the mission unresolved;
 - retains a bounded provider failure diagnosis only for normalized failed
   missions, preventing stale failure text from leaking into another outcome;
+- retains up to eight distinct LL2 program affiliations in provider order while
+  preserving the first value for clients using the legacy singular field;
 - ranks detailed provider broadcasts by source trust, live state, and provider
   priority so official coverage remains the primary mission action;
 - excludes non-live broadcasts whose declared end precedes the launch window,

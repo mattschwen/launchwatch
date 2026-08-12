@@ -400,12 +400,19 @@ describe('launch formatting', () => {
   });
 
   it('matches every search term across a launch mission profile', () => {
-    const launch = UPCOMING_LAUNCHES[0];
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      programs: [
+        'LaunchWatch Test Program',
+        'International Space Station',
+      ],
+    };
 
     expect(matchesLaunchSearch(launch, 'communications')).toBe(true);
     expect(matchesLaunchSearch(launch, 'low earth orbit')).toBe(true);
     expect(matchesLaunchSearch(launch, 'orbital alliance nova')).toBe(true);
     expect(matchesLaunchSearch(launch, 'relay authority government')).toBe(true);
+    expect(matchesLaunchSearch(launch, 'international space station')).toBe(true);
     expect(matchesLaunchSearch(launch, 'ora')).toBe(true);
     expect(matchesLaunchSearch(launch, '  ')).toBe(true);
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);

@@ -46,6 +46,8 @@ export const MAX_HISTORY_LIMIT = 100;
 const MAX_PROVIDER_UPDATES = 5;
 const MAX_FAILURE_REASON_LENGTH = 500;
 const MAX_STATUS_DESCRIPTION_LENGTH = 300;
+const MAX_MISSION_PROGRAMS = 8;
+const MAX_MISSION_PROGRAM_LENGTH = 120;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -592,6 +594,32 @@ function providerStatusDescription(
     : null;
 }
 
+function providerPrograms(
+  value: LL2Launch['program'],
+): NonNullable<Launch['programs']> {
+  if (!Array.isArray(value)) return [];
+
+  return value.reduce<NonNullable<Launch['programs']>>((programs, item) => {
+    const name = isMeaningfulLaunchValue(item?.name)
+      ? item.name.trim()
+      : null;
+    if (
+      !name ||
+      name.length > MAX_MISSION_PROGRAM_LENGTH ||
+      programs.length >= MAX_MISSION_PROGRAMS ||
+      programs.some(
+        (program) =>
+          program.localeCompare(name, undefined, { sensitivity: 'base' }) === 0,
+      )
+    ) {
+      return programs;
+    }
+
+    programs.push(name);
+    return programs;
+  }, []);
+}
+
 function providerTimestamp(value: string | null | undefined): string | null {
   const normalized = optionalText(value);
   if (!normalized) return null;
@@ -1036,6 +1064,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     provider: 'SpaceX',
     providerLogo: null,
     program: null,
+    programs: null,
     timeline: null,
     videoThumbnail: buildYouTubeThumbnail(webcast),
     source: 'spacex',
@@ -1183,6 +1212,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     return agencies;
   }, []);
   const providerUpdates = normalizeProviderUpdates(launch.updates);
+  const programs = providerPrograms(launch.program);
 
   return {
     id: toCanonicalLaunchId('ll2', launch.id),
@@ -1249,11 +1279,8 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     } : null,
     provider: provider.name,
     providerLogo: provider.logo,
-    program: isMeaningfulLaunchValue(
-      (Array.isArray(launch.program) ? launch.program : [])[0]?.name
-    )
-      ? (Array.isArray(launch.program) ? launch.program : [])[0]!.name.trim()
-      : null,
+    program: programs[0] ?? null,
+    programs: programs.length > 0 ? programs : null,
     timeline: Array.isArray(launch.timeline)
       ? launch.timeline.flatMap((event) => {
         const type = event?.type?.name || event?.type?.abbrev;

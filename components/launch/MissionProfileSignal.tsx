@@ -2,7 +2,10 @@ import { Orbit } from 'lucide-react';
 import { isMeaningfulLaunchValue } from '@/lib/format';
 import type { Launch } from '@/lib/types';
 
-type MissionProfile = Pick<Launch, 'missionType' | 'orbit' | 'program'>;
+type MissionProfile = Pick<
+  Launch,
+  'missionType' | 'orbit' | 'program' | 'programs'
+>;
 type MissionProfileVariant = 'default' | 'compact' | 'hero';
 
 function normalizedValue(value: string | null | undefined): string | null {
@@ -13,6 +16,20 @@ function sameValue(left: string, right: string): boolean {
   return left.localeCompare(right, undefined, { sensitivity: 'base' }) === 0;
 }
 
+function normalizedPrograms(launch: MissionProfile): string[] {
+  return [...(launch.programs ?? []), launch.program]
+    .reduce<string[]>((programs, value) => {
+      const program = normalizedValue(value);
+      if (
+        program &&
+        !programs.some((candidate) => sameValue(candidate, program))
+      ) {
+        programs.push(program);
+      }
+      return programs;
+    }, []);
+}
+
 export default function MissionProfileSignal({
   launch,
   variant = 'default',
@@ -21,16 +38,25 @@ export default function MissionProfileSignal({
   variant?: MissionProfileVariant;
 }): React.ReactElement {
   const missionType = normalizedValue(launch.missionType);
-  const program = normalizedValue(launch.program);
+  const programs = normalizedPrograms(launch);
   const orbit = normalizedValue(launch.orbit);
-  const primary = missionType || program || orbit || 'Profile pending';
+  const primary = missionType || programs[0] || orbit || 'Profile pending';
+  const contextualPrograms = programs.filter(
+    (program) => !sameValue(program, primary),
+  );
+  const programContext = contextualPrograms.length > 0
+    ? `${contextualPrograms.length === 1 ? 'Program' : 'Programs'} · ${contextualPrograms.join(' · ')}`
+    : null;
   const context = [
-    program && !sameValue(program, primary) ? `Program · ${program}` : null,
+    programContext,
     orbit && !sameValue(orbit, primary) ? `Orbit · ${orbit}` : null,
   ].filter((value): value is string => Boolean(value));
   const heroContext =
-    program && !sameValue(program, primary)
-      ? { label: 'Program', value: program }
+    contextualPrograms.length > 0
+      ? {
+          label: contextualPrograms.length === 1 ? 'Program' : 'Programs',
+          value: contextualPrograms.join(' · '),
+        }
       : orbit && !sameValue(orbit, primary)
         ? { label: 'Orbit', value: orbit }
         : null;

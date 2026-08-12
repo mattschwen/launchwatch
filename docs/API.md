@@ -131,6 +131,12 @@ provider-supplied `name`, optional `abbrev`, and optional agency `type`.
 Placeholder or duplicate agency names are omitted, and clients must not infer
 an operator from the launch service provider when the mission record is silent.
 
+Launch Library 2 program affiliations normalize to the ordered, deduplicated
+`programs` list, capped at eight names of at most 120 characters each. The
+legacy singular `program` field remains the first valid entry for compatible
+clients. Placeholder, empty, oversized, and case-insensitive duplicate names
+are omitted; mission-profile surfaces and search use the complete list.
+
 Normal-mode schedule records do not include provider update notes. Canonical
 LL2 detail responses may add `providerUpdates`, containing at most the latest
 five valid notes in newest-first order. Each note has a stable string `id`, a
@@ -381,7 +387,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `padLaunchAttemptCountYear` | Optional positive ordinal for the launch pad's attempt sequence in the mission's UTC year |
 | `isLive`, `webcastLive` | Active coverage selection signal plus the provider's explicit webcast flag; an in-flight UI claim still requires an in-flight `statusName` |
 | `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window |
-| `description`, `missionType`, `orbit`, `program` | Mission context |
+| `description`, `missionType`, `orbit`, `program`, `programs` | Mission context; `program` is the first compatible value while `programs` retains every distinct LL2 affiliation |
 | `missionAgencies` | Optional provider-reported mission operators with name, abbreviation, and agency type |
 | `image`, `missionPatch`, `videoThumbnail` | Optional media |
 | `rocketImageUrl`, `launchImageUrl`, `padMapImage`, `providerLogo` | Backward-compatible optional media URLs |
