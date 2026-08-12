@@ -254,7 +254,7 @@ export function useLaunchById(id: string | null | undefined) {
     const controller = new AbortController();
     setRemote((current) => ({
       id,
-      launch: null,
+      launch: current?.id === id ? current.launch : null,
       loading: true,
       error: null,
       notFound: false,

@@ -272,6 +272,69 @@ describe('useLaunchById', () => {
     );
   });
 
+  it('retains settled detail while the same mission revalidates after reconnecting', async () => {
+    let online = true;
+    vi.spyOn(window.navigator, 'onLine', 'get').mockImplementation(
+      () => online,
+    );
+    let resolveRevalidation: ((value: Response) => void) | undefined;
+    const revalidation = new Promise<Response>((resolve) => {
+      resolveRevalidation = resolve;
+    });
+    const detailedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+    };
+    let detailRequests = 0;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('?type=all')) {
+          return Promise.resolve(response({ launches: UPCOMING_LAUNCHES }));
+        }
+
+        detailRequests += 1;
+        return detailRequests === 1
+          ? Promise.resolve(response({ launch: detailedLaunch }))
+          : revalidation;
+      }),
+    );
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={detailedLaunch.id} />
+      </LaunchDataProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('selected-stream')).toHaveTextContent(
+        detailedLaunch.livestream,
+      ),
+    );
+
+    online = false;
+    fireEvent(window, new Event('offline'));
+    online = true;
+    fireEvent(window, new Event('online'));
+
+    await waitFor(() => expect(detailRequests).toBe(2));
+    expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+      'Acquiring detail',
+    );
+    expect(screen.getByTestId('selected-stream')).toHaveTextContent(
+      detailedLaunch.livestream,
+    );
+
+    resolveRevalidation?.(response({ launch: detailedLaunch }));
+    await waitFor(() =>
+      expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+        'Detail settled',
+      ),
+    );
+  });
+
   it('never shows the prior detailed mission after the selected ID changes', async () => {
     const user = userEvent.setup();
     const detailedFirst = {

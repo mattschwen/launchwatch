@@ -965,6 +965,67 @@ test('detail enrichment cannot regress the current schedule or live state', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch retains settled coverage and focus while detail revalidates after reconnecting', async ({
+  context,
+  page,
+}) => {
+  let detailRequests = 0;
+  let releaseRevalidation: (() => void) | undefined;
+  const revalidationGate = new Promise<void>((resolve) => {
+    releaseRevalidation = resolve;
+  });
+  const detailedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    livestream: 'https://x.com/i/broadcasts/reconnect-orbital-dawn',
+  };
+
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    async (route) => {
+      detailRequests += 1;
+      if (detailRequests > 1) await revalidationGate;
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: detailedLaunch,
+          canonicalId: detailedLaunch.id,
+          meta: FEED_META,
+        }),
+      });
+    },
+  );
+  await page.goto('/watch');
+
+  const coverage = page.getByRole('region', {
+    name: 'Mission coverage scheduled',
+  });
+  const stream = coverage.getByRole('link', {
+    name: /Open X stream.*new tab/i,
+  });
+  await expect(stream).toBeVisible();
+  await stream.focus();
+  await expect(stream).toBeFocused();
+
+  await context.setOffline(true);
+  await expect(
+    page.getByText('Device is offline.', { exact: true }),
+  ).toBeVisible();
+  await context.setOffline(false);
+
+  await expect.poll(() => detailRequests).toBe(2);
+  await expect(stream).toBeVisible();
+  await expect(stream).toBeFocused();
+  await expect(
+    page.getByRole('heading', { name: 'Checking stream status' }),
+  ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  releaseRevalidation?.();
+  await expect(stream).toBeVisible();
+});
+
 test('detail suppresses a live server snapshot the current feed cannot confirm', async ({
   page,
 }) => {
