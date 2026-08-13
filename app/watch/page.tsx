@@ -30,6 +30,7 @@ import LaunchTimeContext from '@/components/LaunchTimeContext';
 import MissionDescription from '@/components/MissionDescription';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchActions from '@/components/launch/LaunchActions';
+import CoverageTimingSignal from '@/components/launch/CoverageTimingSignal';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import MissionVisualDisclosure from '@/components/launch/MissionVisualDisclosure';
@@ -439,6 +440,10 @@ function WatchStage({
               : 'border-[var(--border-strong)]'
           }`}
         >
+          <CoverageTimingSignal
+            launch={launch}
+            className="border-b border-[var(--console-cyan)]/20"
+          />
           <VideoPlayer
             url={launch.livestream}
             title={launch.name}

@@ -440,6 +440,9 @@ const ll2RankedCoverage = {
       title: 'Orbital Dawn official webcast',
       url: 'https://x.com/i/broadcasts/official-orbital-dawn',
       type: { name: 'Official Webcast' },
+      start_time: new Date(
+        new Date(ll2Upcoming.net).getTime() - 20 * 60 * 1000
+      ).toISOString(),
       live: false,
     },
   ],

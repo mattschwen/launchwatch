@@ -183,7 +183,11 @@ function isSafeLaunchStreams(value: unknown): boolean {
     value === null ||
     (Array.isArray(value) &&
       value.every(
-        (stream) => isRecord(stream) && isSafeHttpsUrl(stream.url),
+        (stream) =>
+          isRecord(stream) &&
+          isSafeHttpsUrl(stream.url) &&
+          isOptionalProviderTimestamp(stream.startTime) &&
+          isOptionalProviderTimestamp(stream.endTime),
       ))
   );
 }

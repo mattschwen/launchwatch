@@ -389,7 +389,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `padLaunchAttemptCountYear` | Optional positive ordinal for the launch pad's attempt sequence in the mission's UTC year |
 | `padTurnaroundSeconds` | Optional bounded LL2 detail duration since the previous launch from the same pad |
 | `isLive`, `webcastLive` | Active coverage selection signal plus the provider's explicit webcast flag; an in-flight UI claim still requires an in-flight `statusName` |
-| `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window |
+| `livestream`, `livestreams` | Safe provider video candidates whose declared schedule can overlap the launch window; optional `startTime` and `endTime` values are normalized canonical timestamps |
 | `description`, `missionType`, `orbit`, `program`, `programs` | Mission context; `program` is the first compatible value while `programs` retains every distinct LL2 affiliation |
 | `missionAgencies` | Optional provider-reported mission operators with name, abbreviation, and agency type |
 | `image`, `missionPatch`, `videoThumbnail` | Optional media |

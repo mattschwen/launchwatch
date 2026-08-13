@@ -23,6 +23,8 @@ describe('client launch contract', () => {
           {
             url: 'https://x.com/i/broadcasts/orbital-dawn',
             title: 'Orbital Dawn official coverage',
+            startTime: '2035-07-28T14:10:00.000Z',
+            endTime: '2035-07-28T16:30:00.000Z',
           },
         ],
       }),
@@ -105,6 +107,28 @@ describe('client launch contract', () => {
           'https://flightclub.io/result?llId=demo-orbital-dawn',
       }),
     ).toBe(true);
+  });
+
+  it('rejects malformed provider coverage timestamps', () => {
+    for (const streamTiming of [
+      { startTime: 'not-a-date' },
+      { startTime: '2035-07-28T14:10:00Z' },
+      { endTime: '2035-07-28T16:30:00Z' },
+    ]) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+          livestreams: [
+            {
+              url: 'https://x.com/i/broadcasts/orbital-dawn',
+              title: 'Orbital Dawn official coverage',
+              ...streamTiming,
+            },
+          ],
+        }),
+      ).toBe(false);
+    }
   });
 
   it('rejects malformed provider launch designators', () => {

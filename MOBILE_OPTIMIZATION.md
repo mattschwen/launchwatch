@@ -212,6 +212,10 @@ The optional expanded map remains a modal dialog. It must:
 - Scheduled provider coverage and completed replays keep the cyan secondary
   signal treatment. Magenta live framing and actions are reserved for a
   provider-confirmed active broadcast.
+- Scheduled provider coverage exposes its exact UTC and local start time plus
+  its offset from the provider launch target above the media surface on Watch
+  and mission detail. The timing strip wraps without displacing the primary
+  stream action or implying that coverage is already live.
 - The mission queue follows primary coverage on smaller screens, ahead of the
   selected mission briefing and secondary vehicle imagery, so switching missions
   does not require traversing details for the current selection. It becomes a side

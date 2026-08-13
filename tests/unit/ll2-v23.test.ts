@@ -1013,6 +1013,10 @@ describe('Launch Library 2.3 adapter', () => {
     expect(normalized.livestream).toBe(
       'https://www.youtube.com/watch?v=current123'
     );
+    expect(normalized.livestreams?.[0]).toMatchObject({
+      startTime: '2035-07-29T01:50:00.000Z',
+      endTime: '2035-07-29T07:50:00.000Z',
+    });
     expect(normalized.livestreams?.map((stream) => stream.url)).toEqual([
       'https://www.youtube.com/watch?v=current123',
     ]);

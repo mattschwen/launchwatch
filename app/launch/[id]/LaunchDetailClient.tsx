@@ -32,6 +32,7 @@ import LaunchTimeContext from '@/components/LaunchTimeContext';
 import MissionDescription from '@/components/MissionDescription';
 import TimelineEventClock from '@/components/TimelineEventClock';
 import LaunchActions from '@/components/launch/LaunchActions';
+import CoverageTimingSignal from '@/components/launch/CoverageTimingSignal';
 import LaunchIntelDeck from '@/components/launch/LaunchIntelDeck';
 import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
@@ -1454,6 +1455,10 @@ export default function LaunchDetailClient({
                     : 'border-[var(--border-subtle)]'
               }`}
             >
+              <CoverageTimingSignal
+                launch={presentedLaunch}
+                className="border-b border-[var(--console-cyan)]/20"
+              />
               <VideoPlayer
                 url={presentedLaunch.livestream}
                 title={presentedLaunch.name}

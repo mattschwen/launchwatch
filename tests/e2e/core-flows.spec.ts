@@ -1343,6 +1343,14 @@ test('watch prefers official provider coverage over an earlier restream', async 
     'href',
     'https://x.com/i/broadcasts/official-orbital-dawn'
   );
+  const timing = page.getByRole('group', {
+    name: 'Provider coverage schedule',
+  });
+  await expect(timing).toContainText('20m before provider launch target');
+  await expect(timing.locator('time').first()).toHaveAttribute(
+    'datetime',
+    /^\d{4}-\d{2}-\d{2}T11:40:00\.000Z$/,
+  );
   await primaryCoverage.focus();
   await expect(primaryCoverage).toBeFocused();
   const primaryBounds = await primaryCoverage.boundingBox();
@@ -1352,6 +1360,14 @@ test('watch prefers official provider coverage over an earlier restream', async 
       'a[href="https://www.youtube.com/watch?v=community-orbital-dawn"]'
     )
   ).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.goto('/launch/ll2-demo-ranked-coverage');
+  await expect(
+    page.getByRole('region', { name: 'Mission coverage' }).getByRole('group', {
+      name: 'Provider coverage schedule',
+    }),
+  ).toContainText('20m before provider launch target');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

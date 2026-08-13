@@ -1178,8 +1178,8 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     source: stream.source || null,
     thumbnail: stream.feature_image || buildYouTubeThumbnail(stream.url),
     type: stream.type?.name || null,
-    startTime: stream.start_time || null,
-    endTime: stream.end_time || null,
+    startTime: providerTimestamp(stream.start_time),
+    endTime: providerTimestamp(stream.end_time),
     isLive: Boolean(stream.live || launch.webcast_live),
   }));
   const latitude = coordinate(launch.pad.latitude);
