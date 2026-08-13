@@ -10825,6 +10825,35 @@ test('mission detail index moves focus among available sections', async ({
     name: 'Mission sections',
   }).last();
   await expect(sectionIndex).toContainText('6 sections');
+  const indexShortcut = page.getByRole('link', {
+    name: 'Jump to mission index',
+    exact: true,
+  });
+  const shortcutHierarchy = await indexShortcut.evaluate((shortcut) => {
+    const description = document.querySelector('[data-mission-description]');
+    const index = document.getElementById('mission-sections');
+    return {
+      shortcutPrecedesDescription: Boolean(
+        description &&
+          shortcut.compareDocumentPosition(description) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+      shortcutPrecedesIndex: Boolean(
+        index &&
+          shortcut.compareDocumentPosition(index) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    };
+  });
+  expect(shortcutHierarchy).toEqual({
+    shortcutPrecedesDescription: true,
+    shortcutPrecedesIndex: true,
+  });
+  await indexShortcut.focus();
+  await indexShortcut.press('Enter');
+  await expect(page).toHaveURL(/#mission-sections$/);
+  await expect(sectionIndex).toBeFocused();
+  await expect(sectionIndex).toBeInViewport();
   const sectionLinks = sectionIndex.getByRole('link');
   await expect(sectionLinks).toHaveCount(6);
 

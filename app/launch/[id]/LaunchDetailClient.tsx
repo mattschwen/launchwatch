@@ -1048,6 +1048,14 @@ export default function LaunchDetailClient({
               className="mt-5"
             />
 
+            <a
+              href="#mission-sections"
+              className="action-button action-button-quiet mt-3 w-full justify-center text-[var(--console-cyan)] sm:w-auto"
+            >
+              Jump to mission index
+              <ChevronRight aria-hidden="true" size={16} />
+            </a>
+
             {launch.description ? (
               <MissionDescription
                 description={launch.description}
@@ -1065,9 +1073,11 @@ export default function LaunchDetailClient({
         </section>
 
         <nav
+          id="mission-sections"
           ref={sectionIndexNavRef}
+          tabIndex={-1}
           aria-label="Mission sections"
-          className="mission-section-index surface-card holo-card signal-cold !sticky top-[calc(3.5rem+var(--safe-area-top))] z-40 mt-5 min-w-0 max-w-full overflow-hidden bg-[color:var(--surface-header)] shadow-[0_10px_24px_rgba(0,0,0,0.34)] sm:top-[calc(4.375rem+var(--safe-area-top))]"
+          className="mission-section-index surface-card holo-card signal-cold !sticky top-[calc(3.5rem+var(--safe-area-top))] z-40 mt-5 min-w-0 max-w-full overflow-hidden bg-[color:var(--surface-header)] shadow-[0_10px_24px_rgba(0,0,0,0.34)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] sm:top-[calc(4.375rem+var(--safe-area-top))]"
         >
           <div className="mission-section-index-header flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5">
             <p className="data-label text-[var(--console-cyan)]">
