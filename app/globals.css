@@ -1597,6 +1597,10 @@ html[data-boot-status='visible']:has(
   );
 }
 
+.supplemental-command[data-text-compact='true'] .supplemental-command-icon {
+  display: none;
+}
+
 .mission-visual-viewport,
 .mission-visual-placeholder-viewport {
   position: relative;

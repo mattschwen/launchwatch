@@ -151,6 +151,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   disclosure. Opening it must preserve the caption and full-image action
   without widening the page; the image itself should not load before
   disclosure.
+- At the 320-pixel / 200%-text boundary, the mobile trajectory and optional
+  visual disclosures give their full row to readable labels; their decorative
+  icons yield before words fragment into narrow letter columns. Normal phone
+  and desktop disclosure styling remains unchanged.
 - When the feed does not yet include official coverage, the featured mission
   holds the generic search fallback while canonical detail is checked. The
   loading action keeps its 44px footprint; a failed check labels the fallback

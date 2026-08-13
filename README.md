@@ -160,7 +160,9 @@ is a short, dismissible status toast; it never blocks the application.
   boundaries, and persistent selected surfaces while retaining signal colors
 - 200% text-size reflow down to the 320px boundary for dense mission telemetry,
   countdown, command, signal, archive, and internal scroll-rail instruments
-  without clipping or horizontal page drift
+  without clipping or horizontal page drift; Home's optional path and visual
+  commands yield decorative icons before their labels fragment into narrow
+  letter columns
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations, uncached data APIs, and
   a dedicated maskable app icon for adaptive launchers; eligible browsers

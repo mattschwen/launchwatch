@@ -4055,6 +4055,49 @@ test('primary mission summaries keep the provider launch window visible', async 
   }
 });
 
+test('home supplemental commands preserve readable words at 200 percent text scaling', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '32px';
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  const missionPath = page.getByRole('button', {
+    name: 'Illustrative mission path Launch site and modeled mission phases',
+  });
+  const visualDisclosure = page.getByRole('button', {
+    name: 'Show mission visual for Orbital Dawn',
+  });
+  const pathTitle = missionPath.getByText('Illustrative mission path', {
+    exact: true,
+  });
+  const visualTitle = visualDisclosure.getByText('Licensed mission visual', {
+    exact: true,
+  });
+
+  await expect(missionPath).toBeVisible();
+  await expect(visualDisclosure).toBeVisible();
+
+  const geometry = await Promise.all([
+    missionPath,
+    visualDisclosure,
+    pathTitle,
+    visualTitle,
+  ].map((locator) => locator.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height };
+  })));
+
+  expect(geometry[0].height).toBeLessThan(400);
+  expect(geometry[1].height).toBeLessThan(400);
+  expect(geometry[2].width).toBeGreaterThanOrEqual(150);
+  expect(geometry[3].width).toBeGreaterThanOrEqual(150);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home keeps the schedule ahead of optional licensed mission imagery', async ({
   page,
 }) => {

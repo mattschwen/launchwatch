@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { ChevronDown, ImageIcon } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
@@ -8,6 +8,7 @@ import {
   selectLaunchVisual,
 } from '@/lib/launch-visual';
 import MissionVisual from './MissionVisual';
+import { useCompactTextLayout } from '@/lib/text-reflow';
 
 export default function MissionVisualDisclosure({
   launch,
@@ -21,6 +22,8 @@ export default function MissionVisualDisclosure({
   className?: string;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
+  const disclosureRef = useRef<HTMLButtonElement>(null);
+  const compactText = useCompactTextLayout(disclosureRef);
   const regionId = useId();
   const selection = selectLaunchVisual(launch);
   const available = selection.status === 'available';
@@ -47,21 +50,23 @@ export default function MissionVisualDisclosure({
       } ${className}`}
     >
       <button
+        ref={disclosureRef}
         type="button"
+        data-text-compact={compactText ? 'true' : undefined}
         aria-expanded={open}
         aria-controls={regionId}
         aria-label={`${open ? 'Hide' : 'Show'} mission visual for ${launch.name}`}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-[4.5rem] w-full flex-wrap items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+        className="supplemental-command flex min-h-[4.5rem] w-full flex-wrap items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--surface-subtle)]"
       >
         <span
           data-visual-summary="true"
           className="flex min-w-0 flex-[1_1_12rem] items-center gap-3"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
+          <span className="supplemental-command-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] text-[var(--console-cyan)]">
             <ImageIcon aria-hidden="true" size={19} />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="supplemental-command-copy min-w-0 flex-1">
             <span className="data-label block break-words text-[var(--console-cyan)]">
               {archiveLabel}
             </span>

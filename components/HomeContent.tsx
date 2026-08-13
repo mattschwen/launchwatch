@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Globe2 } from 'lucide-react';
@@ -14,6 +14,7 @@ import {
 } from '@/components/FilterBar';
 import { useLaunchById, useLaunches } from '@/lib/hooks';
 import { selectLaunchVisual } from '@/lib/launch-visual';
+import { useCompactTextLayout } from '@/lib/text-reflow';
 import {
   buildScheduleDetailHref,
   parseScheduleFilters,
@@ -116,6 +117,8 @@ function HomeExperience({
   initialFilters: FilterOptions;
   returnFocusId?: string | null;
 }): React.ReactElement {
+  const missionPathDisclosureRef = useRef<HTMLButtonElement>(null);
+  const compactMissionPath = useCompactTextLayout(missionPathDisclosureRef);
   const { launches, online, loading, refreshing, error, meta, refresh } = useLaunches();
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
@@ -218,14 +221,16 @@ function HomeExperience({
 
       <section className="mt-4 lg:hidden">
         <button
+          ref={missionPathDisclosureRef}
           type="button"
+          data-text-compact={compactMissionPath ? 'true' : undefined}
           aria-expanded={featuredMission ? mobileMapOpen : undefined}
           aria-controls={featuredMission ? 'mobile-mission-map' : undefined}
           aria-disabled={featuredMission ? undefined : true}
           onClick={() => {
             if (featuredMission) setMobileMapOpen((value) => !value);
           }}
-          className={`surface-card flex min-h-[4.5rem] w-full items-center gap-3 px-4 text-left transition-colors ${
+          className={`supplemental-command surface-card flex min-h-[4.5rem] w-full items-center gap-3 px-4 text-left transition-colors ${
             featuredMission
               ? 'hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]'
               : loading
@@ -234,7 +239,7 @@ function HomeExperience({
           }`}
         >
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] ${
+            className={`supplemental-command-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-accent)] ${
               featuredMission
                 ? 'text-[var(--console-green)]'
                 : loading
@@ -244,7 +249,7 @@ function HomeExperience({
           >
             <Globe2 aria-hidden="true" size={20} />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="supplemental-command-copy min-w-0 flex-1">
             <span className="block break-words font-semibold text-[var(--text-primary)]">
               {missionPathTitle}
             </span>
