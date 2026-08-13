@@ -5933,6 +5933,62 @@ test('watch anchors a selected archive replay in the mission queue', async ({
   expect(pageErrors).toEqual([]);
 });
 
+test('watch keeps source context with the mission rail and gives intelligence the full console', async ({
+  page,
+}) => {
+  await page.goto('/watch');
+
+  const mission = page.locator('[data-watch-mission-details]');
+  const queue = page.getByRole('complementary', { name: 'Mission queue' });
+  const visual = page.locator('[data-watch-mission-visual]');
+  const sourceStatus = page.locator('[data-watch-source-status]');
+  const intelligence = page.locator('#watch-intelligence');
+
+  await expect(mission).toBeVisible();
+  await expect(queue).toBeVisible();
+  await expect(visual).toBeVisible();
+  await expect(sourceStatus).toBeVisible();
+  await expect(intelligence).toBeVisible();
+
+  const [missionBounds, queueBounds, visualBounds, sourceBounds, intelBounds] =
+    await Promise.all([
+      mission.boundingBox(),
+      queue.boundingBox(),
+      visual.boundingBox(),
+      sourceStatus.boundingBox(),
+      intelligence.boundingBox(),
+    ]);
+  expect(missionBounds).not.toBeNull();
+  expect(queueBounds).not.toBeNull();
+  expect(visualBounds).not.toBeNull();
+  expect(sourceBounds).not.toBeNull();
+  expect(intelBounds).not.toBeNull();
+
+  if (test.info().project.name.startsWith('mobile')) {
+    expect(sourceBounds!.y).toBeGreaterThanOrEqual(
+      visualBounds!.y + visualBounds!.height,
+    );
+    expect(intelBounds!.y).toBeGreaterThanOrEqual(
+      sourceBounds!.y + sourceBounds!.height,
+    );
+  } else {
+    expect(Math.abs(sourceBounds!.x - queueBounds!.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(sourceBounds!.width - queueBounds!.width)).toBeLessThanOrEqual(
+      1,
+    );
+    expect(sourceBounds!.y).toBeGreaterThanOrEqual(
+      visualBounds!.y + visualBounds!.height,
+    );
+    expect(sourceBounds!.y).toBeLessThan(
+      missionBounds!.y + missionBounds!.height,
+    );
+    expect(intelBounds!.width).toBeGreaterThan(missionBounds!.width);
+  }
+
+  expect(sourceBounds!.width).toBeGreaterThanOrEqual(280);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch reveals a pointer-selected mission on narrow layouts', async ({
   page,
 }) => {
@@ -6889,6 +6945,14 @@ test('watch preloads approaching trajectory and keeps an offscreen keyboard path
   await expect(trajectoryMap).toHaveCount(0);
 
   await browseArchive.press('Tab');
+  const intelligenceActions = page
+    .locator('#watch-intelligence')
+    .locator('a[href]:visible, button:not([disabled]):visible');
+  await expect(intelligenceActions.first()).toBeFocused();
+  const lastIntelligenceAction = intelligenceActions.last();
+  await lastIntelligenceAction.focus();
+  await expect(lastIntelligenceAction).toBeFocused();
+  await lastIntelligenceAction.press('Tab');
   await expect(loadButton).toBeFocused();
   expect((await loadButton.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(pendingTrajectory).toBeVisible();
@@ -7700,8 +7764,10 @@ test('mission intelligence keeps complete stream identities contained', async ({
     streamContained: true,
     titleComplete: true,
     channelComplete: true,
-    titleWrapped: true,
   });
+  expect(geometry.titleWrapped).toBe(
+    test.info().project.name.startsWith('mobile'),
+  );
   expect(geometry.targetHeight).toBeGreaterThanOrEqual(44);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
   await expect(title).toBeVisible();

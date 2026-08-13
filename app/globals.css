@@ -1396,8 +1396,7 @@ html[data-boot-status='visible']:has(
   }
 }
 
-.watch-primary-grid > *,
-.watch-support-grid > * {
+.watch-primary-grid > * {
   min-width: 0;
   max-width: 100%;
 }

@@ -1460,7 +1460,7 @@ function WatchContent(): React.ReactElement {
               />
             </div>
 
-            <div className="order-4 min-w-0">
+            <div data-watch-mission-visual className="order-4 min-w-0">
               <WatchMissionVisual
                 key={selectedLaunch.id}
                 launch={selectedLaunch}
@@ -1469,10 +1469,65 @@ function WatchContent(): React.ReactElement {
                 collapsible={Boolean(selectedLaunch.livestream)}
               />
             </div>
+
+            <aside
+              data-watch-source-status
+              className="surface-card holo-card signal-warm order-5 min-w-0 p-5"
+            >
+              <h2 className="section-title text-[1.15rem]">Source & status</h2>
+              <div
+                className={`mt-4 flex items-center gap-2 text-sm ${
+                  degradedSchedule
+                    ? 'text-[var(--console-amber)]'
+                    : 'text-[var(--console-green)]'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full ${
+                    degradedSchedule
+                      ? 'bg-[var(--console-amber)]'
+                      : 'bg-[var(--console-green)]'
+                  }`}
+                />
+                {retainedSchedule
+                  ? online
+                    ? 'Schedule status unconfirmed'
+                    : 'Offline · schedule retained'
+                  : meta?.partial
+                    ? 'Schedule partially available'
+                    : 'Schedule online'}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
+                Schedules and stream links are aggregated from official providers.
+                Launch times can change.
+              </p>
+              <div className="-ml-4 mt-4 flex flex-col items-start gap-1">
+                {selectedLaunch.officialMissionUrl ? (
+                  <a
+                    href={selectedLaunch.officialMissionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="action-button action-button-quiet"
+                  >
+                    Official page
+                    <ExternalLink aria-hidden="true" size={15} />
+                    <ExternalLinkHint />
+                  </a>
+                ) : null}
+                <Link
+                  href="/history"
+                  className="action-button action-button-quiet"
+                >
+                  Browse launch archive
+                  <ArrowRight aria-hidden="true" size={15} />
+                </Link>
+              </div>
+            </aside>
           </div>
         </div>
 
-        <div className="watch-support-grid mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="mt-5 min-w-0">
           <div
             id="watch-intelligence"
             tabIndex={-1}
@@ -1488,57 +1543,6 @@ function WatchContent(): React.ReactElement {
               onRetry={retryIntel}
             />
           </div>
-          <aside className="surface-card holo-card signal-warm p-5">
-            <h2 className="section-title text-[1.15rem]">Source & status</h2>
-            <div
-              className={`mt-4 flex items-center gap-2 text-sm ${
-                degradedSchedule
-                  ? 'text-[var(--console-amber)]'
-                  : 'text-[var(--console-green)]'
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className={`h-2 w-2 rounded-full ${
-                  degradedSchedule
-                    ? 'bg-[var(--console-amber)]'
-                    : 'bg-[var(--console-green)]'
-                }`}
-              />
-              {retainedSchedule
-                ? online
-                  ? 'Schedule status unconfirmed'
-                  : 'Offline · schedule retained'
-                : meta?.partial
-                  ? 'Schedule partially available'
-                  : 'Schedule online'}
-            </div>
-            <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
-              Schedules and stream links are aggregated from official providers.
-              Launch times can change.
-            </p>
-            <div className="-ml-4 mt-4 flex flex-col items-start gap-1">
-              {selectedLaunch.officialMissionUrl ? (
-                <a
-                  href={selectedLaunch.officialMissionUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="action-button action-button-quiet"
-                >
-                  Official page
-                  <ExternalLink aria-hidden="true" size={15} />
-                  <ExternalLinkHint />
-                </a>
-              ) : null}
-              <Link
-                href="/history"
-                className="action-button action-button-quiet"
-              >
-                Browse launch archive
-                <ArrowRight aria-hidden="true" size={15} />
-              </Link>
-            </div>
-          </aside>
         </div>
 
         <DeferredWatchTrajectory
