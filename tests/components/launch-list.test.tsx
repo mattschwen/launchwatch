@@ -162,7 +162,8 @@ describe('LaunchList', () => {
     ).toHaveTextContent('1 mission');
   });
 
-  it('surfaces the nearest concurrent provider windows for schedule planning', () => {
+  it('keeps concurrent-window planning aligned with the filtered schedule', async () => {
+    const user = userEvent.setup();
     const launches = [
       {
         ...UPCOMING_LAUNCHES[0],
@@ -204,6 +205,26 @@ describe('LaunchList', () => {
     expect(signal).toHaveTextContent('Jul 28, 2035, 16:00–16:15 UTC');
     expect(signal.querySelectorAll('time')).toHaveLength(2);
 
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    const provider = screen.getByRole('combobox', { name: 'Provider' });
+    await user.selectOptions(provider, 'Demo Launch Alliance');
+
+    expect(
+      screen.queryByRole('status', {
+        name: /Concurrent provider launch windows/,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('1 mission');
+
+    await user.selectOptions(provider, 'all');
+    expect(
+      screen.getByRole('status', {
+        name: /Concurrent provider launch windows/,
+      }),
+    ).toBeVisible();
+
     vi.mocked(useLaunches).mockReturnValue({
       launches,
       online: true,
@@ -214,8 +235,11 @@ describe('LaunchList', () => {
       refresh: vi.fn().mockResolvedValue(undefined),
     });
     view.rerender(<LaunchList />);
-    expect(signal).toHaveTextContent('Partial planning signal');
-    expect(signal).toHaveAccessibleName(/Partial planning signal/);
+    const partialSignal = screen.getByRole('status', {
+      name: /Concurrent provider launch windows/,
+    });
+    expect(partialSignal).toHaveTextContent('Partial planning signal');
+    expect(partialSignal).toHaveAccessibleName(/Partial planning signal/);
 
     vi.mocked(useLaunches).mockReturnValue({
       launches,
@@ -227,8 +251,11 @@ describe('LaunchList', () => {
       refresh: vi.fn().mockResolvedValue(undefined),
     });
     view.rerender(<LaunchList />);
-    expect(signal).toHaveTextContent('Last-known planning signal');
-    expect(signal).toHaveAccessibleName(/Last-known planning signal/);
+    const retainedSignal = screen.getByRole('status', {
+      name: /Concurrent provider launch windows/,
+    });
+    expect(retainedSignal).toHaveTextContent('Last-known planning signal');
+    expect(retainedSignal).toHaveAccessibleName(/Last-known planning signal/);
   });
 
   it('finds missions by profile and orbit metadata', async () => {

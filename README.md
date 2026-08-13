@@ -129,8 +129,9 @@ the header route commands in compact landscape layouts.
 - UTC weekday context on calendar-specific featured targets and schedule rows,
   while week, month, quarter, and broader estimates avoid invented weekdays
 - The nearest overlap between calendar-ready provider launch windows appears
-  as an exact shared UTC interval in Home's schedule-planning signal; coarse or
-  excessively broad estimates stay silent, and degraded feeds qualify the signal
+  as an exact shared UTC interval in Home's schedule-planning signal. The signal
+  follows the active result filters so it never describes hidden missions;
+  coarse or excessively broad estimates stay silent, and degraded feeds qualify it
 - Provider-confirmed launch-site clocks accompany precise targets across the
   schedule, featured mission, Watch, briefing, and detail surfaces; the
   viewer clock is omitted when it would duplicate the pad's local time

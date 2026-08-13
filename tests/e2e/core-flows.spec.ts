@@ -5393,6 +5393,29 @@ test('home surfaces concurrent provider windows without widening the schedule', 
     viewport: window.innerWidth,
   }));
   expect(geometry.right).toBeLessThanOrEqual(geometry.viewport);
+
+  await schedule.getByRole('button', { name: 'Filter', exact: true }).click();
+  const provider = schedule.getByRole('combobox', { name: 'Provider' });
+  await provider.selectOption({ label: 'SpaceX' });
+  await expect(signal).toHaveCount(0);
+  await expect(
+    schedule.getByRole('status', { name: 'Upcoming launch results' }),
+  ).toHaveText('1 mission');
+  await expect(
+    schedule.getByRole('heading', {
+      name: 'Falcon 9 Block 5 | Globalstar 2-R Mission 1 (x 9)',
+    }),
+  ).toBeVisible();
+  await expect(
+    schedule.getByRole('heading', { name: 'Falcon 9 Block 5 | USSF-366' }),
+  ).toHaveCount(0);
+
+  await provider.selectOption('all');
+  await expect(
+    schedule.getByRole('status', {
+      name: /Concurrent provider launch windows/,
+    }),
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

@@ -289,8 +289,8 @@ export default function LaunchList({
     return earliest && latest ? { earliest, latest } : null;
   }, [launches]);
   const windowOverlaps = useMemo(
-    () => getLaunchWindowOverlaps(launches),
-    [launches],
+    () => getLaunchWindowOverlaps(filtered),
+    [filtered],
   );
 
   useEffect(() => {

@@ -104,8 +104,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   a short weekday; week, month, quarter, and broader estimates remain unchanged.
 - When two calendar-ready provider windows overlap, the schedule surfaces the
   nearest shared UTC interval before the result rows. The signal wraps long
-  mission names without widening the page and identifies partial or retained
-  data instead of presenting it as a complete current planning picture.
+  mission names without widening the page, follows active result filters, and
+  identifies partial or retained data instead of presenting it as a complete
+  current planning picture.
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping the full
