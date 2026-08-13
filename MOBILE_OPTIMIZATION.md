@@ -199,6 +199,9 @@ The optional expanded map remains a modal dialog. It must:
   standby stage names that checked state explicitly instead of continuing to
   imply that provider details are still being updated. Loading and failed
   checks retain their distinct progress and recovery messages.
+- A stream newly announced by the current shared feed stays on the coverage
+  stage when an older canonical detail snapshot settles; enrichment must not
+  regress Watch to standby or replace the current provider handoff.
 - At the supported 320-pixel boundary, the standby console removes decorative
   bulk and stacks long mission names above the compact countdown so both remain
   readable, touch-safe, and fully above fixed navigation; wider mobile and

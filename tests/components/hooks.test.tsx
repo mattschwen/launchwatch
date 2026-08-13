@@ -272,6 +272,55 @@ describe('useLaunchById', () => {
     );
   });
 
+  it('keeps newly announced feed coverage after older detail enrichment settles', async () => {
+    const announcedStream =
+      'https://www.youtube.com/watch?v=orbital-dawn-announced';
+    const feedLaunch = {
+      ...UPCOMING_LAUNCHES[0],
+      livestream: announcedStream,
+      livestreams: [
+        {
+          url: announcedStream,
+          title: 'Official mission coverage',
+          isLive: false,
+        },
+      ],
+      videoThumbnail: 'https://example.test/orbital-dawn-announced.jpg',
+    };
+    const olderDetail = {
+      ...UPCOMING_LAUNCHES[0],
+      livestream: null,
+      livestreams: null,
+      videoThumbnail: null,
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const url = String(input);
+        if (url.includes('?type=all')) {
+          return Promise.resolve(response({ launches: [feedLaunch] }));
+        }
+        return Promise.resolve(response({ launch: olderDetail }));
+      }),
+    );
+
+    render(
+      <LaunchDataProvider>
+        <HookHarness initialId={feedLaunch.id} />
+      </LaunchDataProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('enrichment-state')).toHaveTextContent(
+        'Detail settled',
+      ),
+    );
+    expect(screen.getByTestId('selected-stream')).toHaveTextContent(
+      announcedStream,
+    );
+  });
+
   it('retains settled detail while the same mission revalidates after reconnecting', async () => {
     let online = true;
     vi.spyOn(window.navigator, 'onLine', 'get').mockImplementation(

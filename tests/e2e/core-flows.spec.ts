@@ -977,6 +977,65 @@ test('detail enrichment cannot regress the current schedule or live state', asyn
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('watch keeps newly announced feed coverage after older detail enrichment', async ({
+  page,
+}) => {
+  const announcedStream =
+    'https://x.com/i/broadcasts/orbital-dawn-announced';
+  const currentFeedLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    livestream: announcedStream,
+    livestreams: [
+      {
+        url: announcedStream,
+        title: 'Official mission coverage',
+        isLive: false,
+      },
+    ],
+  };
+  const olderDetail = {
+    ...UPCOMING_LAUNCHES[0],
+    livestream: null,
+    livestreams: null,
+    videoThumbnail: null,
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [currentFeedLaunch], meta: FEED_META }),
+    }),
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: olderDetail,
+          canonicalId: olderDetail.id,
+          meta: FEED_META,
+        }),
+      }),
+  );
+
+  await page.goto('/watch');
+
+  const coverage = page.getByRole('region', {
+    name: 'Mission coverage scheduled',
+  });
+  const stream = coverage.locator(`a[href="${announcedStream}"]`);
+  await expect(coverage).toBeVisible();
+  await expect(stream).toBeVisible();
+  await expect(stream).toHaveAttribute('target', '_blank');
+  await stream.focus();
+  await expect(stream).toBeFocused();
+  expect((await stream.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch retains settled coverage and focus while detail revalidates after reconnecting', async ({
   context,
   page,
@@ -8273,6 +8332,20 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
 
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: UPCOMING_LAUNCHES.map((launch) => ({
+          ...launch,
+          livestream: null,
+          livestreams: null,
+        })),
+        meta: FEED_META,
+      }),
+    }),
+  );
   await page.route('**/api/launches/*', async (route) => {
     const id = decodeURIComponent(
       new URL(route.request().url()).pathname.replace('/api/launches/', '')

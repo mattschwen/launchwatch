@@ -185,8 +185,17 @@ export function reconcileCurrentLaunch(
   if (!detailLaunch) return feedLaunch;
   if (!feedLaunch) return detailLaunch;
 
+  const currentCoverage = feedLaunch.livestream
+    ? {
+        livestream: feedLaunch.livestream,
+        livestreams: feedLaunch.livestreams ?? null,
+        videoThumbnail: feedLaunch.videoThumbnail ?? null,
+      }
+    : {};
+
   return {
     ...detailLaunch,
+    ...currentCoverage,
     date: feedLaunch.date,
     dateUnix: feedLaunch.dateUnix,
     datePrecision: feedLaunch.datePrecision,
