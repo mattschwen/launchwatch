@@ -8253,9 +8253,10 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
   expect((await searchFallback.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(
     page.getByText(
-      'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.'
+      'Mission details are current, but no verified stream is listed. Search for current coverage while we wait for an official broadcast.'
     )
   ).toBeVisible();
+  await expect(page.getByText(/provider details are being updated/i)).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: /Open provider channel.*new tab/i, exact: true })
   ).toHaveCount(0);
@@ -8273,7 +8274,7 @@ test('watch labels stream-search and provider-channel fallbacks truthfully', asy
   );
   await expect(
     page.getByText(
-      'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
+      'Mission details are current, but no verified stream is listed. Follow the mission or check the official provider channel for an announcement.'
     )
   ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);

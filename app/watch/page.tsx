@@ -402,8 +402,8 @@ function WatchStage({
       ? 'The mission schedule is available, but detailed provider coverage could not be checked. Use the official provider channel or retry mission details.'
       : 'The mission schedule is available, but detailed provider coverage could not be checked. Search for current coverage or retry mission details.'
     : hasProviderChannel
-      ? 'We are between launches. Follow the next mission or use the official provider channel while coverage is being scheduled.'
-      : 'No verified stream is scheduled yet. Search for current mission coverage while provider details are being updated.';
+      ? 'Mission details are current, but no verified stream is listed. Follow the mission or check the official provider channel for an announcement.'
+      : 'Mission details are current, but no verified stream is listed. Search for current coverage while we wait for an official broadcast.';
   const coverageLabel = launch.livestream
     ? liveCoverage
       ? 'Mission coverage live'

@@ -193,6 +193,10 @@ The optional expanded map remains a modal dialog. It must:
 - When no verified stream is available, the route presents the next mission,
   countdown, provider fallback, and one eligible mission visual instead of an
   empty stage. A verified stream remains the primary visual.
+- Once canonical mission details finish loading without a verified stream, the
+  standby stage names that checked state explicitly instead of continuing to
+  imply that provider details are still being updated. Loading and failed
+  checks retain their distinct progress and recovery messages.
 - At the supported 320-pixel boundary, the standby console removes decorative
   bulk and stacks long mission names above the compact countdown so both remain
   readable, touch-safe, and fully above fixed navigation; wider mobile and
