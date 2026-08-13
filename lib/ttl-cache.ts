@@ -48,7 +48,10 @@ export class TTLCache<T> {
       })
       .catch((error) => {
         const fallback = this.store.get(key);
-        if (fallback?.value !== undefined && now - fallback.updatedAt < this.staleMs) {
+        if (
+          fallback?.value !== undefined &&
+          Date.now() - fallback.updatedAt < this.staleMs
+        ) {
           this.store.set(key, {
             value: fallback.value,
             updatedAt: fallback.updatedAt,
@@ -66,7 +69,7 @@ export class TTLCache<T> {
     });
 
     if (existing?.value !== undefined && now - existing.updatedAt < this.staleMs) {
-      void loadPromise;
+      void loadPromise.catch(() => undefined);
       return existing.value;
     }
 
