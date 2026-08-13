@@ -632,7 +632,7 @@ test('launch history publishes a canonical archive social preview', async ({
 
   const canonicalUrl = 'https://www.launchwatch.io/history';
   const description =
-    'Search completed launches, inspect mission outcomes, and reopen official coverage from the LaunchWatch archive.';
+    'Search completed launches, inspect provider-reported dates and outcomes, and reopen official coverage from the LaunchWatch archive.';
 
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
@@ -9003,12 +9003,12 @@ test('history uses scannable archive columns at desktop workspace widths', async
     name: 'Archived launch results',
   });
   const firstRow = archive.locator('article').first();
-  const actualLaunchDateHeader = archive.getByText('Actual launch date', {
-    exact: true,
-  });
+  const providerDateHeader = archive
+    .locator('.archive-table-header')
+    .getByText('Provider date', { exact: true });
 
-  await expect(actualLaunchDateHeader).toBeVisible();
-  await expect(firstRow.getByText('Date (UTC)', { exact: true })).toBeHidden();
+  await expect(providerDateHeader).toBeVisible();
+  await expect(firstRow.getByText('Provider date', { exact: true })).toBeHidden();
 
   const layout = await firstRow.evaluate((element) => {
     const bounds = element.getBoundingClientRect();
@@ -12204,7 +12204,7 @@ test('archive stays usable at the desktop-tablet boundary', async ({ page }) => 
   ).toBeVisible();
   await expect(page.getByRole('link', { name: /^View mission / }).first()).toBeVisible();
   const firstRow = page.locator('article').first();
-  for (const label of ['Date (UTC)', 'Vehicle', 'Site', 'Outcome']) {
+  for (const label of ['Provider date', 'Vehicle', 'Site', 'Outcome']) {
     await expect(firstRow.getByText(label, { exact: true })).toBeVisible();
   }
   expect(await expectNoHorizontalOverflow(page)).toBe(true);

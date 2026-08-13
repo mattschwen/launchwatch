@@ -318,7 +318,7 @@ function HistoryRow({
           </span>
           <span className="archive-row-compact mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-[var(--border-subtle)] pt-3 sm:grid-cols-4 min-[1120px]:hidden">
             <span className="min-w-0">
-              <span className="data-label block">Date (UTC)</span>
+              <span className="data-label block">Provider date</span>
               <span className="mt-1 block text-xs text-[var(--text-secondary)]">
                 {formatLaunchDate(launch.date, launch.datePrecision)}
               </span>
@@ -1283,7 +1283,7 @@ export default function PastLaunches({
       ) : null}
 
       <div className="archive-table-header hidden grid-cols-[minmax(13rem,1.25fr)_minmax(11rem,.9fr)_minmax(9rem,.75fr)_minmax(12rem,1fr)_8rem_7rem] gap-3 border-b border-[var(--border-subtle)] px-4 py-3 min-[1120px]:grid">
-        {['Mission', 'Actual launch date', 'Vehicle', 'Site', 'Outcome', 'Actions'].map(
+        {['Mission', 'Provider date', 'Vehicle', 'Site', 'Outcome', 'Actions'].map(
           (label) => (
             <span key={label} className="data-label">
               {label}

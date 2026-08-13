@@ -94,6 +94,8 @@ describe('PastLaunches', () => {
         name: 'View mission Pathfinder Qualification',
       })
     ).toBeVisible();
+    expect(screen.queryByText('Actual launch date')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Provider date')).toHaveLength(3);
 
     await user.type(screen.getByRole('searchbox', { name: 'Search missions' }), 'Return');
 

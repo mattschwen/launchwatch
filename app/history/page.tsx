@@ -7,7 +7,7 @@ import {
 } from '@/lib/history-return';
 
 const archiveDescription =
-  'Search completed launches, inspect mission outcomes, and reopen official coverage from the LaunchWatch archive.';
+  'Search completed launches, inspect provider-reported dates and outcomes, and reopen official coverage from the LaunchWatch archive.';
 
 export const metadata: Metadata = {
   title: 'Launch History | LaunchWatch',
@@ -55,8 +55,8 @@ export default async function HistoryPage({
             </h1>
           </div>
           <p className="mt-4 hidden max-w-2xl text-sm leading-6 text-[var(--text-secondary)] min-[360px]:block sm:text-base">
-            Search completed missions, inspect outcomes, and reopen official
-            launch coverage.
+            Search completed missions, inspect provider-reported dates and
+            outcomes, and reopen official launch coverage.
           </p>
         </div>
         <p className="data-label hidden min-[360px]:block">

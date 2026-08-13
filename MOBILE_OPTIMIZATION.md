@@ -425,6 +425,8 @@ The optional expanded map remains a modal dialog. It must:
 - Completed missions return to History—or the filtered archive that opened
   them—and omit future-only calendar actions. Active archive filters remain in
   the address so a filtered result set survives reloads and can be shared.
+- History labels its responsive date field as provider-reported rather than
+  implying that the normalized provider target is verified liftoff telemetry.
 - Missing or malformed mission links explain that a flight may be upcoming or
   completed and expose touch-safe recovery paths to both the current schedule
   and searchable archive.
