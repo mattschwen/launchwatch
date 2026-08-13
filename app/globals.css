@@ -2079,6 +2079,29 @@ html[data-boot-status='visible']:has(
   transform: translateY(-1px);
 }
 
+.schedule-batch-container {
+  container-name: schedule-batch;
+  container-type: inline-size;
+}
+
+.schedule-batch-return-compact {
+  display: none;
+}
+
+@container schedule-batch (max-width: 12rem) {
+  .schedule-batch-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-batch-return-compact {
+    display: inline-flex;
+  }
+
+  .schedule-batch-return-default {
+    display: none;
+  }
+}
+
 .compact-launch-actions > *,
 .compact-launch-actions > * > .action-button {
   min-width: 0;

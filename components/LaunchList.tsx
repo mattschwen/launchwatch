@@ -7,7 +7,7 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
-import { AlertTriangle, Filter, Rocket } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import {
   formatLaunchDay,
@@ -218,6 +218,22 @@ export default function LaunchList({
     batchTabPendingRef.current = false;
     setFilterResetKey((value) => value + 1);
     requestAnimationFrame(() => focusTarget.current?.focus());
+  };
+
+  const returnToScheduleFilters = (): void => {
+    setFiltersOpen(true);
+    window.requestAnimationFrame(() => {
+      const searchInput = searchInputRef.current;
+      if (!searchInput) return;
+
+      searchInput.focus({ preventScroll: true });
+      searchInput.scrollIntoView?.({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto'
+          : 'smooth',
+        block: 'center',
+      });
+    });
   };
 
   const filtered = useMemo(() => {
@@ -597,51 +613,70 @@ export default function LaunchList({
             ))}
           </div>
           {filtered.length > INITIAL_VISIBLE_COUNT ? (
-            <div className="border-t border-[var(--border-subtle)] p-4 text-center">
-              <button
-                ref={loadMoreRef}
-                type="button"
-                aria-controls="upcoming-launch-results"
-                aria-disabled={allResultsVisible}
-                onClick={() => {
-                  if (!allResultsVisible) {
-                    setRevealedBatchStartIndex(visibleLaunches.length);
-                    batchTabPendingRef.current = true;
-                    setVisibleCount((count) => count + INITIAL_VISIBLE_COUNT);
-                    requestAnimationFrame(() => {
-                      if (!batchTabPendingRef.current) return;
-                      loadMoreRef.current?.scrollIntoView?.({
-                        block: 'nearest',
+            <div className="schedule-batch-container border-t border-[var(--border-subtle)] p-4">
+              <div className="schedule-batch-controls grid grid-cols-2 gap-2 text-center md:flex md:flex-wrap md:justify-center">
+                <button
+                  type="button"
+                  onClick={returnToScheduleFilters}
+                  data-schedule-return-compact="true"
+                  className="schedule-batch-return-compact action-button action-button-quiet hidden w-full justify-center whitespace-normal md:w-auto"
+                >
+                  <ArrowUp aria-hidden="true" size={16} />
+                  Back to schedule filters
+                </button>
+                <button
+                  ref={loadMoreRef}
+                  type="button"
+                  aria-controls="upcoming-launch-results"
+                  aria-disabled={allResultsVisible}
+                  onClick={() => {
+                    if (!allResultsVisible) {
+                      setRevealedBatchStartIndex(visibleLaunches.length);
+                      batchTabPendingRef.current = true;
+                      setVisibleCount((count) => count + INITIAL_VISIBLE_COUNT);
+                      requestAnimationFrame(() => {
+                        if (!batchTabPendingRef.current) return;
+                        loadMoreRef.current?.scrollIntoView?.({
+                          block: 'nearest',
+                        });
                       });
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Tab' || !batchTabPendingRef.current) {
+                      return;
+                    }
+
+                    batchTabPendingRef.current = false;
+                    if (event.shiftKey || !revealedBatchStartRef.current) return;
+
+                    event.preventDefault();
+                    revealedBatchStartRef.current.focus();
+                    revealedBatchStartRef.current.scrollIntoView?.({
+                      block: 'center',
                     });
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (event.key !== 'Tab' || !batchTabPendingRef.current) {
-                    return;
-                  }
-
-                  batchTabPendingRef.current = false;
-                  if (event.shiftKey || !revealedBatchStartRef.current) return;
-
-                  event.preventDefault();
-                  revealedBatchStartRef.current.focus();
-                  revealedBatchStartRef.current.scrollIntoView?.({
-                    block: 'center',
-                  });
-                }}
-                onBlur={() => {
-                  batchTabPendingRef.current = false;
-                }}
-                className="action-button action-button-secondary aria-disabled:cursor-default aria-disabled:opacity-60"
-              >
-                {allResultsVisible
-                  ? `All ${filtered.length} missions loaded`
-                  : `Load ${Math.min(
-                      INITIAL_VISIBLE_COUNT,
-                      filtered.length - visibleLaunches.length
-                    )} more`}
-              </button>
+                  }}
+                  onBlur={() => {
+                    batchTabPendingRef.current = false;
+                  }}
+                  className="action-button action-button-secondary w-full justify-center whitespace-normal aria-disabled:cursor-default aria-disabled:opacity-60 md:w-auto"
+                >
+                  {allResultsVisible
+                    ? `All ${filtered.length} missions loaded`
+                    : `Load ${Math.min(
+                        INITIAL_VISIBLE_COUNT,
+                        filtered.length - visibleLaunches.length
+                      )} more`}
+                </button>
+                <button
+                  type="button"
+                  onClick={returnToScheduleFilters}
+                  className="schedule-batch-return-default action-button action-button-quiet w-full justify-center whitespace-normal md:w-auto"
+                >
+                  <ArrowUp aria-hidden="true" size={16} />
+                  Back to schedule filters
+                </button>
+              </div>
             </div>
           ) : null}
         </>

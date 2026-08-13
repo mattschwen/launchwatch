@@ -110,7 +110,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   enlarged text reflows those regions into a single column.
 - Large mission queues report the visible and total result count, then reveal
   five more rows per touch-safe command instead of mounting the full provider
-  schedule at once.
+  schedule at once. The batch rail keeps a direct return to schedule filters;
+  it opens the controls, focuses search, and scrolls that focus clear of fixed
+  navigation after long mission queues have been revealed.
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
   well as an icon so its purpose remains clear on narrow screens.

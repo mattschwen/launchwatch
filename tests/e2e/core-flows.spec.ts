@@ -5349,10 +5349,30 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   const loadMore = schedule.locator(
     'button[aria-controls="upcoming-launch-results"]'
   );
+  const backToFilters = schedule.getByRole('button', {
+    name: 'Back to schedule filters',
+  });
   await expect(loadMore).toHaveAccessibleName('Load 5 more');
+  await expect(backToFilters).toBeVisible();
+  expect((await backToFilters.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await loadMore.focus();
   await expect(loadMore).toBeFocused();
   expect((await loadMore.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect
+    .poll(() =>
+      backToFilters.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const mobileNav = document.querySelector<HTMLElement>(
+          'nav.fixed.bottom-0'
+        );
+        if (!mobileNav || getComputedStyle(mobileNav).display === 'none') {
+          return true;
+        }
+        const visibleBottom = mobileNav.getBoundingClientRect().top;
+        return bounds.top >= 0 && bounds.bottom <= visibleBottom;
+      })
+    )
+    .toBe(true);
   await loadMore.press('Enter');
   await loadMore.press('Tab');
 
@@ -5385,6 +5405,64 @@ test('home reveals a large mission queue in honest, touch-safe batches', async (
   });
   await expect(allLoaded).toBeFocused();
   await expect(allLoaded).toHaveAttribute('aria-disabled', 'true');
+
+  if ((page.viewportSize()?.width ?? 0) < 768) {
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '32px';
+    });
+    const batchRail = schedule.locator('.schedule-batch-controls');
+    await expect(batchRail).toBeVisible();
+    await expect(
+      schedule.locator('[data-schedule-return-compact="true"]')
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        batchRail.evaluate((element) => {
+          const controls = [...element.querySelectorAll('button')];
+          return controls.every(
+            (control) => control.scrollWidth <= control.clientWidth
+          );
+        })
+      )
+      .toBe(true);
+    for (const control of [backToFilters, allLoaded]) {
+      await control.focus();
+      await expect(control).toBeFocused();
+      await expect
+        .poll(() =>
+          control.evaluate((element) => {
+            const bounds = element.getBoundingClientRect();
+            const headerBottom = document
+              .querySelector('header')
+              ?.getBoundingClientRect().bottom ?? 0;
+            const mobileNav = document.querySelector<HTMLElement>(
+              'nav.fixed.bottom-0'
+            );
+            const visibleBottom = mobileNav?.getBoundingClientRect().top ??
+              window.innerHeight;
+            return bounds.top >= headerBottom && bounds.bottom <= visibleBottom;
+          })
+        )
+        .toBe(true);
+    }
+  }
+
+  await backToFilters.click();
+  const scheduleSearch = schedule.getByRole('searchbox', {
+    name: 'Search launches',
+  });
+  await expect(scheduleSearch).toBeFocused();
+  await expect
+    .poll(() =>
+      scheduleSearch.evaluate((element) => {
+        const headerBottom = document
+          .querySelector('header')
+          ?.getBoundingClientRect().bottom ?? 0;
+        const bounds = element.getBoundingClientRect();
+        return bounds.top >= headerBottom && bounds.bottom <= window.innerHeight;
+      })
+    )
+    .toBe(true);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
