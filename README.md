@@ -126,6 +126,9 @@ the header route commands in compact landscape layouts.
   schedule rows, plus the complete local start and end of validated launch
   windows, while UTC remains authoritative; UTC users and coarse provider
   estimates keep the existing single-time presentation
+- The nearest overlap between calendar-ready provider launch windows appears
+  as an exact shared UTC interval in Home's schedule-planning signal; coarse or
+  excessively broad estimates stay silent, and degraded feeds qualify the signal
 - Provider-confirmed launch-site clocks accompany precise targets across the
   schedule, featured mission, Watch, briefing, and detail surfaces; the
   viewer clock is omitted when it would duplicate the pad's local time

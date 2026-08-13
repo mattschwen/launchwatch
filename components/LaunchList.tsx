@@ -26,6 +26,8 @@ import {
 } from '@/lib/schedule-return';
 import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { RESET_SCHEDULE_FILTERS_EVENT } from './layout/navigation';
+import ScheduleOverlapSignal from './launch/ScheduleOverlapSignal';
+import { getLaunchWindowOverlaps } from '@/lib/schedule-overlap';
 
 const INITIAL_VISIBLE_COUNT = 5;
 
@@ -286,6 +288,10 @@ export default function LaunchList({
 
     return earliest && latest ? { earliest, latest } : null;
   }, [launches]);
+  const windowOverlaps = useMemo(
+    () => getLaunchWindowOverlaps(launches),
+    [launches],
+  );
 
   useEffect(() => {
     if (
@@ -514,6 +520,20 @@ export default function LaunchList({
                 : 'Refresh when online'}
           </button>
         </div>
+      ) : null}
+
+      {windowOverlaps[0] ? (
+        <ScheduleOverlapSignal
+          overlap={windowOverlaps[0]}
+          additionalCount={windowOverlaps.length - 1}
+          state={
+            retainedSchedule
+              ? 'retained'
+              : meta?.partial
+                ? 'partial'
+                : 'current'
+          }
+        />
       ) : null}
 
       {filtersOpen ? (

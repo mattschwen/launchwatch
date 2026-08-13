@@ -146,6 +146,75 @@ describe('LaunchList', () => {
     ).toHaveTextContent('1 mission');
   });
 
+  it('surfaces the nearest concurrent provider windows for schedule planning', () => {
+    const launches = [
+      {
+        ...UPCOMING_LAUNCHES[0],
+        missionName: 'Orbital Dawn',
+        windowStart: '2035-07-28T14:30:00.000Z',
+        windowEnd: '2035-07-28T16:30:00.000Z',
+      },
+      {
+        ...UPCOMING_LAUNCHES[1],
+        missionName: 'Polaris Relay',
+        date: '2035-07-28T16:00:00.000Z',
+        dateUnix: 2069251200,
+        windowStart: '2035-07-28T16:00:00.000Z',
+        windowEnd: '2035-07-28T16:15:00.000Z',
+      },
+    ];
+    vi.mocked(useLaunches).mockReturnValue({
+      launches,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const view = render(<LaunchList />);
+
+    const signal = screen.getByRole('status', {
+      name: /Concurrent provider launch windows/,
+    });
+    expect(signal).toHaveAccessibleName(/Schedule planning/);
+    expect(signal).toHaveAccessibleName(
+      /15 min overlap between Orbital Dawn and Polaris Relay/,
+    );
+    expect(signal).toHaveTextContent('15 min overlap');
+    expect(signal).toHaveTextContent('Orbital Dawn');
+    expect(signal).toHaveTextContent('Polaris Relay');
+    expect(signal).toHaveTextContent('Jul 28, 2035, 16:00–16:15 UTC');
+    expect(signal.querySelectorAll('time')).toHaveLength(2);
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: { ...FEED_META, partial: true },
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+    view.rerender(<LaunchList />);
+    expect(signal).toHaveTextContent('Partial planning signal');
+    expect(signal).toHaveAccessibleName(/Partial planning signal/);
+
+    vi.mocked(useLaunches).mockReturnValue({
+      launches,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: 'Provider maintenance',
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+    view.rerender(<LaunchList />);
+    expect(signal).toHaveTextContent('Last-known planning signal');
+    expect(signal).toHaveAccessibleName(/Last-known planning signal/);
+  });
+
   it('finds missions by profile and orbit metadata', async () => {
     const user = userEvent.setup();
 

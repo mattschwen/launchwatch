@@ -5309,6 +5309,63 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('home surfaces concurrent provider windows without widening the schedule', async ({
+  page,
+}) => {
+  const launches = [
+    {
+      ...UPCOMING_LAUNCHES[0],
+      name: 'Falcon 9 Block 5 | USSF-366',
+      missionName: 'USSF-366',
+      windowStart: '2035-07-28T14:30:00.000Z',
+      windowEnd: '2035-07-28T16:30:00.000Z',
+    },
+    {
+      ...UPCOMING_LAUNCHES[1],
+      name: 'Falcon 9 Block 5 | Globalstar 2-R Mission 1 (x 9)',
+      missionName: 'Globalstar 2-R Mission 1 (x 9)',
+      date: '2035-07-28T16:00:00.000Z',
+      dateUnix: 2069251200,
+      windowStart: '2035-07-28T16:00:00.000Z',
+      windowEnd: '2035-07-28T16:15:00.000Z',
+    },
+  ];
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches, meta: FEED_META }),
+    })
+  );
+
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  const signal = schedule.getByRole('status', {
+    name: /Concurrent provider launch windows/,
+  });
+  await expect(signal).toHaveAccessibleName(/Schedule planning/);
+  await expect(signal).toHaveAccessibleName(
+    /15 min overlap between USSF-366 and Globalstar 2-R Mission 1 \(x 9\)/,
+  );
+  await expect(signal).toBeVisible();
+  await expect(signal).toContainText('Schedule planning');
+  await expect(signal).toContainText('15 min overlap');
+  await expect(signal).toContainText('USSF-366');
+  await expect(signal).toContainText('Globalstar 2-R Mission 1 (x 9)');
+  await expect(signal).toContainText('Jul 28, 2035, 16:00–16:15 UTC');
+  await expect(signal.locator('time')).toHaveCount(2);
+  await expect
+    .poll(() => signal.evaluate((element) => element.scrollWidth <= element.clientWidth))
+    .toBe(true);
+  const geometry = await signal.evaluate((element) => ({
+    right: element.getBoundingClientRect().right,
+    viewport: window.innerWidth,
+  }));
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewport);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home surfaces a provider hold in its featured and compact mission states', async ({
   page,
 }) => {
