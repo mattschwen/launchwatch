@@ -38,6 +38,9 @@ describe('isNavItemActive', () => {
 
   it('commits a clean same-route Home URL before signaling the filter reset', () => {
     window.history.replaceState({}, '', '/?q=Polaris');
+    const scrollTo = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
     const resetListener = vi.fn(() => {
       expect(window.location.pathname).toBe('/');
       expect(window.location.search).toBe('');
@@ -59,12 +62,20 @@ describe('isNavItemActive', () => {
 
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(resetListener).toHaveBeenCalledOnce();
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    });
   });
 
   it('leaves modified Home navigation to the browser', () => {
     window.history.replaceState({}, '', '/?q=Polaris');
     const resetListener = vi.fn();
     const preventDefault = vi.fn();
+    const scrollTo = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
     window.addEventListener(RESET_SCHEDULE_FILTERS_EVENT, resetListener, {
       once: true,
     });
@@ -81,12 +92,41 @@ describe('isNavItemActive', () => {
 
     expect(preventDefault).not.toHaveBeenCalled();
     expect(resetListener).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
     expect(window.location.search).toBe('?q=Polaris');
     window.removeEventListener(RESET_SCHEDULE_FILTERS_EVENT, resetListener);
   });
 
+  it('returns an already-clean current route to its start without adding history', () => {
+    window.history.replaceState({}, '', '/history');
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const scrollTo = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+    const preventDefault = vi.fn();
+
+    signalHistoryFilterReset({
+      defaultPrevented: false,
+      button: 0,
+      metaKey: false,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      preventDefault,
+    } as unknown as MouseEvent<HTMLElement>);
+
+    expect(preventDefault).toHaveBeenCalledOnce();
+    expect(pushState).not.toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    });
+  });
+
   it('commits a clean same-route Watch URL before signaling the mission reset', () => {
     window.history.replaceState({}, '', '/watch?id=spacex-demo-polaris');
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const resetListener = vi.fn(() => {
       expect(window.location.pathname).toBe('/watch');
       expect(window.location.search).toBe('');
@@ -112,6 +152,7 @@ describe('isNavItemActive', () => {
 
   it('commits a clean same-route History URL before signaling the filter reset', () => {
     window.history.replaceState({}, '', '/history?q=Return');
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const resetListener = vi.fn(() => {
       expect(window.location.pathname).toBe('/history');
       expect(window.location.search).toBe('');

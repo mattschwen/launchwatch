@@ -8559,6 +8559,7 @@ test('history search reaches a completed mission detail', async ({ page }) => {
 });
 
 test('history navigation clears same-route archive context', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/history?q=Return');
 
   const search = page.getByRole('searchbox', { name: 'Search missions' });
@@ -8572,6 +8573,10 @@ test('history navigation clears same-route archive context', async ({ page }) =>
     .getByRole('navigation', { name: 'Primary navigation' })
     .filter({ visible: true });
   const historyLink = navigation.getByRole('link', { name: 'History' });
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  );
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await historyLink.focus();
   await historyLink.press('Enter');
 
@@ -8579,6 +8584,7 @@ test('history navigation clears same-route archive context', async ({ page }) =>
   await expect(search).toHaveValue('');
   await expect(archiveResults).toHaveText('2 results');
   await expect(historyLink).toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 
   await page.goBack();
   await expect(page).toHaveURL(/\/history\?q=Return$/);

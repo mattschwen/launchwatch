@@ -32,8 +32,10 @@ surface remains consistent everywhere else.
 The desktop and mobile navigation both expose Home, Watch, and History through
 a shared command-deck shell: the brand mark, active operational surface,
 provider uplink, UTC clock, route index, and live state remain legible without
-competing with mission content. The first-visit synchronization message is a
-short, dismissible status toast; it never blocks the application.
+competing with mission content. Activating the current route command clears its
+transient filters or mission selection and returns the console to the top while
+preserving browser-history recovery. The first-visit synchronization message
+is a short, dismissible status toast; it never blocks the application.
 
 ## Core Features
 

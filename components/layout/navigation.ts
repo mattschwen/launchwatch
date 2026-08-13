@@ -24,15 +24,20 @@ function signalFilteredRouteReset(
     return;
   }
 
-  if (
-    window.location.pathname === pathname &&
-    (window.location.search || window.location.hash)
-  ) {
+  const sameRoute = window.location.pathname === pathname;
+
+  if (sameRoute) {
     event.preventDefault();
-    window.history.pushState(window.history.state, '', pathname);
+    if (window.location.search || window.location.hash) {
+      window.history.pushState(window.history.state, '', pathname);
+    }
   }
 
   window.dispatchEvent(new Event(eventName));
+
+  if (sameRoute) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }
 }
 
 export function signalScheduleFilterReset(

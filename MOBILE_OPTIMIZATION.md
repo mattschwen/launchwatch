@@ -17,6 +17,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 ## Navigation
 
 - Desktop uses the sticky top navigation for Home, Watch, and History.
+- Activating the already-current primary route resets its transient filters or
+  mission selection and returns the viewport to the top without animated
+  travel. Clean routes do not create redundant browser-history entries, while
+  filtered routes retain Back and Forward recovery.
 - Desktop keeps a 44-pixel system bar below page content with the current feed
   condition and a persistent link to the live or next mission. If a refresh
   fails after a successful load or the API serves a stale fallback, the link
