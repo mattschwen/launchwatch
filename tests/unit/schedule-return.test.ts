@@ -15,13 +15,14 @@ describe('schedule return context', () => {
     expect(
       parseScheduleFilters(
         new URLSearchParams(
-          'q=Polaris&provider=SpaceX&status=live&sort=name-desc',
+          'q=Polaris&provider=SpaceX&status=live&ready=1&sort=name-desc',
         ),
       ),
     ).toEqual({
       search: 'Polaris',
       provider: 'SpaceX',
       status: 'live',
+      calendarReady: true,
       sortBy: 'name-desc',
     });
 
@@ -49,10 +50,11 @@ describe('schedule return context', () => {
         search: 'Polaris Relay',
         provider: 'SpaceX',
         status: 'upcoming',
+        calendarReady: true,
         sortBy: 'date-desc',
       }),
     ).toBe(
-      'q=Polaris+Relay&provider=SpaceX&status=upcoming&sort=date-desc',
+      'q=Polaris+Relay&provider=SpaceX&status=upcoming&ready=1&sort=date-desc',
     );
     expect(serializeScheduleFilters(DEFAULT_SCHEDULE_FILTERS)).toBe('');
   });
@@ -70,9 +72,10 @@ describe('schedule return context', () => {
         ...DEFAULT_SCHEDULE_FILTERS,
         search: 'Polaris Relay',
         provider: 'SpaceX',
+        calendarReady: true,
       }),
     ).toBe(
-      '/launch/spacex%2Fdemo?from=home&schedule=q%3DPolaris%2BRelay%26provider%3DSpaceX',
+      '/launch/spacex%2Fdemo?from=home&schedule=q%3DPolaris%2BRelay%26provider%3DSpaceX%26ready%3D1',
     );
 
     const query = readScheduleReturnQuery(
@@ -82,6 +85,10 @@ describe('schedule return context', () => {
     expect(buildScheduleReturnHref(query!)).toBe(
       '/?q=Polaris+Relay&provider=SpaceX',
     );
+
+    expect(
+      parseScheduleFilters(new URLSearchParams('ready=0')).calendarReady,
+    ).toBe(false);
   });
 
   it('round-trips only canonical mission focus for result restoration', () => {

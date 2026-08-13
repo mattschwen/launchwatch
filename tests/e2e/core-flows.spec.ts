@@ -5079,6 +5079,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     'Provider',
     'Status',
     'Sort launches',
+    'Calendar-ready only',
   ]) {
     await expect(filterPanel.getByText(label, { exact: true })).toBeVisible();
   }
@@ -5195,7 +5196,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toBeVisible();
   const clearFilters = page.getByRole('button', { name: 'Clear all filters' });
   await search.focus();
-  for (let index = 0; index < 6; index += 1) {
+  for (let index = 0; index < 7; index += 1) {
     await page.keyboard.press('Tab');
   }
   await expect(clearFilters).toBeFocused();
@@ -5323,6 +5324,10 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
       name: 'Determined Timing Mission',
       status: 'tbd' as const,
       statusName: 'To Be Determined',
+      datePrecision: {
+        name: 'Month',
+        abbrev: 'M',
+      },
     },
     {
       ...UPCOMING_LAUNCHES[1],
@@ -5331,6 +5336,10 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
       name: 'Confirmed Timing Mission',
       status: 'tbd' as const,
       statusName: 'To Be Confirmed',
+      datePrecision: {
+        name: 'Minute',
+        abbrev: 'MIN',
+      },
     },
     {
       ...UPCOMING_LAUNCHES[0],
@@ -5341,6 +5350,10 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
         (UPCOMING_LAUNCHES[0].dateUnix + 2) * 1_000,
       ).toISOString(),
       dateUnix: UPCOMING_LAUNCHES[0].dateUnix + 2,
+      datePrecision: {
+        name: 'Hour',
+        abbrev: 'HR',
+      },
     },
   ];
 
@@ -5364,13 +5377,31 @@ test('home preserves TBD and TBC provider timing in compact rows', async ({
   await expect(confirmed.getByLabel('To be confirmed')).toHaveText('TBC');
 
   await schedule.getByRole('button', { name: 'Filter' }).click();
+  const calendarReady = schedule.getByRole('checkbox', {
+    name: 'Calendar-ready only',
+  });
+  await calendarReady.focus();
+  await expect(calendarReady).toBeFocused();
+  expect(
+    await calendarReady.locator('..').evaluate(
+      (element) => element.getBoundingClientRect().height,
+    ),
+  ).toBeGreaterThanOrEqual(44);
+  await calendarReady.check();
+  await expect(page).toHaveURL(/\?ready=1$/);
+  await expect(
+    schedule.getByRole('status', { name: 'Upcoming launch results' })
+  ).toHaveText('1 mission');
+  await expect(confirmed).toBeVisible();
+  await expect(determined).toHaveCount(0);
+
   await schedule
     .getByRole('combobox', { name: 'Status' })
     .selectOption({ label: 'Timing pending' });
-  await expect(page).toHaveURL(/\?status=tbd$/);
+  await expect(page).toHaveURL(/\?status=tbd&ready=1$/);
   await expect(
     schedule.getByRole('status', { name: 'Upcoming launch results' })
-  ).toHaveText('2 missions');
+  ).toHaveText('1 mission');
   await expect(
     schedule.getByRole('heading', { name: 'Scheduled Timing Mission' })
   ).toHaveCount(0);

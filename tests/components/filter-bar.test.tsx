@@ -28,6 +28,9 @@ describe('FilterBar', () => {
     expect(
       screen.getByRole('option', { name: 'Timing pending' })
     ).toHaveValue('tbd');
+    expect(
+      screen.getByRole('checkbox', { name: 'Calendar-ready only' }),
+    ).not.toBeChecked();
   });
 
   it('renders the current providers and emits the selected provider name', async () => {
@@ -62,6 +65,7 @@ describe('FilterBar', () => {
       search: '',
       provider: 'China Aerospace Science and Technology Corporation',
       status: 'all',
+      calendarReady: false,
       sortBy: 'date-asc',
     });
   });
@@ -90,6 +94,7 @@ describe('FilterBar', () => {
       search: '',
       provider: 'all',
       status: 'all',
+      calendarReady: false,
       sortBy: 'date-asc',
     });
     await waitFor(() => expect(search).toHaveFocus());
@@ -129,6 +134,7 @@ describe('FilterBar', () => {
       search: '',
       provider: 'SpaceX',
       status: 'all',
+      calendarReady: false,
       sortBy: 'date-asc',
     });
   });
@@ -153,6 +159,7 @@ describe('FilterBar', () => {
       search: '   ',
       provider: 'all',
       status: 'all',
+      calendarReady: false,
       sortBy: 'date-asc',
     });
   });
@@ -205,6 +212,7 @@ describe('FilterBar', () => {
       search: '',
       provider: 'all',
       status: 'all',
+      calendarReady: false,
       sortBy: 'date-asc',
     });
     await waitFor(() => expect(search).toHaveFocus());

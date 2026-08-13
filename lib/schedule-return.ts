@@ -4,6 +4,7 @@ export interface ScheduleFilters {
   search: string;
   provider: string;
   status: 'all' | 'upcoming' | 'live' | 'tbd';
+  calendarReady: boolean;
   sortBy: 'date-asc' | 'date-desc' | 'name-asc' | 'name-desc';
 }
 
@@ -11,6 +12,7 @@ export const DEFAULT_SCHEDULE_FILTERS: ScheduleFilters = {
   search: '',
   provider: 'all',
   status: 'all',
+  calendarReady: false,
   sortBy: 'date-asc',
 };
 
@@ -55,6 +57,7 @@ export function parseScheduleFilters(
   const search = boundedText(read('q'), SCHEDULE_SEARCH_MAX_LENGTH);
   const provider = boundedText(read('provider'), MAX_PROVIDER_LENGTH);
   const status = read('status');
+  const calendarReady = read('ready') === '1';
   const sortBy = read('sort');
 
   return {
@@ -64,6 +67,7 @@ export function parseScheduleFilters(
       status === 'upcoming' || status === 'live' || status === 'tbd'
         ? status
         : DEFAULT_SCHEDULE_FILTERS.status,
+    calendarReady,
     sortBy:
       sortBy === 'date-desc' ||
       sortBy === 'name-asc' ||
@@ -80,6 +84,7 @@ export function serializeScheduleFilters(
     q: filters.search,
     provider: filters.provider,
     status: filters.status,
+    ready: filters.calendarReady ? '1' : '',
     sort: filters.sortBy,
   });
   const params = new URLSearchParams();
@@ -91,6 +96,7 @@ export function serializeScheduleFilters(
   if (normalized.status !== DEFAULT_SCHEDULE_FILTERS.status) {
     params.set('status', normalized.status);
   }
+  if (normalized.calendarReady) params.set('ready', '1');
   if (normalized.sortBy !== DEFAULT_SCHEDULE_FILTERS.sortBy) {
     params.set('sort', normalized.sortBy);
   }

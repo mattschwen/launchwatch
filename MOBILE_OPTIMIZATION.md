@@ -116,6 +116,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   provider-supplied values. At phone widths, each row gives timing a full-width
   first scan line, then aligns mission identity with its operational status;
   enlarged text reflows those regions into a single column.
+- A touch-safe `Calendar-ready only` checkbox isolates exact or minute targets
+  without conflating target precision with provider status. Its active state is
+  represented in the filter count and URL, survives detail return navigation,
+  and reflows with the existing filter grid at phone and desktop widths.
 - Large mission queues report the visible and total result count, then reveal
   five more rows per touch-safe command instead of mounting the full provider
   schedule at once. The batch rail keeps a direct return to schedule filters;

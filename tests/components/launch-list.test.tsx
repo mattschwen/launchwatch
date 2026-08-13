@@ -286,6 +286,55 @@ describe('LaunchList', () => {
     ).toHaveTextContent('1 mission');
   });
 
+  it('isolates calendar-ready targets independently of provider status', async () => {
+    const user = userEvent.setup();
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: [
+        {
+          ...UPCOMING_LAUNCHES[0],
+          status: 'tbd',
+          statusName: 'To Be Confirmed',
+          datePrecision: {
+            name: 'Minute',
+            abbrev: 'MIN',
+          },
+        },
+        {
+          ...UPCOMING_LAUNCHES[1],
+          datePrecision: {
+            name: 'Month',
+            abbrev: 'M',
+          },
+        },
+      ],
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    const calendarReady = screen.getByRole('checkbox', {
+      name: 'Calendar-ready only',
+    });
+    await user.click(calendarReady);
+
+    expect(calendarReady).toBeChecked();
+    expect(screen.getByText('Orbital Dawn')).toBeVisible();
+    expect(screen.queryByText('Polaris Relay')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('1 mission');
+    expect(
+      screen.getByRole('button', { name: 'Hide filters, 1 active' }),
+    ).toBeVisible();
+    expect(window.location.search).toBe('?ready=1');
+  });
+
   it('keeps active schedule filters visible when the controls are collapsed', async () => {
     const user = userEvent.setup();
 
@@ -409,6 +458,7 @@ describe('LaunchList', () => {
           search: 'Polaris',
           provider: 'all',
           status: 'all',
+          calendarReady: false,
           sortBy: 'date-asc',
         }}
       />,

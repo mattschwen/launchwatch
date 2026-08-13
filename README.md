@@ -48,6 +48,9 @@ the header route commands in compact landscape layouts.
 - Searchable and filterable launch schedule and archive with mission-specific
   accessible names on repeated archive actions; provider failure diagnoses
   participate in archive search when available
+- Home can isolate calendar-ready exact or minute targets independently of
+  provider status; that URL-backed filter survives mission-detail return
+  navigation and keeps planning signals aligned with visible results
 - A route-aware `/` shortcut opens and focuses mission search on the schedule
   and archive without intercepting editable controls; shared search tolerates
   provider punctuation, accents, and joined vehicle designations. Once a query

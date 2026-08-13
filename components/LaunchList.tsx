@@ -11,6 +11,7 @@ import { AlertTriangle, ArrowUp, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import {
   formatLaunchDay,
+  hasCalendarReadyLaunchTime,
   isCriticalLaunchStatusName,
   matchesLaunchSearch,
 } from '@/lib/format';
@@ -68,11 +69,13 @@ export default function LaunchList({
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.provider !== DEFAULT_FILTERS.provider ||
-    filters.status !== DEFAULT_FILTERS.status;
+    filters.status !== DEFAULT_FILTERS.status ||
+    filters.calendarReady !== DEFAULT_FILTERS.calendarReady;
   const activeFilterCount = [
     Boolean(filters.search.trim()),
     filters.provider !== DEFAULT_FILTERS.provider,
     filters.status !== DEFAULT_FILTERS.status,
+    filters.calendarReady !== DEFAULT_FILTERS.calendarReady,
     filters.sortBy !== DEFAULT_FILTERS.sortBy,
   ].filter(Boolean).length;
   const providerOptions = useMemo(
@@ -246,7 +249,15 @@ export default function LaunchList({
         launch.provider?.trim() === filters.provider;
       const matchesStatus =
         filters.status === 'all' || launch.status === filters.status;
-      return matchesSearch && matchesProvider && matchesStatus;
+      const matchesCalendarReadiness =
+        !filters.calendarReady ||
+        hasCalendarReadyLaunchTime(launch.datePrecision);
+      return (
+        matchesSearch &&
+        matchesProvider &&
+        matchesStatus &&
+        matchesCalendarReadiness
+      );
     });
 
     return result.sort((a, b) => {

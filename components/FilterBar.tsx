@@ -61,6 +61,7 @@ export default function FilterBar({
     Boolean(filters.search.trim()) ||
     (showProvider && filters.provider !== resetFilters.provider) ||
     filters.status !== resetFilters.status ||
+    filters.calendarReady !== resetFilters.calendarReady ||
     filters.sortBy !== resetFilters.sortBy;
   const selectedProviderMissing =
     showProvider &&
@@ -68,7 +69,7 @@ export default function FilterBar({
     !providerOptions.includes(filters.provider);
 
   return (
-    <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1fr)_minmax(10rem,14rem)_10.5rem_10.5rem_auto]">
+    <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1fr)_minmax(9rem,12rem)_9.5rem_9.5rem_minmax(10.5rem,auto)_auto]">
       <div className="min-w-0 sm:col-span-2 lg:col-span-1">
         <label htmlFor={`${id}-search`} className="data-label mb-1.5 block">
           Search launches
@@ -179,6 +180,28 @@ export default function FilterBar({
           <option value="name-desc">Mission Z–A</option>
         </select>
       </div>
+
+      <label className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2.5 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 transition-colors hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]">
+        <input
+          aria-label="Calendar-ready only"
+          aria-describedby={`${id}-calendar-ready-description`}
+          type="checkbox"
+          checked={filters.calendarReady}
+          onChange={(event) => update('calendarReady', event.target.checked)}
+          className="h-4 w-4 shrink-0 accent-[var(--console-cyan)]"
+        />
+        <span className="min-w-0">
+          <span className="block text-sm font-medium leading-4 text-[var(--text-primary)]">
+            Calendar-ready only
+          </span>
+          <span
+            id={`${id}-calendar-ready-description`}
+            className="mt-0.5 block text-[0.68rem] leading-3 text-[var(--text-muted)]"
+          >
+            Exact or minute targets
+          </span>
+        </span>
+      </label>
 
       <button
         type="button"
