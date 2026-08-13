@@ -10,6 +10,7 @@ import {
   formatPrimaryMissionName,
   formatLaunchTarget,
   formatLaunchTime,
+  formatLaunchWindowDuration,
   formatLaunchWindow,
   formatLaunchWindowTimes,
   formatLocalLaunchWindow,
@@ -195,6 +196,30 @@ describe('launch formatting', () => {
         windowEnd: '2035-07-29T00:30:00.000Z',
       })
     ).toBe('Jul 28, 2035, 23:30 UTC – Jul 29, 2035, 00:30 UTC');
+  });
+
+  it('summarizes validated provider window duration without clock arithmetic', () => {
+    expect(formatLaunchWindowDuration(UPCOMING_LAUNCHES[0])).toBe('2h');
+    expect(
+      formatLaunchWindowDuration({
+        ...UPCOMING_LAUNCHES[0],
+        windowEnd: '2035-07-28T17:00:00.000Z',
+      })
+    ).toBe('2h 30m');
+    expect(
+      formatLaunchWindowDuration({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T14:29:30.000Z',
+        windowEnd: '2035-07-28T14:31:00.000Z',
+      })
+    ).toBe('1m 30s');
+    expect(
+      formatLaunchWindowDuration({
+        ...UPCOMING_LAUNCHES[0],
+        windowStart: '2035-07-28T16:30:00.000Z',
+        windowEnd: '2035-07-28T14:30:00.000Z',
+      })
+    ).toBeNull();
   });
 
   it('translates validated provider windows without repeating UTC', () => {

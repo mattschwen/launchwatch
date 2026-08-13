@@ -4167,12 +4167,13 @@ test('primary mission summaries keep the provider launch window visible', async 
     ).toBeVisible();
 
     const launchWindow = page.getByRole('note', {
-      name: /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC$/,
+      name: /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC, 2h duration$/,
     });
     await expect(launchWindow).toBeVisible();
     await expect(launchWindow).toHaveAccessibleName(
-      /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC$/
+      /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC, 2h duration$/
     );
+    await expect(launchWindow).toContainText('2h duration');
     const showSiteWindow = page.getByRole('button', {
       name: /^Show launch site window \d{1,2}:\d{2} [AP]M–\d{1,2}:\d{2} [AP]M EDT$/,
     });
@@ -4208,6 +4209,43 @@ test('primary mission summaries keep the provider launch window visible', async 
       .toBe(true);
     if (await showSiteWindow.count()) await showSiteWindow.click();
   }
+
+  await page.addInitScript(() => {
+    const original = Intl.DateTimeFormat.prototype.resolvedOptions;
+    Intl.DateTimeFormat.prototype.resolvedOptions = function resolvedOptions() {
+      return {
+        ...original.call(this),
+        timeZone: 'America/Denver',
+      };
+    };
+  });
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/');
+  const narrowWindow = page.locator('[data-launch-window]').first();
+  const narrowSwitcher = narrowWindow.getByRole('button', {
+    name: /^Show launch site window/,
+  });
+  await narrowSwitcher.focus();
+  await narrowSwitcher.press('Enter');
+  const activeSwitcher = narrowWindow.locator(
+    '[data-launch-site-window="true"] button',
+  );
+  const siteTime = narrowWindow
+    .locator('[data-launch-site-window="true"]')
+    .locator('span')
+    .last();
+  const narrowGeometry = await Promise.all([
+    activeSwitcher.boundingBox(),
+    siteTime.boundingBox(),
+    narrowWindow.boundingBox(),
+  ]);
+  expect(narrowGeometry.every(Boolean)).toBe(true);
+  const [switcherBox, siteTimeBox, windowBox] = narrowGeometry;
+  expect(switcherBox!.y + switcherBox!.height).toBeLessThanOrEqual(
+    siteTimeBox!.y,
+  );
+  expect(windowBox!.x + windowBox!.width).toBeLessThanOrEqual(320);
+  await expect(activeSwitcher).toBeFocused();
 });
 
 test('home supplemental commands preserve readable words at 200 percent text scaling', async ({

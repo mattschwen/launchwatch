@@ -57,7 +57,7 @@ export default function LocalLaunchWindow({
       aria-label={`${activeLabel} ${activeWindow}`}
       data-launch-site-window={showingSite ? 'true' : undefined}
       data-local-launch-window={!showingSite ? 'true' : undefined}
-      className="inline-flex min-w-0 flex-wrap items-baseline gap-x-2"
+      className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"
     >
       <span aria-hidden="true" className="text-[var(--border-strong)]">
         {'//'}
@@ -68,7 +68,7 @@ export default function LocalLaunchWindow({
           aria-label={`Show ${alternateLabel} ${alternateWindow}`}
           aria-pressed={showingSite}
           onClick={() => setSiteSelected((selected) => !selected)}
-          className="-my-1 inline-flex min-h-6 items-center gap-1 rounded-[var(--radius-sm)] px-1 font-sans text-[0.62rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--console-cyan)] focus-visible:text-[var(--console-cyan)]"
+          className="inline-flex min-h-6 items-center gap-1 rounded-[var(--radius-sm)] px-1 font-sans text-[0.62rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--console-cyan)] focus-visible:text-[var(--console-cyan)] min-[360px]:-my-1"
         >
           {activeLabel}
           <ArrowLeftRight aria-hidden="true" size={11} />

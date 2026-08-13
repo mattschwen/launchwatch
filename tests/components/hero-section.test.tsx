@@ -238,6 +238,13 @@ describe('HeroSection', () => {
 
     expect(screen.getByText('Launch window')).toBeVisible();
     expect(screen.getByText('14:30–16:30 UTC')).toBeVisible();
+    expect(screen.getByText('2h')).toBeVisible();
+    expect(screen.getByText('duration')).toBeVisible();
+    expect(
+      screen.getByRole('note', {
+        name: 'Launch window 14:30–16:30 UTC, 2h duration',
+      })
+    ).toBeVisible();
 
     rerender(
       <HeroSection

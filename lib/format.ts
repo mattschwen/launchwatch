@@ -559,6 +559,30 @@ export function formatLaunchWindowTimes(
     : formatLaunchWindow(launch);
 }
 
+export function formatLaunchWindowDuration(
+  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>
+): string | null {
+  const bounds = getLaunchWindowBounds(launch);
+  if (!bounds) return null;
+
+  const totalSeconds = Math.round(
+    (bounds.end.getTime() - bounds.start.getTime()) / 1_000
+  );
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [
+    days > 0 ? `${days}d` : null,
+    hours > 0 ? `${hours}h` : null,
+    minutes > 0 ? `${minutes}m` : null,
+    seconds > 0 ? `${seconds}s` : null,
+  ]
+    .filter((value): value is string => value !== null)
+    .join(' ');
+}
+
 export function formatLocalLaunchWindow(
   launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>,
   timeZone: string,

@@ -1,6 +1,9 @@
 import { CalendarRange } from 'lucide-react';
 import type { Launch } from '@/lib/types';
-import { formatLaunchWindowTimes } from '@/lib/format';
+import {
+  formatLaunchWindowDuration,
+  formatLaunchWindowTimes,
+} from '@/lib/format';
 import LocalLaunchWindow from '@/components/LocalLaunchWindow';
 
 export default function LaunchWindow({
@@ -14,7 +17,8 @@ export default function LaunchWindow({
   className?: string;
 }): React.ReactElement | null {
   const launchWindow = formatLaunchWindowTimes(launch);
-  if (!launchWindow) return null;
+  const launchWindowDuration = formatLaunchWindowDuration(launch);
+  if (!launchWindow || !launchWindowDuration) return null;
 
   return (
     <div
@@ -23,8 +27,8 @@ export default function LaunchWindow({
     >
       <span
         role="note"
-        aria-label={`Launch window ${launchWindow}`}
-        className="inline-flex min-w-0 flex-wrap items-center gap-x-2"
+        aria-label={`Launch window ${launchWindow}, ${launchWindowDuration} duration`}
+        className="inline-flex min-w-0 flex-wrap items-center gap-x-1 sm:gap-x-2"
       >
         <CalendarRange
           aria-hidden="true"
@@ -36,6 +40,16 @@ export default function LaunchWindow({
         </span>
         <span className="break-words text-[var(--text-secondary)]">
           {launchWindow}
+        </span>
+        <span
+          aria-hidden="true"
+          className="hidden text-[var(--border-strong)] sm:inline"
+        >
+          {'//'}
+        </span>
+        <span className="whitespace-nowrap text-[var(--text-muted)]">
+          {launchWindowDuration}
+          <span className="hidden sm:inline"> duration</span>
         </span>
       </span>
       <LocalLaunchWindow launch={launch} />
