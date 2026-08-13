@@ -67,8 +67,10 @@ short, dismissible status toast; it never blocks the application.
 - Provider-sourced vehicle and mission imagery with visible creator and license
   attribution, a full-resolution action, and truthful unavailable states
 - Canonical LL2 mission details retain provider-confirmed first-stage identity,
-  flight history, reuse, and recovery plans across Watch, briefing, and detail
-  telemetry instead of reducing the vehicle to its configuration name
+  flight history, reuse, prior mission, booster turnaround, and recovery plans
+  across Watch, briefing, and detail telemetry instead of reducing the vehicle
+  to its configuration name. Turnaround is labeled as the interval between
+  provider launch dates, not a readiness forecast
 - Detailed LL2 missions retain the launch-vehicle configuration's provider
   record—maiden flight plus completed, successful, and failed flight counts—
   across Watch, briefing, and canonical detail. It is explicitly historical

@@ -1,5 +1,7 @@
 import { Repeat2 } from 'lucide-react';
 import type { LaunchFirstStage } from '@/lib/types';
+import { formatLaunchDate } from '@/lib/format';
+import { formatPadTurnaround } from './PadTurnaroundSignal';
 
 function firstStageIdentity(firstStage: LaunchFirstStage): string {
   const identity = [
@@ -40,6 +42,23 @@ function firstStageContext(firstStage: LaunchFirstStage): string[] {
   return context;
 }
 
+function previousFlightContext(firstStage: LaunchFirstStage): string | null {
+  const previousMission = firstStage.previousFlightName;
+  const previousDate = firstStage.previousFlightDate
+    ? formatLaunchDate(firstStage.previousFlightDate)
+    : null;
+  const turnaround = firstStage.turnaroundSeconds !== null
+    ? formatPadTurnaround(firstStage.turnaroundSeconds)
+    : null;
+  const context = [
+    previousMission,
+    previousDate,
+    turnaround ? `${turnaround} between provider launch dates` : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return context.length > 0 ? context.join(' · ') : null;
+}
+
 export default function FirstStageSignal({
   firstStage,
   compact = false,
@@ -50,6 +69,7 @@ export default function FirstStageSignal({
   if (!firstStage) return null;
 
   const context = firstStageContext(firstStage);
+  const previousFlight = previousFlightContext(firstStage);
 
   return (
     <div
@@ -75,6 +95,14 @@ export default function FirstStageSignal({
         {context.length > 0 ? (
           <span className="mt-1 block break-words text-xs leading-5 text-[var(--text-muted)]">
             {context.join(' // ')}
+          </span>
+        ) : null}
+        {previousFlight ? (
+          <span className="mt-2 block min-w-0 border-l border-[var(--console-cyan)]/40 pl-2 text-xs leading-5 text-[var(--text-muted)]">
+            <span className="block font-mono text-[0.625rem] uppercase tracking-[0.08em] text-[var(--console-cyan)]">
+              Previous flight
+            </span>
+            <span className="block break-words">{previousFlight}</span>
           </span>
         ) : null}
       </dd>

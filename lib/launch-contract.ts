@@ -199,6 +199,16 @@ function isLaunchFirstStage(value: unknown): boolean {
         Number.isInteger(value.flightNumber) &&
         value.flightNumber > 0)) &&
     (value.reused === null || typeof value.reused === 'boolean') &&
+    (value.previousFlightName === null ||
+      (isRequiredTrimmedString(value.previousFlightName) &&
+        value.previousFlightName.length <= 200)) &&
+    (value.previousFlightDate === null ||
+      isCanonicalTimestamp(value.previousFlightDate)) &&
+    (value.turnaroundSeconds === null ||
+      (typeof value.turnaroundSeconds === 'number' &&
+        Number.isSafeInteger(value.turnaroundSeconds) &&
+        value.turnaroundSeconds > 0 &&
+        value.turnaroundSeconds <= 100 * 366 * 24 * 60 * 60)) &&
     (value.landingAttempt === null ||
       typeof value.landingAttempt === 'boolean') &&
     (value.landingSuccess === null ||

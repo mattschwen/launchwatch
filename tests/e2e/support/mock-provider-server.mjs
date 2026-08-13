@@ -181,6 +181,11 @@ function ll2Launch({
           type: 'Core',
           reused: true,
           launcher_flight_number: 7,
+          previous_flight_date: '2035-06-19T10:14:00.000Z',
+          turn_around_time: 'P39DT4H16M',
+          previous_flight: {
+            name: 'Astra Nova | Meridian Pathfinder',
+          },
           launcher: { serial_number: 'B2042' },
           landing: {
             attempt: true,

@@ -50,6 +50,7 @@ const MAX_MISSION_PROGRAMS = 8;
 const MAX_MISSION_PROGRAM_LENGTH = 120;
 const MAX_LAUNCH_DESIGNATOR_LENGTH = 32;
 const MAX_PAD_TURNAROUND_SECONDS = 100 * 366 * 24 * 60 * 60;
+const MAX_PREVIOUS_FLIGHT_NAME_LENGTH = 200;
 const MAX_VEHICLE_LAUNCH_COUNT = 10_000_000;
 
 // Cache configuration
@@ -1234,6 +1235,18 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     typeof providerFirstStage?.reused === 'boolean'
       ? providerFirstStage.reused
       : null;
+  const previousFlightName = isMeaningfulLaunchValue(
+    providerFirstStage?.previous_flight?.name,
+  ) && providerFirstStage.previous_flight.name.trim().length <=
+    MAX_PREVIOUS_FLIGHT_NAME_LENGTH
+    ? providerFirstStage.previous_flight.name.trim()
+    : null;
+  const previousFlightDate = providerTimestamp(
+    providerFirstStage?.previous_flight_date,
+  );
+  const turnaroundSeconds = providerDurationSeconds(
+    providerFirstStage?.turn_around_time,
+  );
   const landingAttempt =
     typeof providerFirstStage?.landing?.attempt === 'boolean'
       ? providerFirstStage.landing.attempt
@@ -1257,6 +1270,9 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     (serialNumber ||
       flightNumber !== null ||
       reused !== null ||
+      previousFlightName ||
+      previousFlightDate ||
+      turnaroundSeconds !== null ||
       landingAttempt !== null ||
       landingSuccess !== null ||
       landingLocation ||
@@ -1267,6 +1283,9 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
           serialNumber,
           flightNumber,
           reused,
+          previousFlightName,
+          previousFlightDate,
+          turnaroundSeconds,
           landingAttempt,
           landingSuccess,
           landingLocation,

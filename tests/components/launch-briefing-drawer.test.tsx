@@ -146,6 +146,10 @@ describe('LaunchBriefingDrawer', () => {
     expect(firstStage).toHaveTextContent(
       'Recovery planned · Autonomous Recovery Platform (ARP)',
     );
+    expect(firstStage).toHaveTextContent('Previous flight');
+    expect(firstStage).toHaveTextContent(
+      'Astra Nova | Meridian Pathfinder · Jun 19, 2035, 10:14 UTC · 39d 4h between provider launch dates',
+    );
   });
 
   it('preserves provider mission type, program, and orbit context', () => {

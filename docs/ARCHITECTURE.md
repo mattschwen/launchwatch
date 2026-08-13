@@ -221,6 +221,10 @@ flags are migrated in place so an app update does not replay an alert.
   and canonical detail label the record as historical provider context—not
   reliability, mission probability, or a forecast—while zero-flight vehicles
   retain an honest new-configuration state.
+- **First-stage telemetry** keeps provider-confirmed serial, flight, reuse, and
+  recovery facts together with a bounded previous-mission name, canonical UTC
+  date, and launch-to-launch turnaround. The interval is historical schedule
+  context and never presented as maintenance progress or readiness.
 - **Launch-site presentation** pairs a compact provider pad name with a distinct
   facility or locality when available. A numeric pad such as `201` therefore
   remains traceable to Wenchang across compact rows, mission summaries, map

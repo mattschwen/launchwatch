@@ -557,6 +557,11 @@ describe('Launch Library 2.3 adapter', () => {
             type: 'Core',
             reused: true,
             launcher_flight_number: 18,
+            previous_flight_date: '2035-06-28T16:09:18Z',
+            turn_around_time: 'P48DT5H42M42S',
+            previous_flight: {
+              name: 'Falcon 9 Block 5 | Starlink Group 17-40',
+            },
             launcher: {
               serial_number: 'B1085',
             },
@@ -581,6 +586,9 @@ describe('Launch Library 2.3 adapter', () => {
       serialNumber: 'B1085',
       flightNumber: 18,
       reused: true,
+      previousFlightName: 'Falcon 9 Block 5 | Starlink Group 17-40',
+      previousFlightDate: '2035-06-28T16:09:18.000Z',
+      turnaroundSeconds: 4_167_762,
       landingAttempt: true,
       landingSuccess: null,
       landingLocation: 'A Shortfall of Gravitas',
@@ -599,6 +607,9 @@ describe('Launch Library 2.3 adapter', () => {
           {
             type: 'Core',
             launcher_flight_number: 0,
+            previous_flight_date: 'not-a-date',
+            turn_around_time: 'P0D',
+            previous_flight: { name: 'Unknown mission' },
             launcher: { serial_number: '   ' },
             landing: {},
           },
@@ -607,6 +618,35 @@ describe('Launch Library 2.3 adapter', () => {
     });
 
     expect(normalized.firstStage).toBeNull();
+  });
+
+  it('drops malformed previous-flight facts without discarding stage identity', () => {
+    const normalized = normalizeLL2Launch({
+      ...DETAILED_LAUNCH,
+      rocket: {
+        ...DETAILED_LAUNCH.rocket,
+        launcher_stage: [
+          {
+            type: 'Core',
+            reused: true,
+            launcher_flight_number: 2,
+            previous_flight_date: '2035-13-40',
+            turn_around_time: 'P0D',
+            previous_flight: { name: 'x'.repeat(201) },
+            launcher: { serial_number: 'B2001' },
+          },
+        ],
+      },
+    });
+
+    expect(normalized.firstStage).toMatchObject({
+      serialNumber: 'B2001',
+      flightNumber: 2,
+      reused: true,
+      previousFlightName: null,
+      previousFlightDate: null,
+      turnaroundSeconds: null,
+    });
   });
 
   it('normalizes confirmed payload deployment as a successful outcome', () => {

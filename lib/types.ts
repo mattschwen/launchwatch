@@ -163,6 +163,11 @@ export interface LL2Launch {
       type?: string | null;
       reused?: boolean | null;
       launcher_flight_number?: number | null;
+      previous_flight_date?: string | null;
+      turn_around_time?: string | null;
+      previous_flight?: {
+        name?: string | null;
+      } | null;
       launcher?: {
         serial_number?: string | null;
       } | null;
@@ -321,6 +326,9 @@ export interface LaunchFirstStage {
   serialNumber: string | null;
   flightNumber: number | null;
   reused: boolean | null;
+  previousFlightName: string | null;
+  previousFlightDate: string | null;
+  turnaroundSeconds: number | null;
   landingAttempt: boolean | null;
   landingSuccess: boolean | null;
   landingLocation: string | null;

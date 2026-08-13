@@ -484,12 +484,20 @@ test('provider first-stage telemetry follows the canonical mission across surfac
   await expect(detailSignal).toContainText(
     'Recovery planned · Autonomous Recovery Platform (ARP)',
   );
+  await expect(detailSignal).toContainText('Previous flight');
+  await expect(detailSignal).toContainText('Astra Nova | Meridian Pathfinder');
+  await expect(detailSignal).toContainText(
+    '39d 4h between provider launch dates',
+  );
 
   await page.getByRole('button', { name: 'Open briefing' }).click();
   const briefing = page.getByRole('dialog', { name: 'Orbital Dawn' });
   await expect(
     briefing.locator('[data-first-stage-signal]'),
   ).toContainText('B2042 · Flight 7');
+  await expect(
+    briefing.locator('[data-first-stage-signal]'),
+  ).toContainText('39d 4h between provider launch dates');
   await briefing.getByRole('button', { name: 'Close mission briefing' }).click();
 
   await page.goto(`/watch?id=${encodeURIComponent(UPCOMING_LAUNCHES[0].id)}`);
@@ -499,6 +507,10 @@ test('provider first-stage telemetry follows the canonical mission across surfac
   await expect(watchSignal).toContainText('B2042 · Flight 7');
   await expect(watchSignal).toContainText(
     'Recovery planned · Autonomous Recovery Platform (ARP)',
+  );
+  await expect(watchSignal).toContainText('Astra Nova | Meridian Pathfinder');
+  await expect(watchSignal).toContainText(
+    '39d 4h between provider launch dates',
   );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });

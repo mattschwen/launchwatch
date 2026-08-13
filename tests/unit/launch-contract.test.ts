@@ -52,6 +52,9 @@ describe('client launch contract', () => {
           serialNumber: 'B1085',
           flightNumber: 18,
           reused: true,
+          previousFlightName: 'Falcon 9 Block 5 | Starlink Group 17-40',
+          previousFlightDate: '2035-06-28T16:09:18.000Z',
+          turnaroundSeconds: 48 * 86_400 + 5 * 3_600 + 42 * 60 + 42,
           landingAttempt: true,
           landingSuccess: null,
           landingLocation: 'A Shortfall of Gravitas',
@@ -237,12 +240,35 @@ describe('client launch contract', () => {
           serialNumber: 'B1085',
           flightNumber: -1,
           reused: 'yes',
+          previousFlightName: 'Falcon 9 Block 5 | Starlink Group 17-40',
+          previousFlightDate: '2035-06-28T16:09:18.000Z',
+          turnaroundSeconds: 48 * 86_400,
           landingAttempt: true,
           landingSuccess: null,
           landingLocation: 'A Shortfall of Gravitas',
           landingLocationAbbrev: 'ASOG',
           landingType: 'Autonomous Spaceport Drone Ship',
           landingTypeAbbrev: 'ASDS',
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it.each([
+    { previousFlightName: '  untrimmed mission' },
+    { previousFlightName: 'x'.repeat(201) },
+    { previousFlightDate: '2035-06-28T16:09:18Z' },
+    { previousFlightDate: 'not-a-date' },
+    { turnaroundSeconds: 0 },
+    { turnaroundSeconds: 42.5 },
+    { turnaroundSeconds: 101 * 366 * 24 * 60 * 60 },
+  ])('rejects malformed previous-flight facts %#', (override) => {
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
+        firstStage: {
+          ...UPCOMING_LAUNCHES[0].firstStage!,
+          ...override,
         },
       }),
     ).toBe(false);
