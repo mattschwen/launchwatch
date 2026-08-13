@@ -1971,7 +1971,7 @@ test('featured countdown keeps every unit on one row', async ({ page }) => {
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
-test('provider attempt sequence stays explicit across mission surfaces', async ({
+test('provider cadence stays explicit across mission surfaces', async ({
   page,
 }) => {
   await page.goto('/');
@@ -2005,18 +2005,31 @@ test('provider attempt sequence stays explicit across mission surfaces', async (
   await expect(
     briefingCadence.getByText('Launch pad attempt number 19 in 2035'),
   ).toBeAttached();
+  const briefingTurnaround = dialog.locator('[data-pad-turnaround-signal]');
+  await expect(briefingTurnaround).toContainText('3d 17h');
+  await expect(briefingTurnaround).toContainText(
+    'Since the previous launch from this pad',
+  );
   await dialog.getByRole('button', { name: 'Close mission briefing' }).click();
 
   await page.goto('/watch');
   await expect(
     page.locator('[data-watch-mission-details] [data-launch-cadence-signal]'),
   ).toContainText('Pad attempt #19');
+  await expect(
+    page.locator('[data-watch-mission-details] [data-pad-turnaround-signal]'),
+  ).toContainText('3d 17h');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await page.goto(`/launch/${UPCOMING_LAUNCHES[0].id}`);
   await expect(
     page.locator('[data-launch-cadence-signal]').first(),
   ).toContainText('Worldwide orbital #132');
+  await expect(
+    page.locator(
+      '[aria-label="Mission telemetry"] [data-pad-turnaround-signal]',
+    ),
+  ).toContainText('Since the previous launch from this pad');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

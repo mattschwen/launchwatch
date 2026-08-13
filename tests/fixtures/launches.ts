@@ -35,6 +35,7 @@ export const UPCOMING_LAUNCHES: Launch[] = [
     orbitalLaunchAttemptCountYear: 132,
     providerLaunchAttemptCountYear: 41,
     padLaunchAttemptCountYear: 19,
+    padTurnaroundSeconds: 3 * 86_400 + 17 * 3_600 + 6 * 60,
     officialMissionUrl: 'https://example.test/orbital-dawn',
     trajectorySimulationUrl:
       'https://flightclub.io/result?llId=demo-orbital-dawn',

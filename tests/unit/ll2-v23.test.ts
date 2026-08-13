@@ -15,6 +15,7 @@ const NORMAL_LIST_LAUNCH = {
   orbital_launch_attempt_count_year: 132,
   agency_launch_attempt_count_year: 41,
   pad_launch_attempt_count_year: 19,
+  pad_turnaround: null,
   net: '2035-07-29T02:00:00Z',
   net_precision: {
     name: 'Hour',
@@ -107,6 +108,7 @@ const NORMAL_LIST_LAUNCH = {
 const DETAILED_LAUNCH = {
   ...NORMAL_LIST_LAUNCH,
   id: 'f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
+  pad_turnaround: 'P3DT17H6M',
   flightclub_url:
     'https://flightclub.io/result?llId=f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
   info_urls: [
@@ -431,6 +433,29 @@ describe('Launch Library 2.3 adapter', () => {
     expect(malformed.orbitalLaunchAttemptCountYear).toBeNull();
     expect(malformed.providerLaunchAttemptCountYear).toBeNull();
     expect(malformed.padLaunchAttemptCountYear).toBeNull();
+  });
+
+  it('preserves a bounded detailed pad turnaround duration', () => {
+    expect(normalizeLL2Launch(DETAILED_LAUNCH).padTurnaroundSeconds).toBe(
+      3 * 86_400 + 17 * 3_600 + 6 * 60,
+    );
+
+    for (const pad_turnaround of [
+      'P0D',
+      'PT0S',
+      'P1M',
+      'P1Y',
+      'P1DT',
+      'PT25H',
+      'PT60M',
+      '3 days',
+      'P999999D',
+    ]) {
+      expect(
+        normalizeLL2Launch({ ...DETAILED_LAUNCH, pad_turnaround })
+          .padTurnaroundSeconds,
+      ).toBeNull();
+    }
   });
 
   it('drops malformed provider revision times', () => {

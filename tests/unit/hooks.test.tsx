@@ -58,6 +58,7 @@ describe('reconcileCurrentLaunch', () => {
       providerLaunchAttemptCountYear:
         feedLaunch.providerLaunchAttemptCountYear,
       padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
+      padTurnaroundSeconds: detailLaunch.padTurnaroundSeconds,
       statusName: feedLaunch.statusName,
       statusDescription: feedLaunch.statusDescription,
       description: detailLaunch.description,

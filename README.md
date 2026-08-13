@@ -101,6 +101,9 @@ short, dismissible status toast; it never blocks the application.
   across the featured mission, Watch, briefing, and canonical detail: launch
   provider, pad, and worldwide orbital sequence remain explicitly attempts,
   never inferred outcomes
+- Detailed LL2 missions expose the elapsed pad turnaround since the facility's
+  previous launch across Watch, briefing, and canonical detail telemetry;
+  missing or malformed durations stay absent and never imply pad readiness
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
   once the provider confirms a minute-level launch target; provider retargets
   re-arm the alert thresholds for the new confirmed time, and a failed

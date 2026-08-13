@@ -48,6 +48,7 @@ const MAX_FAILURE_REASON_LENGTH = 500;
 const MAX_STATUS_DESCRIPTION_LENGTH = 300;
 const MAX_MISSION_PROGRAMS = 8;
 const MAX_MISSION_PROGRAM_LENGTH = 120;
+const MAX_PAD_TURNAROUND_SECONDS = 100 * 366 * 24 * 60 * 60;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -631,6 +632,36 @@ function providerTimestamp(value: string | null | undefined): string | null {
 function positiveProviderCount(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value > 0
     ? value
+    : null;
+}
+
+function providerDurationSeconds(
+  value: string | null | undefined,
+): number | null {
+  const normalized = optionalText(value);
+  if (!normalized) return null;
+
+  const match = normalized.match(
+    /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/,
+  );
+  if (!match || match.slice(1).every((part) => part === undefined)) return null;
+
+  const [, days = '0', hours = '0', minutes = '0', seconds = '0'] = match;
+  if (
+    (normalized.includes('T') && match.slice(2).every((part) => part === undefined)) ||
+    Number(hours) >= 24 ||
+    Number(minutes) >= 60 ||
+    Number(seconds) >= 60
+  ) {
+    return null;
+  }
+  const parts = [days, hours, minutes, seconds].map(Number);
+  if (parts.some((part) => !Number.isSafeInteger(part))) return null;
+
+  const totalSeconds =
+    parts[0] * 86_400 + parts[1] * 3_600 + parts[2] * 60 + parts[3];
+  return totalSeconds > 0 && totalSeconds <= MAX_PAD_TURNAROUND_SECONDS
+    ? totalSeconds
     : null;
 }
 
@@ -1236,6 +1267,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     padLaunchAttemptCountYear: positiveProviderCount(
       launch.pad_launch_attempt_count_year,
     ),
+    padTurnaroundSeconds: providerDurationSeconds(launch.pad_turnaround),
     missionName: isMeaningfulLaunchValue(launch.mission?.name)
       ? launch.mission.name.trim()
       : null,

@@ -56,6 +56,7 @@ describe('client launch contract', () => {
         orbitalLaunchAttemptCountYear: 132,
         providerLaunchAttemptCountYear: 41,
         padLaunchAttemptCountYear: 19,
+        padTurnaroundSeconds: 320_760,
       }),
     ).toBe(true);
     expect(
@@ -225,6 +226,18 @@ describe('client launch contract', () => {
         isLaunch({
           ...UPCOMING_LAUNCHES[0],
           providerLaunchAttemptCountYear,
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it.each([0, -1, 4.5, Number.NaN, Number.MAX_SAFE_INTEGER])(
+    'rejects malformed pad turnaround %s',
+    (padTurnaroundSeconds) => {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          padTurnaroundSeconds,
         }),
       ).toBe(false);
     },

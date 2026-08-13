@@ -210,6 +210,10 @@ flags are migrated in place so an app update does not replay an alert.
   briefings, and canonical detail. The bounded provider wording explains why a
   state is confirmed or provisional without letting descriptive copy drive
   normalized status behavior.
+- **Pad turnaround telemetry** is accepted only from bounded LL2 detailed
+  records, rendered as elapsed time since the previous launch from that pad,
+  and kept in Watch, briefing, and canonical detail so dense result rows stay
+  scannable. It never represents maintenance progress or launch readiness.
 - **Launch-site presentation** pairs a compact provider pad name with a distinct
   facility or locality when available. A numeric pad such as `201` therefore
   remains traceable to Wenchang across compact rows, mission summaries, map

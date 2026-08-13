@@ -125,6 +125,7 @@ export interface LL2Launch {
   orbital_launch_attempt_count_year?: number | null;
   agency_launch_attempt_count_year?: number | null;
   pad_launch_attempt_count_year?: number | null;
+  pad_turnaround?: string | null;
   net: string; // Network Estimated Time
   net_precision?: LaunchDatePrecision | null;
   window_start?: string | null;
@@ -380,6 +381,7 @@ export interface Launch {
   orbitalLaunchAttemptCountYear?: number | null;
   providerLaunchAttemptCountYear?: number | null;
   padLaunchAttemptCountYear?: number | null;
+  padTurnaroundSeconds?: number | null;
   missionName?: string | null;
   missionType?: string | null;
   missionAgencies?: LaunchMissionAgency[] | null;

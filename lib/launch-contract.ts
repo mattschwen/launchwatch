@@ -68,6 +68,17 @@ function isOptionalPositiveInteger(value: unknown): boolean {
   );
 }
 
+function isOptionalPadTurnaround(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'number' &&
+      Number.isSafeInteger(value) &&
+      value > 0 &&
+      value <= 100 * 366 * 24 * 60 * 60)
+  );
+}
+
 function isLaunchTarget(date: unknown, dateUnix: unknown): boolean {
   if (
     typeof date !== 'string' ||
@@ -324,6 +335,7 @@ export function isLaunch(value: unknown): value is Launch {
     isOptionalPositiveInteger(value.orbitalLaunchAttemptCountYear) &&
     isOptionalPositiveInteger(value.providerLaunchAttemptCountYear) &&
     isOptionalPositiveInteger(value.padLaunchAttemptCountYear) &&
+    isOptionalPadTurnaround(value.padTurnaroundSeconds) &&
     isSafeNullableUrl(value.livestream) &&
     isSafeLaunchStreams(value.livestreams) &&
     isNullableString(value.description) &&

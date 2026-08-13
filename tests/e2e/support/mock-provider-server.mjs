@@ -149,6 +149,7 @@ function ll2Launch({
     orbital_launch_attempt_count_year: 132,
     agency_launch_attempt_count_year: 41,
     pad_launch_attempt_count_year: 19,
+    pad_turnaround: 'P3DT17H6M',
     net: launchDate.toISOString(),
     window_start: launchDate.toISOString(),
     window_end: new Date(launchDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
@@ -621,6 +622,7 @@ const server = createServer(async (request, response) => {
   ) {
     const normalLaunch = { ...ll2Upcoming };
     delete normalLaunch.updates;
+    delete normalLaunch.pad_turnaround;
     sendJson(response, 200, { count: 1, results: [normalLaunch] });
     return;
   }

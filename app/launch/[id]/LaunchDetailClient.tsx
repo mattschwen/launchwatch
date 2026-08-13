@@ -37,6 +37,7 @@ import LaunchWindow from '@/components/launch/LaunchWindow';
 import MissionVisual from '@/components/launch/MissionVisual';
 import FirstStageSignal from '@/components/launch/FirstStageSignal';
 import LaunchCadenceSignal from '@/components/launch/LaunchCadenceSignal';
+import PadTurnaroundSignal from '@/components/launch/PadTurnaroundSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import LaunchFailureSignal from '@/components/launch/LaunchFailureSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
@@ -581,6 +582,10 @@ export default function LaunchDetailClient({
           variant="compact"
         />
         <LaunchCadenceSignal launch={presentedLaunch} variant="compact" />
+        <PadTurnaroundSignal
+          seconds={presentedLaunch.padTurnaroundSeconds}
+          compact
+        />
         <LaunchReadinessSignal launch={presentedLaunch} variant="compact" />
         <LaunchFailureSignal launch={presentedLaunch} compact />
         <FirstStageSignal firstStage={presentedLaunch.firstStage} compact />
