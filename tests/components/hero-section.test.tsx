@@ -248,6 +248,17 @@ describe('HeroSection', () => {
     expect(screen.queryByRole('note', { name: /Launch window/ })).toBeNull();
   });
 
+  it('orients a precise featured target by UTC weekday', () => {
+    render(
+      <HeroSection
+        {...defaultProps}
+        activeLaunch={UPCOMING_LAUNCHES[0]}
+      />
+    );
+
+    expect(screen.getByText('Sat, Jul 28, 2035')).toBeVisible();
+  });
+
   it('keeps provider mission program visible without pushing down the schedule', () => {
     render(
       <HeroSection

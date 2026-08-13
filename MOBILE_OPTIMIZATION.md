@@ -100,6 +100,8 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   hydration-safe local start/end range inside the same telemetry badge. UTC
   viewers do not receive a duplicate range, and local midnight crossings name
   both dates instead of implying one calendar day.
+- Calendar-specific featured targets and schedule rows prefix the UTC date with
+  a short weekday; week, month, quarter, and broader estimates remain unchanged.
 - When two calendar-ready provider windows overlap, the schedule surfaces the
   nearest shared UTC interval before the result rows. The signal wraps long
   mission names without widening the page and identifies partial or retained

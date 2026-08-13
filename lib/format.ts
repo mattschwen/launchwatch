@@ -22,6 +22,14 @@ const UTC_DATE = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 });
 
+const UTC_WEEKDAY_DATE = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 const UTC_TIME = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',
   minute: '2-digit',
@@ -422,6 +430,36 @@ export function formatLaunchDay(
   }
 
   return UTC_DATE.format(parsed);
+}
+
+export function formatLaunchDayWithWeekday(
+  date: string,
+  precision?: LaunchDatePrecision | null
+): string {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
+
+  const code = precisionCode(precision);
+  if (
+    code === 'WK' ||
+    code === 'WEEK' ||
+    code === 'M' ||
+    code === 'MONTH' ||
+    code?.startsWith('Q') ||
+    code === 'QUARTER' ||
+    (Boolean(code) && /^H[12]$/.test(code!)) ||
+    code === 'HALF' ||
+    code === 'Y' ||
+    code === 'YEAR' ||
+    code === 'FY' ||
+    code === 'FISCAL YEAR' ||
+    code === 'DEC' ||
+    code === 'DECADE'
+  ) {
+    return formatLaunchDay(date, precision);
+  }
+
+  return UTC_WEEKDAY_DATE.format(parsed);
 }
 
 export function formatLaunchTime(

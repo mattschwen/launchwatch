@@ -4,7 +4,7 @@ import type { Ref } from 'react';
 import type { Launch } from '@/lib/types';
 import LaunchTimeContext from '@/components/LaunchTimeContext';
 import {
-  formatLaunchDay,
+  formatLaunchDayWithWeekday,
   formatLaunchTime,
   getPendingLaunchStatus,
   getLaunchSiteDisplay,
@@ -93,7 +93,10 @@ export default function LaunchCard({
               dateTime={launch.date}
               className="block break-words text-sm font-medium leading-5 text-[var(--text-primary)]"
             >
-              {formatLaunchDay(launch.date, launch.datePrecision)}
+              {formatLaunchDayWithWeekday(
+                launch.date,
+                launch.datePrecision
+              )}
             </time>
             <time
               dateTime={launch.date}

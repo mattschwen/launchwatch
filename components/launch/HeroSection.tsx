@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CalendarDays, MapPin, Rocket } from 'lucide-react';
 import type { Launch } from '@/lib/types';
 import {
-  formatLaunchDay,
+  formatLaunchDayWithWeekday,
   formatPrimaryMissionName,
   formatLaunchTime,
   getLaunchSiteDisplay,
@@ -382,7 +382,7 @@ export default function HeroSection({
               />
               <dt className="data-label">Date (UTC)</dt>
               <dd className="mt-1 break-words text-[0.8125rem] font-medium leading-5 text-[var(--text-primary)] min-[360px]:text-sm">
-                {formatLaunchDay(
+                {formatLaunchDayWithWeekday(
                   activeLaunch.date,
                   activeLaunch.datePrecision
                 )}

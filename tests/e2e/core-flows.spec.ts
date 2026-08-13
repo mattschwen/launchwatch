@@ -2176,12 +2176,12 @@ test('provider cadence stays explicit across mission surfaces', async ({
   ).toContainText('Worldwide orbital #132');
   await expect(
     page.locator(
-      '[aria-label="Mission telemetry"] [data-pad-turnaround-signal]',
+      '#main-content [aria-label="Mission telemetry"] [data-pad-turnaround-signal]',
     ),
   ).toContainText('Since the previous launch from this pad');
   await expect(
     page.locator(
-      '[aria-label="Mission telemetry"] [data-vehicle-record-signal]',
+      '#main-content [aria-label="Mission telemetry"] [data-vehicle-record-signal]',
     ),
   ).toContainText('Configuration first flew May 11, 2018');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
@@ -2195,6 +2195,12 @@ test('narrow schedule rows keep timing and mission identity in a stable scan pat
     window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
   });
   await page.goto('/');
+
+  await expect(
+    page
+      .locator('section[aria-labelledby="featured-launch-title"]')
+      .getByText('Sat, Jul 28, 2035')
+  ).toBeVisible();
 
   const row = page.locator('.launch-card-grid').first();
   await expect(row).toBeVisible();
@@ -2219,6 +2225,7 @@ test('narrow schedule rows keep timing and mission identity in a stable scan pat
     status.boundingBox(),
   ]);
   expect(dateBounds).not.toBeNull();
+  await expect(date.getByText('Sat, Jul 28, 2035')).toBeVisible();
   expect(missionBounds).not.toBeNull();
   expect(statusBounds).not.toBeNull();
   expect(dateBounds!.width).toBeGreaterThan(missionBounds!.width);
@@ -5741,7 +5748,9 @@ test('home schedule keeps long mission telemetry readable', async ({
 
   const schedule = page.getByRole('region', { name: 'Upcoming launches' });
   const scheduleRow = schedule.locator('article').first();
-  const launchDay = scheduleRow.getByText('Jul 28, 2035', { exact: true });
+  const launchDay = scheduleRow.getByText('Sat, Jul 28, 2035', {
+    exact: true,
+  });
   const missionName = schedule.getByText(longMissionName, { exact: true });
   const providerName = schedule.getByText(longProviderName, { exact: true });
   const statusName = schedule.getByText(longStatusName, { exact: true });

@@ -62,6 +62,22 @@ describe('LaunchList', () => {
     }
   });
 
+  it('orients precise mission rows by UTC weekday', () => {
+    vi.mocked(useLaunches).mockReturnValue({
+      launches: UPCOMING_LAUNCHES,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<LaunchList />);
+
+    expect(screen.getByText('Sat, Jul 28, 2035')).toBeVisible();
+  });
+
   it('adds distinct site and viewer time context to exact upcoming rows', () => {
     vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
       locale: 'en-US',

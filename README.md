@@ -126,6 +126,8 @@ the header route commands in compact landscape layouts.
   schedule rows, plus the complete local start and end of validated launch
   windows, while UTC remains authoritative; UTC users and coarse provider
   estimates keep the existing single-time presentation
+- UTC weekday context on calendar-specific featured targets and schedule rows,
+  while week, month, quarter, and broader estimates avoid invented weekdays
 - The nearest overlap between calendar-ready provider launch windows appears
   as an exact shared UTC interval in Home's schedule-planning signal; coarse or
   excessively broad estimates stay silent, and degraded feeds qualify the signal

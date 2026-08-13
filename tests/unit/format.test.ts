@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   firstLaunchValue,
   formatLaunchDate,
+  formatLaunchDayWithWeekday,
   formatLocalLaunchTime,
   formatLaunchPrecisionLabel,
   getLaunchSiteDisplay,
@@ -43,6 +44,31 @@ describe('launch formatting', () => {
   it('formats dates in UTC and handles invalid input', () => {
     expect(formatLaunchDate('2035-07-28T14:30:00.000Z')).toContain('UTC');
     expect(formatLaunchDate('not-a-date')).toBe('Date unavailable');
+  });
+
+  it('adds weekday context only when the provider identifies a calendar day', () => {
+    expect(formatLaunchDayWithWeekday('2035-07-28T14:30:00.000Z')).toBe(
+      'Sat, Jul 28, 2035'
+    );
+    expect(
+      formatLaunchDayWithWeekday('2035-07-28T00:00:00.000Z', {
+        name: 'Day',
+        abbrev: 'DAY',
+      })
+    ).toBe('Sat, Jul 28, 2035');
+    expect(
+      formatLaunchDayWithWeekday('2035-08-31T00:00:00.000Z', {
+        name: 'Month',
+        abbrev: 'M',
+      })
+    ).toBe('August 2035');
+    expect(
+      formatLaunchDayWithWeekday('2035-07-28T00:00:00.000Z', {
+        name: 'Week',
+        abbrev: 'WK',
+      })
+    ).toBe('Week of Jul 28, 2035');
+    expect(formatLaunchDayWithWeekday('not-a-date')).toBe('Date unavailable');
   });
 
   it('adds local context only for precise targets outside UTC', () => {
