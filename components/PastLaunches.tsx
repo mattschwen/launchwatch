@@ -410,6 +410,14 @@ function HistoryRow({
                   {formatLaunchValue(launch.missionType)}
                 </dd>
               </div>
+              {launch.launchDesignator ? (
+                <div>
+                  <dt className="data-label">Provider designator</dt>
+                  <dd className="mt-1 font-mono text-sm font-semibold text-[var(--console-cyan)]">
+                    {launch.launchDesignator}
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt className="data-label">Orbit</dt>
                 <dd className="mt-1 text-sm text-[var(--text-primary)]">
@@ -1011,7 +1019,7 @@ export default function PastLaunches({
                     setSearch(event.target.value);
                     setVisibleCount(PAGE_SIZE);
                   }}
-                  placeholder="Mission, operator, profile, orbit, vehicle, or site"
+                  placeholder="Mission, designator, operator, profile, orbit, vehicle, or site"
                   className="controlled-search-input min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] py-2 pl-10 pr-12 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
                 />
                 {search.length > 0 ? (

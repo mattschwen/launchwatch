@@ -121,6 +121,7 @@ export interface LL2InfoUrl {
 export interface LL2Launch {
   id: string;
   name: string;
+  launch_designator?: string | null;
   last_updated?: string | null;
   orbital_launch_attempt_count_year?: number | null;
   agency_launch_attempt_count_year?: number | null;
@@ -369,6 +370,7 @@ export interface Launch {
    */
   sourceId?: string | null;
   name: string;
+  launchDesignator?: string | null;
   date: string;
   dateUnix: number;
   datePrecision?: LaunchDatePrecision | null;

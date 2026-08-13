@@ -28,6 +28,7 @@ import TimelineEventClock from './TimelineEventClock';
 import StatusBadge from './ui/StatusBadge';
 import FirstStageSignal from './launch/FirstStageSignal';
 import LaunchCadenceSignal from './launch/LaunchCadenceSignal';
+import LaunchDesignatorSignal from './launch/LaunchDesignatorSignal';
 import PadTurnaroundSignal from './launch/PadTurnaroundSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import LaunchFailureSignal from './launch/LaunchFailureSignal';
@@ -234,6 +235,7 @@ export default function LaunchBriefingDrawer({
               </div>
             ) : null}
             <ProviderRevisionSignal updatedAt={launch.providerUpdatedAt} />
+            <LaunchDesignatorSignal designator={launch.launchDesignator} />
             <LaunchCadenceSignal launch={launch} />
             <PadTurnaroundSignal seconds={launch.padTurnaroundSeconds} />
             <LaunchReadinessSignal launch={launch} />

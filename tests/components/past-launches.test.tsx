@@ -152,6 +152,29 @@ describe('PastLaunches', () => {
     ).toBeVisible();
   });
 
+  it('finds and exposes a provider launch designator without crowding collapsed rows', async () => {
+    const user = userEvent.setup();
+    render(<PastLaunches />);
+
+    const search = await screen.findByRole('searchbox', {
+      name: 'Search missions',
+    });
+    await user.type(search, '2024F03');
+
+    expect(screen.getByText('Pathfinder Qualification')).toBeVisible();
+    expect(screen.queryByText('Demo Return Flight')).not.toBeInTheDocument();
+    expect(screen.queryByText('2024-F03')).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Show mission details for Pathfinder Qualification',
+      }),
+    );
+
+    expect(screen.getByText('Provider designator')).toBeVisible();
+    expect(screen.getByText('2024-F03')).toBeVisible();
+  });
+
   it('marks and filters past missions whose outcomes remain unconfirmed', async () => {
     const user = userEvent.setup();
     const unconfirmedLaunch = {

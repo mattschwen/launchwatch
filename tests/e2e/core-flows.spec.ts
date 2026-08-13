@@ -8544,7 +8544,7 @@ test('schedule and archive search across mission profile data', async ({
   });
   await expect(archiveSearch).toHaveAttribute(
     'placeholder',
-    'Mission, operator, profile, orbit, vehicle, or site',
+    'Mission, designator, operator, profile, orbit, vehicle, or site',
   );
   await archiveSearch.fill('flight directorate multinational');
 
@@ -8553,6 +8553,38 @@ test('schedule and archive search across mission profile data', async ({
   ).toHaveText('1 result');
   await expect(page.getByText('Demo Return Flight')).toBeVisible();
   await expect(page.getByText('Pathfinder Qualification')).toHaveCount(0);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('archive search and deep mission telemetry preserve provider designators', async ({
+  page,
+}) => {
+  await page.goto('/history');
+
+  const search = page.getByRole('searchbox', { name: 'Search missions' });
+  await search.fill('2024F03');
+  await expect(page.getByText('Pathfinder Qualification')).toBeVisible();
+  await expect(page.getByText('Demo Return Flight')).toHaveCount(0);
+
+  const mission = page.locator('article').filter({
+    hasText: 'Pathfinder Qualification',
+  });
+  await mission
+    .getByRole('button', {
+      name: 'Show mission details for Pathfinder Qualification',
+    })
+    .click();
+  await expect(mission.getByText('Provider designator')).toBeVisible();
+  await expect(mission.getByText('2024-F03')).toBeVisible();
+
+  await mission.getByRole('link', { name: /^View mission / }).click();
+  const detailSignal = page.locator(
+    '[aria-label="Mission telemetry"] [data-launch-designator-signal]',
+  );
+  await expect(detailSignal).toContainText('2024-F03');
+  await expect(detailSignal).toContainText(
+    'Identifier supplied in the provider record',
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

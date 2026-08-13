@@ -251,6 +251,7 @@ export const HISTORICAL_LAUNCHES: Launch[] = [
     id: 'll2-demo-pathfinder',
     sourceId: 'demo-pathfinder',
     name: 'Pathfinder Qualification',
+    launchDesignator: '2024-F03',
     date: '2024-11-05T06:45:00.000Z',
     dateUnix: 1730789100,
     rocket: 'Pathfinder I',

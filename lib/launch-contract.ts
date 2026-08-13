@@ -136,6 +136,16 @@ function isOptionalStatusDescription(value: unknown): boolean {
   );
 }
 
+function isOptionalLaunchDesignator(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (isRequiredTrimmedString(value) &&
+      value.length <= 32 &&
+      /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(value))
+  );
+}
+
 function isOptionalFailureReason(value: unknown, status: unknown): boolean {
   if (value === undefined || value === null) return true;
 
@@ -326,6 +336,7 @@ export function isLaunch(value: unknown): value is Launch {
   return (
     canonicalIdentity &&
     typeof value.name === 'string' &&
+    isOptionalLaunchDesignator(value.launchDesignator) &&
     isLaunchTarget(value.date, value.dateUnix) &&
     typeof value.rocket === 'string' &&
     typeof value.launchSite === 'string' &&

@@ -258,6 +258,10 @@ keyboard accessible. Mission briefings keep the first eight provider timeline
 events compact while reporting and revealing every additional event on demand;
 the expanded state resets when the briefing closes.
 
+Provider launch designators are bounded identifier strings, not inferred
+outcomes or locally assigned catalog numbers. They participate in shared
+mission search and appear only on expanded or deep mission surfaces.
+
 ## Visual Provenance Boundary
 
 Provider media URLs are data, not permission. Normalization stores structured

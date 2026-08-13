@@ -375,6 +375,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `sourceId` | Provider-native identifier |
 | `source` | `spacex` or `ll2` |
 | `name`, `date`, `dateUnix` | Mission identity and provider target timestamp |
+| `launchDesignator` | Optional bounded provider-assigned launch identifier |
 | `datePrecision` | Optional provider precision (`name`, `abbrev`, and description) used to distinguish exact T-0 values from day/month/quarter/year estimates |
 | `rocket`, `launchSite`, `location` | Vehicle and pad data |
 | `firstStage` | Optional LL2 detail telemetry for provider-confirmed booster identity, flight number, reuse, and landing attempt/outcome/location |

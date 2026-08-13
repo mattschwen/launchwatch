@@ -546,6 +546,7 @@ const ll2Previous = ll2Launch({
 });
 
 ll2Previous.failreason = 'Vehicle lost during the qualification ascent.';
+ll2Previous.launch_designator = '2024-F03';
 
 ll2Previous.image = {
   id: 9002,

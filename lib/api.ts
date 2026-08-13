@@ -48,6 +48,7 @@ const MAX_FAILURE_REASON_LENGTH = 500;
 const MAX_STATUS_DESCRIPTION_LENGTH = 300;
 const MAX_MISSION_PROGRAMS = 8;
 const MAX_MISSION_PROGRAM_LENGTH = 120;
+const MAX_LAUNCH_DESIGNATOR_LENGTH = 32;
 const MAX_PAD_TURNAROUND_SECONDS = 100 * 366 * 24 * 60 * 60;
 
 // Cache configuration
@@ -629,6 +630,17 @@ function providerTimestamp(value: string | null | undefined): string | null {
   return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 }
 
+function providerLaunchDesignator(
+  value: string | null | undefined,
+): string | null {
+  const normalized = optionalText(value);
+  return normalized &&
+    normalized.length <= MAX_LAUNCH_DESIGNATOR_LENGTH &&
+    /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(normalized)
+    ? normalized
+    : null;
+}
+
 function positiveProviderCount(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value > 0
     ? value
@@ -1054,6 +1066,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     id: toCanonicalLaunchId('spacex', launch.id),
     sourceId: launch.id,
     name: launch.name,
+    launchDesignator: null,
     date: launch.date_utc,
     dateUnix: launch.date_unix,
     datePrecision: normalizeDatePrecision(launch.date_precision),
@@ -1249,6 +1262,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
     id: toCanonicalLaunchId('ll2', launch.id),
     sourceId: launch.id,
     name: launch.name,
+    launchDesignator: providerLaunchDesignator(launch.launch_designator),
     date: launch.net,
     dateUnix: Number.isFinite(parsedDate) ? parsedDate : 0,
     datePrecision: normalizeDatePrecision(launch.net_precision),

@@ -53,6 +53,7 @@ describe('client launch contract', () => {
     expect(
       isLaunch({
         ...UPCOMING_LAUNCHES[0],
+        launchDesignator: '2035-132',
         orbitalLaunchAttemptCountYear: 132,
         providerLaunchAttemptCountYear: 41,
         padLaunchAttemptCountYear: 19,
@@ -90,6 +91,23 @@ describe('client launch contract', () => {
           'https://flightclub.io/result?llId=demo-orbital-dawn',
       }),
     ).toBe(true);
+  });
+
+  it('rejects malformed provider launch designators', () => {
+    for (const launchDesignator of [
+      ' 2035-132 ',
+      '2035 132',
+      '2035_132',
+      'x'.repeat(33),
+      { id: '2035-132' },
+    ]) {
+      expect(
+        isLaunch({
+          ...UPCOMING_LAUNCHES[0],
+          launchDesignator,
+        }),
+      ).toBe(false);
+    }
   });
 
   it('rejects malformed provider status explanations', () => {

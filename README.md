@@ -80,6 +80,9 @@ short, dismissible status toast; it never blocks the application.
 - Failed LL2 missions retain the provider's bounded failure diagnosis in the
   archive, briefing, and canonical detail telemetry; absent or stale reasons
   are never inferred from the generic mission status
+- Provider launch designators remain searchable in History and visible in
+  expanded and deep mission telemetry; missing or malformed identifiers stay
+  absent instead of being inferred from mission timing or outcome
 - Canonical LL2 detail records expose the latest five valid provider update
   notes in newest-first order with UTC timestamps and credential-free HTTPS
   source handoffs; the briefing retains only the newest note, and list-only

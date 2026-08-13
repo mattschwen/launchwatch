@@ -402,6 +402,7 @@ describe('launch formatting', () => {
   it('matches every search term across a launch mission profile', () => {
     const launch = {
       ...UPCOMING_LAUNCHES[0],
+      launchDesignator: '2035-132',
       programs: [
         'LaunchWatch Test Program',
         'International Space Station',
@@ -414,6 +415,7 @@ describe('launch formatting', () => {
     expect(matchesLaunchSearch(launch, 'relay authority government')).toBe(true);
     expect(matchesLaunchSearch(launch, 'international space station')).toBe(true);
     expect(matchesLaunchSearch(launch, 'ora')).toBe(true);
+    expect(matchesLaunchSearch(launch, '2035132')).toBe(true);
     expect(matchesLaunchSearch(launch, '  ')).toBe(true);
     expect(matchesLaunchSearch(launch, 'communications falcon')).toBe(false);
     expect(

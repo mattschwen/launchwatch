@@ -11,6 +11,7 @@ import type { LL2Launch } from '@/lib/types';
 const NORMAL_LIST_LAUNCH = {
   id: '8b8a30c5-12b5-4a37-bbea-160d90ec65e5',
   name: 'Falcon 9 Block 5 | Fixture Mission',
+  launch_designator: null,
   last_updated: '2035-07-29T01:13:00Z',
   orbital_launch_attempt_count_year: 132,
   agency_launch_attempt_count_year: 41,
@@ -108,6 +109,7 @@ const NORMAL_LIST_LAUNCH = {
 const DETAILED_LAUNCH = {
   ...NORMAL_LIST_LAUNCH,
   id: 'f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
+  launch_designator: '2035-132',
   pad_turnaround: 'P3DT17H6M',
   flightclub_url:
     'https://flightclub.io/result?llId=f83f7f2c-e9f5-4af2-b5cc-5c9416b19ca6',
@@ -229,6 +231,30 @@ afterEach(() => {
 });
 
 describe('Launch Library 2.3 adapter', () => {
+  it('preserves a bounded provider launch designator and rejects malformed values', () => {
+    expect(normalizeLL2Launch(DETAILED_LAUNCH).launchDesignator).toBe(
+      '2035-132',
+    );
+    expect(
+      normalizeLL2Launch({
+        ...DETAILED_LAUNCH,
+        launch_designator: ' 2035-132 ',
+      }).launchDesignator,
+    ).toBe('2035-132');
+
+    for (const launch_designator of [
+      '2035 132',
+      '2035_132',
+      'x'.repeat(33),
+      '',
+    ]) {
+      expect(
+        normalizeLL2Launch({ ...DETAILED_LAUNCH, launch_designator })
+          .launchDesignator,
+      ).toBeNull();
+    }
+  });
+
   it('preserves every distinct provider program affiliation', () => {
     const normalized = normalizeLL2Launch({
       ...DETAILED_LAUNCH,

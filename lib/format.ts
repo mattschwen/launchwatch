@@ -172,6 +172,7 @@ export function matchesLaunchSearch(launch: Launch, query: string): boolean {
 
   const normalizedProfileValues = [
     launch.name,
+    launch.launchDesignator,
     launch.missionName,
     launch.missionType,
     ...(launch.missionAgencies ?? []).flatMap((agency) => [
