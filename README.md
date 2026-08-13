@@ -123,9 +123,9 @@ the header route commands in compact landscape layouts.
   mission details retain the canonical LaunchWatch route. Browsers that block
   clipboard writes expose the same mission brief as selectable text
 - Compact local-time context beside exact primary mission targets and upcoming
-  schedule rows, plus the complete local start and end of validated launch
-  windows, while UTC remains authoritative; UTC users and coarse provider
-  estimates keep the existing single-time presentation
+  schedule rows. Validated launch windows keep UTC authoritative and retain
+  the viewer's range while an inline switch reveals the complete launch-site
+  interval when it differs; coarse estimates keep their existing presentation
 - UTC weekday context on calendar-specific featured targets and schedule rows,
   while week, month, quarter, and broader estimates avoid invented weekdays
 - The nearest overlap between calendar-ready provider launch windows appears

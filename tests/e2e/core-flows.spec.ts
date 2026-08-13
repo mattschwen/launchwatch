@@ -4173,6 +4173,21 @@ test('primary mission summaries keep the provider launch window visible', async 
     await expect(launchWindow).toHaveAccessibleName(
       /^Launch window \d{2}:\d{2}–\d{2}:\d{2} UTC$/
     );
+    const showSiteWindow = page.getByRole('button', {
+      name: /^Show launch site window \d{1,2}:\d{2} [AP]M–\d{1,2}:\d{2} [AP]M EDT$/,
+    });
+    if (await showSiteWindow.count()) {
+      await expect(showSiteWindow).toBeVisible();
+      await showSiteWindow.click();
+    }
+    const siteWindow = page.getByRole('note', {
+      name: /^Site window \d{1,2}:\d{2} [AP]M–\d{1,2}:\d{2} [AP]M EDT$/,
+    });
+    await expect(siteWindow).toBeVisible();
+    if (await showSiteWindow.count()) {
+      await expect(showSiteWindow).toHaveAccessibleName(/^Show your window/);
+      await expect(showSiteWindow).toBeFocused();
+    }
 
     const geometry = await launchWindow.evaluate((element) => {
       const bounds = element.getBoundingClientRect();
@@ -4184,6 +4199,14 @@ test('primary mission summaries keep the provider launch window visible', async 
     });
     expect(geometry.left).toBeGreaterThanOrEqual(0);
     expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+    await expect
+      .poll(() =>
+        siteWindow.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+      )
+      .toBe(true);
+    if (await showSiteWindow.count()) await showSiteWindow.click();
   }
 });
 

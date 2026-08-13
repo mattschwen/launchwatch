@@ -68,9 +68,24 @@ test.describe('confirmed launch local time', () => {
     ).toContainText('6:00 AM–8:00 AM MDT');
     await expect(
       featuredWindow.getByRole('note', {
-        name: 'Your local launch window 6:00 AM–8:00 AM MDT',
+        name: 'Your window 6:00 AM–8:00 AM MDT',
       })
     ).toBeVisible();
+    const showSiteWindow = featuredWindow.getByRole('button', {
+      name: 'Show launch site window 8:00 AM–10:00 AM EDT',
+    });
+    await showSiteWindow.focus();
+    await showSiteWindow.press('Enter');
+    const showViewerWindow = featuredWindow.getByRole('button', {
+      name: 'Show your window 6:00 AM–8:00 AM MDT',
+    });
+    await expect(showViewerWindow).toBeFocused();
+    await expect(
+      featuredWindow.getByRole('note', {
+        name: 'Site window 8:00 AM–10:00 AM EDT',
+      })
+    ).toBeVisible();
+    await showViewerWindow.press('Enter');
 
     const schedule = page.locator('#upcoming-launch-results');
     const firstMissionRow = schedule.locator('article').first();

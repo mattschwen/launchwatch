@@ -7,7 +7,10 @@ export default function LaunchWindow({
   launch,
   className = '',
 }: {
-  launch: Pick<Launch, 'date' | 'windowStart' | 'windowEnd'>;
+  launch: Pick<
+    Launch,
+    'date' | 'windowStart' | 'windowEnd' | 'location'
+  >;
   className?: string;
 }): React.ReactElement | null {
   const launchWindow = formatLaunchWindowTimes(launch);
@@ -16,7 +19,7 @@ export default function LaunchWindow({
   return (
     <div
       data-launch-window="true"
-      className={`inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-cyan)_22%,transparent)] bg-[var(--console-cyan)]/[0.045] px-2.5 py-1.5 font-mono text-[0.68rem] leading-4 ${className}`}
+      className={`inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--console-cyan)_22%,transparent)] bg-[var(--console-cyan)]/[0.045] px-2.5 py-1 font-mono text-[0.68rem] leading-4 ${className}`}
     >
       <span
         role="note"

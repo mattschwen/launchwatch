@@ -97,9 +97,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   pending control remains keyboard-focusable and exposes its precision-aware
   explanation on focus or hover without opening calendar actions.
 - Validated provider launch windows keep the UTC range authoritative and add a
-  hydration-safe local start/end range inside the same telemetry badge. UTC
-  viewers do not receive a duplicate range, and local midnight crossings name
-  both dates instead of implying one calendar day.
+  hydration-safe inline switch between the viewer and launch-site start/end
+  ranges without adding a row to the primary mission summary. Equivalent
+  ranges collapse, and midnight crossings name both dates instead of one day.
 - Calendar-specific featured targets and schedule rows prefix the UTC date with
   a short weekday; week, month, quarter, and broader estimates remain unchanged.
 - When two calendar-ready provider windows overlap, the schedule surfaces the
