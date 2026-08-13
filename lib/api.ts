@@ -50,6 +50,7 @@ const MAX_MISSION_PROGRAMS = 8;
 const MAX_MISSION_PROGRAM_LENGTH = 120;
 const MAX_LAUNCH_DESIGNATOR_LENGTH = 32;
 const MAX_PAD_TURNAROUND_SECONDS = 100 * 366 * 24 * 60 * 60;
+const MAX_VEHICLE_LAUNCH_COUNT = 10_000_000;
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for most data
@@ -845,6 +846,52 @@ function ll2RocketFamily(launch: LL2Launch): string | null {
   return family?.name || null;
 }
 
+function providerVehicleRecord(
+  configuration: LL2Launch['rocket']['configuration'],
+): Launch['vehicleRecord'] {
+  const counts = [
+    configuration.total_launch_count,
+    configuration.successful_launches,
+    configuration.failed_launches,
+  ];
+  if (
+    counts.some(
+      (value) =>
+        typeof value !== 'number' ||
+        !Number.isSafeInteger(value) ||
+        value < 0 ||
+        value > MAX_VEHICLE_LAUNCH_COUNT,
+    )
+  ) {
+    return null;
+  }
+
+  const [totalLaunchCount, successfulLaunches, failedLaunches] = counts as [
+    number,
+    number,
+    number,
+  ];
+  if (successfulLaunches + failedLaunches !== totalLaunchCount) return null;
+
+  const maidenFlight = optionalText(configuration.maiden_flight);
+  const maidenTimestamp = maidenFlight && /^\d{4}-\d{2}-\d{2}$/.test(maidenFlight)
+    ? new Date(`${maidenFlight}T00:00:00.000Z`).getTime()
+    : Number.NaN;
+  const normalizedMaidenFlight =
+    maidenFlight &&
+    Number.isFinite(maidenTimestamp) &&
+    new Date(maidenTimestamp).toISOString().slice(0, 10) === maidenFlight
+      ? maidenFlight
+      : null;
+
+  return {
+    maidenFlight: normalizedMaidenFlight,
+    totalLaunchCount,
+    successfulLaunches,
+    failedLaunches,
+  };
+}
+
 function canCoverLaunchWindow(
   launch: LL2Launch,
   video: LL2Video,
@@ -1116,6 +1163,7 @@ export function normalizeSpaceXLaunch(launch: SpaceXLaunch): Launch {
     orbit: null,
     rocketFamily: rocket,
     rocketVariant: null,
+    vehicleRecord: null,
   };
 }
 
@@ -1351,6 +1399,7 @@ export function normalizeLL2Launch(launch: LL2Launch): Launch {
       : null,
     rocketFamily: family,
     rocketVariant: configuration.variant || null,
+    vehicleRecord: providerVehicleRecord(configuration),
     firstStage,
   };
 }

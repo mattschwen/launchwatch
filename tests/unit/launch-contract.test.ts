@@ -37,6 +37,17 @@ describe('client launch contract', () => {
     expect(
       isLaunch({
         ...UPCOMING_LAUNCHES[0],
+        vehicleRecord: {
+          maidenFlight: '2018-05-11',
+          totalLaunchCount: 620,
+          successfulLaunches: 619,
+          failedLaunches: 1,
+        },
+      }),
+    ).toBe(true);
+    expect(
+      isLaunch({
+        ...UPCOMING_LAUNCHES[0],
         firstStage: {
           serialNumber: 'B1085',
           flightNumber: 18,
@@ -235,6 +246,37 @@ describe('client launch contract', () => {
         },
       }),
     ).toBe(false);
+  });
+
+  it('rejects malformed or inconsistent vehicle records', () => {
+    for (const vehicleRecord of [
+      {
+        maidenFlight: '2018-05-11',
+        totalLaunchCount: 620,
+        successfulLaunches: 619,
+        failedLaunches: 2,
+      },
+      {
+        maidenFlight: 'May 11, 2018',
+        totalLaunchCount: 1,
+        successfulLaunches: 1,
+        failedLaunches: 0,
+      },
+      {
+        maidenFlight: '2018-13-40',
+        totalLaunchCount: 1,
+        successfulLaunches: 1,
+        failedLaunches: 0,
+      },
+      {
+        maidenFlight: null,
+        totalLaunchCount: -1,
+        successfulLaunches: 0,
+        failedLaunches: 0,
+      },
+    ]) {
+      expect(isLaunch({ ...UPCOMING_LAUNCHES[0], vehicleRecord })).toBe(false);
+    }
   });
 
   it.each([0, -1, 4.5, Number.NaN])(

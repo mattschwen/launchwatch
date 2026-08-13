@@ -69,6 +69,10 @@ short, dismissible status toast; it never blocks the application.
 - Canonical LL2 mission details retain provider-confirmed first-stage identity,
   flight history, reuse, and recovery plans across Watch, briefing, and detail
   telemetry instead of reducing the vehicle to its configuration name
+- Detailed LL2 missions retain the launch-vehicle configuration's provider
+  record—maiden flight plus completed, successful, and failed flight counts—
+  across Watch, briefing, and canonical detail. It is explicitly historical
+  context, never a probability or forecast for the selected mission
 - Provider mission context keeps type and complete multi-program lineage
   visible in the featured mission while Watch, briefing, and detail telemetry
   retain the complete type, every distinct program affiliation, and
@@ -260,11 +264,11 @@ See [`docs/API.md`](docs/API.md) for response shapes and error behavior.
 - Browser connection changes update feed health immediately: an offline shell
   retains the last schedule, suppresses live claims, and pauses impossible
   refresh actions until the connection returns.
-- If the featured feed record lacks a reusable visual, Home requests that one
-  canonical launch detail record to acquire richer vehicle-image provenance;
-  the server caches the result under the existing detail policy. Detail
-  enrichment cannot replace the current feed's target, launch window, status,
-  or live flags.
+- If the featured feed record lacks a reusable visual, official coverage, or
+  detailed vehicle history, Home requests that one canonical launch detail
+  record to acquire the missing provenance and context; the server caches the
+  result under the existing detail policy. Detail enrichment cannot replace
+  the current feed's target, launch window, status, or live flags.
 - Server responses include provider metadata so the UI can distinguish fresh, cached, partial, and stale results.
 - Fresh launch feeds, canonical mission details, and provider-derived mission
   intelligence and launch-site atlases retain their normal shared-cache

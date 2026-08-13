@@ -41,6 +41,12 @@ describe('reconcileCurrentLaunch', () => {
       ...UPCOMING_LAUNCHES[0],
       description: 'Canonical mission detail.',
       livestream: 'https://example.test/official-coverage',
+      vehicleRecord: {
+        maidenFlight: '2018-05-11',
+        totalLaunchCount: 620,
+        successfulLaunches: 619,
+        failedLaunches: 1,
+      },
     };
 
     expect(reconcileCurrentLaunch(feedLaunch, detailLaunch)).toMatchObject({
@@ -59,6 +65,7 @@ describe('reconcileCurrentLaunch', () => {
         feedLaunch.providerLaunchAttemptCountYear,
       padLaunchAttemptCountYear: feedLaunch.padLaunchAttemptCountYear,
       padTurnaroundSeconds: detailLaunch.padTurnaroundSeconds,
+      vehicleRecord: detailLaunch.vehicleRecord,
       statusName: feedLaunch.statusName,
       statusDescription: feedLaunch.statusDescription,
       description: detailLaunch.description,

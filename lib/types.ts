@@ -149,6 +149,10 @@ export interface LL2Launch {
       id: number;
       name: string;
       full_name?: string | null;
+      maiden_flight?: string | null;
+      total_launch_count?: number | null;
+      successful_launches?: number | null;
+      failed_launches?: number | null;
       families?: Array<LL2NamedReference & { id?: number }> | null;
       family?: string | null;
       variant?: string | null;
@@ -325,6 +329,13 @@ export interface LaunchFirstStage {
   landingTypeAbbrev: string | null;
 }
 
+export interface LaunchVehicleRecord {
+  maidenFlight: string | null;
+  totalLaunchCount: number;
+  successfulLaunches: number;
+  failedLaunches: number;
+}
+
 export interface LaunchMissionAgency {
   name: string;
   abbrev: string | null;
@@ -420,6 +431,7 @@ export interface Launch {
   orbit?: string | null;
   rocketFamily?: string | null;
   rocketVariant?: string | null;
+  vehicleRecord?: LaunchVehicleRecord | null;
   firstStage?: LaunchFirstStage | null;
 }
 

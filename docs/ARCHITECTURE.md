@@ -168,9 +168,10 @@ shared state. `useLaunchById` preserves the shared feed record while it calls
 `/api/launches/[id]`, exposes the in-progress enrichment state, and then merges
 canonical detail into that record. While a mission remains in the current feed,
 its target, precision, launch window, provider status and explanation, and live flags stay
-authoritative; detail can add richer visuals, descriptions, and stream links but
+authoritative; detail can add richer visuals, descriptions, stream links, and
+vehicle-configuration history but
 cannot regress current schedule state. This lets Watch resolve streams, Home
-acquire richer visual provenance only when the feed has no eligible image, and
+acquire richer visual provenance and detail-only vehicle history, and
 completed missions or launches outside the current window resolve. A failed
 detail check keeps the shared feed mission visible and can be retried in place;
 Watch reports the checking, failed, retrying, and recovered coverage states
@@ -180,7 +181,8 @@ canonical ID.
 Home keeps dynamic detail acquisition on demand: its featured title, compact
 schedule rows, and desktop ticker load their provider-backed detail route only
 after activation. The featured mission can still use the bounded client detail
-API when coverage or reusable visual metadata needs enrichment. This prevents a
+API when coverage, reusable visual metadata, or vehicle history needs
+enrichment. This prevents a
 visible batch of mission links from speculatively resolving canonical detail
 routes before the user chooses one.
 
@@ -214,6 +216,11 @@ flags are migrated in place so an app update does not replay an alert.
   records, rendered as elapsed time since the previous launch from that pad,
   and kept in Watch, briefing, and canonical detail so dense result rows stay
   scannable. It never represents maintenance progress or launch readiness.
+- **Vehicle record telemetry** is accepted only when LL2 detailed configuration
+  counts are non-negative, bounded, and internally consistent. Watch, briefing,
+  and canonical detail label the record as historical provider context—not
+  reliability, mission probability, or a forecast—while zero-flight vehicles
+  retain an honest new-configuration state.
 - **Launch-site presentation** pairs a compact provider pad name with a distinct
   facility or locality when available. A numeric pad such as `201` therefore
   remains traceable to Wenchang across compact rows, mission summaries, map

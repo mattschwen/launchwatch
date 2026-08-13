@@ -73,6 +73,12 @@ export async function installApiFixtures(page: Page): Promise<void> {
       launch.id === 'll2-demo-orbital-dawn'
         ? {
             ...launch,
+            vehicleRecord: {
+              maidenFlight: '2018-05-11',
+              totalLaunchCount: 620,
+              successfulLaunches: 619,
+              failedLaunches: 1,
+            },
             livestream: 'https://x.com/i/broadcasts/demo-orbital-dawn',
             livestreams: [
               {

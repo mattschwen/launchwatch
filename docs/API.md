@@ -379,6 +379,7 @@ The UI consumes the shared `Launch` interface in [`lib/types.ts`](../lib/types.t
 | `datePrecision` | Optional provider precision (`name`, `abbrev`, and description) used to distinguish exact T-0 values from day/month/quarter/year estimates |
 | `rocket`, `launchSite`, `location` | Vehicle and pad data |
 | `firstStage` | Optional LL2 detail telemetry for provider-confirmed booster identity, flight number, reuse, and landing attempt/outcome/location |
+| `vehicleRecord` | Optional LL2 detail telemetry for a vehicle configuration's maiden flight and internally consistent completed/successful/failed launch counts; historical context, not mission probability |
 | `status`, `statusName` | Normalized status plus the provider's human-readable mission state |
 | `statusDescription` | Optional bounded LL2 explanation of what the current provider state means |
 | `failureReason` | Optional bounded LL2 diagnosis exposed only for a failed mission |

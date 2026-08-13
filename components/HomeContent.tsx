@@ -141,8 +141,13 @@ function HomeExperience({
   const needsCoverageEnrichment = Boolean(
     featuredLaunch && !featuredLaunch.livestream,
   );
+  const needsVehicleRecordEnrichment = Boolean(
+    featuredLaunch && !featuredLaunch.vehicleRecord,
+  );
   const featuredDetail = useLaunchById(
-    needsVisualEnrichment || needsCoverageEnrichment
+    needsVisualEnrichment ||
+      needsCoverageEnrichment ||
+      needsVehicleRecordEnrichment
       ? featuredLaunch?.id
       : null,
   );

@@ -168,6 +168,10 @@ function ll2Launch({
         id: 1,
         name: rocket,
         full_name: rocket,
+        maiden_flight: '2018-05-11',
+        total_launch_count: 620,
+        successful_launches: 619,
+        failed_launches: 1,
         families: [{ id: 1, name: rocket.split(' ')[0] }],
         variant: rocket.split(' ').slice(1).join(' ') || null,
         image: null,
@@ -622,6 +626,16 @@ const server = createServer(async (request, response) => {
     url.pathname === '/ll2/2.3.0/launches/upcoming/'
   ) {
     const normalLaunch = { ...ll2Upcoming };
+    normalLaunch.rocket = {
+      ...normalLaunch.rocket,
+      configuration: {
+        ...normalLaunch.rocket.configuration,
+        maiden_flight: null,
+        total_launch_count: null,
+        successful_launches: null,
+        failed_launches: null,
+      },
+    };
     delete normalLaunch.updates;
     delete normalLaunch.pad_turnaround;
     sendJson(response, 200, { count: 1, results: [normalLaunch] });

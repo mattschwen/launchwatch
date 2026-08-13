@@ -30,6 +30,7 @@ import FirstStageSignal from './launch/FirstStageSignal';
 import LaunchCadenceSignal from './launch/LaunchCadenceSignal';
 import LaunchDesignatorSignal from './launch/LaunchDesignatorSignal';
 import PadTurnaroundSignal from './launch/PadTurnaroundSignal';
+import VehicleRecordSignal from './launch/VehicleRecordSignal';
 import LaunchReadinessSignal from './launch/LaunchReadinessSignal';
 import LaunchFailureSignal from './launch/LaunchFailureSignal';
 import MissionProfileSignal from './launch/MissionProfileSignal';
@@ -252,6 +253,7 @@ export default function LaunchBriefingDrawer({
                 {launch.rocket}
               </dd>
             </div>
+            <VehicleRecordSignal record={launch.vehicleRecord} />
             <FirstStageSignal firstStage={launch.firstStage} />
             <div className="py-4">
               <dt className="flex items-center gap-3">

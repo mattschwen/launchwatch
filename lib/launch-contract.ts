@@ -210,6 +210,50 @@ function isLaunchFirstStage(value: unknown): boolean {
   );
 }
 
+function isLaunchVehicleRecord(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (!isRecord(value)) return false;
+
+  const counts = [
+    value.totalLaunchCount,
+    value.successfulLaunches,
+    value.failedLaunches,
+  ];
+  if (
+    counts.some(
+      (count) =>
+        typeof count !== 'number' ||
+        !Number.isSafeInteger(count) ||
+        count < 0 ||
+        count > 10_000_000,
+    )
+  ) {
+    return false;
+  }
+
+  const [totalLaunchCount, successfulLaunches, failedLaunches] = counts as [
+    number,
+    number,
+    number,
+  ];
+  const maidenFlight = value.maidenFlight;
+  const maidenTimestamp =
+    typeof maidenFlight === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(maidenFlight)
+      ? new Date(`${maidenFlight}T00:00:00.000Z`).getTime()
+      : Number.NaN;
+  const validMaidenFlight =
+    maidenFlight === null ||
+    (typeof maidenFlight === 'string' &&
+      Number.isFinite(maidenTimestamp) &&
+      new Date(maidenTimestamp).toISOString().slice(0, 10) ===
+        maidenFlight);
+
+  return (
+    validMaidenFlight &&
+    successfulLaunches + failedLaunches === totalLaunchCount
+  );
+}
+
 function isLaunchMissionAgencies(value: unknown): boolean {
   if (value === undefined || value === null) return true;
   if (!Array.isArray(value)) return false;
@@ -361,6 +405,7 @@ export function isLaunch(value: unknown): value is Launch {
     isLaunchProviderUpdates(value.providerUpdates) &&
     isSafeOptionalUrl(value.officialMissionUrl) &&
     isSafeOptionalUrl(value.trajectorySimulationUrl) &&
+    isLaunchVehicleRecord(value.vehicleRecord) &&
     isLaunchFirstStage(value.firstStage) &&
     isLaunchLocation(value.location) &&
     (timeline === undefined ||

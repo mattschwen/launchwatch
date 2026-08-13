@@ -37,6 +37,7 @@ import FirstStageSignal from '@/components/launch/FirstStageSignal';
 import LaunchCadenceSignal from '@/components/launch/LaunchCadenceSignal';
 import LaunchDesignatorSignal from '@/components/launch/LaunchDesignatorSignal';
 import PadTurnaroundSignal from '@/components/launch/PadTurnaroundSignal';
+import VehicleRecordSignal from '@/components/launch/VehicleRecordSignal';
 import LaunchReadinessSignal from '@/components/launch/LaunchReadinessSignal';
 import MissionProfileSignal from '@/components/launch/MissionProfileSignal';
 import MissionOperatorSignal from '@/components/launch/MissionOperatorSignal';
@@ -1408,6 +1409,10 @@ function WatchContent(): React.ReactElement {
                     <LaunchReadinessSignal
                       launch={selectedLaunch}
                       variant="compact"
+                    />
+                    <VehicleRecordSignal
+                      record={selectedLaunch.vehicleRecord}
+                      compact
                     />
                     {selectedLaunch.firstStage ? (
                       <FirstStageSignal

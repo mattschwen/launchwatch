@@ -40,6 +40,10 @@ const NORMAL_LIST_LAUNCH = {
       id: 164,
       name: 'Falcon 9',
       full_name: 'Falcon 9 Block 5',
+      maiden_flight: null,
+      total_launch_count: null,
+      successful_launches: null,
+      failed_launches: null,
       families: [
         { id: 1, name: 'Falcon' },
         { id: 176, name: 'Falcon 9' },
@@ -133,6 +137,10 @@ const DETAILED_LAUNCH = {
     id: 9089,
     configuration: {
       ...NORMAL_LIST_LAUNCH.rocket.configuration,
+      maiden_flight: '2018-05-11',
+      total_launch_count: 620,
+      successful_launches: 619,
+      failed_launches: 1,
       image: {
         id: 1736,
         name: 'Falcon 9 liftoff',
@@ -644,6 +652,7 @@ describe('Launch Library 2.3 adapter', () => {
 
     expect(launches).toHaveLength(1);
     expect(launches[0].rocket.configuration.families?.[0]?.name).toBe('Falcon');
+    expect(normalizeLL2Launch(launches[0]).vehicleRecord).toBeNull();
     expect(fetchMock).toHaveBeenCalledWith(
       'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=7&mode=normal',
       expect.objectContaining({
@@ -785,6 +794,12 @@ describe('Launch Library 2.3 adapter', () => {
       rocket: 'Falcon 9',
       rocketFamily: 'Falcon',
       rocketVariant: 'Block 5',
+      vehicleRecord: {
+        maidenFlight: '2018-05-11',
+        totalLaunchCount: 620,
+        successfulLaunches: 619,
+        failedLaunches: 1,
+      },
       provider: 'SpaceX',
       providerLogo: 'https://example.test/spacex-logo.png',
       image: 'https://example.test/launch.jpg',
@@ -839,6 +854,44 @@ describe('Launch Library 2.3 adapter', () => {
       type: 'Official Webcast',
       thumbnail: 'https://example.test/webcast.jpg',
       isLive: true,
+    });
+  });
+
+  it('rejects incomplete or inconsistent vehicle history while preserving new configurations', () => {
+    expect(
+      normalizeLL2Launch({
+        ...DETAILED_LAUNCH,
+        rocket: {
+          ...DETAILED_LAUNCH.rocket,
+          configuration: {
+            ...DETAILED_LAUNCH.rocket.configuration,
+            total_launch_count: 5,
+            successful_launches: 5,
+            failed_launches: 1,
+          },
+        },
+      }).vehicleRecord,
+    ).toBeNull();
+
+    expect(
+      normalizeLL2Launch({
+        ...DETAILED_LAUNCH,
+        rocket: {
+          ...DETAILED_LAUNCH.rocket,
+          configuration: {
+            ...DETAILED_LAUNCH.rocket.configuration,
+            maiden_flight: '2018-13-40',
+            total_launch_count: 0,
+            successful_launches: 0,
+            failed_launches: 0,
+          },
+        },
+      }).vehicleRecord,
+    ).toEqual({
+      maidenFlight: null,
+      totalLaunchCount: 0,
+      successfulLaunches: 0,
+      failedLaunches: 0,
     });
   });
 

@@ -2010,6 +2010,15 @@ test('provider cadence stays explicit across mission surfaces', async ({
   await expect(briefingTurnaround).toContainText(
     'Since the previous launch from this pad',
   );
+  const briefingVehicleRecord = dialog.locator(
+    '[data-vehicle-record-signal]',
+  );
+  await expect(briefingVehicleRecord).toContainText(
+    '620 provider-recorded flights',
+  );
+  await expect(briefingVehicleRecord).toContainText(
+    'Historical provider record — not a forecast for this mission.',
+  );
   await dialog.getByRole('button', { name: 'Close mission briefing' }).click();
 
   await page.goto('/watch');
@@ -2019,6 +2028,9 @@ test('provider cadence stays explicit across mission surfaces', async ({
   await expect(
     page.locator('[data-watch-mission-details] [data-pad-turnaround-signal]'),
   ).toContainText('3d 17h');
+  await expect(
+    page.locator('[data-watch-mission-details] [data-vehicle-record-signal]'),
+  ).toContainText('619 successful');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 
   await page.goto(`/launch/${UPCOMING_LAUNCHES[0].id}`);
@@ -2030,6 +2042,11 @@ test('provider cadence stays explicit across mission surfaces', async ({
       '[aria-label="Mission telemetry"] [data-pad-turnaround-signal]',
     ),
   ).toContainText('Since the previous launch from this pad');
+  await expect(
+    page.locator(
+      '[aria-label="Mission telemetry"] [data-vehicle-record-signal]',
+    ),
+  ).toContainText('Configuration first flew May 11, 2018');
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
