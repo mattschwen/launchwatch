@@ -1626,6 +1626,56 @@ test('short landscape keeps mission telemetry clear of duplicate bottom chrome',
     .toBe('44px');
 });
 
+test('short landscape keeps primary routes beside the initial sync status', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 480, height: 320 });
+  await page.addInitScript(() => {
+    window.localStorage.removeItem('launchwatch.boot-sequence.v3');
+  });
+  await page.goto('/');
+
+  const header = page.locator('header');
+  const headerNavigation = header.getByRole('navigation', {
+    name: 'Primary navigation',
+  });
+  const toast = page.getByRole('complementary', { name: 'MISSION CONTROL' });
+  await expect(toast).toBeVisible();
+  await expect(headerNavigation).toBeVisible({ timeout: 1_000 });
+  await expect(header.locator('.brand-copy:visible')).toHaveCount(0, {
+    timeout: 1_000,
+  });
+  await expect(header.locator('.brand-emblem:visible')).toHaveCount(1, {
+    timeout: 1_000,
+  });
+  await expect(
+    page.locator('nav[aria-label="Primary navigation"].fixed:visible'),
+  ).toHaveCount(0);
+
+  const initialChrome = await page.evaluate(() => {
+    const navigation = document
+      .querySelector<HTMLElement>('header nav[aria-label="Primary navigation"]')
+      ?.getBoundingClientRect();
+    const toast = document
+      .querySelector<HTMLElement>('aside[aria-label="MISSION CONTROL"]')
+      ?.getBoundingClientRect();
+    return {
+      separated: Boolean(navigation && toast && navigation.right <= toast.left),
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  expect(initialChrome).toEqual({
+    separated: true,
+    scrollWidth: 480,
+    viewportWidth: 480,
+  });
+  for (const destination of ['Home', 'Watch', 'History']) {
+    const link = headerNavigation.getByRole('link', { name: destination });
+    expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  }
+});
+
 test('short mobile landscape moves primary navigation into the unused header', async ({
   page,
 }) => {

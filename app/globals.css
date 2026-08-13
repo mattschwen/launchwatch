@@ -2517,8 +2517,22 @@ select:focus {
     padding-bottom: var(--safe-area-bottom);
   }
 
-  html[data-boot-status='visible'] .desktop-primary-nav {
-    visibility: hidden;
+  html[data-boot-status='visible'] .top-nav-shell {
+    .brand-copy {
+      display: none;
+    }
+
+    .brand-emblem {
+      display: flex;
+    }
+
+    .brand-lockup {
+      gap: 0;
+    }
+
+    .desktop-primary-nav {
+      visibility: visible;
+    }
   }
 }
 

@@ -35,7 +35,8 @@ provider uplink, UTC clock, route index, and live state remain legible without
 competing with mission content. Activating the current route command clears its
 transient filters or mission selection and returns the console to the top while
 preserving browser-history recovery. The first-visit synchronization message
-is a short, dismissible status toast; it never blocks the application.
+is a short, dismissible status toast; it never blocks the application or hides
+the header route commands in compact landscape layouts.
 
 ## Core Features
 
