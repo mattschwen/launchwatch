@@ -5836,6 +5836,17 @@ test('home surfaces concurrent provider windows without widening the schedule', 
     )
     .toBe(true);
   await schedule.getByRole('button', { name: 'Filter', exact: true }).click();
+  const filterPanel = schedule.locator('#launch-filters');
+  await expect(filterPanel).toBeVisible();
+  await expect
+    .poll(() =>
+      filterPanel.evaluate((element) => {
+        const planningRegion = element.nextElementSibling;
+        return planningRegion?.getAttribute('aria-label') ===
+          'Concurrent launch window planning';
+      }),
+    )
+    .toBe(true);
   const provider = schedule.getByRole('combobox', { name: 'Provider' });
   await provider.selectOption({ label: 'SpaceX' });
   await expect(signal).toHaveCount(0);

@@ -262,6 +262,13 @@ describe('LaunchList', () => {
 
     await user.click(screen.getByRole('button', { name: 'Filter' }));
     const provider = screen.getByRole('combobox', { name: 'Provider' });
+    const filterPanel = document.getElementById('launch-filters');
+    const planningRegion = signal.closest('section');
+    expect(filterPanel).toBeInTheDocument();
+    expect(planningRegion).toBeInTheDocument();
+    expect(
+      filterPanel?.compareDocumentPosition(planningRegion as Node) ?? 0,
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     await user.selectOptions(provider, 'Demo Launch Alliance');
 
     expect(

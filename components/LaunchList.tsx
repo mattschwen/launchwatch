@@ -476,6 +476,29 @@ export default function LaunchList({
         </div>
       </header>
 
+      {filtersOpen ? (
+        <div
+          id="launch-filters"
+          className="border-b border-[var(--border-subtle)] p-3 sm:p-4"
+        >
+          <FilterBar
+            key={filterResetKey}
+            initialFilters={filterSeed}
+            searchInputRef={searchInputRef}
+            providerOptions={providerOptions}
+            onFilterChange={(next) => {
+              if (next.horizon !== filters.horizon) {
+                setHorizonReferenceTime(Date.now());
+              }
+              setFilters(next);
+              setVisibleCount(INITIAL_VISIBLE_COUNT);
+              setRevealedBatchStartIndex(null);
+              batchTabPendingRef.current = false;
+            }}
+          />
+        </div>
+      ) : null}
+
       {retainedSchedule ? (
         <div
           role="status"
@@ -526,26 +549,6 @@ export default function LaunchList({
                 : 'current'
           }
         />
-      ) : null}
-
-      {filtersOpen ? (
-        <div id="launch-filters" className="border-b border-[var(--border-subtle)] p-3 sm:p-4">
-          <FilterBar
-            key={filterResetKey}
-            initialFilters={filterSeed}
-            searchInputRef={searchInputRef}
-            providerOptions={providerOptions}
-            onFilterChange={(next) => {
-              if (next.horizon !== filters.horizon) {
-                setHorizonReferenceTime(Date.now());
-              }
-              setFilters(next);
-              setVisibleCount(INITIAL_VISIBLE_COUNT);
-              setRevealedBatchStartIndex(null);
-              batchTabPendingRef.current = false;
-            }}
-          />
-        </div>
       ) : null}
 
       {filtered.length === 0 ? (

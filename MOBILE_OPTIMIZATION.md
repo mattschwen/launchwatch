@@ -145,7 +145,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   navigation after long mission queues have been revealed.
 - Filters are collapsed until requested. Once open, every control keeps a
   visible category label as values change, and the reset action uses text as
-  well as an icon so its purpose remains clear on narrow screens.
+  well as an icon so its purpose remains clear on narrow screens. The filter
+  panel stays directly after its disclosure and before filter-derived planning
+  signals, so expanding a long conflict list cannot separate the command from
+  the controls it reveals.
 - Schedule search enforces the same 120-character boundary as its canonical
   URL state, preventing a visible filter from diverging from reload, share, or
   mission-return context. Whitespace-only search stays inactive across the
