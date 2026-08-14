@@ -517,8 +517,7 @@ export default function LaunchList({
 
       {windowOverlaps[0] ? (
         <ScheduleOverlapSignal
-          overlap={windowOverlaps[0]}
-          additionalCount={windowOverlaps.length - 1}
+          overlaps={windowOverlaps}
           state={
             retainedSchedule
               ? 'retained'

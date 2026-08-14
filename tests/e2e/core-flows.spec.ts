@@ -5760,6 +5760,18 @@ test('home surfaces concurrent provider windows without widening the schedule', 
       windowStart: '2035-07-28T16:00:00.000Z',
       windowEnd: '2035-07-28T16:15:00.000Z',
     },
+    {
+      ...UPCOMING_LAUNCHES[1],
+      id: 'spacex-demo-lunar-pathfinder',
+      sourceId: 'demo-lunar-pathfinder',
+      name: 'Electron | Lunar Pathfinder Extended Communications Demonstration',
+      missionName: 'Lunar Pathfinder Extended Communications Demonstration',
+      provider: 'Rocket Lab',
+      date: '2035-07-28T16:05:00.000Z',
+      dateUnix: 2069251500,
+      windowStart: '2035-07-28T16:05:00.000Z',
+      windowEnd: '2035-07-28T16:45:00.000Z',
+    },
   ];
   await page.route('**/api/launches?type=all', (route) =>
     route.fulfill({
@@ -5786,6 +5798,28 @@ test('home surfaces concurrent provider windows without widening the schedule', 
   await expect(signal).toContainText('Globalstar 2-R Mission 1 (x 9)');
   await expect(signal).toContainText('Jul 28, 2035, 16:00–16:15 UTC');
   await expect(signal.locator('time')).toHaveCount(2);
+  const laterOverlaps = schedule.getByRole('button', {
+    name: 'Show 2 later overlaps',
+  });
+  await expect(laterOverlaps).toHaveAttribute('aria-expanded', 'false');
+  expect((await laterOverlaps.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await laterOverlaps.focus();
+  await laterOverlaps.press('Enter');
+  const hideLaterOverlaps = schedule.getByRole('button', {
+    name: 'Hide 2 later overlaps',
+  });
+  await expect(hideLaterOverlaps).toBeFocused();
+  await expect(hideLaterOverlaps).toHaveAttribute('aria-expanded', 'true');
+  const overlapList = schedule.getByRole('list', {
+    name: 'Later concurrent provider launch windows',
+  });
+  await expect(overlapList.getByRole('listitem')).toHaveCount(2);
+  await expect(overlapList).toContainText('25 min overlap');
+  await expect(overlapList).toContainText(
+    'Lunar Pathfinder Extended Communications Demonstration',
+  );
+  await expect(overlapList).toContainText('10 min overlap');
+  await expect(overlapList.locator('time')).toHaveCount(4);
   await expect
     .poll(() => signal.evaluate((element) => element.scrollWidth <= element.clientWidth))
     .toBe(true);
@@ -5794,7 +5828,13 @@ test('home surfaces concurrent provider windows without widening the schedule', 
     viewport: window.innerWidth,
   }));
   expect(geometry.right).toBeLessThanOrEqual(geometry.viewport);
-
+  await expect
+    .poll(() =>
+      overlapList.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    )
+    .toBe(true);
   await schedule.getByRole('button', { name: 'Filter', exact: true }).click();
   const provider = schedule.getByRole('combobox', { name: 'Provider' });
   await provider.selectOption({ label: 'SpaceX' });

@@ -119,7 +119,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   nearest shared UTC interval before the result rows. The signal wraps long
   mission names without widening the page, follows active result filters, and
   identifies partial or retained data instead of presenting it as a complete
-  current planning picture.
+  current planning picture. When more overlaps exist, a 44-pixel disclosure
+  reveals their complete mission pairs and UTC intervals in the same compact
+  planning panel.
 - Mission metadata adapts from multiple columns to stacked groups and wraps
   complete provider-supplied values instead of clipping them with ellipses.
 - Upcoming missions render as compact responsive rows while keeping the full
