@@ -176,6 +176,9 @@ the header route commands in compact landscape layouts.
   selected mission, map site, phase, and view controls without relying on color
 - Increased-contrast theming that strengthens muted telemetry, panel
   boundaries, and persistent selected surfaces while retaining signal colors
+- Short desktop Home layouts keep both primary mission actions clear of the
+  fixed status deck while lower-priority cadence telemetry remains available
+  in the briefing and canonical mission detail
 - 200% text-size reflow down to the 320px boundary for dense mission telemetry,
   countdown, command, signal, archive, and internal scroll-rail instruments
   without clipping or horizontal page drift; Home's optional path and visual

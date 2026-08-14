@@ -1701,6 +1701,69 @@ test('short landscape keeps mission telemetry clear of duplicate bottom chrome',
     .toBe('44px');
 });
 
+test('short desktop keeps live-like Home actions above the status deck', async ({
+  page,
+}) => {
+  test.skip(test.info().project.name.startsWith('mobile'));
+
+  const liveLikeLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    name: 'Falcon 9 Block 5 | USSF-366',
+    date: '2035-08-16T00:52:00.000Z',
+    dateUnix: 2070838320,
+    windowStart: '2035-08-15T21:52:00.000Z',
+    windowEnd: '2035-08-16T01:52:00.000Z',
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [liveLikeLaunch], meta: FEED_META }),
+    }),
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: liveLikeLaunch,
+          canonicalId: liveLikeLaunch.id,
+          meta: FEED_META,
+        }),
+      }),
+  );
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  const actions = hero.locator('.compact-hero-actions');
+  const cadence = hero.locator('[data-launch-cadence-signal]');
+  const statusBar = page.getByRole('complementary', {
+    name: 'Mission status',
+  });
+  await expect(actions).toBeVisible();
+  await expect(cadence).toBeHidden();
+  await expect(statusBar).toBeVisible();
+
+  const [actionsBox, statusBox] = await Promise.all([
+    actions.boundingBox(),
+    statusBar.boundingBox(),
+  ]);
+  expect(actionsBox).not.toBeNull();
+  expect(statusBox).not.toBeNull();
+  expect(actionsBox!.height).toBeGreaterThanOrEqual(44);
+  expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(statusBox!.y);
+
+  await page.setViewportSize({ width: 1180, height: 900 });
+  await expect(cadence).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('short landscape keeps primary routes beside the initial sync status', async ({
   page,
 }) => {
@@ -2111,6 +2174,9 @@ test('featured countdown keeps every unit on one row', async ({ page }) => {
 test('provider cadence stays explicit across mission surfaces', async ({
   page,
 }) => {
+  if (!test.info().project.name.startsWith('mobile')) {
+    await page.setViewportSize({ width: 1180, height: 900 });
+  }
   await page.goto('/');
 
   const hero = page.locator(

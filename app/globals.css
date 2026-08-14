@@ -315,6 +315,15 @@ body::before {
   }
 }
 
+/* The fixed desktop status deck must never cover Home's primary mission
+   commands. On short wide viewports, cadence is the lowest-priority hero
+   telemetry and remains available in the briefing and mission detail. */
+@media (min-width: 64rem) and (max-height: 52rem) {
+  .compact-hero-telemetry > [data-launch-cadence-signal] {
+    display: none;
+  }
+}
+
 .mission-detail-section-anchor {
   scroll-margin-top: calc(
     5.5rem + var(--safe-area-top) +

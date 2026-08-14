@@ -88,6 +88,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - On compact mobile viewports up to 430 × 760, featured mission actions precede
   the telemetry grid so both 44-pixel controls remain fully available above the
   fixed primary navigation.
+- On short desktop viewports up to 832 pixels tall, the featured mission keeps
+  both primary actions above the fixed status deck. Secondary launch-cadence
+  telemetry yields from the hero at that height and remains available in the
+  briefing and canonical mission detail.
 - Countdown values wrap without horizontal overflow.
 - The compact featured readiness badge keeps probability first while naming
   provider-reported hold and weather categories on the same short line. It
