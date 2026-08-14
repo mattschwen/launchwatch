@@ -113,7 +113,7 @@ function StreamRow({
       href={candidate.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-[4.25rem] min-w-0 items-start gap-3 border-b border-[var(--border-subtle)] px-4 py-3 transition-colors last:border-0 hover:bg-[var(--surface-subtle)]"
+      className="group flex min-h-[4.25rem] min-w-0 max-w-full items-start gap-3 overflow-hidden border-b border-[var(--border-subtle)] px-4 py-3 transition-colors last:border-0 hover:bg-[var(--surface-subtle)]"
     >
       <span
         aria-hidden="true"
@@ -126,10 +126,10 @@ function StreamRow({
         }`}
       />
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-sm font-semibold leading-5 text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
+        <span className="block break-words [overflow-wrap:anywhere] text-sm font-semibold leading-5 text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]">
           {candidate.title}
         </span>
-        <span className="mt-0.5 block break-words text-xs leading-5 text-[var(--text-muted)]">
+        <span className="mt-0.5 block break-words [overflow-wrap:anywhere] text-xs leading-5 text-[var(--text-muted)]">
           {candidate.channelTitle || 'Provider stream'} · {candidate.confidence}{' '}
           confidence
         </span>

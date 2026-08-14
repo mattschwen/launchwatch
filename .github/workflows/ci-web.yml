@@ -67,6 +67,7 @@ jobs:
             artifact: accessibility
     env:
       NEXT_TELEMETRY_DISABLED: '1'
+      PLAYWRIGHT_PRODUCTION_SERVER: '1'
 
     steps:
       - name: Check out repository
@@ -83,6 +84,9 @@ jobs:
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+
+      - name: Build browser test application
+        run: npm run build
 
       - name: Run ${{ matrix.name }}
         run: ${{ matrix.command }}

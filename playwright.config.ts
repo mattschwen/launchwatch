@@ -5,6 +5,7 @@ const appPort = process.env.PLAYWRIGHT_APP_PORT || '3100';
 const mockProviderPort = process.env.MOCK_PROVIDER_PORT || '3199';
 const baseURL = externalBaseUrl || `http://127.0.0.1:${appPort}`;
 const mockProviderURL = `http://127.0.0.1:${mockProviderPort}`;
+const productionServer = process.env.PLAYWRIGHT_PRODUCTION_SERVER === '1';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -59,7 +60,9 @@ export default defineConfig({
         },
       },
       {
-        command: `npm run dev -- --hostname 127.0.0.1 --port ${appPort}`,
+        command: productionServer
+          ? `npm run start -- --hostname 127.0.0.1 --port ${appPort}`
+          : `npm run dev -- --hostname 127.0.0.1 --port ${appPort}`,
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

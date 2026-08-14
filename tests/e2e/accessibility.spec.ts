@@ -119,6 +119,9 @@ test('@a11y provider failure diagnosis stays semantic across archive and detail'
       .getByRole('region', { name: 'Mission telemetry' })
       .locator('[data-launch-failure-signal]'),
   ).toBeVisible();
+  await expect(page).toHaveTitle(
+    `${HISTORICAL_LAUNCHES[1].name} | LaunchWatch`,
+  );
 
   const detailResults = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

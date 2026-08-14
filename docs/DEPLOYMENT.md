@@ -68,11 +68,13 @@ npm run test:a11y
 
 Install Chromium once per fresh development environment. A Linux CI job that
 runs browser tests should use `npx playwright install --with-deps chromium`.
-The standard web CI gate installs Chromium and runs desktop flows, mobile
-flows, and accessibility checks as three independent jobs after the quality
-job passes. Each browser job keeps the stable one-worker Playwright setting,
-its own 20-minute timeout, and separately named diagnostics, so a slow viewport
-cannot prevent the other required gates from reporting.
+The standard web CI gate builds and serves the production application, installs
+Chromium, and runs desktop flows, mobile flows, and accessibility checks as
+three independent jobs after the quality job passes. Production mode keeps
+framework development overlays out of interaction and overflow assertions.
+Each browser job keeps the stable one-worker Playwright setting, a deterministic
+viewer timezone, its own 20-minute timeout, and separately named diagnostics,
+so a slow viewport cannot prevent the other required gates from reporting.
 
 Optionally exercise the production server locally:
 

@@ -2252,7 +2252,9 @@ test('dense mission consoles reflow at 200% text size', async ({ page }) => {
 
   await page.goto('/history');
   await applyTextResize();
-  await expect(page.getByRole('heading', { name: 'Launch archive' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Launch archive', exact: true })
+  ).toBeVisible();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
   await expectContentFits('label[for$="-search"]');
 
@@ -11697,19 +11699,21 @@ test('mission detail index moves focus among available sections', async ({
   await expect(
     directIndex.getByRole('link', { name: 'Intelligence', exact: true })
   ).toHaveAttribute('aria-current', 'location');
-  const directPlacement = await directIntelligence.evaluate((element) => ({
-    top: element.getBoundingClientRect().top,
-    indexBottom: Array.from(
-      document.querySelectorAll<HTMLElement>(
-        'nav[aria-label="Mission sections"]'
-      )
+  await expect
+    .poll(() =>
+      directIntelligence.evaluate((element) => {
+        const indexBottom =
+          Array.from(
+            document.querySelectorAll<HTMLElement>(
+              'nav[aria-label="Mission sections"]'
+            )
+          )
+            .at(-1)
+            ?.getBoundingClientRect().bottom ?? 0;
+        return element.getBoundingClientRect().top >= indexBottom - 1;
+      })
     )
-      .at(-1)
-      ?.getBoundingClientRect().bottom ?? 0,
-  }));
-  expect(directPlacement.top).toBeGreaterThanOrEqual(
-    directPlacement.indexBottom - 1
-  );
+    .toBe(true);
 
   await page.goto('/launch/ll2-demo-orbital-dawn');
 
