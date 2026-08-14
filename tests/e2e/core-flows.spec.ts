@@ -6301,6 +6301,49 @@ test('archive filters stay truthful when selected values leave the feed', async 
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('archive chronology does not masquerade as a restrictive empty filter', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=history&limit=100', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [], meta: FEED_META }),
+    })
+  );
+
+  await page.goto('/history?sort=date-asc');
+
+  await expect(
+    page.getByRole('heading', {
+      name: 'No archived missions are available.',
+    })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'No archived missions match these filters.',
+    })
+  ).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Chronology' })).toHaveValue(
+    'date-asc'
+  );
+  const refresh = page.getByRole('button', {
+    name: 'Refresh launch archive',
+  });
+  await expect(refresh).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Reset archive chronology' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Clear archive filters' })
+  ).toHaveCount(0);
+  await refresh.focus();
+  await expect(refresh).toBeFocused();
+  expect((await refresh.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(page).toHaveURL(/\/history\?sort=date-asc$/);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('home schedule keeps long mission telemetry readable', async ({
   page,
 }) => {

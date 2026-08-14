@@ -794,6 +794,11 @@ export default function PastLaunches({
     year !== 'all' ||
     outcome !== 'all' ||
     sortBy !== DEFAULT_HISTORY_FILTERS.sortBy;
+  const restrictiveFiltersActive =
+    Boolean(search.trim()) ||
+    provider !== 'all' ||
+    year !== 'all' ||
+    outcome !== 'all';
   const secondaryFilterCount = [
     provider !== 'all',
     year !== 'all',
@@ -1247,10 +1252,18 @@ export default function PastLaunches({
                   type="button"
                   onClick={clearFilters}
                   className="action-button action-button-quiet shrink-0 px-3"
-                  aria-label="Clear archive filters"
+                  aria-label={
+                    restrictiveFiltersActive
+                      ? 'Clear archive filters'
+                      : 'Reset archive chronology'
+                  }
                 >
                   <X aria-hidden="true" size={16} />
-                  <span>Clear filters</span>
+                  <span>
+                    {restrictiveFiltersActive
+                      ? 'Clear filters'
+                      : 'Reset chronology'}
+                  </span>
                 </button>
               ) : null}
             </div>
@@ -1300,26 +1313,30 @@ export default function PastLaunches({
             size={34}
           />
           <h2 id="archive-results-title" className="mt-4 text-lg font-semibold text-[var(--text-primary)]">
-            {filtersActive
+            {restrictiveFiltersActive
               ? 'No archived missions match these filters.'
               : 'No archived missions are available.'}
           </h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            {filtersActive
+            {restrictiveFiltersActive
               ? 'Clear the search, provider, year, or outcome selection.'
               : 'Connected providers returned an empty archive. Refresh the feed to check for recovered mission records.'}
           </p>
           <button
             type="button"
-            onClick={filtersActive ? clearFilters : retryHistory}
+            onClick={restrictiveFiltersActive ? clearFilters : retryHistory}
             aria-label={
-              filtersActive ? 'Clear empty-result filters' : undefined
+              restrictiveFiltersActive
+                ? 'Clear empty-result filters'
+                : undefined
             }
-            aria-disabled={!filtersActive && (retrying || !online)}
-            aria-busy={!filtersActive && retrying}
+            aria-disabled={
+              !restrictiveFiltersActive && (retrying || !online)
+            }
+            aria-busy={!restrictiveFiltersActive && retrying}
             className="action-button action-button-secondary mt-5 aria-disabled:cursor-wait aria-disabled:opacity-60"
           >
-            {filtersActive
+            {restrictiveFiltersActive
               ? 'Clear archive filters'
               : retrying
                 ? 'Refreshing launch archive'

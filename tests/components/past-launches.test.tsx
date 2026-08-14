@@ -707,6 +707,55 @@ describe('PastLaunches', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('keeps an empty provider archive truthful with chronology-only preferences', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ launches: [], meta: FEED_META }),
+      })
+    );
+
+    render(
+      <PastLaunches
+        initialFilters={{
+          search: '',
+          provider: 'all',
+          year: 'all',
+          outcome: 'all',
+          sortBy: 'date-asc',
+        }}
+      />
+    );
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'No archived missions are available.',
+      })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', {
+        name: 'No archived missions match these filters.',
+      })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'Chronology' })
+    ).toHaveValue('date-asc');
+    expect(
+      screen.getByRole('button', { name: 'Refresh launch archive' })
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Reset archive chronology' })
+    ).toHaveTextContent('Reset chronology');
+    expect(
+      screen.queryByRole('button', { name: 'Clear empty-result filters' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Clear archive filters' })
+    ).not.toBeInTheDocument();
+  });
+
   it('reports an incomplete initial response instead of a false empty archive', async () => {
     vi.stubGlobal(
       'fetch',
