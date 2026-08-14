@@ -189,9 +189,18 @@ describe('HeroSection', () => {
       />
     );
 
-    expect(screen.getByText('GO FOR LAUNCH')).toBeVisible();
+    expect(
+      screen
+        .getAllByText('GO FOR LAUNCH')
+        .find((element) => !element.classList.contains('sr-only'))
+    ).toBeVisible();
     expect(screen.getByText('GO')).toBeVisible();
-    expect(screen.getByLabelText('GO FOR LAUNCH')).toBeVisible();
+    expect(
+      screen.getByText('GO FOR LAUNCH', { selector: '.sr-only' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('GO', { selector: '[aria-hidden="true"]' })
+    ).toBeVisible();
   });
 
   it('does not present a retained provider state as current', () => {

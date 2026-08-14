@@ -86,12 +86,12 @@ export default function StatusBadge({
 
   return (
     <span
-      aria-label={compactLabel ? displayLabel : undefined}
       className={`inline-flex items-center gap-1.5 ${presentationClass} ${className}`}
     >
       <WarningLight color={config.lightColor} size="sm" spinning={config.spinning} />
       {compactLabel ? (
         <>
+          <span className="sr-only">{displayLabel}</span>
           <span aria-hidden="true" className="sm:hidden">
             {compactLabel}
           </span>

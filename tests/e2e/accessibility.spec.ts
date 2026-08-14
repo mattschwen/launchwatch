@@ -92,6 +92,53 @@ for (const route of routes) {
   });
 }
 
+test('@a11y responsive provider status uses valid adaptive text', async ({
+  page,
+}) => {
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [
+          {
+            ...UPCOMING_LAUNCHES[0],
+            statusName: 'Go for Launch',
+          },
+          ...UPCOMING_LAUNCHES.slice(1),
+        ],
+        meta: FEED_META,
+        cached: false,
+        source: 'api',
+      }),
+    })
+  );
+
+  await page.goto('/');
+  const providerStatus = page.locator('.provider-status-hero');
+  await expect(providerStatus).toBeVisible();
+  await expect(providerStatus).not.toHaveAttribute('aria-label');
+  await expect(providerStatus.locator('.sr-only')).toHaveText('GO FOR LAUNCH');
+
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  const blocking = results.violations.filter(
+    (violation) =>
+      violation.impact === 'serious' || violation.impact === 'critical'
+  );
+
+  expect(
+    blocking,
+    blocking
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.help} (${violation.nodes.length} nodes)`
+      )
+      .join('\n')
+  ).toEqual([]);
+});
+
 test('@a11y provider failure diagnosis stays semantic across archive and detail', async ({
   page,
 }) => {

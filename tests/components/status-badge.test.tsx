@@ -62,4 +62,26 @@ describe('StatusBadge', () => {
     expect(status).toHaveClass('text-[var(--console-red)]');
     expect(status).not.toHaveClass('border');
   });
+
+  it('keeps one valid accessible label while its visual text adapts', () => {
+    const { container } = render(
+      <StatusBadge
+        status="upcoming"
+        statusName="Go for Launch"
+        compactLabel="GO"
+      />
+    );
+
+    const badge = container.firstElementChild;
+    expect(badge).not.toHaveAttribute('aria-label');
+    expect(
+      screen.getByText('GO FOR LAUNCH', { selector: '.sr-only' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('GO')).toHaveAttribute('aria-hidden', 'true');
+    expect(
+      screen.getAllByText('GO FOR LAUNCH').find((element) =>
+        element.classList.contains('sm:inline')
+      )
+    ).toHaveAttribute('aria-hidden', 'true');
+  });
 });
