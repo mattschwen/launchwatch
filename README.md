@@ -185,6 +185,9 @@ the header route commands in compact landscape layouts.
   without clipping or horizontal page drift; Home's optional path and visual
   commands yield decorative icons before their labels fragment into narrow
   letter columns
+- Content-sized external coverage previews on canonical mission detail keep
+  provider handoffs and attribution visible in narrow desktop support columns,
+  while playable video retains its native aspect ratio
 - Partial, stale, offline, empty, error, and retry states
 - Installable PWA shell with network-first navigations, uncached data APIs, and
   a dedicated maskable app icon for adaptive launchers; eligible browsers

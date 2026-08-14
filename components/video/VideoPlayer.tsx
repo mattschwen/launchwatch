@@ -19,6 +19,7 @@ interface VideoPlayerProps {
   live?: boolean;
   launch?: Launch | null;
   visualPriority?: boolean;
+  fitExternalContent?: boolean;
 }
 
 function externalStreamDestination(url: string): string {
@@ -39,6 +40,7 @@ export default function VideoPlayer({
   live = false,
   launch = null,
   visualPriority = false,
+  fitExternalContent = false,
 }: VideoPlayerProps): React.ReactElement {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const [failedVisualKey, setFailedVisualKey] = useState<string | null>(null);
@@ -94,7 +96,9 @@ export default function VideoPlayer({
           data-visual-kind={visual.kind}
           className={`stream-surface ${
             live ? 'signal-live' : 'signal-cold'
-          } relative isolate flex min-h-[24rem] w-full overflow-hidden bg-[var(--surface-canvas)] text-left sm:aspect-video sm:min-h-0 ${className}`}
+          } relative isolate flex min-h-[24rem] w-full overflow-hidden bg-[var(--surface-canvas)] text-left ${
+            fitExternalContent ? '' : 'sm:aspect-video sm:min-h-0'
+          } ${className}`}
         >
           <Image
             key={visualKey}
@@ -196,7 +200,9 @@ export default function VideoPlayer({
       <div
         className={`stream-surface ${
           live ? 'signal-live' : 'signal-cold'
-        } flex min-h-[16rem] w-full flex-col items-center justify-center px-5 py-6 text-center sm:aspect-video sm:min-h-0 ${className}`}
+        } flex min-h-[16rem] w-full flex-col items-center justify-center px-5 py-6 text-center ${
+          fitExternalContent ? '' : 'sm:aspect-video sm:min-h-0'
+        } ${className}`}
       >
         <div className="flex max-w-xl flex-col items-center">
           <span

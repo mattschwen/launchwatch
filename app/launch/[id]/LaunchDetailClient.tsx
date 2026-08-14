@@ -1592,6 +1592,7 @@ export default function LaunchDetailClient({
                 autoplay={presentedLaunch.isLive}
                 live={presentedLaunch.isLive}
                 launch={presentedLaunch}
+                fitExternalContent
                 className="rounded-none"
               />
             </div>

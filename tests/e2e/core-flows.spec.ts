@@ -1204,6 +1204,74 @@ test('detail keeps one direct provider alternative for embedded video', async ({
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('detail keeps external coverage content inside its desktop preview', async ({
+  page,
+}) => {
+  const coverageLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    name: 'Falcon 9 Block 5 | International Orbital Demonstration Mission',
+    missionName: 'International Orbital Demonstration Mission',
+    livestream: 'https://x.com/i/broadcasts/orbital-dawn',
+    livestreams: [
+      {
+        url: 'https://x.com/i/broadcasts/orbital-dawn',
+        title: 'Official mission coverage',
+        isLive: false,
+      },
+    ],
+  };
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [coverageLaunch], meta: FEED_META }),
+    })
+  );
+  await page.route('**/api/launches/ll2-demo-orbital-dawn', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launch: coverageLaunch,
+        canonicalId: coverageLaunch.id,
+        meta: FEED_META,
+      }),
+    })
+  );
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await page.goto('/launch/ll2-demo-orbital-dawn');
+
+  const coverage = page.getByRole('region', { name: 'Mission coverage' });
+  const preview = coverage.locator('[data-coverage-visual="true"]');
+  const handoff = coverage.getByRole('link', {
+    name: /Open X stream.*new tab/i,
+  });
+  await expect(preview).toBeVisible();
+  await expect(handoff).toBeVisible();
+
+  const geometry = await preview.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const action = element.querySelector<HTMLElement>('a.action-button');
+    const sourceLinks = element.querySelectorAll<HTMLElement>('a');
+    const source = sourceLinks.item(sourceLinks.length - 1);
+    const actionBounds = action?.getBoundingClientRect();
+    const sourceBounds = source?.getBoundingClientRect();
+
+    return {
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      actionBottom: actionBounds?.bottom ?? Number.POSITIVE_INFINITY,
+      sourceBottom: sourceBounds?.bottom ?? Number.POSITIVE_INFINITY,
+      frameBottom: bounds.bottom,
+    };
+  });
+
+  expect(geometry.scrollHeight).toBeLessThanOrEqual(geometry.clientHeight + 1);
+  expect(geometry.actionBottom).toBeLessThanOrEqual(geometry.frameBottom + 1);
+  expect(geometry.sourceBottom).toBeLessThanOrEqual(geometry.frameBottom + 1);
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('watch keeps one direct provider alternative beside embedded video', async ({
   page,
 }) => {

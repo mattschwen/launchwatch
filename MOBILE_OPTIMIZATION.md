@@ -450,6 +450,10 @@ The optional expanded map remains a modal dialog. It must:
   reaches the first or final event, then leaves the next Tab press for a usable
   destination. Mission-map zoom controls follow the same boundary behavior.
 - Video and intelligence sections become a single column.
+- Canonical-detail coverage previews keep playable video at its native aspect
+  ratio, while external provider handoffs size to their mission title,
+  attribution, and touch-safe action instead of clipping that content inside a
+  narrow desktop support column.
 - Every canonical detail renders exactly one selected-mission trajectory before
   timeline and intelligence support. Its map bundle loads only as the stable,
   named trajectory panel approaches the viewport; the pending panel preserves

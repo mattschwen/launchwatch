@@ -153,6 +153,22 @@ describe('VideoPlayer coverage state', () => {
     ).toBeVisible();
   });
 
+  it('lets compact external coverage grow around its handoff content', () => {
+    const { container } = render(
+      <VideoPlayer
+        url="https://x.com/i/broadcasts/scheduled-mission"
+        title="Orbital Dawn"
+        launch={UPCOMING_LAUNCHES[0]}
+        fitExternalContent
+      />
+    );
+
+    const visual = container.querySelector('[data-coverage-visual="true"]');
+    expect(visual).toHaveClass('min-h-[24rem]');
+    expect(visual).not.toHaveClass('sm:aspect-video');
+    expect(visual).not.toHaveClass('sm:min-h-0');
+  });
+
   it('falls back to the external handoff when the eligible visual cannot load', () => {
     const { container } = render(
       <VideoPlayer
