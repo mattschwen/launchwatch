@@ -41,6 +41,13 @@ export default function LaunchReadinessSignal({
     holdReason ? `Hold · ${holdReason}` : null,
     weatherConcerns ? `Weather · ${weatherConcerns}` : null,
   ].filter((value): value is string => Boolean(value));
+  const cautionSummary = holdReason && weatherConcerns
+    ? 'hold + weather'
+    : holdReason
+      ? 'hold'
+      : weatherConcerns
+        ? 'weather'
+        : null;
   const caution = Boolean(holdReason || weatherConcerns);
   const hero = variant === 'hero';
   const compact = variant === 'compact';
@@ -62,16 +69,25 @@ export default function LaunchReadinessSignal({
             : 'border-[color-mix(in_srgb,var(--console-cyan)_26%,transparent)] bg-[color-mix(in_srgb,var(--console-cyan)_6%,transparent)]'
         }`}
       >
-        <Gauge aria-hidden="true" size={14} className={`shrink-0 ${signalColor}`} />
+        <Gauge
+          aria-hidden="true"
+          size={14}
+          className={`shrink-0 ${signalColor}`}
+        />
         <span className="min-w-0">
           <span className={`block whitespace-nowrap font-semibold ${signalColor}`}>
             {probability !== null ? (
               <>
-                {probability}% <span className="sr-only">provider </span>
-                probability
+                {probability}%{' '}
+                <span className="sr-only">provider probability</span>
+                {cautionSummary ? (
+                  <span aria-hidden="true"> · {cautionSummary}</span>
+                ) : (
+                  <span aria-hidden="true"> probability</span>
+                )}
               </>
             ) : (
-              primary
+              cautionSummary ? `${cautionSummary} reported` : primary
             )}
           </span>
         </span>

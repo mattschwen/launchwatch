@@ -89,6 +89,11 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   the telemetry grid so both 44-pixel controls remain fully available above the
   fixed primary navigation.
 - Countdown values wrap without horizontal overflow.
+- The compact featured readiness badge keeps probability first while naming
+  provider-reported hold and weather categories on the same short line. It
+  preserves the schedule-first hero height at narrow breakpoints, while the
+  exact constraint wording remains available in the briefing and accessible
+  name.
 - Provider minute/hour targets retain a live amber countdown that visibly ticks
   every second toward the approximate provider target; the `≈T−` prefix and
   estimate note preserve the source precision. Day/month/quarter/year targets

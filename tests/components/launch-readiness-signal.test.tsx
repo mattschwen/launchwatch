@@ -42,6 +42,46 @@ describe('LaunchReadinessSignal', () => {
     expect(screen.queryByText(/% provider probability/)).not.toBeInTheDocument();
   });
 
+  it('keeps provider caution categories visible in the compact hero summary', () => {
+    render(
+      <LaunchReadinessSignal
+        variant="hero"
+        launch={{
+          launchProbability: 85,
+          weatherConcerns: 'Cumulus Cloud Rule',
+          holdReason: 'Range clearance pending',
+        }}
+      />
+    );
+
+    const readiness = screen.getByRole('note', {
+      name: /Launch readiness: 85% provider probability/,
+    });
+
+    expect(readiness).toHaveTextContent('85% provider probability');
+    expect(readiness).toHaveTextContent('85% provider probability · hold + weather');
+    expect(readiness).toHaveAccessibleName(
+      /Range clearance pending.*Cumulus Cloud Rule/,
+    );
+  });
+
+  it('names a weather-only compact hero constraint honestly', () => {
+    render(
+      <LaunchReadinessSignal
+        variant="hero"
+        launch={{
+          launchProbability: null,
+          weatherConcerns: 'Anvil Cloud Rule',
+          holdReason: null,
+        }}
+      />
+    );
+
+    expect(screen.getByRole('note')).toHaveTextContent(
+      'weather reported',
+    );
+  });
+
   it('omits readiness when the provider supplied no facts', () => {
     const { container } = render(
       <dl>

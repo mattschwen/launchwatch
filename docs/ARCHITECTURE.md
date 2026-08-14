@@ -212,6 +212,10 @@ flags are migrated in place so an app update does not replay an alert.
   briefings, and canonical detail. The bounded provider wording explains why a
   state is confirmed or provisional without letting descriptive copy drive
   normalized status behavior.
+- **Provider readiness** keeps probability as the primary compact Home signal,
+  but an attached hold or weather constraint changes the signal to amber and
+  remains visibly named by category. Briefing, Watch, and canonical detail keep
+  the exact bounded provider wording; Home's accessible name does the same.
 - **Pad turnaround telemetry** is accepted only from bounded LL2 detailed
   records, rendered as elapsed time since the previous launch from that pad,
   and kept in Watch, briefing, and canonical detail so dense result rows stay

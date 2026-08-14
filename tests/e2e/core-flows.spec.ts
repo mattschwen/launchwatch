@@ -4030,6 +4030,9 @@ test('provider readiness follows the mission across primary surfaces', async ({
   );
   const heroReadiness = hero.locator('[data-launch-readiness-signal]');
   await assertReadiness(heroReadiness, false);
+  await expect(heroReadiness).toContainText(
+    '85% provider probability · hold + weather'
+  );
   await expect(heroReadiness).toHaveAccessibleName(
     /Launch readiness: 85% provider probability.*Range clearance pending.*Cumulus Cloud Rule/,
   );

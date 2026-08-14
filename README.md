@@ -107,8 +107,10 @@ the header route commands in compact landscape layouts.
   disclosure so external simulations are never presented as LaunchWatch telemetry
 - Provider launch-readiness reports retain bounded probability, weather
   constraints, and hold reasons across Home, Watch, briefing, and canonical
-  detail surfaces; missing or malformed values remain absent rather than being
-  inferred from mission status
+  detail surfaces. Home keeps its compact readiness badge while visibly naming
+  reported hold and weather categories; deeper telemetry and the accessible
+  name retain the exact provider wording. Missing or malformed values remain
+  absent rather than being inferred from mission status
 - Provider status definitions explain schedule confidence in Watch, briefing,
   and canonical detail telemetry, so `Go`, `To Be Confirmed`, and placeholder
   `To Be Determined` states remain understandable without crowding mission rows
