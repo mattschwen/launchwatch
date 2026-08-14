@@ -338,7 +338,12 @@ degraded shared-cache entry.
 Dense schedule and archive result lists disable automatic Next.js prefetching
 for provider-backed canonical detail routes. Detail acquisition begins after
 explicit mission activation, preventing speculative provider work for every
-visible row while preserving normal client-side navigation.
+visible row while preserving normal client-side navigation. Home and its
+canonical detail route share one schedule filtering and sorting function, so
+the detail's previous and next commands follow the exact bounded return view.
+Those adjacent commands also disable prefetching and report loading,
+unavailable, no-longer-matching, and single-result states without inventing a
+neighbor.
 
 ## PWA and Service Worker Policy
 

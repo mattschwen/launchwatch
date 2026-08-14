@@ -165,6 +165,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   when that provider is no longer represented in the current or partial feed.
 - Active schedule filters travel through mission details as bounded return
   context, then reopen with the same visible result set.
+- Schedule-entered mission details expose the previous and next result from
+  that exact filtered and sorted view. The touch-safe commands stack on narrow
+  screens, wrap long provider names at 200% text, and load another canonical
+  detail only after explicit activation.
 - A schedule detail return reveals the progressive batch containing the
   selected mission, scrolls it clear of persistent chrome, and returns keyboard
   focus to its link.

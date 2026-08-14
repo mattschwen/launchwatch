@@ -5831,7 +5831,12 @@ test('schedule detail return restores the revealed mission result', async ({
       id: `${source}-${sourceId}`,
       source,
       sourceId,
-      name: `Schedule Return Mission ${index + 1}`,
+      name:
+        index === 6
+          ? 'Schedule Return Mission 7 with an extended international payload designation'
+          : index === 8
+            ? 'Schedule Return Mission 9 with an extended rideshare manifest name'
+            : `Schedule Return Mission ${index + 1}`,
       date: new Date(
         (UPCOMING_LAUNCHES[0].dateUnix + index) * 1_000,
       ).toISOString(),
@@ -5856,9 +5861,108 @@ test('schedule detail return restores the revealed mission result', async ({
   await expect(target).toBeVisible();
   await target.click();
 
+  const adjacent = page.getByRole('navigation', {
+    name: 'Adjacent schedule missions',
+  });
+  const adjacentLinks = adjacent.getByRole('link');
+  await expect(adjacentLinks).toHaveCount(2);
+  await expect(
+    adjacent.getByRole('link', {
+      name: /Previous mission Schedule Return Mission 7 with an extended international payload designation/,
+    }),
+  ).toBeVisible();
+  await expect(
+    adjacent.getByRole('link', {
+      name: /Next mission Schedule Return Mission 9 with an extended rideshare manifest name/,
+    }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      adjacentLinks.evaluateAll((links) =>
+        links.every((link) => {
+          const bounds = link.getBoundingClientRect();
+          return bounds.height >= 44 && link.scrollWidth <= link.clientWidth;
+        }),
+      ),
+    )
+    .toBe(true);
+  const adjacentLayout = await adjacentLinks.evaluateAll((links) =>
+    links.map((link) => {
+      const bounds = link.getBoundingClientRect();
+      return { top: bounds.top, bottom: bounds.bottom };
+    }),
+  );
+  if ((page.viewportSize()?.width ?? 0) >= 640) {
+    expect(Math.abs(adjacentLayout[0].top - adjacentLayout[1].top)).toBeLessThan(
+      1,
+    );
+  } else {
+    expect(adjacentLayout[1].top).toBeGreaterThanOrEqual(
+      adjacentLayout[0].bottom,
+    );
+  }
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  if ((page.viewportSize()?.width ?? 0) < 640) {
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '32px';
+    });
+    await expect
+      .poll(() =>
+        adjacentLinks.evaluateAll((links) =>
+          links.every((link) => link.scrollWidth <= link.clientWidth),
+        ),
+      )
+      .toBe(true);
+    expect(await expectNoHorizontalOverflow(page)).toBe(true);
+  }
+
   await page.getByRole('link', { name: 'Back to launches' }).click();
   await expect(schedule.locator('#upcoming-launch-results article')).toHaveCount(10);
   await expect(target).toBeFocused();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('schedule mission details navigate to adjacent filtered missions', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  await schedule.getByRole('link', { name: /Orbital Dawn/ }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Orbital Dawn' }),
+  ).toBeVisible();
+
+  const adjacent = page.getByRole('navigation', {
+    name: 'Adjacent schedule missions',
+  });
+  const nextMission = adjacent.getByRole('link', {
+    name: /Next mission Polaris Relay/,
+  });
+  await expect(nextMission).toHaveAttribute(
+    'href',
+    '/launch/spacex-demo-polaris?from=home',
+  );
+  expect((await nextMission.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await nextMission.focus();
+  await nextMission.press('Enter');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Polaris Relay' }),
+  ).toBeVisible();
+  const previousMission = page
+    .getByRole('navigation', { name: 'Adjacent schedule missions' })
+    .getByRole('link', { name: /Previous mission Orbital Dawn/ });
+  await expect(previousMission).toHaveAttribute(
+    'href',
+    '/launch/ll2-demo-orbital-dawn?from=home',
+  );
+  await previousMission.focus();
+  await expect(previousMission).toBeFocused();
+  expect((await previousMission.boundingBox())?.height).toBeGreaterThanOrEqual(
+    44,
+  );
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 

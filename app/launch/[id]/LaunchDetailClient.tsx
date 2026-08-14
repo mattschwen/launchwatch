@@ -70,6 +70,11 @@ import {
   useCurrentTime,
   useLaunchIntel,
 } from '@/lib/hooks';
+import {
+  buildScheduleDetailHref,
+  parseScheduleFilters,
+} from '@/lib/schedule-return';
+import { getScheduleResults } from '@/lib/schedule-results';
 import type { Launch } from '@/lib/types';
 import { extractYouTubeId } from '@/lib/youtube';
 import { useDetailNavigationContext, useLaunchData } from '@/lib/contexts';
@@ -332,6 +337,7 @@ export default function LaunchDetailClient({
   historyReturnHref = null,
   historyReturnFiltered = false,
   scheduleReturnHref = null,
+  scheduleReturnQuery = null,
   scheduleReturnFiltered = false,
 }: {
   launch: Launch;
@@ -339,9 +345,11 @@ export default function LaunchDetailClient({
   historyReturnHref?: string | null;
   historyReturnFiltered?: boolean;
   scheduleReturnHref?: string | null;
+  scheduleReturnQuery?: string | null;
   scheduleReturnFiltered?: boolean;
 }): React.ReactElement {
   const [briefingOpen, setBriefingOpen] = useState(false);
+  const [scheduleReferenceTime] = useState(() => Date.now());
   const [activeSectionId, setActiveSectionId] =
     useState<DetailSectionId>('mission-summary');
   const [sectionIndexHeight, setSectionIndexHeight] = useState(0);
@@ -357,6 +365,38 @@ export default function LaunchDetailClient({
   const feedLaunch = feedLaunches.find(
     (candidate) => candidate.id === launch.id,
   );
+  const scheduleFilters = useMemo(
+    () =>
+      scheduleReturnHref
+        ? parseScheduleFilters(
+            new URLSearchParams(scheduleReturnQuery ?? ''),
+          )
+        : null,
+    [scheduleReturnHref, scheduleReturnQuery],
+  );
+  const scheduleMissions = useMemo(
+    () =>
+      scheduleFilters
+        ? getScheduleResults(
+            feedLaunches,
+            scheduleFilters,
+            scheduleReferenceTime,
+          )
+        : [],
+    [feedLaunches, scheduleFilters, scheduleReferenceTime],
+  );
+  const scheduleMissionIndex = scheduleMissions.findIndex(
+    (candidate) => candidate.id === launch.id,
+  );
+  const previousScheduleMission =
+    scheduleMissionIndex > 0
+      ? scheduleMissions[scheduleMissionIndex - 1]
+      : null;
+  const nextScheduleMission =
+    scheduleMissionIndex >= 0 &&
+    scheduleMissionIndex < scheduleMissions.length - 1
+      ? scheduleMissions[scheduleMissionIndex + 1]
+      : null;
   const feedCanConfirmCurrentState =
     online && !feedLoading && !feedError && !feedMeta?.stale;
   const liveStatusUnconfirmed = Boolean(
@@ -941,13 +981,97 @@ export default function LaunchDetailClient({
           '--mission-section-index-height': `${sectionIndexHeight}px`,
         } as CSSProperties}
       >
-        <Link
-          href={returnHref}
-          className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
-        >
-          <ArrowLeft aria-hidden="true" size={16} />
-          {returnLabel}
-        </Link>
+        <div className="mb-4 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-between">
+          <Link
+            href={returnHref}
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--console-cyan)]"
+          >
+            <ArrowLeft aria-hidden="true" size={16} />
+            {returnLabel}
+          </Link>
+
+          {scheduleFilters ? (
+            <nav
+              aria-label="Adjacent schedule missions"
+              style={{
+                width:
+                  previousScheduleMission && nextScheduleMission
+                    ? 'min(100%, 44rem)'
+                    : 'min(100%, 22rem)',
+              }}
+              className={`grid min-w-0 gap-2 sm:ml-auto ${
+                previousScheduleMission && nextScheduleMission
+                  ? 'sm:grid-cols-2'
+                  : ''
+              }`}
+            >
+              {previousScheduleMission ? (
+                <Link
+                  href={buildScheduleDetailHref(
+                    previousScheduleMission.id,
+                    scheduleFilters,
+                  )}
+                  prefetch={false}
+                  className="group grid min-h-11 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 py-2 text-left transition-colors hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]"
+                >
+                  <ChevronLeft
+                    aria-hidden="true"
+                    size={17}
+                    className="text-[var(--text-muted)] transition-colors group-hover:text-[var(--console-cyan)]"
+                  />
+                  <span className="min-w-0">
+                    <span className="data-label block text-[var(--console-cyan)]">
+                      Previous mission
+                    </span>
+                    <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--text-secondary)]">
+                      {previousScheduleMission.name}
+                    </span>
+                  </span>
+                </Link>
+              ) : null}
+
+              {nextScheduleMission ? (
+                <Link
+                  href={buildScheduleDetailHref(
+                    nextScheduleMission.id,
+                    scheduleFilters,
+                  )}
+                  prefetch={false}
+                  className="group grid min-h-11 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 py-2 text-right transition-colors hover:border-[var(--border-accent)] hover:bg-[var(--surface-subtle)]"
+                >
+                  <span className="min-w-0">
+                    <span className="data-label block text-[var(--console-cyan)]">
+                      Next mission
+                    </span>
+                    <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--text-secondary)]">
+                      {nextScheduleMission.name}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={17}
+                    className="text-[var(--text-muted)] transition-colors group-hover:text-[var(--console-cyan)]"
+                  />
+                </Link>
+              ) : null}
+
+              {!previousScheduleMission && !nextScheduleMission ? (
+                <p
+                  role="status"
+                  className="flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 font-mono text-[0.68rem] uppercase tracking-[0.08em] text-[var(--text-muted)]"
+                >
+                  {feedLoading && feedLaunches.length === 0
+                    ? 'Syncing adjacent missions'
+                    : feedError && feedLaunches.length === 0
+                      ? 'Adjacent missions unavailable'
+                      : scheduleMissionIndex < 0
+                        ? 'Mission no longer matches this schedule view'
+                        : 'Only mission in this schedule view'}
+                </p>
+              ) : null}
+            </nav>
+          ) : null}
+        </div>
 
         {liveStatusUnconfirmed ? (
           <div

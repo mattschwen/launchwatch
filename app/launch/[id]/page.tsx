@@ -154,6 +154,7 @@ export default async function LaunchDetailPage({
       historyReturnHref={historyReturnHref}
       historyReturnFiltered={Boolean(historyReturnQuery)}
       scheduleReturnHref={scheduleReturnHref}
+      scheduleReturnQuery={scheduleReturnQuery}
       scheduleReturnFiltered={Boolean(scheduleReturnQuery)}
     />
   );

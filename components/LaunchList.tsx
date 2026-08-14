@@ -11,9 +11,7 @@ import { AlertTriangle, ArrowUp, Filter, Rocket } from 'lucide-react';
 import { useLaunches } from '@/lib/hooks';
 import {
   formatLaunchDay,
-  hasCalendarReadyLaunchTime,
   isCriticalLaunchStatusName,
-  matchesLaunchSearch,
 } from '@/lib/format';
 import LaunchCard from './LaunchCard';
 import FilterBar, {
@@ -25,7 +23,7 @@ import {
   parseScheduleFilters,
   serializeScheduleFilters,
 } from '@/lib/schedule-return';
-import { isNearTermLaunch } from '@/lib/schedule-horizon';
+import { getScheduleResults } from '@/lib/schedule-results';
 import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { RESET_SCHEDULE_FILTERS_EVENT } from './layout/navigation';
 import ScheduleOverlapSignal from './launch/ScheduleOverlapSignal';
@@ -249,34 +247,7 @@ export default function LaunchList({
   };
 
   const filtered = useMemo(() => {
-    const result = launches.filter((launch) => {
-      const matchesSearch = matchesLaunchSearch(launch, filters.search);
-      const matchesProvider =
-        filters.provider === 'all' ||
-        launch.provider?.trim() === filters.provider;
-      const matchesHorizon =
-        filters.horizon === 'all' ||
-        isNearTermLaunch(launch, horizonReferenceTime);
-      const matchesStatus =
-        filters.status === 'all' || launch.status === filters.status;
-      const matchesCalendarReadiness =
-        !filters.calendarReady ||
-        hasCalendarReadyLaunchTime(launch.datePrecision);
-      return (
-        matchesSearch &&
-        matchesHorizon &&
-        matchesProvider &&
-        matchesStatus &&
-        matchesCalendarReadiness
-      );
-    });
-
-    return result.sort((a, b) => {
-      if (filters.sortBy === 'date-desc') return b.dateUnix - a.dateUnix;
-      if (filters.sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (filters.sortBy === 'name-desc') return b.name.localeCompare(a.name);
-      return a.dateUnix - b.dateUnix;
-    });
+    return getScheduleResults(launches, filters, horizonReferenceTime);
   }, [filters, horizonReferenceTime, launches]);
   const visibleLaunches = filtered.slice(0, visibleCount);
   const allResultsVisible =
