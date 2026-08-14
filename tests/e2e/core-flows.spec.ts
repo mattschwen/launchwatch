@@ -1764,6 +1764,89 @@ test('short desktop keeps live-like Home actions above the status deck', async (
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
+test('narrow Home keeps mission commands ahead of secondary telemetry', async ({
+  page,
+}) => {
+  const liveLikeLaunch = {
+    ...UPCOMING_LAUNCHES[0],
+    name: 'Falcon 9 Block 5 | USSF-366',
+    date: '2035-08-16T00:52:00.000Z',
+    dateUnix: 2070838320,
+    windowStart: '2035-08-15T21:52:00.000Z',
+    windowEnd: '2035-08-16T01:52:00.000Z',
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ launches: [liveLikeLaunch], meta: FEED_META }),
+    }),
+  );
+  await page.route(
+    '**/api/launches/ll2-demo-orbital-dawn',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          launch: liveLikeLaunch,
+          canonicalId: liveLikeLaunch.id,
+          meta: FEED_META,
+        }),
+      }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const hero = page.locator(
+    'section[aria-labelledby="featured-launch-title"]',
+  );
+  const actions = hero.locator('.compact-hero-actions');
+  const telemetry = hero.locator('.compact-hero-telemetry');
+  const mobileNavigation = page.locator(
+    'nav[aria-label="Primary navigation"].fixed:visible',
+  );
+  await expect(hero.getByRole('link', { name: /Find stream/ })).toBeVisible();
+  await expect(hero.getByRole('button', { name: 'Open briefing' })).toBeVisible();
+
+  const [actionsBox, telemetryBox, navigationBox] = await Promise.all([
+    actions.boundingBox(),
+    telemetry.boundingBox(),
+    mobileNavigation.boundingBox(),
+  ]);
+  expect(actionsBox).not.toBeNull();
+  expect(telemetryBox).not.toBeNull();
+  expect(navigationBox).not.toBeNull();
+  expect(actionsBox!.y + actionsBox!.height).toBeLessThanOrEqual(
+    navigationBox!.y,
+  );
+  expect(telemetryBox!.y).toBeGreaterThanOrEqual(
+    actionsBox!.y + actionsBox!.height,
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/');
+  const [compactActionsBox, compactTelemetryBox, compactNavigationBox] =
+    await Promise.all([
+      actions.boundingBox(),
+      telemetry.boundingBox(),
+      mobileNavigation.boundingBox(),
+    ]);
+  expect(compactActionsBox).not.toBeNull();
+  expect(compactTelemetryBox).not.toBeNull();
+  expect(compactNavigationBox).not.toBeNull();
+  expect(compactActionsBox!.height).toBe(44);
+  expect(compactActionsBox!.y + compactActionsBox!.height).toBeLessThanOrEqual(
+    compactNavigationBox!.y,
+  );
+  expect(compactTelemetryBox!.y).toBeGreaterThanOrEqual(
+    compactActionsBox!.y + compactActionsBox!.height,
+  );
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('short landscape keeps primary routes beside the initial sync status', async ({
   page,
 }) => {
@@ -4559,11 +4642,11 @@ test('short mobile viewports keep featured actions clear of primary navigation',
         compactBriefingBox,
         compactNavBox,
       ] = await Promise.all([
-          telemetry.boundingBox(),
-          primaryAction.boundingBox(),
-          briefingAction.boundingBox(),
-          mobileNav.boundingBox(),
-        ]);
+        telemetry.boundingBox(),
+        primaryAction.boundingBox(),
+        briefingAction.boundingBox(),
+        mobileNav.boundingBox(),
+      ]);
 
       return Boolean(
         compactTelemetryBox &&
@@ -4587,15 +4670,26 @@ test('short mobile viewports keep featured actions clear of primary navigation',
   await page.setViewportSize({ width: 393, height: 851 });
   await expect
     .poll(async () => {
-      const [standardTelemetryBox, standardPrimaryBox] = await Promise.all([
-        telemetry.boundingBox(),
-        primaryAction.boundingBox(),
-      ]);
+      const [
+        standardTelemetryBox,
+        standardPrimaryBox,
+        standardBriefingBox,
+        standardNavBox,
+      ] = await Promise.all([
+          telemetry.boundingBox(),
+          primaryAction.boundingBox(),
+          briefingAction.boundingBox(),
+          mobileNav.boundingBox(),
+        ]);
 
       return Boolean(
         standardTelemetryBox &&
           standardPrimaryBox &&
-          standardTelemetryBox.y < standardPrimaryBox.y
+          standardBriefingBox &&
+          standardNavBox &&
+          standardPrimaryBox.y < standardTelemetryBox.y &&
+          standardBriefingBox.y + standardBriefingBox.height + 4 <=
+            standardNavBox.y
       );
     })
     .toBe(true);

@@ -85,9 +85,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
 - At the supported 320-pixel boundary, the featured mission uses a 16-pixel
   inset so telemetry words remain whole without shrinking the established type
   scale; wider mobile layouts retain the standard 20-pixel inset.
-- On compact mobile viewports up to 430 × 760, featured mission actions precede
-  the telemetry grid so both 44-pixel controls remain fully available above the
-  fixed primary navigation.
+- On narrow mobile viewports up to 430 pixels wide, featured mission actions
+  precede the telemetry grid. Common tall-phone layouts keep both 44-pixel
+  controls above the fixed navigation; compact-height phones place them in one
+  row and yield decorative icons before allowing their labels to fragment.
 - On short desktop viewports up to 832 pixels tall, the featured mission keeps
   both primary actions above the fixed status deck. Secondary launch-cadence
   telemetry yields from the hero at that height and remains available in the

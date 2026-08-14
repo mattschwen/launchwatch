@@ -288,13 +288,13 @@ export default function HeroSection({
           >
             <h1
               id="featured-launch-title"
-              className="max-w-3xl text-[clamp(2.15rem,4vw,3.65rem)] font-bold leading-[1.02] tracking-[-0.05em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]"
+              className="compact-hero-title max-w-3xl text-[clamp(2.15rem,4vw,3.65rem)] font-bold leading-[1.02] tracking-[-0.05em] text-[var(--text-primary)] transition-colors group-hover:text-[var(--console-cyan)]"
             >
               {primaryMissionName}
             </h1>
           </Link>
 
-          <div className="my-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-5 pt-1 md:max-lg:flex-row md:max-lg:items-end md:max-lg:justify-between">
+          <div className="compact-hero-countdown my-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-5 pt-1 md:max-lg:flex-row md:max-lg:items-end md:max-lg:justify-between">
             <div className="min-w-0 flex-1">
               {live && missionInFlight ? (
                 <div className="flex items-center gap-3">
