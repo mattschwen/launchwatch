@@ -8,6 +8,7 @@ import {
   useLiveContext,
 } from '@/lib/contexts';
 import {
+  getPrimaryNavAccessibleLabel,
   isNavItemActive,
   PRIMARY_NAV_ITEMS,
   signalHistoryFilterReset,
@@ -22,7 +23,7 @@ function MobileNavContents({
 }): React.ReactElement {
   const pathname = usePathname();
   const { source: inferredDetailSource } = useDetailNavigationContext();
-  const { hasLiveLaunches } = useLiveContext();
+  const { hasLiveLaunches, liveCount } = useLiveContext();
 
   return (
     <nav
@@ -41,7 +42,7 @@ function MobileNavContents({
             <Link
               key={link.href}
               href={link.href}
-              aria-label={link.label}
+              aria-label={getPrimaryNavAccessibleLabel(link, liveCount)}
               onClick={
                 link.href === '/'
                   ? signalScheduleFilterReset
@@ -64,10 +65,12 @@ function MobileNavContents({
               <div className="relative row-span-2">
                 <Icon size={20} />
                 {link.showLiveStatus && hasLiveLaunches && (
-                  <span className="absolute -top-1 -right-1.5 flex h-2.5 w-2.5">
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1 -right-1.5 flex h-2.5 w-2.5"
+                  >
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--live)]" />
-                    <span className="sr-only">Live launch available</span>
                   </span>
                 )}
               </div>

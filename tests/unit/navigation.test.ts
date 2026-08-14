@@ -1,7 +1,9 @@
 import type { MouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  getPrimaryNavAccessibleLabel,
   isNavItemActive,
+  PRIMARY_NAV_ITEMS,
   RESET_HISTORY_FILTERS_EVENT,
   RESET_SCHEDULE_FILTERS_EVENT,
   RESET_WATCH_SELECTION_EVENT,
@@ -9,6 +11,25 @@ import {
   signalScheduleFilterReset,
   signalWatchSelectionReset,
 } from '@/components/layout/navigation';
+
+describe('getPrimaryNavAccessibleLabel', () => {
+  const watchItem = PRIMARY_NAV_ITEMS.find((item) => item.href === '/watch')!;
+  const homeItem = PRIMARY_NAV_ITEMS.find((item) => item.href === '/')!;
+
+  it('adds a correctly pluralized live count to the Watch route', () => {
+    expect(getPrimaryNavAccessibleLabel(watchItem, 1)).toBe(
+      'Watch, 1 active live signal',
+    );
+    expect(getPrimaryNavAccessibleLabel(watchItem, 2)).toBe(
+      'Watch, 2 active live signals',
+    );
+  });
+
+  it('keeps ordinary route names stable without an applicable live signal', () => {
+    expect(getPrimaryNavAccessibleLabel(watchItem, 0)).toBe('Watch');
+    expect(getPrimaryNavAccessibleLabel(homeItem, 2)).toBe('Home');
+  });
+});
 
 describe('isNavItemActive', () => {
   it.each([

@@ -12,6 +12,7 @@ import {
 } from '@/lib/contexts';
 import { getFeedHealth, type FeedHealth } from '@/lib/feed-health';
 import {
+  getPrimaryNavAccessibleLabel,
   isNavItemActive,
   PRIMARY_NAV_ITEMS,
   signalHistoryFilterReset,
@@ -239,7 +240,7 @@ function TopNavContents({
               <Link
                 key={link.href}
                 href={link.href}
-                aria-label={link.label}
+                aria-label={getPrimaryNavAccessibleLabel(link, liveCount)}
                 onClick={
                   link.href === '/'
                     ? signalScheduleFilterReset
@@ -269,7 +270,7 @@ function TopNavContents({
                 {link.showLiveStatus && hasLiveLaunches && (
                   <span
                     className="command-nav-live absolute right-1.5 top-1.5 flex h-2 w-2"
-                    aria-label={`${liveCount} live`}
+                    aria-hidden="true"
                   >
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--live)] opacity-50" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--live)]" />

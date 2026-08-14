@@ -92,6 +92,17 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   },
 ];
 
+export function getPrimaryNavAccessibleLabel(
+  item: PrimaryNavItem,
+  liveCount: number,
+): string {
+  if (!item.showLiveStatus || liveCount <= 0) return item.label;
+
+  return `${item.label}, ${liveCount} active live signal${
+    liveCount === 1 ? '' : 's'
+  }`;
+}
+
 export function isNavItemActive(
   pathname: string,
   href: string,

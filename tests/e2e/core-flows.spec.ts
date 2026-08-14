@@ -2008,7 +2008,10 @@ test('short mobile landscape moves primary navigation into the unused header', a
   await expect(headerNavigation).toBeVisible();
   await expect(bottomNavigation).toHaveCount(0);
   await expect(
-    header.getByRole('link', { name: '1 active live signal' }),
+    header.getByRole('link', {
+      name: '1 active live signal',
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
     header.getByRole('button', {
@@ -3193,8 +3196,11 @@ test('narrow mobile chrome keeps concurrent live and degraded states readable', 
   await expect(
     page
       .locator('nav[aria-label="Primary navigation"].fixed:visible')
-      .getByText('Live launch available'),
-  ).toBeAttached();
+      .getByRole('link', {
+        name: 'Watch, 1 active live signal',
+        exact: true,
+      }),
+  ).toBeVisible();
   const enlargedFeedStatus = header.getByRole('button', {
     name: 'Partial feed — view provider status',
   });
