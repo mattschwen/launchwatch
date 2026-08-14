@@ -6906,6 +6906,8 @@ test('watch keeps source context with the mission rail and gives intelligence th
   await expect(visual).toBeVisible();
   await expect(sourceStatus).toBeVisible();
   await expect(intelligence).toBeVisible();
+  await expect(sourceStatus).toHaveClass(/signal-nominal/);
+  await expect(sourceStatus).not.toHaveClass(/signal-warm/);
 
   const [missionBounds, queueBounds, visualBounds, sourceBounds, intelBounds] =
     await Promise.all([
@@ -8125,9 +8127,12 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
   await expect(unconfirmedCoverage.locator('iframe')).toHaveCount(0);
   await expect(page.getByText('Schedule status unconfirmed')).toBeVisible();
   const masthead = page.locator('.route-masthead');
+  const sourceStatus = page.locator('[data-watch-source-status]');
   await expect(masthead).toHaveCount(1);
   await expect(masthead).toHaveClass(/signal-warm/);
   await expect(masthead).not.toHaveClass(/signal-live/);
+  await expect(sourceStatus).toHaveClass(/signal-warm/);
+  await expect(sourceStatus).not.toHaveClass(/signal-nominal/);
   await expect(page.getByText('LIVE', { exact: true })).toHaveCount(0);
   await expect(page).toHaveTitle(
     'LAST KNOWN · Polaris Relay | Watch | LaunchWatch'
@@ -8155,6 +8160,8 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
     'COVERAGE LIVE · Polaris Relay | LaunchWatch'
   );
   await expect(masthead).toHaveClass(/signal-live/);
+  await expect(sourceStatus).toHaveClass(/signal-nominal/);
+  await expect(sourceStatus).not.toHaveClass(/signal-warm/);
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
   expect(
     consoleErrors.filter(

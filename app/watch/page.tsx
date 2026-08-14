@@ -1477,7 +1477,9 @@ function WatchContent(): React.ReactElement {
 
             <aside
               data-watch-source-status
-              className="surface-card holo-card signal-warm order-5 min-w-0 p-5"
+              className={`surface-card holo-card order-5 min-w-0 p-5 ${
+                degradedSchedule ? 'signal-warm' : 'signal-nominal'
+              }`}
             >
               <h2 className="section-title text-[1.15rem]">Source & status</h2>
               <div
