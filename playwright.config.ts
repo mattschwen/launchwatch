@@ -22,6 +22,7 @@ export default defineConfig({
   use: {
     baseURL,
     serviceWorkers: 'block',
+    timezoneId: 'America/Denver',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

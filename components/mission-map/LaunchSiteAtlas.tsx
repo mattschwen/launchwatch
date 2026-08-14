@@ -328,7 +328,7 @@ export default function LaunchSiteAtlas({
   }
 
   return (
-    <div className={`grid min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,1fr)] bg-[var(--surface-sunken)] ${expanded ? 'h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
+    <div className={`grid w-full min-h-0 min-w-0 max-w-full grid-cols-[minmax(0,1fr)] overflow-hidden bg-[var(--surface-sunken)] ${expanded ? 'h-full lg:grid-cols-[minmax(0,1.6fr)_minmax(22rem,0.7fr)]' : 'xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.7fr)]'}`} data-launch-site-atlas>
       <div className={`relative min-w-0 max-w-full overflow-hidden border-[var(--border-subtle)] ${expanded ? 'min-h-[18rem] sm:min-h-[24rem] lg:min-h-0 lg:border-r' : 'min-h-[28rem] xl:border-r'}`}>
         <div ref={containerRef} className="launch-site-atlas-map absolute inset-0" data-atlas-map />
         <div aria-hidden="true" className="launch-site-atlas-brand-overlay pointer-events-none absolute inset-0 z-[350]" />

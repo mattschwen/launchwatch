@@ -40,8 +40,8 @@ export default async function HistoryPage({
   const returnFocusId = readHistoryReturnFocus(resolvedSearchParams);
 
   return (
-    <div className="page-container py-4 min-[360px]:py-5 sm:py-7 lg:py-9">
-      <header className="route-masthead signal-warm mb-4 flex flex-col gap-4 min-[360px]:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <div className="history-page page-container py-4 min-[360px]:py-5 sm:py-7 lg:py-9">
+      <header className="archive-route-masthead route-masthead signal-warm mb-4 flex flex-col gap-4 min-[360px]:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="data-label mb-2 text-[var(--console-amber)] min-[360px]:mb-3">
             Archive node // recovered telemetry
@@ -50,7 +50,7 @@ export default async function HistoryPage({
             <span className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--console-amber)]/25 bg-[var(--console-amber)]/[0.07] text-[var(--console-amber)] shadow-[inset_0_0_18px_rgba(255,196,92,0.04)]">
               <Archive aria-hidden="true" size={21} />
             </span>
-            <h1 className="gradient-text text-[clamp(2.2rem,5vw,4.4rem)] font-bold leading-none tracking-[-0.055em]">
+            <h1 className="archive-route-title gradient-text min-w-0 text-[clamp(2.2rem,5vw,4.4rem)] font-bold leading-none tracking-[-0.055em]">
               Launch archive
             </h1>
           </div>

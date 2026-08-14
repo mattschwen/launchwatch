@@ -189,8 +189,8 @@ export default function MissionTrajectory({
         </header>
 
         {variant === 'detail' && launch && trajectory ? (
-          <div className="grid min-h-0">
-            <section aria-labelledby={`${sectionTitleId}-flight-path`} className="border-b border-[var(--border-strong)] bg-[var(--surface-sunken)]">
+          <div className="grid min-h-0 min-w-0 max-w-full">
+            <section aria-labelledby={`${sectionTitleId}-flight-path`} className="min-w-0 max-w-full overflow-hidden border-b border-[var(--border-strong)] bg-[var(--surface-sunken)]">
               <div className="border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
                 <p className="console-label">Animated flight path</p>
                 <h3 id={`${sectionTitleId}-flight-path`} className="mt-1 text-base font-bold text-[var(--text-primary)]">Stage-by-stage mission model</h3>
@@ -200,7 +200,7 @@ export default function MissionTrajectory({
               <MissionPhaseRail activeSelection={activeSelection} launch={launch} onSelect={setActiveSelection} trajectory={trajectory} />
               <TrajectoryDisclosure launch={launch} />
             </section>
-            <section aria-labelledby={`${sectionTitleId}-atlas`}>
+            <section aria-labelledby={`${sectionTitleId}-atlas`} className="min-w-0 max-w-full overflow-hidden">
               <div className="border-b border-[var(--border-subtle)] px-4 py-3 sm:px-5">
                 <p className="console-label text-[var(--console-green)]">Launch complex field guide</p>
                 <h3 id={`${sectionTitleId}-atlas`} className="mt-1 text-base font-bold text-[var(--text-primary)]">Launch site atlas</h3>

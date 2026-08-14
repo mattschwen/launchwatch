@@ -158,12 +158,22 @@ function TopNavContents({
       );
     };
     const observer = new ResizeObserver(update);
+    const styleObserver = new MutationObserver(update);
     observer.observe(header);
+    styleObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
+    styleObserver.observe(document.head, {
+      childList: true,
+      subtree: true,
+    });
     window.addEventListener('resize', update);
     update();
 
     return () => {
       observer.disconnect();
+      styleObserver.disconnect();
       window.removeEventListener('resize', update);
     };
   }, []);
