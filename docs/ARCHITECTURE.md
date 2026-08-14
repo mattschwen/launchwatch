@@ -161,7 +161,10 @@ See [`API.md`](API.md) for request and response examples.
 - exposes `online`, `loading`, `refreshing`, `error`, `meta`, and `refresh`;
 - feeds notification checks from the same normalized launch set;
 - checks the selected mission immediately when notification permission is
-  granted, instead of waiting for the next two-minute feed refresh.
+  granted, instead of waiting for the next two-minute feed refresh;
+- treats browser permission and LaunchWatch's persisted alert preference as
+  separate states, so the calendar menu can pause or resume all calendar-ready
+  mission alerts without sending users into browser settings.
 
 `useLaunches`, `useLiveLaunches`, and `useNextLaunch` are selectors over this
 shared state. `useLaunchById` preserves the shared feed record while it calls

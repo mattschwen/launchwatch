@@ -5,6 +5,33 @@ import {
   hasCalendarReadyLaunchTime,
 } from './format';
 
+const ALERTS_ENABLED_KEY = 'launchwatch-alerts-enabled';
+let sessionAlertPreference: boolean | null = null;
+
+export function areLaunchAlertsEnabled(): boolean {
+  try {
+    const storedPreference = localStorage.getItem(ALERTS_ENABLED_KEY);
+    if (storedPreference === 'enabled') return true;
+    if (storedPreference === 'paused') return false;
+  } catch {
+    // A session preference still lets privacy-restricted browsers pause alerts.
+  }
+
+  return sessionAlertPreference ?? true;
+}
+
+export function setLaunchAlertsEnabled(enabled: boolean): void {
+  sessionAlertPreference = enabled;
+  try {
+    localStorage.setItem(
+      ALERTS_ENABLED_KEY,
+      enabled ? 'enabled' : 'paused',
+    );
+  } catch {
+    // Keep the in-memory preference for the current application session.
+  }
+}
+
 function markNotified(notificationKey: string, targetMinute?: string): void {
   try {
     localStorage.setItem(notificationKey, targetMinute ?? 'true');
@@ -125,6 +152,8 @@ export async function showLaunchNotification(
  * Check launches and send notifications for upcoming ones
  */
 export async function checkAndNotify(launches: Launch[]): Promise<void> {
+  if (!areLaunchAlertsEnabled()) return;
+
   const now = Date.now();
 
   for (const launch of launches) {

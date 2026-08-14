@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkAndNotify } from '@/lib/notifications';
+import {
+  areLaunchAlertsEnabled,
+  checkAndNotify,
+  setLaunchAlertsEnabled,
+} from '@/lib/notifications';
 import { UPCOMING_LAUNCHES } from '../fixtures/launches';
 
 const originalNotification = window.Notification;
@@ -46,6 +50,25 @@ function installGrantedNotifications(): ReturnType<typeof vi.fn> {
 }
 
 describe('launch notification precision', () => {
+  it('pauses and resumes all launch checks without changing browser permission', async () => {
+    const showNotification = installGrantedNotifications();
+    const launch = {
+      ...UPCOMING_LAUNCHES[0],
+      date: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      datePrecision: { name: 'Minute', abbrev: 'MIN' },
+    };
+
+    setLaunchAlertsEnabled(false);
+    expect(areLaunchAlertsEnabled()).toBe(false);
+    await checkAndNotify([launch]);
+    expect(showNotification).not.toHaveBeenCalled();
+
+    setLaunchAlertsEnabled(true);
+    expect(areLaunchAlertsEnabled()).toBe(true);
+    await checkAndNotify([launch]);
+    expect(showNotification).toHaveBeenCalledOnce();
+  });
+
   it('falls back to an in-page alert when service-worker delivery fails', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));

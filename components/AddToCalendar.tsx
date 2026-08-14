@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
   Bell,
+  BellOff,
   Calendar,
   CalendarClock,
   Check,
@@ -22,7 +23,11 @@ import {
   formatLaunchPrecisionLabel,
   hasCalendarReadyLaunchTime,
 } from '@/lib/format';
-import { checkAndNotify } from '@/lib/notifications';
+import {
+  areLaunchAlertsEnabled,
+  checkAndNotify,
+  setLaunchAlertsEnabled,
+} from '@/lib/notifications';
 import ExternalLinkHint from '@/components/ui/ExternalLinkHint';
 
 interface AddToCalendarProps {
@@ -129,6 +134,7 @@ export default function AddToCalendar({
   const [open, setOpen] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const [alertState, setAlertState] = useState<AlertState>('unsupported');
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [resolvedMenuAlign, setResolvedMenuAlign] =
     useState<MenuAlignment>(menuAlign);
   const [resolvedMenuPlacement, setResolvedMenuPlacement] =
@@ -211,13 +217,22 @@ export default function AddToCalendar({
     }
   };
 
-  const handleEnableAlerts = async (): Promise<void> => {
+  const handleAlertAction = async (): Promise<void> => {
+    if (alertState === 'granted') {
+      const nextEnabled = !alertsEnabled;
+      setLaunchAlertsEnabled(nextEnabled);
+      setAlertsEnabled(nextEnabled);
+      if (nextEnabled) await checkAndNotify([launch]);
+      return;
+    }
     if (alertState !== 'default' && alertState !== 'error') return;
 
     setAlertState('requesting');
     try {
       const permission = await window.Notification.requestPermission();
       if (permission === 'granted') {
+        setLaunchAlertsEnabled(true);
+        setAlertsEnabled(true);
         await checkAndNotify([launch]);
       }
       setAlertState(permission);
@@ -228,21 +243,22 @@ export default function AddToCalendar({
 
   const alertBusy = alertState === 'requesting';
   const alertUnavailable =
-    alertState === 'granted' ||
     alertState === 'denied' ||
     alertState === 'unsupported';
   const alertLabel =
     alertState === 'requesting'
-      ? 'Enabling browser alerts…'
+      ? 'Enabling all launch alerts…'
       : alertState === 'granted'
-        ? 'Alerts enabled while app is open'
+        ? alertsEnabled
+          ? 'Pause all launch alerts'
+          : 'Resume all launch alerts'
         : alertState === 'denied'
           ? 'Alerts blocked in browser settings'
           : alertState === 'unsupported'
             ? 'Browser alerts unavailable'
             : alertState === 'error'
               ? 'Could not enable alerts — retry'
-              : 'Enable browser launch alerts';
+              : 'Enable alerts for all launches';
   const calendarReady = hasCalendarReadyLaunchTime(launch.datePrecision);
   const labeled = variant !== 'icon';
 
@@ -334,6 +350,7 @@ export default function AddToCalendar({
                 ? 'unsupported'
                 : window.Notification.permission
             );
+            setAlertsEnabled(areLaunchAlertsEnabled());
             if (triggerRef.current) {
               const triggerBounds = triggerRef.current.getBoundingClientRect();
               setResolvedMenuAlign(
@@ -412,7 +429,7 @@ export default function AddToCalendar({
           </button>
           <button
             type="button"
-            onClick={() => void handleEnableAlerts()}
+            onClick={() => void handleAlertAction()}
             aria-busy={alertBusy}
             aria-disabled={alertBusy || alertUnavailable}
             className={`menu-item aria-disabled:cursor-default aria-disabled:opacity-60 ${
@@ -427,8 +444,8 @@ export default function AddToCalendar({
                 size={16}
                 className="shrink-0 animate-spin"
               />
-            ) : alertState === 'granted' ? (
-              <Check
+            ) : alertState === 'granted' && alertsEnabled ? (
+              <BellOff
                 aria-hidden="true"
                 size={16}
                 className="shrink-0 text-[var(--console-green)]"
@@ -509,7 +526,9 @@ export default function AddToCalendar({
               : copyState === 'error'
                 ? 'Could not copy launch details. A selectable manual copy fallback is available.'
                 : alertState === 'granted'
-                  ? 'Browser launch alerts enabled while LaunchWatch is open.'
+                  ? alertsEnabled
+                    ? 'Browser alerts are active for every calendar-ready mission while LaunchWatch is open. Activate this command to pause them.'
+                    : 'Browser launch alerts are paused. Activate this command to resume alerts for every calendar-ready mission.'
                   : alertState === 'denied'
                     ? 'Browser launch alerts are blocked. Change notification permission in your browser settings to enable them.'
                     : alertState === 'error'

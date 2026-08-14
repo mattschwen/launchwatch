@@ -8891,17 +8891,25 @@ test('briefing calendar options stay visible and restore trigger focus', async (
   await expect(firstOption).toBeFocused();
 
   const alerts = calendarOptions.getByRole('button', {
-    name: 'Enable browser launch alerts',
+    name: 'Enable alerts for all launches',
   });
   await alerts.focus();
   await alerts.press('Enter');
   const enabledAlerts = calendarOptions.getByRole('button', {
-    name: 'Alerts enabled while app is open',
+    name: 'Pause all launch alerts',
   });
   await expect(enabledAlerts).toBeFocused();
-  await expect(enabledAlerts).toHaveAttribute('aria-disabled', 'true');
+  await expect(enabledAlerts).toHaveAttribute('aria-disabled', 'false');
   await expect(enabledAlerts).not.toHaveAttribute('disabled', '');
   expect((await enabledAlerts.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+
+  await enabledAlerts.press('Enter');
+  const pausedAlerts = calendarOptions.getByRole('button', {
+    name: 'Resume all launch alerts',
+  });
+  await expect(pausedAlerts).toBeFocused();
+  await expect(pausedAlerts).toHaveAttribute('aria-disabled', 'false');
+  await expect(calendarOptions).toContainText('Browser launch alerts are paused');
 
   const placement = await calendarOptions.evaluate((element) => {
     const options = element.getBoundingClientRect();
@@ -8924,7 +8932,7 @@ test('briefing calendar options stay visible and restore trigger focus', async (
     aboveTrigger: true,
   });
 
-  await enabledAlerts.press('Escape');
+  await pausedAlerts.press('Escape');
   await expect(calendarOptions).toHaveCount(0);
   await expect(dialog).toBeVisible();
   await expect(calendarTrigger).toBeFocused();

@@ -125,7 +125,9 @@ the header route commands in compact landscape layouts.
   previous launch across Watch, briefing, and canonical detail telemetry;
   missing or malformed durations stay absent and never imply pad readiness
 - Calendar export and opt-in browser launch alerts while LaunchWatch is open,
-  once the provider confirms a minute-level launch target; provider retargets
+  once the provider confirms a minute-level launch target. The calendar menu
+  names their all-mission scope and keeps pause/resume available after browser
+  permission is granted; provider retargets
   re-arm the alert thresholds for the new confirmed time, and a failed
   service-worker delivery falls back to the active page. Exported or copied
   mission details retain the canonical LaunchWatch route. Browsers that block

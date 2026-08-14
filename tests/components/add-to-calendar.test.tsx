@@ -20,6 +20,7 @@ afterEach(() => {
   } else {
     Reflect.deleteProperty(navigator, 'serviceWorker');
   }
+  localStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -253,7 +254,7 @@ describe('AddToCalendar', () => {
       screen.getByRole('button', { name: 'Add to calendar' })
     );
     const alerts = await screen.findByRole('button', {
-      name: 'Enable browser launch alerts',
+      name: 'Enable alerts for all launches',
     });
     alerts.focus();
     await user.keyboard('{Enter}{Enter}');
@@ -267,15 +268,15 @@ describe('AddToCalendar', () => {
 
     expect(
       await screen.findByRole('button', {
-        name: 'Alerts enabled while app is open',
+        name: 'Pause all launch alerts',
       })
     ).toHaveFocus();
     expect(alerts).not.toBeDisabled();
     expect(alerts).toHaveAttribute('aria-busy', 'false');
-    expect(alerts).toHaveAttribute('aria-disabled', 'true');
+    expect(alerts).toHaveAttribute('aria-disabled', 'false');
     expect(
       screen.getByText(
-        'Browser launch alerts enabled while LaunchWatch is open.'
+        'Browser alerts are active for every calendar-ready mission while LaunchWatch is open. Activate this command to pause them.'
       )
     ).toBeInTheDocument();
   });
@@ -321,12 +322,12 @@ describe('AddToCalendar', () => {
       screen.getByRole('button', { name: 'Add to calendar' })
     );
     await user.click(
-      screen.getByRole('button', { name: 'Enable browser launch alerts' })
+      screen.getByRole('button', { name: 'Enable alerts for all launches' })
     );
 
     expect(
       await screen.findByRole('button', {
-        name: 'Alerts enabled while app is open',
+        name: 'Pause all launch alerts',
       })
     ).toBeVisible();
     expect(showNotification).toHaveBeenCalledOnce();
@@ -336,6 +337,43 @@ describe('AddToCalendar', () => {
         body: expect.stringMatching(/^Launching in [45] minutes\n/),
       })
     );
+  });
+
+  it('keeps pause and resume available after browser permission is granted', async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: {
+        permission: 'granted',
+        requestPermission: vi.fn(),
+      },
+    });
+
+    render(<AddToCalendar launch={UPCOMING_LAUNCHES[0]} />);
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }));
+    const pause = screen.getByRole('button', {
+      name: 'Pause all launch alerts',
+    });
+    await user.click(pause);
+
+    const resume = screen.getByRole('button', {
+      name: 'Resume all launch alerts',
+    });
+    expect(resume).toHaveFocus();
+    expect(resume).toHaveAttribute('aria-disabled', 'false');
+    expect(localStorage.getItem('launchwatch-alerts-enabled')).toBe('paused');
+    expect(
+      screen.getByText(
+        'Browser launch alerts are paused. Activate this command to resume alerts for every calendar-ready mission.'
+      )
+    ).toBeInTheDocument();
+
+    await user.click(resume);
+    expect(
+      screen.getByRole('button', { name: 'Pause all launch alerts' })
+    ).toHaveFocus();
+    expect(localStorage.getItem('launchwatch-alerts-enabled')).toBe('enabled');
   });
 
   it('reports a failed alert prompt and supports a denied retry', async () => {
@@ -358,7 +396,7 @@ describe('AddToCalendar', () => {
       screen.getByRole('button', { name: 'Add to calendar' })
     );
     const alerts = screen.getByRole('button', {
-      name: 'Enable browser launch alerts',
+      name: 'Enable alerts for all launches',
     });
     alerts.focus();
     await user.keyboard('{Enter}');
