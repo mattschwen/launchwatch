@@ -618,7 +618,7 @@ test('@a11y mission briefing calendar has no serious WCAG A/AA violations', asyn
   ).toHaveCount(1);
   await dialog
     .getByRole('button', { name: 'Add launch to calendar' })
-    .click();
+    .press('Enter');
   await expect(
     dialog.getByRole('group', { name: 'Calendar options' })
   ).toBeVisible();
