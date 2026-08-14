@@ -341,6 +341,18 @@ export function hasCountdownTarget(
   );
 }
 
+export function hasDayOrBetterLaunchTime(
+  precision: LaunchDatePrecision | null | undefined
+): boolean {
+  const code = precisionCode(precision);
+  return (
+    hasCountdownTarget(precision) ||
+    code === 'AM' ||
+    code === 'PM' ||
+    code === 'DAY'
+  );
+}
+
 export function hasCalendarReadyLaunchTime(
   precision: LaunchDatePrecision | null | undefined
 ): boolean {

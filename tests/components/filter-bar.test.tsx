@@ -9,6 +9,7 @@ describe('FilterBar', () => {
 
     for (const label of [
       'Search launches',
+      'Planning horizon',
       'Provider',
       'Status',
       'Sort launches',
@@ -31,6 +32,9 @@ describe('FilterBar', () => {
     expect(
       screen.getByRole('checkbox', { name: 'Calendar-ready only' }),
     ).not.toBeChecked();
+    expect(
+      screen.getByRole('combobox', { name: 'Planning horizon' }),
+    ).toHaveAccessibleDescription('Includes all provider target ranges');
   });
 
   it('renders the current providers and emits the selected provider name', async () => {
@@ -63,6 +67,7 @@ describe('FilterBar', () => {
 
     expect(onFilterChange).toHaveBeenLastCalledWith({
       search: '',
+      horizon: 'all',
       provider: 'China Aerospace Science and Technology Corporation',
       status: 'all',
       calendarReady: false,
@@ -92,6 +97,7 @@ describe('FilterBar', () => {
     expect(clear).toBeDisabled();
     expect(onFilterChange).toHaveBeenLastCalledWith({
       search: '',
+      horizon: 'all',
       provider: 'all',
       status: 'all',
       calendarReady: false,
@@ -132,6 +138,7 @@ describe('FilterBar', () => {
     );
     expect(onFilterChange).toHaveBeenLastCalledWith({
       search: '',
+      horizon: 'all',
       provider: 'SpaceX',
       status: 'all',
       calendarReady: false,
@@ -157,6 +164,7 @@ describe('FilterBar', () => {
     expect(clear).toBeDisabled();
     expect(onFilterChange).toHaveBeenLastCalledWith({
       search: '   ',
+      horizon: 'all',
       provider: 'all',
       status: 'all',
       calendarReady: false,
@@ -210,6 +218,7 @@ describe('FilterBar', () => {
     );
     expect(onFilterChange).toHaveBeenLastCalledWith({
       search: '',
+      horizon: 'all',
       provider: 'all',
       status: 'all',
       calendarReady: false,

@@ -2,6 +2,7 @@ import { parseLaunchId } from '@/lib/launch-id';
 
 export interface ScheduleFilters {
   search: string;
+  horizon: 'all' | '7d';
   provider: string;
   status: 'all' | 'upcoming' | 'live' | 'tbd';
   calendarReady: boolean;
@@ -10,6 +11,7 @@ export interface ScheduleFilters {
 
 export const DEFAULT_SCHEDULE_FILTERS: ScheduleFilters = {
   search: '',
+  horizon: 'all',
   provider: 'all',
   status: 'all',
   calendarReady: false,
@@ -55,6 +57,7 @@ export function parseScheduleFilters(
         : null
       : singleValue(params[key]);
   const search = boundedText(read('q'), SCHEDULE_SEARCH_MAX_LENGTH);
+  const horizon = read('horizon');
   const provider = boundedText(read('provider'), MAX_PROVIDER_LENGTH);
   const status = read('status');
   const calendarReady = read('ready') === '1';
@@ -62,6 +65,7 @@ export function parseScheduleFilters(
 
   return {
     search,
+    horizon: horizon === '7d' ? horizon : DEFAULT_SCHEDULE_FILTERS.horizon,
     provider: provider || DEFAULT_SCHEDULE_FILTERS.provider,
     status:
       status === 'upcoming' || status === 'live' || status === 'tbd'
@@ -82,6 +86,7 @@ export function serializeScheduleFilters(
 ): string {
   const normalized = parseScheduleFilters({
     q: filters.search,
+    horizon: filters.horizon,
     provider: filters.provider,
     status: filters.status,
     ready: filters.calendarReady ? '1' : '',
@@ -90,6 +95,9 @@ export function serializeScheduleFilters(
   const params = new URLSearchParams();
 
   if (normalized.search) params.set('q', normalized.search);
+  if (normalized.horizon !== DEFAULT_SCHEDULE_FILTERS.horizon) {
+    params.set('horizon', normalized.horizon);
+  }
   if (normalized.provider !== DEFAULT_SCHEDULE_FILTERS.provider) {
     params.set('provider', normalized.provider);
   }

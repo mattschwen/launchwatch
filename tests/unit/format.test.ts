@@ -25,6 +25,7 @@ import {
   isMeaningfulLaunchValue,
   normalizeLaunchDescription,
   hasCalendarReadyLaunchTime,
+  hasDayOrBetterLaunchTime,
   hasExactLaunchTime,
   launchOutcomeLabel,
   matchesLaunchSearch,
@@ -126,6 +127,10 @@ describe('launch formatting', () => {
     expect(formatLaunchPrecisionLabel(month)).toBe('Month estimate');
     expect(hasExactLaunchTime(month)).toBe(false);
     expect(hasCalendarReadyLaunchTime(month)).toBe(false);
+    expect(hasDayOrBetterLaunchTime(month)).toBe(false);
+    expect(hasDayOrBetterLaunchTime({ name: 'Day', abbrev: 'DAY' })).toBe(
+      true
+    );
     expect(hasCalendarReadyLaunchTime({ name: 'Minute', abbrev: 'MIN' })).toBe(
       true
     );

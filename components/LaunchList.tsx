@@ -25,6 +25,7 @@ import {
   parseScheduleFilters,
   serializeScheduleFilters,
 } from '@/lib/schedule-return';
+import { isNearTermLaunch } from '@/lib/schedule-horizon';
 import { useMissionSearchShortcut } from '@/lib/search-shortcut';
 import { RESET_SCHEDULE_FILTERS_EVENT } from './layout/navigation';
 import ScheduleOverlapSignal from './launch/ScheduleOverlapSignal';
@@ -49,6 +50,9 @@ export default function LaunchList({
   const [filterSeed, setFilterSeed] = useState<FilterOptions>(initialFilters);
   const [filterResetKey, setFilterResetKey] = useState(0);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [horizonReferenceTime, setHorizonReferenceTime] = useState(() =>
+    Date.now()
+  );
   const [revealedBatchStartIndex, setRevealedBatchStartIndex] = useState<
     number | null
   >(null);
@@ -68,11 +72,13 @@ export default function LaunchList({
   const retryUnavailable = refreshing || !online;
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
+    filters.horizon !== DEFAULT_FILTERS.horizon ||
     filters.provider !== DEFAULT_FILTERS.provider ||
     filters.status !== DEFAULT_FILTERS.status ||
     filters.calendarReady !== DEFAULT_FILTERS.calendarReady;
   const activeFilterCount = [
     Boolean(filters.search.trim()),
+    filters.horizon !== DEFAULT_FILTERS.horizon,
     filters.provider !== DEFAULT_FILTERS.provider,
     filters.status !== DEFAULT_FILTERS.status,
     filters.calendarReady !== DEFAULT_FILTERS.calendarReady,
@@ -113,6 +119,7 @@ export default function LaunchList({
 
   useEffect(() => {
     const applyNavigationFilters = (nextFilters: FilterOptions): void => {
+      setHorizonReferenceTime(Date.now());
       setFilters({ ...nextFilters });
       setFilterSeed({ ...nextFilters });
       setFiltersOpen(Boolean(serializeScheduleFilters(nextFilters)));
@@ -247,6 +254,9 @@ export default function LaunchList({
       const matchesProvider =
         filters.provider === 'all' ||
         launch.provider?.trim() === filters.provider;
+      const matchesHorizon =
+        filters.horizon === 'all' ||
+        isNearTermLaunch(launch, horizonReferenceTime);
       const matchesStatus =
         filters.status === 'all' || launch.status === filters.status;
       const matchesCalendarReadiness =
@@ -254,6 +264,7 @@ export default function LaunchList({
         hasCalendarReadyLaunchTime(launch.datePrecision);
       return (
         matchesSearch &&
+        matchesHorizon &&
         matchesProvider &&
         matchesStatus &&
         matchesCalendarReadiness
@@ -266,7 +277,7 @@ export default function LaunchList({
       if (filters.sortBy === 'name-desc') return b.name.localeCompare(a.name);
       return a.dateUnix - b.dateUnix;
     });
-  }, [filters, launches]);
+  }, [filters, horizonReferenceTime, launches]);
   const visibleLaunches = filtered.slice(0, visibleCount);
   const allResultsVisible =
     filtered.length > 0 && visibleLaunches.length === filtered.length;
@@ -555,6 +566,9 @@ export default function LaunchList({
             searchInputRef={searchInputRef}
             providerOptions={providerOptions}
             onFilterChange={(next) => {
+              if (next.horizon !== filters.horizon) {
+                setHorizonReferenceTime(Date.now());
+              }
               setFilters(next);
               setVisibleCount(INITIAL_VISIBLE_COUNT);
               setRevealedBatchStartIndex(null);

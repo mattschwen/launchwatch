@@ -162,6 +162,61 @@ describe('LaunchList', () => {
     ).toHaveTextContent('1 mission');
   });
 
+  it('isolates day-or-better missions in the next seven days', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(
+      Date.parse('2035-07-26T12:00:00.000Z'),
+    );
+    const launches = [
+      UPCOMING_LAUNCHES[0],
+      {
+        ...UPCOMING_LAUNCHES[1],
+        id: 'spacex-demo-far-future',
+        sourceId: 'demo-far-future',
+        name: 'Far Future Mission',
+        date: '2035-08-04T09:15:00.000Z',
+        dateUnix: 2069831700,
+      },
+      {
+        ...UPCOMING_LAUNCHES[1],
+        id: 'spacex-demo-coarse-month',
+        sourceId: 'demo-coarse-month',
+        name: 'Coarse Month Mission',
+        date: '2035-07-31T00:00:00.000Z',
+        dateUnix: 2069452800,
+        datePrecision: { name: 'Month', abbrev: 'M' },
+      },
+    ];
+    vi.mocked(useLaunches).mockReturnValue({
+      launches,
+      online: true,
+      loading: false,
+      refreshing: false,
+      error: null,
+      meta: FEED_META,
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const user = userEvent.setup();
+    render(<LaunchList />);
+    await user.click(screen.getByRole('button', { name: 'Filter' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Planning horizon' }),
+      '7d',
+    );
+
+    expect(
+      screen.getByRole('status', { name: 'Upcoming launch results' }),
+    ).toHaveTextContent('1 mission');
+    expect(screen.getByRole('heading', { name: 'Orbital Dawn' })).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'Far Future Mission' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Coarse Month Mission' }),
+    ).not.toBeInTheDocument();
+    expect(window.location.search).toBe('?horizon=7d');
+  });
+
   it('keeps concurrent-window planning aligned with the filtered schedule', async () => {
     const user = userEvent.setup();
     const launches = [
@@ -456,6 +511,7 @@ describe('LaunchList', () => {
       <LaunchList
         initialFilters={{
           search: 'Polaris',
+          horizon: 'all',
           provider: 'all',
           status: 'all',
           calendarReady: false,

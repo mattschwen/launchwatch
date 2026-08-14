@@ -120,6 +120,10 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   without conflating target precision with provider status. Its active state is
   represented in the filter count and URL, survives detail return navigation,
   and reflows with the existing filter grid at phone and desktop widths.
+- The labeled planning-horizon control can reduce a dense feed to the next
+  seven days of day-or-better provider targets. Month and broader placeholders
+  stay out of that near-term claim, while active missions remain visible; the
+  selection shares the same URL, filter-count, reset, and return behavior.
 - Large mission queues report the visible and total result count, then reveal
   five more rows per touch-safe command instead of mounting the full provider
   schedule at once. The batch rail keeps a direct return to schedule filters;

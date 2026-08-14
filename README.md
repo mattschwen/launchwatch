@@ -51,6 +51,9 @@ the header route commands in compact landscape layouts.
 - Home can isolate calendar-ready exact or minute targets independently of
   provider status; that URL-backed filter survives mission-detail return
   navigation and keeps planning signals aligned with visible results
+- A rolling seven-day planning horizon isolates day-or-better provider targets
+  without treating month or quarter placeholders as near-term commitments; it
+  remains URL-backed through mission-detail return navigation
 - A route-aware `/` shortcut opens and focuses mission search on the schedule
   and archive without intercepting editable controls; shared search tolerates
   provider punctuation, accents, and joined vehicle designations. Once a query

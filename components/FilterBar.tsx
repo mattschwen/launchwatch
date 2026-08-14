@@ -59,6 +59,7 @@ export default function FilterBar({
 
   const active =
     Boolean(filters.search.trim()) ||
+    filters.horizon !== resetFilters.horizon ||
     (showProvider && filters.provider !== resetFilters.provider) ||
     filters.status !== resetFilters.status ||
     filters.calendarReady !== resetFilters.calendarReady ||
@@ -69,8 +70,8 @@ export default function FilterBar({
     !providerOptions.includes(filters.provider);
 
   return (
-    <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1fr)_minmax(9rem,12rem)_9.5rem_9.5rem_minmax(10.5rem,auto)_auto]">
-      <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+    <div className="grid items-end gap-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--surface-base)] p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(12rem,1fr)_minmax(8.5rem,10rem)_minmax(9rem,11rem)_8.75rem_8.75rem_minmax(10.5rem,auto)_auto]">
+      <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-1">
         <label htmlFor={`${id}-search`} className="data-label mb-1.5 block">
           Search launches
         </label>
@@ -114,6 +115,32 @@ export default function FilterBar({
             </kbd>
           )}
         </div>
+      </div>
+
+      <div className="min-w-0">
+        <label htmlFor={`${id}-horizon`} className="data-label mb-1.5 block">
+          Planning horizon
+        </label>
+        <select
+          id={`${id}-horizon`}
+          aria-describedby={`${id}-horizon-description`}
+          value={filters.horizon}
+          onChange={(event) =>
+            update('horizon', event.target.value as FilterOptions['horizon'])
+          }
+          className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-canvas)] px-3 text-sm text-[var(--text-primary)]"
+        >
+          <option value="all">Full feed</option>
+          <option value="7d">Next 7 days</option>
+        </select>
+        <p
+          id={`${id}-horizon-description`}
+          className="mt-1 text-[0.68rem] leading-3 text-[var(--text-muted)]"
+        >
+          {filters.horizon === '7d'
+            ? 'Day-or-better provider targets'
+            : 'Includes all provider target ranges'}
+        </p>
       </div>
 
       {showProvider ? (

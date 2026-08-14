@@ -5076,6 +5076,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   const filterPanel = page.locator('#launch-filters');
   for (const label of [
     'Search launches',
+    'Planning horizon',
     'Provider',
     'Status',
     'Sort launches',
@@ -5094,6 +5095,10 @@ test('home schedule filters missions and opens a detail route', async ({ page })
     name: 'Clear launch filters',
   });
   await search.focus();
+  await page.keyboard.press('Tab');
+  await expect(
+    page.getByRole('combobox', { name: 'Planning horizon' }),
+  ).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(provider).toBeFocused();
   const providerPlacement = await provider.evaluate((element) => {
@@ -5196,7 +5201,7 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   ).toBeVisible();
   const clearFilters = page.getByRole('button', { name: 'Clear all filters' });
   await search.focus();
-  for (let index = 0; index < 7; index += 1) {
+  for (let index = 0; index < 8; index += 1) {
     await page.keyboard.press('Tab');
   }
   await expect(clearFilters).toBeFocused();
@@ -5234,6 +5239,93 @@ test('home schedule filters missions and opens a detail route', async ({ page })
   await expect(
     page.getByRole('heading', { level: 1, name: 'Polaris Relay' })
   ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
+test('home isolates and preserves the near-term planning horizon', async ({
+  page,
+}) => {
+  const referenceTime = Date.now();
+  const nearTerm = {
+    ...UPCOMING_LAUNCHES[0],
+    date: new Date(referenceTime + 2 * 86_400_000).toISOString(),
+    dateUnix: Math.floor((referenceTime + 2 * 86_400_000) / 1_000),
+    datePrecision: { name: 'Hour', abbrev: 'HR' },
+  };
+  const coarsePlaceholder = {
+    ...UPCOMING_LAUNCHES[1],
+    id: 'spacex-demo-coarse-horizon',
+    sourceId: 'demo-coarse-horizon',
+    name: 'Coarse Horizon Mission',
+    date: new Date(referenceTime + 4 * 86_400_000).toISOString(),
+    dateUnix: Math.floor((referenceTime + 4 * 86_400_000) / 1_000),
+    datePrecision: { name: 'Month', abbrev: 'M' },
+  };
+  const laterMission = {
+    ...UPCOMING_LAUNCHES[1],
+    id: 'spacex-demo-later-horizon',
+    sourceId: 'demo-later-horizon',
+    name: 'Later Horizon Mission',
+    date: new Date(referenceTime + 10 * 86_400_000).toISOString(),
+    dateUnix: Math.floor((referenceTime + 10 * 86_400_000) / 1_000),
+    datePrecision: { name: 'Minute', abbrev: 'MIN' },
+  };
+
+  await page.route('**/api/launches?type=all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        launches: [nearTerm, coarsePlaceholder, laterMission],
+        meta: FEED_META,
+      }),
+    }),
+  );
+  await page.goto('/');
+
+  const schedule = page.getByRole('region', { name: 'Upcoming launches' });
+  await schedule.getByRole('button', { name: 'Filter' }).click();
+  const horizon = schedule.getByRole('combobox', {
+    name: 'Planning horizon',
+  });
+  await expect(horizon).toHaveAccessibleDescription(
+    'Includes all provider target ranges',
+  );
+  await horizon.selectOption('7d');
+  await expect(horizon).toHaveAccessibleDescription(
+    'Day-or-better provider targets',
+  );
+
+  await expect(page).toHaveURL(/\?horizon=7d$/);
+  await expect(
+    schedule.getByRole('status', { name: 'Upcoming launch results' }),
+  ).toHaveText('1 mission');
+  await expect(
+    schedule.getByRole('heading', { name: 'Orbital Dawn' }),
+  ).toBeVisible();
+  await expect(
+    schedule.getByRole('heading', { name: 'Coarse Horizon Mission' }),
+  ).toHaveCount(0);
+  await expect(
+    schedule.getByRole('heading', { name: 'Later Horizon Mission' }),
+  ).toHaveCount(0);
+
+  const briefing = schedule.getByRole('link', { name: /Orbital Dawn/ });
+  await briefing.click();
+  await expect(page).toHaveURL(
+    /\/launch\/ll2-demo-orbital-dawn\?from=home&schedule=horizon%3D7d$/,
+  );
+  const returnToSchedule = page.getByRole('link', {
+    name: 'Back to filtered schedule',
+  });
+  await expect(returnToSchedule).toHaveAttribute(
+    'href',
+    '/?horizon=7d&focus=ll2-demo-orbital-dawn',
+  );
+  await returnToSchedule.click();
+  await expect(page).toHaveURL(/\?horizon=7d$/);
+  await expect(horizon).toHaveValue('7d');
+  await expect(briefing).toBeFocused();
   expect(await expectNoHorizontalOverflow(page)).toBe(true);
 });
 
