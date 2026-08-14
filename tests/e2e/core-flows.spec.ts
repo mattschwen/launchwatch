@@ -7178,7 +7178,7 @@ test('watch console index preserves mission context and reveals every region', a
 test('watch console index keeps every label inside its control on narrow phones', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 393, height: 727 });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
     window.localStorage.setItem('launchwatch.boot-sequence.v3', 'done');
   });
@@ -7187,8 +7187,20 @@ test('watch console index keeps every label inside its control on narrow phones'
   const index = page.getByRole('navigation', {
     name: 'Watch console sections',
   });
+  const track = index.locator('[data-watch-section-track]');
   await expect(index).toBeVisible();
   await expect(index.getByText('01', { exact: true })).toBeHidden();
+  await expect(
+    index.getByRole('button', { name: 'Next watch sections' }),
+  ).toHaveCount(0);
+  await expect(track).not.toHaveAttribute('tabindex');
+  await expect
+    .poll(() =>
+      track.evaluate(
+        (element) => element.scrollWidth - element.clientWidth,
+      ),
+    )
+    .toBeLessThanOrEqual(1);
 
   const labelPlacement = await index.getByRole('link').evaluateAll((links) =>
     links.map((link) => {

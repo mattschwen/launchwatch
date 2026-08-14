@@ -374,7 +374,7 @@ export default function WatchSectionIndex(): React.ReactElement {
                 event.preventDefault();
                 revealSection(section.id);
               }}
-              className={`group inline-flex min-h-11 min-w-[3.5rem] flex-1 shrink-0 items-center justify-center gap-1.5 border-r border-[var(--border-subtle)] px-2 font-mono text-[0.67rem] font-semibold uppercase tracking-[0.04em] transition-colors last:border-r-0 hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] min-[360px]:min-w-[4.5rem] min-[360px]:px-3 min-[360px]:text-[0.7rem] min-[360px]:tracking-[0.06em] ${
+              className={`group inline-flex min-h-11 min-w-[3.5rem] flex-1 shrink-0 items-center justify-center gap-1.5 border-r border-[var(--border-subtle)] px-2 font-mono text-[0.67rem] font-semibold uppercase tracking-[0.04em] transition-colors last:border-r-0 hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--console-cyan)] min-[360px]:min-w-[4.25rem] min-[360px]:px-3 min-[360px]:text-[0.7rem] min-[360px]:tracking-[0.06em] ${
                 active
                   ? 'bg-[var(--surface-accent)] text-[var(--console-green)]'
                   : 'text-[var(--text-secondary)]'
