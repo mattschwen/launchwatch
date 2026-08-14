@@ -640,10 +640,10 @@ body::before {
 }
 
 @keyframes hologram-sheen {
-  0% { transform: translateX(-150%) skewX(-16deg); opacity: 0; }
+  0% { transform: translateX(-150%); opacity: 0; }
   30% { opacity: 0.26; }
   70% { opacity: 0.12; }
-  100% { transform: translateX(190%) skewX(-16deg); opacity: 0; }
+  100% { transform: translateX(325%); opacity: 0; }
 }
 
 @keyframes signal-pulse {
@@ -743,15 +743,16 @@ html[data-boot-status='visible'] .header-instruments {
   content: '';
   position: absolute;
   z-index: 3;
-  inset: 0;
+  inset: -1px auto auto -1px;
+  height: 2px;
   width: 32%;
   background: linear-gradient(
-    105deg,
+    90deg,
     transparent,
-    color-mix(in srgb, var(--panel-signal) 9%, transparent),
+    color-mix(in srgb, var(--panel-signal) 72%, white 8%),
     transparent
   );
-  transform: translateX(-150%) skewX(-16deg);
+  transform: translateX(-150%);
   pointer-events: none;
 }
 

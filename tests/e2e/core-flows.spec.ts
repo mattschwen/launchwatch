@@ -14,6 +14,35 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('shared holographic sheen stays contained to the card top rail', async ({
+  page,
+}) => {
+  await page.goto('/history');
+
+  const archive = page.locator('.archive-console.holo-card');
+  await expect(archive).toBeVisible();
+
+  const geometry = await archive.evaluate((element) => {
+    const cardBounds = element.getBoundingClientRect();
+    const sheen = getComputedStyle(element, '::after');
+
+    return {
+      cardHeight: cardBounds.height,
+      sheenHeight: Number.parseFloat(sheen.height),
+      sheenTop: Number.parseFloat(sheen.top),
+      pointerEvents: sheen.pointerEvents,
+      transform: sheen.transform,
+    };
+  });
+
+  expect(geometry.cardHeight).toBeGreaterThan(200);
+  expect(geometry.sheenHeight).toBe(2);
+  expect(geometry.sheenTop).toBe(-1);
+  expect(geometry.pointerEvents).toBe('none');
+  expect(geometry.transform).not.toBe('none');
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 test('first visit confirms synchronization without covering the active route', async ({
   page,
 }) => {
