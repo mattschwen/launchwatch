@@ -499,17 +499,17 @@ function WatchStage({
             size={34}
           />
         )}
-        <h2 className="text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] min-[360px]:mt-5 min-[360px]:text-[clamp(1.65rem,4vw,2.5rem)]">
+        <h2 className="watch-standby-title text-xl font-bold leading-tight tracking-[-0.035em] text-[var(--text-primary)] min-[360px]:mt-5 min-[360px]:text-[clamp(1.65rem,4vw,2.5rem)]">
           {detailLoading
             ? 'Checking stream status'
             : streamLookupError
             ? 'Stream status unavailable'
             : 'No live stream right now'}
         </h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] min-[360px]:mt-2 min-[360px]:text-sm min-[360px]:leading-6">
+        <p className="watch-standby-description mt-1 text-xs leading-5 text-[var(--text-secondary)] min-[360px]:mt-2 min-[360px]:text-sm min-[360px]:leading-6">
           {fallbackDescription}
         </p>
-        <div className="my-2 h-px bg-[var(--border-subtle)] min-[360px]:my-6" />
+        <div className="watch-standby-divider my-2 h-px bg-[var(--border-subtle)] min-[360px]:my-6" />
         <div
           data-watch-standby-context
           className="grid min-w-0 grid-cols-1 items-center gap-1 min-[360px]:contents"
@@ -531,7 +531,7 @@ function WatchStage({
             />
           </div>
         </div>
-        <div className="mt-2 flex flex-wrap justify-center gap-2 min-[360px]:mt-6">
+        <div className="watch-standby-actions mt-2 flex flex-wrap justify-center gap-2 min-[360px]:mt-6">
           {fallback.recommendedUrl ? (
             <a
               href={fallback.recommendedUrl}

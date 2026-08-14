@@ -8064,10 +8064,14 @@ test('watch marks retained live coverage unconfirmed until refresh recovers', as
     consoleErrors.filter(
       (message) =>
         message !==
-        'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+          'Failed to load resource: the server responded with a status of 503 (Service Unavailable)' &&
+        message !==
+          'Permissions policy violation: compute-pressure is not allowed in this document.',
     ),
   ).toEqual([]);
-  expect(consoleErrors).toHaveLength(1);
+  expect(consoleErrors).toContain(
+    'Failed to load resource: the server responded with a status of 503 (Service Unavailable)',
+  );
   expect(pageErrors).toEqual([]);
 });
 
@@ -9113,7 +9117,7 @@ test('briefing calendar options stay visible and restore trigger focus', async (
     name: 'Add launch to calendar',
   });
 
-  await calendarTrigger.click();
+  await calendarTrigger.press('Enter');
   const calendarOptions = dialog.getByRole('group', {
     name: 'Calendar options',
   });

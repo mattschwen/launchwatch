@@ -315,6 +315,27 @@ body::before {
   .compact-hero-actions .action-button > svg {
     display: none;
   }
+
+  .compact-hero-telemetry [data-mission-profile-signal] > dd {
+    font-size: 0.75rem;
+  }
+
+  .watch-standby-title {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+
+  .watch-standby-description {
+    line-height: 1.125rem;
+  }
+
+  .watch-standby-divider {
+    margin-block: 0.25rem;
+  }
+
+  .watch-standby-actions {
+    margin-top: 0.25rem;
+  }
 }
 
 @media (max-height: 430px) {
@@ -1059,6 +1080,11 @@ html[data-boot-status='visible'] .header-instruments {
 
   .brand-lockup {
     gap: 0;
+  }
+
+  .brand-wordmark {
+    font-size: 1rem;
+    letter-spacing: -0.055em;
   }
 }
 

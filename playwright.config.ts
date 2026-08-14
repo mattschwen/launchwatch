@@ -1,8 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
-const baseURL = externalBaseUrl || 'http://127.0.0.1:3100';
-const mockProviderURL = 'http://127.0.0.1:3199';
+const appPort = process.env.PLAYWRIGHT_APP_PORT || '3100';
+const mockProviderPort = process.env.MOCK_PROVIDER_PORT || '3199';
+const baseURL = externalBaseUrl || `http://127.0.0.1:${appPort}`;
+const mockProviderURL = `http://127.0.0.1:${mockProviderPort}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -52,9 +54,12 @@ export default defineConfig({
         timeout: 30_000,
         stdout: 'pipe',
         stderr: 'pipe',
+        env: {
+          MOCK_PROVIDER_PORT: mockProviderPort,
+        },
       },
       {
-        command: 'npm run dev -- --hostname 127.0.0.1 --port 3100',
+        command: `npm run dev -- --hostname 127.0.0.1 --port ${appPort}`,
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
