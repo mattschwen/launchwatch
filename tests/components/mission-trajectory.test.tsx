@@ -124,7 +124,7 @@ describe('MissionTrajectory', () => {
     expect(within(panel).getByRole('img', { name: /Space Launch Complex 40 launch facility/i })).toBeVisible();
     expect(within(panel).getByRole('link', { name: /OpenStreetMap/i })).toHaveAttribute('rel', 'noopener noreferrer');
     expect(screen.getAllByText('Illustrative ascent corridor')).not.toHaveLength(0);
-    expect(polylineMock).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(polylineMock).toHaveBeenCalledTimes(2));
     expect(polylineMock.mock.calls[1]?.[1]).toEqual(expect.objectContaining({
       className: 'mission-corridor-line',
       color: '#5ee6a8',
