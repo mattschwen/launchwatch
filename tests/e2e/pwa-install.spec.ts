@@ -9,6 +9,40 @@ test.beforeEach(async ({ page }) => {
   await installApiFixtures(page);
 });
 
+test('installed-app share target opens a filtered mission schedule', async ({
+  page,
+  request,
+}) => {
+  const response = await request.post('/share-target', {
+    form: {
+      title: 'Launch article',
+      text: 'Orbital Dawn https://example.test/launches/orbital-dawn',
+      url: 'https://example.test/launches/orbital-dawn',
+    },
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(303);
+  const destination = response.headers().location;
+  const destinationUrl = new URL(destination);
+  expect(destinationUrl.origin).toBe('http://localhost:3100');
+  expect(`${destinationUrl.pathname}${destinationUrl.search}`).toBe(
+    '/?q=Orbital+Dawn',
+  );
+
+  await page.goto(destination);
+  await expect(
+    page.getByRole('searchbox', { name: 'Search launches' }),
+  ).toHaveValue('Orbital Dawn');
+  await expect(
+    page.getByRole('status', { name: 'Upcoming launch results' }),
+  ).toHaveText('1 mission');
+  await expect(
+    page.getByRole('heading', { name: 'Orbital Dawn', level: 3 }),
+  ).toBeVisible();
+  expect(await expectNoHorizontalOverflow(page)).toBe(true);
+});
+
 async function offerInstall(
   page: Page,
   outcome: 'accepted' | 'dismissed' = 'dismissed',

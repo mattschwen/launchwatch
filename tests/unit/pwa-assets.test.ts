@@ -17,6 +17,12 @@ interface WebManifest {
   scope: string;
   display: string;
   icons: ManifestIcon[];
+  share_target: {
+    action: string;
+    method: string;
+    enctype: string;
+    params: { title: string; text: string; url: string };
+  };
   shortcuts: Array<{ url: string; icons?: ManifestIcon[] }>;
 }
 
@@ -50,6 +56,12 @@ describe('PWA install assets', () => {
       display: 'standalone',
     });
     expect(manifest.name).toContain('LaunchWatch');
+    expect(manifest.share_target).toEqual({
+      action: '/share-target',
+      method: 'POST',
+      enctype: 'application/x-www-form-urlencoded',
+      params: { title: 'title', text: 'text', url: 'url' },
+    });
     expect(manifest.shortcuts.map((shortcut) => shortcut.url)).toEqual([
       '/',
       '/watch',

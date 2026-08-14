@@ -159,6 +159,8 @@ Confirm that responses expose partial or stale provider metadata when an upstrea
 ### PWA checks
 
 - verify `manifest.json`, icons, and `offline.html` load;
+- POST mission text to the manifest share-target action and confirm the app
+  opens the matching URL-backed schedule search;
 - confirm the service worker registers only in a secure production build;
 - confirm `/api/*`, navigations, Next.js flight payloads, and query-string requests do not enter Cache Storage;
 - confirm content-hashed `/_next/static/*` assets can be served from the static cache;

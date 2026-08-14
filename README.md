@@ -194,6 +194,9 @@ the header route commands in compact landscape layouts.
 - Installable PWA shell with network-first navigations, uncached data APIs, and
   a dedicated maskable app icon for adaptive launchers; eligible browsers
   expose a footer install action only while their native installer is available
+- Installed platforms that support Web Share Targets can send mission text
+  directly into LaunchWatch's bounded schedule search; appended links are
+  discarded and malformed payloads recover to the unfiltered schedule
 - Device-safe installed-PWA chrome that keeps navigation, status, update, and
   offline controls clear of display cutouts in portrait and landscape
 - Branded large-image previews for shared routes, the launch archive, and
