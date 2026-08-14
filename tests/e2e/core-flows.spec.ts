@@ -4182,6 +4182,9 @@ test('primary mission summaries keep the provider launch window visible', async 
     });
     if (await showSiteWindow.count()) {
       await expect(showSiteWindow).toBeVisible();
+      const switcherBox = await showSiteWindow.boundingBox();
+      expect(switcherBox).not.toBeNull();
+      expect(switcherBox!.height).toBeGreaterThanOrEqual(44);
       await showSiteWindow.click();
     }
     const siteWindow = page.getByRole('note', {
@@ -4244,6 +4247,7 @@ test('primary mission summaries keep the provider launch window visible', async 
   ]);
   expect(narrowGeometry.every(Boolean)).toBe(true);
   const [switcherBox, siteTimeBox, windowBox] = narrowGeometry;
+  expect(switcherBox!.height).toBeGreaterThanOrEqual(44);
   expect(switcherBox!.y + switcherBox!.height).toBeLessThanOrEqual(
     siteTimeBox!.y,
   );

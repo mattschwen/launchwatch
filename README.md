@@ -134,9 +134,9 @@ the header route commands in compact landscape layouts.
   clipboard writes expose the same mission brief as selectable text
 - Compact local-time context beside exact primary mission targets and upcoming
   schedule rows. Validated launch windows keep UTC authoritative and retain
-  a compact duration cue plus the viewer's range while an inline switch reveals
-  the complete launch-site interval when it differs; coarse estimates keep
-  their existing presentation
+  a compact duration cue plus the viewer's range while a touch-safe inline
+  switch reveals the complete launch-site interval when it differs; coarse
+  estimates keep their existing presentation
 - UTC weekday context on calendar-specific featured targets and schedule rows,
   while week, month, quarter, and broader estimates avoid invented weekdays
 - The nearest overlap between calendar-ready provider launch windows appears

@@ -68,7 +68,7 @@ export default function LocalLaunchWindow({
           aria-label={`Show ${alternateLabel} ${alternateWindow}`}
           aria-pressed={showingSite}
           onClick={() => setSiteSelected((selected) => !selected)}
-          className="inline-flex min-h-6 items-center gap-1 rounded-[var(--radius-sm)] px-1 font-sans text-[0.62rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--console-cyan)] focus-visible:text-[var(--console-cyan)] min-[360px]:-my-1"
+          className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] px-1 font-sans text-[0.62rem] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--console-cyan)] focus-visible:text-[var(--console-cyan)] min-[360px]:-my-3.5"
         >
           {activeLabel}
           <ArrowLeftRight aria-hidden="true" size={11} />

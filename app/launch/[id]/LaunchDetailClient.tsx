@@ -1162,7 +1162,10 @@ export default function LaunchDetailClient({
                 className="mt-1 pl-6 font-mono text-xs text-[var(--text-secondary)]"
               />
             ) : null}
-            <LaunchWindow launch={presentedLaunch} className="mt-3" />
+            <LaunchWindow
+              launch={presentedLaunch}
+              className="mt-2 min-[360px]:mt-3"
+            />
 
             <LaunchActions
               launch={presentedLaunch}
@@ -1170,7 +1173,7 @@ export default function LaunchDetailClient({
               showCalendar={!completed}
               showShare
               detail
-              className="mt-5"
+              className="mt-1 min-[360px]:mt-5"
             />
 
             <a

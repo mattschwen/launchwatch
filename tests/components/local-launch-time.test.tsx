@@ -111,8 +111,8 @@ describe('LocalLaunchWindow', () => {
       'Show your window 8:30 AM–10:30 AM MDT',
     );
     expect(showSite).toHaveFocus();
-    expect(showSite).not.toHaveClass('-my-1');
-    expect(showSite).toHaveClass('min-[360px]:-my-1');
+    expect(showSite).toHaveClass('min-h-11');
+    expect(showSite).toHaveClass('min-[360px]:-my-3.5');
     expect(window).toHaveClass('items-center', 'gap-y-1');
   });
 

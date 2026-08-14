@@ -105,10 +105,9 @@ The schedule must remain reachable without scrolling through a fully rendered ma
   eligible mission and retain a touch-safe pause/resume command after browser
   permission is granted.
 - Validated provider launch windows keep the UTC range authoritative and add a
-  compact duration cue plus a hydration-safe inline switch between the viewer
-  and launch-site start/end ranges without adding a row to the primary mission
-  summary. Equivalent ranges collapse, and midnight crossings name both dates
-  instead of one day.
+  compact duration cue plus a hydration-safe, 44-pixel inline switch between
+  the viewer and launch-site start/end ranges. Equivalent ranges collapse, and
+  midnight crossings name both dates instead of one day.
 - Calendar-specific featured targets and schedule rows prefix the UTC date with
   a short weekday; week, month, quarter, and broader estimates remain unchanged.
 - When two calendar-ready provider windows overlap, the schedule surfaces the
